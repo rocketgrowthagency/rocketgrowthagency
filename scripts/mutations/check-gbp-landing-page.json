@@ -1,410 +1,410 @@
 [
- [
-  "the one-keyword reader turns a failed read into a page",
-  "gbplanding",
-  "if (!Array.isArray(rows)) return { state: \"unknown\", keyword: kw };",
-  "if (!Array.isArray(rows)) return { state: \"ok\", keyword: kw, page: siteUrl, is_home: true, clicks: 0, impressions: 0 };"
- ],
- [
-  "only the first plan keyword counts",
-  "gbplanding",
-  "for (const k of (plan && Array.isArray(plan.keywords) ? plan.keywords : [])) {",
-  "for (const k of (plan && Array.isArray(plan.keywords) ? plan.keywords.slice(0, 1) : [])) {"
- ],
- [
-  "an exact match instead of a search that contains the keyword",
-  "gbplanding",
-  "return !!k && ` ${q} `.includes(` ${k} `);",
-  "return !!k && q === k;"
- ],
- [
-  "part of a word counts as the keyword",
-  "gbplanding",
-  "return !!k && ` ${q} `.includes(` ${k} `);",
-  "return !!k && q.includes(k);"
- ],
- [
-  "another site's rows count",
-  "gbplanding",
-  "if (!r || !sameSite(r.page, homeUrl) || !kws.some((k) => containsKeyword(r.query, k))) continue;",
-  "if (!r || !kws.some((k) => containsKeyword(r.query, k))) continue;"
- ],
- [
-  "too few searches still pick a page",
-  "gbplanding",
-  "if (impressions < MIN_IMPRESSIONS) return { state: \"few\", ...out };",
-  "if (impressions < 0) return { state: \"few\", ...out };"
- ],
- [
-  "a tie goes to the other page",
-  "gbplanding",
-  "const wins = !!top && (top.clicks > home.clicks || (top.clicks === home.clicks && top.impressions > home.impressions));",
-  "const wins = !!top && top.clicks >= home.clicks;"
- ],
- [
-  "impressions never break a tie on clicks",
-  "gbplanding",
-  "const wins = !!top && (top.clicks > home.clicks || (top.clicks === home.clicks && top.impressions > home.impressions));",
-  "const wins = !!top && top.clicks > home.clicks;"
- ],
- [
-  "an unreadable Search Console reads as no searches",
-  "gbplanding",
-  "if (!Array.isArray(rows)) return { state: \"unknown\", ...base };",
-  "if (!Array.isArray(rows)) rows = [];"
- ],
- [
-  "no website invents a page",
-  "gbplanding",
-  "if (!site) return { state: \"no_site\", page: null, keywords: kws };",
-  "if (!site) return { state: \"no_site\", page: \"https://example.com/\", keywords: kws };"
- ],
- [
-  "a website link we couldn't read counts as a match",
-  "gbplanding",
-  "if (shows === null || shows === undefined) return { state: \"unknown\", shows: null, at };",
-  "if (shows === null || shows === undefined) return { state: \"matches\", shows: null, at };"
- ],
- [
-  "the saved page is raised over itself",
-  "gbplanding",
-  "if (!a || (b && a.key === b.key)) return null;",
-  "if (!a) return null;"
- ],
- [
-  "Keep doesn't hold the next month",
-  "gbplanding",
-  "if (k && k.key === a.key && lead <=",
-  "if (false && k.key === a.key && lead <="
- ],
- [
-  "it reads again every night",
-  "gbplanding",
-  "return !Number.isFinite(last) || nowMs - last >= RECHECK_DAYS * 86400000;",
-  "return true;"
- ],
- [
-  "a no-website skip never decides again",
-  "gbplanding",
-  "if (l.reason === \"no_site\") return !!siteOf(client);",
-  "if (l.reason === \"no_site\") return false;"
- ],
- [
-  "the decision isn't the system's",
-  "gbplanding",
-  "reason: r.state, read_at: at, saved_at: at, by: \"system\", evidence };",
-  "reason: r.state, read_at: at, saved_at: at, by: \"RGA\", evidence };"
- ],
- [
-  "the page the rule picked isn't a valid saved choice",
-  "gbplanding",
-  "const CHOICES = [\"homepage\", \"service\", \"city\", \"page\"];",
-  "const CHOICES = [\"homepage\", \"service\", \"city\"];"
- ],
- [
-  "a page off their site is accepted",
-  "gbplanding",
-  "if (!sameSite(p.url, siteUrl))",
-  "if (false)"
- ],
- [
-  "a stale choice is still used",
-  "gbplanding",
-  "return c.ok ? { choice: c.choice, url: c.url } : null;",
-  "return { choice: l.choice, url: l.url };"
- ],
- [
-  "no fallback to the homepage",
-  "gbplanding",
-  "return site ? { url: site, choice: \"homepage\", saved: false } : null;",
-  "return null;"
- ],
- [
-  "the words always say homepage",
-  "gbplanding",
-  "pg.choice !== \"homepage\" ? \"The page your Google profile links to\" : \"Your homepage\"",
-  "false ? \"The page your Google profile links to\" : \"Your homepage\""
- ],
- [
-  "it decides over a decision already saved",
-  "gbplandingrun",
-  "if (task.landing) return { decided: false, why: \"already decided\", tasks: rec.tasks };",
-  "if (false) return { decided: false, why: \"already decided\", tasks: rec.tasks };"
- ],
- [
-  "the first write isn't conditional",
-  "gbplandingrun",
-  "const after = await writeIf(d, rec, { ...rec.tasks, [GL.STEP]: next }, `${LANDING}=is.null`);",
-  "const after = await writeIf(d, rec, { ...rec.tasks, [GL.STEP]: next }, \"id=not.is.null\");"
- ],
- [
-  "the monthly write isn't conditional",
-  "gbplandingrun",
-  "const after = await writeIf(d, rec, { ...rec.tasks, [GL.STEP]: next }, unchanged(l));",
-  "const after = await writeIf(d, rec, { ...rec.tasks, [GL.STEP]: next }, \"id=not.is.null\");"
- ],
- [
-  "the step isn't finished when it decides",
-  "gbplandingrun",
-  "const next = { ...task, landing, status: landing.url ? \"done\" : \"skipped\", completed_at: at, completed_by: \"system\" };\n  delete next.landing_read;",
-  "const next = { ...task, landing, status: \"pending\", completed_at: at, completed_by: \"system\" };\n  delete next.landing_read;"
- ],
- [
-  "the monthly read switches the saved page",
-  "gbplandingrun",
-  "const raise = GL.raiseFor(landing, r, task.landing_kept, at);",
-  "if (r.state === \"page_wins\") landing = { ...landing, url: r.page, choice: \"page\" }; const raise = GL.raiseFor(landing, r, task.landing_kept, at);"
- ],
- [
-  "a link we couldn't read this month erases the one read before",
-  "gbplandingrun",
-  "shows === null && l.google && l.google.state !== \"unknown\" ? l.google : GL.compareGoogle(landing.url, shows, at);",
-  "GL.compareGoogle(landing.url, shows, at);"
- ],
- [
-  "Search Console is asked about the first keyword only",
-  "gbplandingrun",
-  "try { rows = await d.gscRows(clientId, keywords); } catch { rows = null; }",
-  "try { rows = await d.gscRows(clientId, keywords.slice(0, 1)); } catch { rows = null; }"
- ],
- [
-  "a failed Search Console read becomes no searches",
-  "gbplandingrun",
-  "try { rows = await d.gscRows(clientId, keywords); } catch { rows = null; }",
-  "try { rows = await d.gscRows(clientId, keywords); } catch { rows = []; }"
- ],
- [
-  "Google is asked with no website",
-  "gbplandingrun",
-  "if (siteUrl) { try { shows = await d.googleSite(clientId); } catch { shows = null; } }",
-  "if (true) { try { shows = await d.googleSite(clientId); } catch { shows = null; } }"
- ],
- [
-  "the decision isn't recorded",
-  "gbplandingrun",
-  "await d.record({ clientId, kind: \"gbp_landing_page\", stepId: GL.STEP, by: \"system\"",
-  "await (async () => 0)({ clientId, kind: \"gbp_landing_page\", stepId: GL.STEP, by: \"system\""
- ],
- [
-  "RGA's choice is saved unchecked",
-  "gbplandingrun",
-  "const c = GL.checkChoice({ choice: String(choice || \"\"), url, siteUrl });",
-  "const c = { ok: true, choice: String(choice || \"\"), url: String(url || \"\") };"
- ],
- [
-  "RGA's save leaves the raise up",
-  "gbplandingrun",
-  "delete next.landing_read; delete next.landing_raise;\n  const after = await writeStepTasks(",
-  "delete next.landing_read;\n  const after = await writeStepTasks("
- ],
- [
-  "Keep doesn't clear the raise",
-  "gbplandingrun",
-  "const next = { ...task, landing_kept: kept };\n  delete next.landing_raise;",
-  "const next = { ...task, landing_kept: kept };"
- ],
- [
-  "the sweep reads whole records",
-  "gbplandingrun",
-  "/client_onboarding_records?select=client_id,t:data->",
-  "/client_onboarding_records?select=client_id,data,t:data->"
- ],
- [
-  "the sweep decides the walk's test clients",
-  "gbplandingrun",
-  "/clients?status=neq.archived&or=(source.is.null,source.not.like.test:*)&select=id,website_url",
-  "/clients?status=neq.archived&select=id,website_url"
- ],
- [
-  "the sweep has no nightly cap",
-  "gbplandingrun",
-  "if (decided + rechecked >= NIGHT_CAP) break;",
-  "if (false) break;"
- ],
- [
-  "the off switch does nothing",
-  "gbplandingrun",
-  "if (!isOn(d.env || {})) return { decided: 0, rechecked: 0, off: true };",
-  ""
- ],
- [
-  "the sweep decides a step someone finished by hand",
-  "gbplandingrun",
-  "if (t && [\"done\", \"skipped\", \"declined\"].includes(String(t.status || \"\"))) continue;",
-  ""
- ],
- [
-  "the sweep decides before the plan is done",
-  "gbplandingrun",
-  "if (![\"done\", \"skipped\"].includes(String(r.plan || \"\"))) continue;",
-  ""
- ],
- [
-  "the endpoint has no way to decide",
-  "gbplandingfn",
-  "if (action === \"auto\") {",
-  "if (false) {"
- ],
- [
-  "the endpoint isn't RGA-only",
-  "gbplandingfn",
-  "const gate = await requireWorkspaceForClient(event, clientId);",
-  "const gate = {};"
- ],
- [
-  "the nightly job doesn't run the sweep",
-  "scraper_metrics",
-  "const gl = await require(\"./_gbp-landing-run\").sweepLanding();",
-  "const gl = { decided: 0, rechecked: 0 };"
- ],
- [
-  "Choose by hand is back on the card",
-  "admin",
-  "const GL_NO_SEND = \"Sending a link change",
-  "const GL_OLD = \"Choose by hand\"; const GL_NO_SEND = \"Sending a link change"
- ],
- [
-  "Mark step complete is back on the step",
-  "admin",
-  "const doneBtn = zcWaits || siteStep || o.flowId === GL_STEP ? \"\" :",
-  "const doneBtn = zcWaits || siteStep ? \"\" :"
- ],
- [
-  "the done row has no card",
-  "admin",
-  "          + (o.flowId === GL_STEP ? `<div class=\"ob-done-card\">${gbpLandingAdminHtml(s.task, s)}</div>` : \"\")\n",
-  ""
- ],
- [
-  "the active step never asks the server",
-  "admin",
-  "if (!a && cidRaw) setTimeout(() => glAutoRun(cidRaw), 0);",
-  ""
- ],
- [
-  "it decides out of turn",
-  "admin",
-  "if (!(s && s.uiState === \"active\")) return wrap(gsCard({ icon: GS_LINK, pill: \"Runs itself\"",
-  "if (false) return wrap(gsCard({ icon: GS_LINK, pill: \"Runs itself\""
- ],
- [
-  "a reply with no decision is a dead end",
-  "admin",
-  "if (a === \"done\" || (a && a.error)) return wrap(",
-  "if (a && a.error) return wrap("
- ],
- [
-  "a link we couldn't read is drawn as matching",
-  "admin",
-  "const known = g && g.state === \"matches\";",
-  "const known = !!g;"
- ],
- [
-  "Send is drawn with no approval path behind it",
-  "admin",
-  "foot: `<span class=\"ob-zc-note\">${GL_NO_SEND}</span>${home ? \"\" :",
-  "foot: `<button type=\"button\" class=\"admin-button\">Send</button><span class=\"ob-zc-note\">${GL_NO_SEND}</span>${home ? \"\" :"
- ],
- [
-  "B is drawn as Done",
-  "admin",
-  "if (g && g.state === \"differs\") return wrap(",
-  "if (false) return wrap("
- ],
- [
-  "E is never drawn",
-  "admin",
-  "  if (raise) {\n    const ev = raise.evidence",
-  "  if (false) {\n    const ev = raise.evidence"
- ],
- [
-  "D reads as Done",
-  "admin",
-  "cls: \"off\", icon: GL_NONE, pill: \"Skipped\"",
-  "cls: \"ok\", icon: GL_NONE, pill: \"Done\""
- ],
- [
-  "Save does not spin",
-  "admin",
-  "  b.classList.add(\"is-busy\");\n  try {\n    const r = await fetch(\"/.netlify/functions/admin-gbp-landing\"",
-  "  try {\n    const r = await fetch(\"/.netlify/functions/admin-gbp-landing\""
- ],
- [
-  "the row says Done over B and E",
-  "admin",
-  "(l.google && l.google.state === \"differs\") ? \"rga\" : \"ok\"; }",
-  "(l.google && l.google.state === \"differs\") ? \"ok\" : \"ok\"; }"
- ],
- [
-  "the step isn't self-settling",
-  "playbook",
-  "\"clientBucket\": \"admin\",\n      \"selfSettles\": true\n    },\n    {\n      \"id\": \"m1.web.homepage_meta\"",
-  "\"clientBucket\": \"admin\"\n    },\n    {\n      \"id\": \"m1.web.homepage_meta\""
- ],
- [
-  "the step's title changes",
-  "playbook",
-  "\"title\": \"Decide which page the Google profile links to\"",
-  "\"title\": \"Decide the page\""
- ],
- [
-  "the canonical file isn't self-settling",
-  "sopm1",
-  "type: \"manual\", dependsOn: [\"m1.strategy.keywords_locations\"], selfSettles: true,",
-  "type: \"manual\", dependsOn: [\"m1.strategy.keywords_locations\"],"
- ],
- [
-  "the canonical file drifts",
-  "sopm1",
-  "3. It saves the page with its reason and the step is done. The card compares the page with the website link the Google profile shows.",
-  "3. It saves the page with its reason and the step is done."
- ],
- [
-  "what the step does still says RGA picks",
-  "stepwhat",
-  "Decides by itself which page the Google profile links to",
-  "Saves which page the Google profile links to"
- ],
- [
-  "the title step ignores the saved page",
-  "admindeliv",
-  "c.page_url = pg ? pg.url : site;",
-  "c.page_url = site;"
- ],
- [
-  "the headline draft ignores the saved page",
-  "exec",
-  "${planBlock(_plan)}${await pageBlock(client)}`,\n      { maxTokens: 1400 },",
-  "${planBlock(_plan)}`,\n      { maxTokens: 1400 },"
- ],
- [
-  "the auto call decides inside the web request (26 s)",
-  "gbplandingfn",
-  "    if (action === \"auto\" && !deps) {",
-  "    if (false) {"
- ],
- [
-  "the status read reads the whole record",
-  "gbplandingfn",
-  "select=t:data->tasks->%22m1.web.gbp_landing_page%22&limit=1",
-  "select=data&limit=1"
- ],
- [
-  "the background function skips the secret",
-  "gbplandingbg",
-  "  const gate = requireInternalSecret(event);\n  if (gate.error) return gate.error;\n",
-  "  const gate = { ok: true };\n"
- ],
- [
-  "the card stops waiting for the background decision",
-  "admin",
-  "    if (r.status === 202 && j.queued) {",
-  "    if (false) {"
- ],
- [
-  "a timeout reads as a raw HTTP 504",
-  "admin",
-  "r.status === 504 ? \"It took too long to answer\" : (j.error || `HTTP ${r.status}`)",
-  "(j.error || `HTTP ${r.status}`)"
- ]
+  [
+    "the one-keyword reader turns a failed read into a page",
+    "gbplanding",
+    "if (!Array.isArray(rows)) return { state: \"unknown\", keyword: kw };",
+    "if (!Array.isArray(rows)) return { state: \"ok\", keyword: kw, page: siteUrl, is_home: true, clicks: 0, impressions: 0 };"
+  ],
+  [
+    "only the first plan keyword counts",
+    "gbplanding",
+    "for (const k of (plan && Array.isArray(plan.keywords) ? plan.keywords : [])) {",
+    "for (const k of (plan && Array.isArray(plan.keywords) ? plan.keywords.slice(0, 1) : [])) {"
+  ],
+  [
+    "an exact match instead of a search that contains the keyword",
+    "gbplanding",
+    "return !!k && ` ${q} `.includes(` ${k} `);",
+    "return !!k && q === k;"
+  ],
+  [
+    "part of a word counts as the keyword",
+    "gbplanding",
+    "return !!k && ` ${q} `.includes(` ${k} `);",
+    "return !!k && q.includes(k);"
+  ],
+  [
+    "another site's rows count",
+    "gbplanding",
+    "if (!r || !sameSite(r.page, homeUrl) || !kws.some((k) => containsKeyword(r.query, k))) continue;",
+    "if (!r || !kws.some((k) => containsKeyword(r.query, k))) continue;"
+  ],
+  [
+    "too few searches still pick a page",
+    "gbplanding",
+    "if (impressions < MIN_IMPRESSIONS) return { state: \"few\", ...out };",
+    "if (impressions < 0) return { state: \"few\", ...out };"
+  ],
+  [
+    "a tie goes to the other page",
+    "gbplanding",
+    "const wins = !!top && !isHomepage(top.page, homeUrl) && top.clicks > home.clicks;",
+    "const wins = !!top && !isHomepage(top.page, homeUrl) && top.clicks >= home.clicks;"
+  ],
+  [
+    "impressions break a tie on clicks (the 11-6 /local-seo/ pick)",
+    "gbplanding",
+    "const wins = !!top && !isHomepage(top.page, homeUrl) && top.clicks > home.clicks;",
+    "const wins = !!top && !isHomepage(top.page, homeUrl) && (top.clicks > home.clicks || (top.clicks === home.clicks && top.impressions > home.impressions));"
+  ],
+  [
+    "an unreadable Search Console reads as no searches",
+    "gbplanding",
+    "if (!Array.isArray(rows)) return { state: \"unknown\", ...base };",
+    "if (!Array.isArray(rows)) rows = [];"
+  ],
+  [
+    "no website invents a page",
+    "gbplanding",
+    "if (!site) return { state: \"no_site\", page: null, keywords: kws };",
+    "if (!site) return { state: \"no_site\", page: \"https://example.com/\", keywords: kws };"
+  ],
+  [
+    "a website link we couldn't read counts as a match",
+    "gbplanding",
+    "if (shows === null || shows === undefined) return { state: \"unknown\", shows: null, at };",
+    "if (shows === null || shows === undefined) return { state: \"matches\", shows: null, at };"
+  ],
+  [
+    "the saved page is raised over itself",
+    "gbplanding",
+    "if (!a || (b && a.key === b.key)) return null;",
+    "if (!a) return null;"
+  ],
+  [
+    "Keep doesn't hold the next month",
+    "gbplanding",
+    "if (k && k.key === a.key && lead <=",
+    "if (false && k.key === a.key && lead <="
+  ],
+  [
+    "it reads again every night",
+    "gbplanding",
+    "return !Number.isFinite(last) || nowMs - last >= RECHECK_DAYS * 86400000;",
+    "return true;"
+  ],
+  [
+    "a no-website skip never decides again",
+    "gbplanding",
+    "if (l.reason === \"no_site\") return !!siteOf(client);",
+    "if (l.reason === \"no_site\") return false;"
+  ],
+  [
+    "the decision isn't the system's",
+    "gbplanding",
+    "reason: r.state, read_at: at, saved_at: at, by: \"system\", rule: RULE, evidence };",
+    "reason: r.state, read_at: at, saved_at: at, by: \"RGA\", rule: RULE, evidence };"
+  ],
+  [
+    "the page the rule picked isn't a valid saved choice",
+    "gbplanding",
+    "const CHOICES = [\"homepage\", \"service\", \"city\", \"page\"];",
+    "const CHOICES = [\"homepage\", \"service\", \"city\"];"
+  ],
+  [
+    "a page off their site is accepted",
+    "gbplanding",
+    "if (!sameSite(p.url, siteUrl))",
+    "if (false)"
+  ],
+  [
+    "a stale choice is still used",
+    "gbplanding",
+    "return c.ok ? { choice: c.choice, url: c.url } : null;",
+    "return { choice: l.choice, url: l.url };"
+  ],
+  [
+    "no fallback to the homepage",
+    "gbplanding",
+    "return site ? { url: site, choice: \"homepage\", saved: false } : null;",
+    "return null;"
+  ],
+  [
+    "the words always say homepage",
+    "gbplanding",
+    "pg.choice !== \"homepage\" ? \"The page your Google profile links to\" : \"Your homepage\"",
+    "false ? \"The page your Google profile links to\" : \"Your homepage\""
+  ],
+  [
+    "it decides over a decision already saved",
+    "gbplandingrun",
+    "if (task.landing && !stale) return { decided: false",
+    "if (false && !stale) return { decided: false"
+  ],
+  [
+    "the first write isn't conditional",
+    "gbplandingrun",
+    "stale ? unchanged(task.landing) : `${LANDING}=is.null`);",
+    "stale ? unchanged(task.landing) : \"id=not.is.null\");"
+  ],
+  [
+    "the monthly write isn't conditional",
+    "gbplandingrun",
+    "const after = await writeIf(d, rec, { ...rec.tasks, [GL.STEP]: next }, unchanged(l));",
+    "const after = await writeIf(d, rec, { ...rec.tasks, [GL.STEP]: next }, \"id=not.is.null\");"
+  ],
+  [
+    "the step isn't finished when it decides",
+    "gbplandingrun",
+    "const next = { ...task, landing, status: landing.url ? \"done\" : \"skipped\", completed_at: at, completed_by: \"system\" };\n  delete next.landing_read;",
+    "const next = { ...task, landing, status: \"pending\", completed_at: at, completed_by: \"system\" };\n  delete next.landing_read;"
+  ],
+  [
+    "the monthly read switches the saved page",
+    "gbplandingrun",
+    "const raise = GL.raiseFor(landing, r, task.landing_kept, at);",
+    "if (r.state === \"page_wins\") landing = { ...landing, url: r.page, choice: \"page\" }; const raise = GL.raiseFor(landing, r, task.landing_kept, at);"
+  ],
+  [
+    "a link we couldn't read this month erases the one read before",
+    "gbplandingrun",
+    "shows === null && l.google && l.google.state !== \"unknown\" ? l.google : GL.compareGoogle(landing.url, shows, at);",
+    "GL.compareGoogle(landing.url, shows, at);"
+  ],
+  [
+    "Search Console is asked about the first keyword only",
+    "gbplandingrun",
+    "try { rows = await d.gscRows(clientId, keywords); } catch { rows = null; }",
+    "try { rows = await d.gscRows(clientId, keywords.slice(0, 1)); } catch { rows = null; }"
+  ],
+  [
+    "a failed Search Console read becomes no searches",
+    "gbplandingrun",
+    "try { rows = await d.gscRows(clientId, keywords); } catch { rows = null; }",
+    "try { rows = await d.gscRows(clientId, keywords); } catch { rows = []; }"
+  ],
+  [
+    "Google is asked with no website",
+    "gbplandingrun",
+    "if (siteUrl) { try { shows = await d.googleSite(clientId); } catch { shows = null; } }",
+    "if (true) { try { shows = await d.googleSite(clientId); } catch { shows = null; } }"
+  ],
+  [
+    "the decision isn't recorded",
+    "gbplandingrun",
+    "await d.record({ clientId, kind: \"gbp_landing_page\", stepId: GL.STEP, by: \"system\"",
+    "await (async () => 0)({ clientId, kind: \"gbp_landing_page\", stepId: GL.STEP, by: \"system\""
+  ],
+  [
+    "RGA's choice is saved unchecked",
+    "gbplandingrun",
+    "const c = GL.checkChoice({ choice: String(choice || \"\"), url, siteUrl });",
+    "const c = { ok: true, choice: String(choice || \"\"), url: String(url || \"\") };"
+  ],
+  [
+    "RGA's save leaves the raise up",
+    "gbplandingrun",
+    "delete next.landing_read; delete next.landing_raise;\n  const after = await writeStepTasks(",
+    "delete next.landing_read;\n  const after = await writeStepTasks("
+  ],
+  [
+    "Keep doesn't clear the raise",
+    "gbplandingrun",
+    "const next = { ...task, landing_kept: kept };\n  delete next.landing_raise;",
+    "const next = { ...task, landing_kept: kept };"
+  ],
+  [
+    "the sweep reads whole records",
+    "gbplandingrun",
+    "/client_onboarding_records?select=client_id,t:data->",
+    "/client_onboarding_records?select=client_id,data,t:data->"
+  ],
+  [
+    "the sweep decides the walk's test clients",
+    "gbplandingrun",
+    "/clients?status=neq.archived&or=(source.is.null,source.not.like.test:*)&select=id,website_url",
+    "/clients?status=neq.archived&select=id,website_url"
+  ],
+  [
+    "the sweep has no nightly cap",
+    "gbplandingrun",
+    "if (decided + rechecked >= NIGHT_CAP) break;",
+    "if (false) break;"
+  ],
+  [
+    "the off switch does nothing",
+    "gbplandingrun",
+    "if (!isOn(d.env || {})) return { decided: 0, rechecked: 0, off: true };",
+    ""
+  ],
+  [
+    "the sweep decides a step someone finished by hand",
+    "gbplandingrun",
+    "if (t && [\"done\", \"skipped\", \"declined\"].includes(String(t.status || \"\"))) continue;",
+    ""
+  ],
+  [
+    "the sweep decides before the plan is done",
+    "gbplandingrun",
+    "if (![\"done\", \"skipped\"].includes(String(r.plan || \"\"))) continue;",
+    ""
+  ],
+  [
+    "the endpoint has no way to decide",
+    "gbplandingfn",
+    "if (action === \"auto\") {",
+    "if (false) {"
+  ],
+  [
+    "the endpoint isn't RGA-only",
+    "gbplandingfn",
+    "const gate = await requireWorkspaceForClient(event, clientId);",
+    "const gate = {};"
+  ],
+  [
+    "the nightly job doesn't run the sweep",
+    "scraper_metrics",
+    "const gl = await require(\"./_gbp-landing-run\").sweepLanding();",
+    "const gl = { decided: 0, rechecked: 0 };"
+  ],
+  [
+    "Choose by hand is back on the card",
+    "admin",
+    "const GL_NO_SEND = \"Sending a link change",
+    "const GL_OLD = \"Choose by hand\"; const GL_NO_SEND = \"Sending a link change"
+  ],
+  [
+    "Mark step complete is back on the step",
+    "admin",
+    "const doneBtn = zcWaits || siteStep || o.flowId === GL_STEP ? \"\" :",
+    "const doneBtn = zcWaits || siteStep ? \"\" :"
+  ],
+  [
+    "the done row has no card",
+    "admin",
+    "          + (o.flowId === GL_STEP ? `<div class=\"ob-done-card\">${gbpLandingAdminHtml(s.task, s)}</div>` : \"\")\n",
+    ""
+  ],
+  [
+    "the active step never asks the server",
+    "admin",
+    "if (!a && cidRaw) setTimeout(() => glAutoRun(cidRaw), 0);",
+    ""
+  ],
+  [
+    "it decides out of turn",
+    "admin",
+    "if (!(s && s.uiState === \"active\")) return wrap(gsCard({ icon: GS_LINK, pill: \"Runs itself\"",
+    "if (false) return wrap(gsCard({ icon: GS_LINK, pill: \"Runs itself\""
+  ],
+  [
+    "a reply with no decision is a dead end",
+    "admin",
+    "if (a === \"done\" || (a && a.error)) return wrap(",
+    "if (a && a.error) return wrap("
+  ],
+  [
+    "a link we couldn't read is drawn as matching",
+    "admin",
+    "const known = g && g.state === \"matches\";",
+    "const known = !!g;"
+  ],
+  [
+    "Send is drawn with no approval path behind it",
+    "admin",
+    "foot: `<span class=\"ob-zc-note\">${GL_NO_SEND}</span>${home ? \"\" :",
+    "foot: `<button type=\"button\" class=\"admin-button\">Send</button><span class=\"ob-zc-note\">${GL_NO_SEND}</span>${home ? \"\" :"
+  ],
+  [
+    "B is drawn as Done",
+    "admin",
+    "if (g && g.state === \"differs\") return wrap(",
+    "if (false) return wrap("
+  ],
+  [
+    "E is never drawn",
+    "admin",
+    "  if (raise) {\n    const ev = raise.evidence",
+    "  if (false) {\n    const ev = raise.evidence"
+  ],
+  [
+    "D reads as Done",
+    "admin",
+    "cls: \"off\", icon: GL_NONE, pill: \"Skipped\"",
+    "cls: \"ok\", icon: GL_NONE, pill: \"Done\""
+  ],
+  [
+    "Save does not spin",
+    "admin",
+    "  b.classList.add(\"is-busy\");\n  try {\n    const r = await fetch(\"/.netlify/functions/admin-gbp-landing\"",
+    "  try {\n    const r = await fetch(\"/.netlify/functions/admin-gbp-landing\""
+  ],
+  [
+    "the row says Done over B and E",
+    "admin",
+    "(l.google && l.google.state === \"differs\") ? \"rga\" : \"ok\"; }",
+    "(l.google && l.google.state === \"differs\") ? \"ok\" : \"ok\"; }"
+  ],
+  [
+    "the step isn't self-settling",
+    "playbook",
+    "\"clientBucket\": \"admin\",\n      \"selfSettles\": true\n    },\n    {\n      \"id\": \"m1.web.homepage_meta\"",
+    "\"clientBucket\": \"admin\"\n    },\n    {\n      \"id\": \"m1.web.homepage_meta\""
+  ],
+  [
+    "the step's title changes",
+    "playbook",
+    "\"title\": \"Decide which page the Google profile links to\"",
+    "\"title\": \"Decide the page\""
+  ],
+  [
+    "the canonical file isn't self-settling",
+    "sopm1",
+    "type: \"manual\", dependsOn: [\"m1.strategy.keywords_locations\"], selfSettles: true,",
+    "type: \"manual\", dependsOn: [\"m1.strategy.keywords_locations\"],"
+  ],
+  [
+    "the canonical file drifts",
+    "sopm1",
+    "3. It saves the page with its reason and the step is done. The card compares the page with the website link the Google profile shows.",
+    "3. It saves the page with its reason and the step is done."
+  ],
+  [
+    "what the step does still says RGA picks",
+    "stepwhat",
+    "Decides by itself which page the Google profile links to",
+    "Saves which page the Google profile links to"
+  ],
+  [
+    "the title step ignores the saved page",
+    "admindeliv",
+    "c.page_url = pg ? pg.url : site;",
+    "c.page_url = site;"
+  ],
+  [
+    "the headline draft ignores the saved page",
+    "exec",
+    "${planBlock(_plan)}${await pageBlock(client)}`,\n      { maxTokens: 1400 },",
+    "${planBlock(_plan)}`,\n      { maxTokens: 1400 },"
+  ],
+  [
+    "the auto call decides inside the web request (26 s)",
+    "gbplandingfn",
+    "    if (action === \"auto\" && !deps) {",
+    "    if (false) {"
+  ],
+  [
+    "the status read reads the whole record",
+    "gbplandingfn",
+    "select=t:data->tasks->%22m1.web.gbp_landing_page%22&limit=1",
+    "select=data&limit=1"
+  ],
+  [
+    "the background function skips the secret",
+    "gbplandingbg",
+    "  const gate = requireInternalSecret(event);\n  if (gate.error) return gate.error;\n",
+    "  const gate = { ok: true };\n"
+  ],
+  [
+    "the card stops waiting for the background decision",
+    "admin",
+    "    if (r.status === 202 && j.queued) {",
+    "    if (false) {"
+  ],
+  [
+    "a timeout reads as a raw HTTP 504",
+    "admin",
+    "r.status === 504 ? \"It took too long to answer\" : (j.error || `HTTP ${r.status}`)",
+    "(j.error || `HTTP ${r.status}`)"
+  ]
 ]

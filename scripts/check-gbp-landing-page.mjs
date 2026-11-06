@@ -83,7 +83,8 @@ else {
   const tie = all([row("https://acme-plumbing.com/a/", "plumber austin", 4, 50), row(SITE_US, "plumber austin", 4, 50)], KW);
   home(tie, "a tie"); if (tie.state !== "tie") F(`an exact tie must say tie, got ${tie.state}`);
   const imp = all([row("https://acme-plumbing.com/a/", "plumber austin", 4, 80), row(SITE_US, "plumber austin", 4, 50)], KW);
-  if (imp.state !== "page_wins") F(`the same clicks and more impressions must win (then impressions), got ${imp.state}`);
+  // 🔴 11-6: approved decision 3 = MORE clicks to win; equal clicks keep the homepage whatever the impressions (the 3:22 PM /local-seo/ pick)
+  home(imp, "equal clicks, more impressions"); if (imp.state !== "tie") F(`equal clicks with more impressions must keep the homepage (a tie), got ${imp.state}`);
   const homeAhead = all([row("https://acme-plumbing.com/a/", "plumber austin", 3, 500), row(SITE_US, "plumber austin", 4, 20)], KW);
   home(homeAhead, "the homepage has more clicks"); if (homeAhead.state !== "home_wins") F(`more clicks on the homepage must say home_wins, got ${homeAhead.state}`);
   // a failed read, no keywords, no website
@@ -376,7 +377,7 @@ const lift = () => {
     throw new Error(`${name} never closes`);
   };
   const names = ["escapeHtml", "escapeAttribute", "gsDay", "GS_LINK", "GS_CLOCK", "GS_WARN", "GS_TICK", "gsCard", "gsRow", "gsAct", "GL_STEP", "_glAuto", "_glEditing", "glUrl", "glKey",
-    "glWhere", "glWhy", "GL_NONE", "GL_NO_SEND", "glNow", "gbpLandingAdminHtml", "glFormHtml"];
+    "glWhere", "glWhy", "GL_NONE", "GL_NO_SEND", "glNow", "glIsStale", "gbpLandingAdminHtml", "glFormHtml"];
   const src = names.map(one).join("\n");
   const box = { state: { selectedClient: { id: CID, website_url: "https://acme-plumbing.com/" } }, timers: 0, console, URL };
   box.setTimeout = () => { box.timers++; };
@@ -389,7 +390,8 @@ try { box = lift(); } catch (e) { F(`the card's code can't be lifted from admin.
 if (box) {
   const G = box.__gl, at = "2026-11-06T22:00:00.000Z";
   const ev = (o = {}) => ({ keywords: ["a", "b", "c", "d"], days: 90, clicks: 40, impressions: 420, home: { clicks: 6, impressions: 120 }, top: { page: "https://acme-plumbing.com/services/drain-cleaning/", clicks: 31, impressions: 300 }, pages: [], ...o });
-  const draw = (task, ui = "done") => { const h = G.gbpLandingAdminHtml(task, { uiState: ui, task }); const d = new JSDOM(`<body>${h}</body>`).window.document; return { h, d, text: d.body.textContent.replace(/\s+/g, " ") }; };
+  // a system decision drawn here is under today's rule (rule 2); an old-rule one is tested on its own above
+  const draw = (task, ui = "done") => { if (task && task.landing && task.landing.by === "system" && task.landing.rule == null) task = { ...task, landing: { ...task.landing, rule: 2 } }; const h = G.gbpLandingAdminHtml(task, { uiState: ui, task }); const d = new JSDOM(`<body>${h}</body>`).window.document; return { h, d, text: d.body.textContent.replace(/\s+/g, " ") }; };
   const has = (x, sel, why) => { if (!x.d.querySelector(sel)) F(`${why}: no ${sel}`); };
   const say = (x, re, why) => { if (!re.test(x.text)) F(`${why}: "${x.text.slice(0, 180)}"`); };
   const no = (x, re, why) => { if (re.test(x.text) || re.test(x.h)) F(why); };
@@ -441,6 +443,33 @@ if (box) {
   const save = X.d.querySelector("[data-gl-save]"); if (save && save.textContent.trim() !== "Save") F(`the save button must say one plain word, says "${save.textContent.trim()}"`);
 }
 
+// 11-6 (the owner's screenshot, 3:22 PM): "/local-seo/ · as many clicks as the homepage (0) … more impressions: 11 to 0" won on EQUAL clicks.
+// Approved decision 3: another page wins only with MORE clicks; a tie keeps the homepage. A system decision made under the old rule is made again.
+{
+  const Lr = req(path.join(SITE, "netlify/functions/_gbp-landing.js"));
+  const rows = [{ page: "https://acme-plumbing.com/local-seo/", query: "local seo services near me", clicks: 0, impressions: 11 }];
+  const r0 = Lr.recommend ? null : null;
+  const rec = typeof Lr.recommendAll === "function" ? Lr.recommendAll : null;
+  const fnName = Object.keys(Lr).find((k) => typeof Lr[k] === "function" && /recommend/i.test(k) && k !== "recommend");
+  const R2 = fnName ? Lr[fnName] : null;
+  if (R2) {
+    let out = null; try { out = R2({ rows, keywords: ["local seo services near me"], siteUrl: "https://acme-plumbing.com/" }); } catch { out = null; }
+    if (out && out.page && !/acme-plumbing\.com\/?$/.test(out.page.replace(/\/$/, "/").replace(/\/$/, ""))) F(`a page with 0 clicks (the homepage also 0) beat the homepage on impressions: ${out.page} (${out.state})`);
+  }
+  const fnSrc = fs.readFileSync(path.join(SITE, "netlify/functions/_gbp-landing.js"), "utf8");
+  if (!/const wins = !!top && !isHomepage\(top\.page, homeUrl\) && top\.clicks > home\.clicks;/.test(fnSrc)) F("another page can win without MORE clicks than the homepage (approved decision 3: a tie keeps the homepage)");
+  if (typeof Lr.staleRule !== "function" || !Lr.staleRule({ by: "system" }) || Lr.staleRule({ by: "system", rule: Lr.RULE }) || Lr.staleRule({ by: "rga@x" })) F("a system decision made under the old rule isn't marked to decide again (or one RGA made is)");
+  const runSrc = fs.readFileSync(path.join(SITE, "netlify/functions/_gbp-landing-run.js"), "utf8");
+  if (!/const stale = GL\.staleRule\(task\.landing\);\s*if \(task\.landing && !stale\)/.test(runSrc) || !/stale \? unchanged\(task\.landing\) : `\$\{LANDING\}=is\.null`/.test(runSrc)) F("decideOnce doesn't make an old-rule system decision again (or overwrites without checking it's unchanged)");
+  if (box) {
+    const G = box.__gl;
+    G._glAuto.clear();
+    const old = G.gbpLandingAdminHtml({ status: "done", landing: { choice: "page", url: "https://acme-plumbing.com/local-seo/", reason: "page_wins", by: "system", saved_at: "2026-11-06T22:00:00Z" } }, { uiState: "done" });
+    if (!/Deciding again with the corrected rule/.test(old)) F("a system decision made under the old rule is shown instead of being made again");
+    const mine = G.gbpLandingAdminHtml({ status: "done", landing: { choice: "page", url: "https://acme-plumbing.com/local-seo/", reason: "rga", by: "owner@rga.test", saved_at: "2026-11-06T22:00:00Z" } }, { uiState: "done" });
+    if (/Deciding again/.test(mine)) F("a page RGA chose by hand is decided again (it must never be)");
+  }
+}
 // 11-6 (the owner's screenshot, 3:12 PM: "The step couldn't decide just now · HTTP 504"): the decision runs in a background function (15 min),
 // the admin call answers 202 at once, and the card asks "status" (this step's task only) until it's saved
 {
@@ -449,7 +478,7 @@ if (box) {
   if (!/if \(action === "auto" && !deps\) \{[\s\S]{0,400}admin-gbp-landing-background[\s\S]{0,300}"x-internal-secret": process\.env\.INTERNAL_FN_SECRET[\s\S]{0,300}return json\(202, \{ ok: true, queued: true \}\);/.test(fn)) F("the admin's auto call decides inside the web request again (it timed out at 26 s): it must queue the background function and answer 202");
   if (!/if \(action === "status"\) \{[\s\S]{0,300}select=t:data->tasks->%22m1\.web\.gbp_landing_page%22/.test(fn)) F("the status read isn't narrow (it must read step 42's task only, never the whole setup record)");
   if (!/requireInternalSecret\(event\)/.test(bg) || !/R\.decideOnce\(\{ clientId, trigger: "admin" \}\)/.test(bg)) F("the background function is missing, doesn't check the internal secret, or doesn't run the one decideOnce");
-  if (!/if \(r\.status === 202 && j\.queued\) \{[\s\S]{0,500}action: "status"[\s\S]{0,400}if \(!\(task && task\.landing\)\) throw new Error\(/.test(rd("admin/admin.js"))) F("the card doesn't wait for the background decision (it must ask status until the decision is saved, then say so if it isn't)");
+  if (!/if \(r\.status === 202 && j\.queued\) \{[\s\S]{0,500}action: "status"[\s\S]{0,400}if \(!\(task && task\.landing && !glIsStale\(task\.landing\)\)\) throw new Error\(/.test(rd("admin/admin.js"))) F("the card doesn't wait for the background decision (it must ask status until the decision is saved, then say so if it isn't)");
   if (!/r\.status === 504 \? "It took too long to answer"/.test(rd("admin/admin.js"))) F("a timeout still reads as a raw \"HTTP 504\"");
 }
 
