@@ -21,7 +21,7 @@ if (!/<div class="ap-empty"><span class="ap-empty-i" aria-hidden="true">✓<\/sp
 if (/Nothing needs you right now/.test(R)) fail("the old \"Nothing needs you right now\" heading is back over a list");
 // 🔄 todo_inbox_v1 (10-26): "With RGA" became "RGA is working on", counting RGA's step moves too
 // 🔄 approval_tab_and_sent_card_v1 (10-28): changes live in For your approval — a change they asked for is "RGA is changing it" there
-if (!/RGA is working on · \$\{rgaN\}/.test(R) || !/rgaN = withRgaActions\.length \+ stepRga\.length;/.test(R) || !/const changing = items\.filter\(\(d\) => d\.approval && d\.approval\.decision !== "approved"\);/.test(P) || !/\(C\.length \? grp\("", "RGA is changing it", C, ""\) : ""\)/.test(P)) fail("a change they asked for isn't in With RGA");
+if (!/RGA is working on · \$\{rgaN\}/.test(R) || !/rgaN = entries\.filter\(\(e\) => e\.group === "rga"\)\.length;/.test(R) || !/const changing = items\.filter\(\(d\) => d\.approval && d\.approval\.decision !== "approved"\);/.test(P) || !/\(C\.length \? grp\("", "RGA is changing it", C, ""\) : ""\)/.test(P)) fail("a change they asked for isn't in With RGA");
 // 🔄 todo_redesign_v1 (10-26): Done folds while ANYTHING is open — what needs them OR what RGA is working on
 if (!/<details class="ap-done"\$\{needN \|\| rgaN \? "" : " open"\}>/.test(R)) fail("Done isn't collapsed while something is open / open when nothing is");
 if (!/\.sort\(\(x, y\) => String\(y\.at \|\| ""\)\.localeCompare\(String\(x\.at \|\| ""\)\)\)/.test(R)) fail("Done isn't newest first");
