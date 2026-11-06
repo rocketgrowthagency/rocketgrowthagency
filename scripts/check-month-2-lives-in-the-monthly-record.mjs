@@ -54,6 +54,27 @@ const EDGE = new Date("2026-10-31T23:30:00-07:00");           // Oct 31 in Los A
 if (R.currentReportingMonth(EDGE) !== "2026-11-01") fail(`the server's month key isn't UTC (Oct 31 11:30 PM Pacific → ${R.currentReportingMonth(EDGE)}, every other server writer says 2026-11-01)`);
 const MONTH = R.currentReportingMonth();
 
+// ── 1b · a save makes as few trips as it can (the owner 11-5: "saving is a little slow") ──
+// the write's own returned row is the read-back (one trip); a write that returns no row is read again; Month 2's two reads run side by side
+{
+  const trips = [];
+  let inflight = 0, most = 0;
+  const fake = (returns) => async (path, init = {}) => {
+    trips.push(`${init.method || "GET"} ${path}`); inflight++; most = Math.max(most, inflight);
+    await new Promise((r) => setTimeout(r, 5)); inflight--;
+    if ((init.method || "GET") === "PATCH") return returns && /return=representation/.test((init.headers || {}).Prefer || "") ? [{ id: "r1", data: JSON.parse(init.body).data }] : [];
+    return [{ id: "r1", data: { tasks: { a: { status: "done" } } } }];
+  };
+  const back = await R.writeStepTasks(fake(true), { scope: "month1", table: "client_onboarding_records", id: "r1", data: {} }, { a: { status: "done" } });
+  if (trips.length !== 1 || back?.tasks?.a?.status !== "done") fail(`a step save makes ${trips.length} trips (the write's returned row is the read-back, one trip): ${trips.join(" · ")}`);
+  trips.length = 0;
+  const back2 = await R.writeStepTasks(fake(false), { scope: "month1", table: "client_onboarding_records", id: "r1", data: {} }, { a: { status: "done" } });
+  if (trips.length !== 2 || !/^GET /.test(trips[1] || "") || back2?.tasks?.a?.status !== "done") fail(`a write that returns no row isn't read back (${trips.join(" · ")})`);
+  trips.length = 0; most = 0;
+  await R.readStepRecord(fake(true), "11111111-1111-4111-8111-111111111111", NUMBERS.id);
+  if (trips.length !== 2 || most !== 2) fail(`Month 2's two record reads run one after the other (${most} at once)`);
+}
+
 // ── 2 + 3 · run the real writers against a stub database ──
 process.env.SUPABASE_URL = "https://stub.supabase.invalid"; process.env.SUPABASE_SERVICE_ROLE_KEY = "stub"; process.env.URL = "https://stub.site.invalid";
 process.env.INTERNAL_FN_SECRET = "gate-secret";

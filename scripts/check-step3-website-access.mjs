@@ -93,7 +93,8 @@ if (/the builder below says how long|data-acc-send disabled>Pick your builder fi
 if (!/const ini = key === "custom" \? "<\/>" : key === "other" \? "\?" : \(words\[0\] \|\| "\?"\)\[0\]\.toUpperCase\(\);/.test(P)) fail("the builder tile shows two letters again (\"WO\" read like a word)");
 if (!/data-acc-cancel>Cancel<\/button>/.test(P) || !/if \(tgt\.closest\("\[data-acc-cancel\]"\)\) \{ e\.preventDefault\(\); _rcEditing\.delete\("m1\.access\.website"\);/.test(P)) fail("there's no way out of Updating without reloading (Cancel)");
 if (!/if \(!j\.platforms \|\| !Object\.keys\(j\.platforms\)\.length\) \{/.test(P)) fail("a failed builder detection hides the builder list (it falls back to the file, minus RGA's notes)");
-if (!/if \(!opts\.local \|\| !_rgaWaitsCache\.has\(clientId\)\) await loadPortalThread\(clientId\);/.test(P) || (P.match(/listEl\._rerender\(listEl\._onboarding, undefined, undefined, undefined, true\);/g) || []).length < 3) fail("a screen-only redraw (Update / Cancel / call tracking Change) makes server trips again (it took 2.8–4.7 s)");
+// 11-6: the thread loads only in the server branch, beside the waits (a screen-only redraw takes the cached branch, no trip)
+if (!/opts\.local && _rgaWaitsCache\.has\(clientId\) \? \[_rgaWaitsCache\.get\(clientId\), [^\]]+\]\s*: \(await Promise\.all\(\[loadRgaWaits\(clientId\), loadOpenMoves\(clientId\), loadPortalThread\(clientId\)\]\)\)/.test(P) || /\) await loadPortalThread\(clientId\);/.test(P) || (P.match(/listEl\._rerender\(listEl\._onboarding, undefined, undefined, undefined, true\);/g) || []).length < 3) fail("a screen-only redraw (Update / Cancel / call tracking Change) makes server trips again (it took 2.8–4.7 s)");
 // ── the builder cards (approved step3_builder_cards_v1, 10-22) — RUN for every builder in the file
 {
   const grab = (re, what) => { const m = P.match(re); if (!m) { console.error(`⚠️  ${what} moved`); process.exit(2); } return m[0]; };

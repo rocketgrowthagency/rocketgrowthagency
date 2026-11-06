@@ -142,6 +142,11 @@ else {
 const notify = read("netlify/functions/notify-rga.js");
 const required = [...notify.matchAll(/if \(!(\w+) \|\| !(\w+)\) return json\(400/g)][0];
 const must = required ? [required[1], required[2]] : ["kind", "message"];
+// 11-6 (the owner 11-5, "saving is a little slow"): the business name is read BESIDE the sign-in check, and used only after it passes
+{
+  const iRead = notify.indexOf("const nameRead ="), iGate = notify.indexOf("requirePortalOwner(event, client_id)"), iUse = notify.indexOf("const businessName = await nameRead;");
+  if (iRead < 0 || iGate < 0 || iUse < 0 || !(iRead < iGate && iGate < iUse)) bad("notify-rga reads the business name after the sign-in check (a save waits on one more trip), or uses it before the check passes");
+}
 
 const callers = fs.readdirSync(path.join(SITE, "netlify/functions"))
   .filter((f) => f.endsWith(".js") && f !== "notify-rga.js")

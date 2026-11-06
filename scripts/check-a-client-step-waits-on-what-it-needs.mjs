@@ -310,7 +310,8 @@ const checks = [
 for (const [re, msg] of checks) if (!re.test(pcode)) fail(msg);
 // 10-22: a screen-only redraw reuses the last answer; a real render still awaits it before any row draws
 // 🔄 todo_inbox_v1 (10-26): the waits load BESIDE the open moves (one Promise.all), still awaited before any row draws
-const lr = pcode.search(/const \[rgaWaits, openMv\] = opts\.local && _rgaWaitsCache\.has\(clientId\) \? \[_rgaWaitsCache\.get\(clientId\), [^\]]+\]\s*: await Promise\.all\(\[loadRgaWaits\(clientId\), loadOpenMoves\(clientId\)\]\);/), rh = pcode.indexOf("const rowHtml = ({");
+// 11-6: the thread loads in the same Promise.all (one trip fewer after a save, the owner 11-5 "saving is a little slow")
+const lr = pcode.search(/const \[rgaWaits, openMv\] = opts\.local && _rgaWaitsCache\.has\(clientId\) \? \[_rgaWaitsCache\.get\(clientId\), [^\]]+\]\s*: \(await Promise\.all\(\[loadRgaWaits\(clientId\), loadOpenMoves\(clientId\), loadPortalThread\(clientId\)\]\)\)\.slice\(0, 2\);/), rh = pcode.indexOf("const rowHtml = ({");
 if (lr < 0 || rh < 0 || lr > rh) fail("the rows render before the server's answer arrives (a waiting row flashes \"Your turn\")");
 const loader = lift(portal, "async function loadRgaWaits(clientId) {", "\n}\n") || "";
 if (!/if \(!r\.ok\) return null;/.test(loader) || /return new Set\(\)/.test(loader)) fail("a failed answer reads as \"nothing waits\" (it must be null: not known)");
