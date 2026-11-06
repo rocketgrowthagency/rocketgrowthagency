@@ -186,6 +186,10 @@ if (!/state\.googleOauth = await[^\n]*\n\s*state\.googleOauthRead = true;/.test(
 if (!/state\.googleOauth = null;\n\s*state\.googleOauthRead = false;/.test(raw)) problems.push("selecting a client no longer resets state.googleOauthRead, so one client's answer shows for another");
 if (!/if \(!state\.googleOauthRead\) \{[\s\S]{0,60}\} else if \(oauth\) \{/.test(raw)) problems.push("the status badge can say Google not connected before the read has come back");
 if (!/state\.googleOauthRead \|\| gates\.oauth \? gateChip\("Google connected"/.test(raw)) problems.push("the mission chip can say Google not connected before the read has come back");
+// 11-6 (the owner's 11:09 mid-load screenshot): "All clear · the automation is handling this client" before the checklist loaded, and the
+// client column's photo step numbered "4" (the client's own number) before it read "38"
+if (!/: stage === "stage_4_onboarding" && !\(Array\.isArray\(state\.flowPlaybook\) && state\.flowPlaybook\.length\)\s*\? `<div class="admin-alert i">[^`]*\$\{state\.flowPlaybookError \? "Couldn't check" : "Checking…"\}/.test(raw)) problems.push("Needs your attention says \"All clear\" before the onboarding checklist has been read");
+if (!/const mvRowNo = \(m\) => \{[^\n]*return n \? String\(n\) : "·"; \};/.test(raw) || /mvStepNo/.test(raw)) problems.push("a waiting step shows the client's own step number while the admin checklist loads (\"4\" before \"38\")");
 // 11-6 (the owner's screenshot, mid-load): "Client Setup: Checklist (1/4)" and "Create and send the service agreement" for a signed 4/4 client
 if (!/if \(state\.contractsLoaded && !hasContract\) alerts\.push\(\{ k: "i", t: "Create and send the service agreement"/.test(raw)) problems.push("Needs your attention says \"Create and send the service agreement\" before the contracts have been read");
 if ((raw.match(/if \(isSetup && state\.googleOauthRead && !googleConnected && !?portalInvited\) alerts\.push\(/g) || []).length !== 2) problems.push("Needs your attention says Google isn't connected before the connection has been read");
