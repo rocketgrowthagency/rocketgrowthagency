@@ -192,5 +192,29 @@
   "keep_days: 400 },\n  { job: \"daily-health-check\"",
   "keep_days: 400, checkin_pending: \"x\" },\n  { job: \"daily-health-check\"",
   1
+ ],
+ [
+  "the daily step runner is scheduled again while the list says off",
+  "flowcrondaily",
+  "require(\"./_deadline\");\n",
+  "require(\"./_deadline\");\nexports.config = { schedule: \"0 9 * * *\" };\n"
+ ],
+ [
+  "off is taken off the list but nothing schedules it",
+  "jobmanifest",
+  "    off: \"Turned off on purpose 11-7:",
+  "    note_off: \"Turned off on purpose 11-7:"
+ ],
+ [
+  "off says no reason",
+  "jobmanifest",
+  "    off: \"Turned off on purpose 11-7: it would run old playbook steps for every client with no one looking. Steps run through the autopilot and the managed portal now\",",
+  "    off: \"off\","
+ ],
+ [
+  "off and unproven at once",
+  "jobmanifest",
+  "{ job: \"flow-cron-daily\", label: \"Daily step runner\", cron: \"0 9 * * *\", ...NET, ...DAILY,\n",
+  "{ job: \"flow-cron-daily\", label: \"Daily step runner\", cron: \"0 9 * * *\", ...NET, ...DAILY, unproven: true,\n"
  ]
 ]

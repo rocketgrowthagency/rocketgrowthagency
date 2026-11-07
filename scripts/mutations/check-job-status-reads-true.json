@@ -2,7 +2,7 @@
  [
   "only OK is healthy tone broken: unknown paints green",
   "jobstatus",
-  "const toneOf = (state) => (state === \"ok\" ? \"ok\" : PROBLEM.has(state) ? \"you\" : \"unk\");",
+  "const toneOf = (state) => (state === \"ok\" ? \"ok\" : state === \"off\" ? \"off\" : PROBLEM.has(state) ? \"you\" : \"unk\");",
   "const toneOf = (state) => (PROBLEM.has(state) ? \"you\" : \"ok\");"
  ],
  [
@@ -188,14 +188,14 @@
  [
   "the card: one unknown doesn't stop all clear",
   "admin",
-  "jobs.every((j) => j.state === \"ok\")",
-  "jobs.some((j) => j.state === \"ok\")"
+  "watched.every((j) => j.state === \"ok\")",
+  "watched.some((j) => j.state === \"ok\")"
  ],
  [
   "the card: an empty list reads all clear",
   "admin",
-  "d.table_ready === true && jobs.length > 0 && jobs.every",
-  "d.table_ready === true && jobs.every"
+  "d.table_ready === true && watched.length > 0 && watched.every",
+  "d.table_ready === true && watched.every"
  ],
  [
   "the card: problem count wrong",
@@ -286,5 +286,47 @@
   "jobstatus",
   "if (job.checkin_pending) return done(\"not_recorded\", job.checkin_pending);",
   ""
+ ],
+ [
+  "an off job reads late (the off check is gone)",
+  "jobstatus",
+  "  if (job.off) return done(\"off\",",
+  "  if (false) return done(\"off\","
+ ],
+ [
+  "an off job reads OK",
+  "jobstatus",
+  "if (job.off) return done(\"off\", row && row.started_at",
+  "if (job.off) return done(\"ok\", row && row.started_at"
+ ],
+ [
+  "an off job counts as a problem",
+  "jobstatus",
+  "const PROBLEM = new Set([\"late\",",
+  "const PROBLEM = new Set([\"off\", \"late\","
+ ],
+ [
+  "a run by hand on an off job is not said",
+  "jobstatus",
+  "`${job.off}. Last run by hand ${when(ms(row.started_at))}`",
+  "job.off"
+ ],
+ [
+  "the summary counts off as unknown",
+  "jobstatus",
+  "unknown: jobs.length - problems - ok - off };",
+  "unknown: jobs.length - problems - ok };"
+ ],
+ [
+  "the card counts an off job among the watched",
+  "admin",
+  "const watched = jobs.filter((j) => j.state !== \"off\");",
+  "const watched = jobs;"
+ ],
+ [
+  "the card lists an off job above working ones",
+  "admin",
+  "j.state === \"off\" ? 4 : 3);",
+  "j.state === \"off\" ? 0.5 : 3);"
  ]
 ]

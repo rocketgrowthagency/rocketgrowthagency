@@ -2,7 +2,7 @@
 // check-job-status-reads-true.mjs — a job's state is worked out right, and the admin card can't read an absence as OK (approved admin_system_health_v1, 10-31).
 // 🔴 The whole card is worth nothing if "we don't know" paints green. HOLDS, by running the shipped code on fakes: (1) the due time from each cron,
 // across a daylight-saving change and weekdays-only; (2) every state from a row: ok, late, failed, some failed, did nothing, no count, not finished,
-// running, not recorded, not installed, not proven, not set up; (3) only `ok` is healthy; a newer good run beats an old failure; silence counts only
+// running, not recorded, not installed, not proven, not set up, off on purpose; (3) only `ok` is healthy; a newer good run beats an old failure; silence counts only
 // from when check-ins began; (4) the alert decision: once, daily, retry undelivered, only a real OK clears; (5) the Mac's verdict on the watcher, and
 // the later client card's "checked this month"; (6) the card itself (lifted from admin.js): which words, which tone, no green unless every job is OK.
 // Files only. Exit 0 = holds · 1 = it reads wrong · 2 = moved (indeterminate). → memory project_system_health · feedback_an_absence_must_never_be_readable_as_a_value
@@ -66,6 +66,16 @@ state("a row can't rescue a missing table", "not_set_up", good, J, { ...ctx, tab
 state("no row, not installed", "not_installed", null, { ...J, installed: false });
 state("no row, not proven", "unproven", null, { ...J, unproven: true });
 state("no row, check-in not added yet", "not_recorded", null, { ...J, checkin_pending: "soon" });
+// 🔒 Off on purpose (the owner 11-7, the daily step runner): a decision, never OK, never an alert, never "late", and a run by hand is said.
+{ const OFF = { ...J, off: "Turned off on purpose" };
+  const o = state("no row, off on purpose", "off", null, OFF);
+  eq("off isn't a problem", o.problem, false); eq("off isn't the healthy tone", o.tone, "off"); eq("off's tag", o.tag, "Off on purpose");
+  if (!/Turned off on purpose/.test(o.line)) F.push("an off job's line doesn't say why it's off");
+  state("off, its old slot long passed: still off, not late", "off", null, OFF, { ...ctx, systemStart: U("2026-01-01T00:00:00Z") });
+  const byHand = state("off, run by hand and failed: still off", "off", { ...good, ok: false, error: "boom" }, OFF);
+  if (!/Last run by hand/.test(byHand.line)) F.push("an off job run by hand doesn't say it was run by hand");
+  const d = S.alertDecision(o, sent0(), NOW); if (d.send || d.clear) F.push("an off job sends or clears an alert");
+  const sm = S.summarize([st(good), o]); eq("summary: off is counted as off", sm.off, 1); eq("summary: off isn't unknown", sm.unknown, 0); eq("summary: watched leaves off out", sm.watched, 1); }
 state("check-in not added yet, a row arrives: watched like any job", "failed", { ...good, ok: false }, { ...J, checkin_pending: "soon" });
 state("no row, slot since check-ins began", "late", null);
 state("no row, check-ins began after the slot", "not_recorded", null, J, { ...ctx, systemStart: U("2026-10-31T09:00:00Z") });
@@ -85,6 +95,7 @@ eq("statusesFrom finds the job's row", sf.state, "ok"); eq("and its alert: not d
 if (!/could not be delivered/.test((sf.alert || {}).line || "")) F.push("an undelivered alert doesn't say so on the row");
 eq("a cleared alert isn't shown", S.statusesFrom([good, { job: "alert:x", ok: true, note: "cleared · OK", finished_at: finished }], { now: NOW, tableReady: true, jobs: [J] })[0].alert, null);
 
+function sent0() { return { job: "alert:x", ok: true, count: 1, note: "failed · via activity", finished_at: iso(NOW - HOUR) }; }
 // ── (4) the alert decision ──────────────────────────────────────────────────────────────────────────────────────────
 const bad = st({ ...good, ok: false, error: "boom" });
 const sent = (hoursAgo, extra = {}) => ({ job: "alert:x", ok: true, count: 1, note: "failed · via activity", finished_at: iso(NOW - hoursAgo * HOUR), ...extra });
@@ -144,6 +155,12 @@ const GREEN = /class="ob-zc ok"|All clear/;
   has("one problem is singular", card(data([row("b", "bad")])), /1 job needs a look/);
   const ok = card(data([row("a", "ok"), row("b", "ok")]));
   has("all good", ok, /All clear/); has("all good", ok, /all 2 jobs checked in/);
+  const offRow = { job: "f", label: "f", where: "netlify", ...S.evaluateJob({ ...J, job: "f", label: "f", off: "Turned off on purpose" }, null, null, ctx) };
+  const withOff = card(data([row("a", "ok"), row("b", "ok"), offRow]));
+  has("an off job doesn't hold back all clear", withOff, /All clear/); has("an off job isn't counted", withOff, /all 2 jobs checked in/);
+  has("an off job still shows its row", withOff, /<b>f<\/b>/); has("an off job's row", withOff, /ob-zc-unk">Off on purpose/); hasnt("an off job's row is never green", withOff, /place ok" data-sh-job="f"/);
+  if (withOff.indexOf("<b>f</b>") < withOff.indexOf("place ok")) F.push("the card lists an off job above a working one");
+  hasnt("an off job doesn't hide a problem", card(data([row("a", "bad"), offRow])), GREEN);
   const oneUnknown = card(data([row("a", "ok"), row("b", "none")]));
   hasnt("one unknown job", oneUnknown, GREEN); has("one unknown job", oneUnknown, /1 of 2 jobs checked in/); has("one unknown job", oneUnknown, /Not all checked/);
   const notSet = card(data(["a", "b", "c"].map((j) => row(j, "unset")).concat(row("m", "unset", "mac")), { table_ready: false }));
@@ -188,4 +205,4 @@ eq("todo: a held-back email is an error", /held back/.test(read["rga-todo-mornin
 eq("photos: no photos due is fine", read["photos-publish-sweep"]({ clients: 0, results: [] }).expected_min, undefined);
 
 if (F.length) { console.error(`🔴 System health reads wrong:\n${F.map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
-console.log("✅ System health reads true: every due time, all 12 states, the alert decision, the Mac's verdict, the card; nothing unknown is green");
+console.log("✅ System health reads true: every due time, all 13 states, the alert decision, the Mac's verdict, the card; nothing unknown is green");

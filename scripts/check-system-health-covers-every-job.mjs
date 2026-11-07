@@ -42,7 +42,13 @@ for (const [name, cron] of scheduled) {
   if (!j) F.push(`${name} is scheduled (${cron}) and isn't on the job list, so nothing would notice if it stopped`);
   else if (j.cron !== cron) F.push(`${name}: the list says ${j.cron}, its schedule says ${cron}, so it would read late or early`);
 }
-for (const j of net) if (!scheduled.has(j.job)) F.push(`${j.job} is on the list but nothing schedules it: it would read late forever`);
+for (const j of net) if (!scheduled.has(j.job) && !j.off) F.push(`${j.job} is on the list but nothing schedules it: it would read late forever`);
+// 🔒 OFF ON PURPOSE must be true: a job marked off that something still schedules would run with the card saying it doesn't (the owner 11-7).
+for (const j of JOBS) if (j.off) {
+  if (scheduled.has(j.job)) F.push(`${j.job} is marked off on purpose, and ${scheduled.get(j.job)} still schedules it: take the schedule out, or take \`off\` off the list`);
+  if (typeof j.off !== "string" || j.off.trim().length < 20) F.push(`${j.job} is marked off without saying why in words`);
+  if (j.unproven || j.installed === false) F.push(`${j.job} is marked off and also unproven/not installed: one state only`);
+}
 for (const j of JOBS) {
   if (!(j.grace_min > 0) || !(j.max_run_min > 0) || !(j.keep_days > 0) || !j.label) F.push(`${j.job}: the list is missing its grace, run limit, keep or label`);
   if (j.where === "netlify" && typeof j.read !== "function") F.push(`${j.job}: no way to read how many it did`);
