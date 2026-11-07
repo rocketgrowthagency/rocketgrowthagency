@@ -152,7 +152,7 @@ if (AR.clientWhyNot({ ...cl, website_url: "" }, {}) === null) fail("a client wit
   const newer = { "m1.web.homepage_meta": { status: "done", ran_at: iso(T0 - 600e3) } };
   if (!/^redo:redo:ood:m1\.web\.homepage_meta@/.test(act({ status: "in_progress", ran_at: ran, auto_result: {} }, newer) || "")) fail("an out-of-date draft doesn't draft again");
   if (act({ status: "in_progress", ran_at: ran, auto_result: {}, auto_done: { [`redo:ood:m1.web.homepage_meta@${iso(T0 - 600e3)}`]: "x" } }, newer) !== fin) fail("an out-of-date redraft repeats");
-  const sc = { v: cv, drafted_by: AR.AUTO_WHO, items: [{ label: "Main headline", after: "x" }] }, as = (o) => ({ v: cv, at: cv, due_at: iso(T0 - 1), failed: [], held: null, rev: SC.AUTO_CHECKS_REV, ...o });
+  const sc = { v: cv, drafted_at: cv, drafted_by: AR.AUTO_WHO, items: [{ label: "Main headline", after: "x" }] }, as = (o) => ({ v: cv, at: cv, due_at: iso(T0 - 1), failed: [], held: null, rev: SC.AUTO_CHECKS_REV, ...o });
   if (act({ ran_at: ran, site_change: sc, auto_send: as({}) }) !== `send:send:${cv}`) fail("a checked draft past its 24 hours doesn't go to the client");
   if (act({ ran_at: ran, site_change: sc, auto_send: as({ due_at: iso(T0 + 3600e3) }) }) !== null) fail("a draft goes to the client before its 24 hours");
   if (act({ ran_at: ran, site_change: sc, auto_send: as({ held: { at: "x" } }) }) !== null) fail("a held draft still goes to the client");
@@ -165,6 +165,10 @@ if (AR.clientWhyNot({ ...cl, website_url: "" }, {}) === null) fail("a client wit
   { const p0 = AR.planStep(H, { ...base, "m1.web.h1_cta": { ran_at: ran, site_change: sc, auto_send: as({ held: { at: "x" } }) } }, T0);
     const p1 = AR.planStep(H, { ...base, "m1.web.h1_cta": { ran_at: ran, site_change: sc, auto_send: as({ held: { at: "x" } }), auto_done: { "redo:recipe": "x" } } }, T0);
     if (!p0 || p0.sig !== "redo:recipe" || p1) fail("a draft from before the recipe doesn't redraft by it once (or redrafts twice)"); }
+  // 11-7 (RGA's step 44): the redraft's new run REPLACES the system's waiting draft; a person's edit is never replaced
+  { const newer2 = iso(T0 - 60e3), t2 = { ran_at: newer2, site_change: { ...sc, drafted_at: cv }, auto_send: as({ held: { at: "x" } }), auto_done: { "redo:recipe": "x" } };
+    const q = AR.planStep(H, { ...base, "m1.web.h1_cta": t2 }, T0), qp = AR.planStep(H, { ...base, "m1.web.h1_cta": { ...t2, site_change: { ...t2.site_change, drafted_by: "chris@x" } } }, T0);
+    if (!q || q.act !== "finish" || (qp && qp.act === "finish")) fail("a redraft's new run doesn't replace the system's waiting draft (or replaces a person's edit)"); }
   // approved: a page change on GitHub access publishes itself (snapshot → pull request → merge), each once; anything else is RGA's by hand
   const P = steps[2], pageC = { v: cv, new_page: true, items: [{ label: "x", after: "y" }] }, appr = { site_change: pageC, approval: { decision: "approved", change_v: cv } };
   const gh = { "m1.access.website": { status: "done", access: { repo: "o/r" } } }, pb = { ...base, "m1.gbp.services_products": done, ...gh };
