@@ -177,20 +177,20 @@
  [
   "it runs again after its stamp",
   "webautorun",
-  "if (t.auto_run) return \"already ran by itself\";",
-  "",
+  "if (t.auto_run || (t.auto_done || {}).start) return \"already ran by itself\";",
+  "if (false) return \"already ran by itself\";",
   1
  ],
  [
-  "it's on by default",
+  "the kill switch does nothing",
   "webautorun",
-  "const isOn = (env) => env.WEBSITE_AUTO_RUN === \"1\";",
+  "const isOn = (env) => env.WEBSITE_AUTO_RUN !== \"0\";",
   "const isOn = () => true;",
   1
  ],
  [
   "a test client starts",
-  "webautorun",
+  "sitechange",
   "if (String(client.source || \"\").startsWith(\"test:\")) return \"a test client\";",
   "",
   1
@@ -198,22 +198,22 @@
  [
   "the cap is gone",
   "webautorun",
-  "if (started >= NIGHT_CAP) break;",
+  "if (model && (modelUsed || started >= NIGHT_CAP)) continue;",
   "",
   1
  ],
  [
   "it starts without claiming",
   "webautorun",
-  "if (!Array.isArray(won) || !won.length) continue;\n    started++;",
-  "started++;",
+  "if (!(await claim(d, rec, key, p.sig, p.act === \"start\" ? { auto_run: { at, trigger } } : {}))) return null;",
+  "",
   1
  ],
  [
   "no claim condition",
   "webautorun",
-  "->auto_run=is.null&select=id`",
-  "&select=id`",
+  "const cond = n ? `=eq.${n}` : \"=is.null\";",
+  "const cond = \"\";",
   1
  ],
  [
@@ -249,6 +249,90 @@
   "admin",
   "pick = _gsLinkPrefill.get(cid) ? \"location\" : c ? c.kind :",
   "pick = c ? c.kind :",
+  1
+ ],
+ [
+  "a held draft goes out",
+  "webautorun",
+  "if (a && a.v === c.v && !a.held && !(a.failed || []).length) return Date.parse(a.due_at) <= now",
+  "if (a && a.v === c.v && !(a.failed || []).length) return Date.parse(a.due_at) <= now",
+  1
+ ],
+ [
+  "a failed check goes out",
+  "webautorun",
+  "if (a && a.v === c.v && !a.held && !(a.failed || []).length) return Date.parse(a.due_at) <= now",
+  "if (a && a.v === c.v && !a.held) return Date.parse(a.due_at) <= now",
+  1
+ ],
+ [
+  "it sends before 24 hours",
+  "webautorun",
+  "return Date.parse(a.due_at) <= now && !done[`send:${c.v}`]",
+  "return !done[`send:${c.v}`]",
+  1
+ ],
+ [
+  "it redrafts over a person's edit",
+  "webautorun",
+  "const ood = c.drafted_by === AUTO_WHO && outOfDate(step, tasks);",
+  "const ood = outOfDate(step, tasks);",
+  1
+ ],
+ [
+  "a not-proven step redrafts forever",
+  "webautorun",
+  "if (t.status === \"done\") return done[\"redo:not_proven\"] || step.hasRunner === false ? null :",
+  "if (t.status === \"done\") return step.hasRunner === false ? null :",
+  1
+ ],
+ [
+  "a stuck run is never handed back",
+  "webautorun",
+  "return now - claim >= SC.AUTO_STUCK_MS && !failed ? { act: \"fail\"",
+  "return false ? { act: \"fail\"",
+  1
+ ],
+ [
+  "a no-lines redraft skips the cap",
+  "webautorun",
+  "        if (!mayModel) return null;   // the redraft is a model call: it waits for a pass with room under the cap\n",
+  "",
+  1
+ ],
+ [
+  "an em dash reaches the client",
+  "sitechange",
+  "after: kind === \"code\" ? clip(i && i.after, long) : clip(noDashes(i && i.after), long)",
+  "after: clip(i && i.after, long)",
+  1
+ ],
+ [
+  "a person's save sets the 24-hour send",
+  "admindeliv",
+  "if (gate.internal && body.auto && typeof body.auto === \"object\") {",
+  "if (body.auto && typeof body.auto === \"object\") {",
+  1
+ ],
+ [
+  "hold is gone",
+  "admindeliv",
+  "if (op === \"hold\") t.auto_send = { ...a, held: { at: now, by: who } };",
+  "if (false) t.auto_send = a;",
+  1
+ ],
+ [
+  "a test client runs itself in admin",
+  "sitechange",
+  "if (!isAutoStep(id) || (opts.client !== undefined && autoClientWhyNot(opts.client))) return null;",
+  "if (!isAutoStep(id)) return null;",
+  1
+ ],
+ [
+  "a reopened earlier step still promises a time",
+  "sitechange",
+  "return (opts.open || []).length && [\"queued\", \"checking\", \"scheduled\", \"publishing\"].includes(m) ? \"waiting\" : m;",
+  "return m;",
   1
  ]
 ]

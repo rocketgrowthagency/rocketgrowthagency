@@ -25,6 +25,7 @@ export AIRTABLE_GET_CACHE=1
 # 🔑 Exit 2 (indeterminate) is NOT treated as healthy. A gate that cannot reach Airtable must never
 # report green — that is how a dead check reads as a pass.
 set -uo pipefail
+QUIET_WHY=""   # the quiet-period reason (scripts/db-quiet-until.txt); given a value before any gate reads it, for the same reason as the line below
 DB_STOPPED=""   # 🔴 under set -u an unset variable KILLS the script: without this line every morning since 10-27 died at the first live gate (reviews, RSVPs, PageSpeed never ran)
 SKIPPED_LIVE=$(mktemp)   # what the database made us skip; run once more at the end
 RETRY_PASS=""

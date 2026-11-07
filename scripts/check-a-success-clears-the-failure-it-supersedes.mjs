@@ -28,6 +28,10 @@ const F = []; const fail = (m) => F.push(m);
 // How each stored failure is cleared once something succeeds. `clear` must match the file's code; `why` says why a
 // field never persists (response-only, or replaced whole on every run).
 const DECLARED = {
+  // admin_website_steps_autopilot_v1 (11-6): a website step's automatic draft that failed (didn't finish, failed twice, couldn't be saved)
+  "_website-autorun.js": {
+    auto_failed: { why: "scoped to the run it describes: every reader (SC.autoMove, planStep) uses it only while auto_failed.run === the step's ran_at, so a later run supersedes it without a delete" },
+  },
   "refresh-review-metrics.js": {
     profile_error: { why: "response only (the run's result row), never stored — the snapshot holds only a measured count" },
     cache_error: { why: "response only (the run's result row), never stored" },

@@ -53,7 +53,7 @@ if (!/: descriptionOnGoogle\(s\.task\) \? `<div class="ob-done-card">\$\{descrip
 
 // ── admin: step 37 — every website-change step ─────────────────────────────────────────────────
 if (!/const siteStep = !!\(globalThis\.rgaSiteChange && globalThis\.rgaSiteChange\.isSiteChangeStep\(o\.flowId\)\);\s*const runBtn = runnable && !siteStep/.test(AJS)) fail("step 37: a website step's row still has its own Draft button (the card has one)");
-if (!/const doneBtn = zcWaits \|\| siteStep \? "" :/.test(AJS)) fail("step 37: a website step's row still offers Mark step complete");
+if (!/const doneBtn = zcWaits \|\| siteStep (\|\| o\.flowId === GL_STEP )?\? "" :/.test(AJS)) fail("step 37: a website step's row still offers Mark step complete");
 
 // ── admin: steps 29 · 30 · 31 — the result first ──────────────────────────────────────────────────
 { const p3 = ["ZC_FOLD_T", "ZC_LIST", "ZC_PLAIN", "zcPlainTitle", "zcFixAct", "zcCatPlan", "citationsCardHtml", "fixPlanCardHtml", "categoriesCardHtml"].map((n) => lift(AJS, n));

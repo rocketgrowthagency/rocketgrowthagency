@@ -27,7 +27,9 @@ const code = [line(/^const WC_TILE = [^\n]*;$/m, "WC_TILE"), line(/^const WC_KIN
   // approval_tab_and_sent_card_v1 (10-28): the whole trip + what they're approving
   line(/^const wcMergeBy = [^\n]*;$/m, "wcMergeBy"), line(/^const wcTime = [^\n]*;$/m, "wcTime"), fn("wcLoopHtml"),
   // publish_safety_checks_v1 (10-28): the safety panel, who merged, the after-check
-  line(/^const wcSafetyCache = [^\n]*$/m, "wcSafetyCache"), line(/^const wcRestAsked = [^\n]*$/m, "wcRestAsked"), line(/^const WC_DAY = [^\n]*;$/m, "WC_DAY"), fn("ghIdHtml"), fn("ghPillText"), fn("ghClientName"), fn("ghBandHtml"), fn("ghPanelHtml"), fn("wcSafetyPanel"), fn("wcMergedHtml"), fn("wcRestHtml"), fn("wcProofHtml"), line(/^const WC_EYE = [^\n]*;$/m, "WC_EYE"), line(/^const wcPathOf = [^\n]*;$/m, "wcPathOf"), fn("wcWhatHtml"), fn("siteChangeAdminHtml")].join("\n");
+  line(/^const wcSafetyCache = [^\n]*$/m, "wcSafetyCache"), line(/^const wcRestAsked = [^\n]*$/m, "wcRestAsked"), line(/^const WC_DAY = [^\n]*;$/m, "WC_DAY"), fn("ghIdHtml"), fn("ghPillText"), fn("ghClientName"), fn("ghBandHtml"), fn("ghPanelHtml"), fn("wcSafetyPanel"), fn("wcMergedHtml"), fn("wcRestHtml"), fn("wcProofHtml"), line(/^const WC_EYE = [^\n]*;$/m, "WC_EYE"), line(/^const wcPathOf = [^\n]*;$/m, "wcPathOf"), fn("wcWhatHtml"),
+  // admin_website_steps_autopilot_v1 (11-6): the card while the system has the step, the raw output inside the card
+  fn("wcRunsItself"), fn("wcAutoMove"), line(/^const WC_CLOCK = [^\n]*;$/m, "WC_CLOCK"), fn("wcDue"), fn("wcAutoCardHtml"), fn("wcRawHtml"), fn("siteChangeAdminHtml")].join("\n");
 
 let puppeteer; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer isn't installed"); process.exit(2); }
@@ -102,6 +104,15 @@ const S = {
   // an edit to a page they have keeps Now → After and names the page
   pageEdit: { id: "m1.web.service_location_matrix", task: { status: "in_progress", site_change: { v: "v1", kind: "visible", edits_page: true, label: "edit_page", where: "A page on your website", page_url: "https://x.test/hvac-denver/", drafted_at: NOW, files: [{ path: "hvac-denver/index.html", action: "edit", note: "named lines on this page, nothing else" }], items: [{ label: "Line 1", before: "Why hvac lose", after: "Why HVAC companies lose" }] } } },
   right: { task: { status: "done", no_change_needed: { note: "One phone number on every page", at: NOW, by: "RGA" } } },
+  // admin_website_steps_autopilot_v1 (approved 11-6): a client whose website steps run themselves — no Run button anywhere, the card says what the system does
+  autoQueued: { auto: true, task: { status: "pending" } },
+  autoNotProven: { auto: true, task: { status: "done", completed_at: "2026-09-14T12:00:00Z" } },
+  autoScheduled: { auto: true, task: { status: "in_progress", ran_at: NOW, auto_result: { summary: "Headline: Local SEO That Puts Your Business on the Map\nButton: Get Your Free Audit", ran_at: NOW },
+    site_change: { v: "v1", kind: "visible", label: "edit_page", where: "Your homepage", drafted_at: NOW, drafted_by: "RGA (automatic)", items: [{ label: "Main headline", before: "Rank Higher on Google Maps", after: "Local SEO That Puts Your Business on the Map" }] },
+    auto_send: { v: "v1", at: NOW, due_at: "2099-11-07T16:00:00Z", failed: [], held: null } } },
+  autoCheckFailed: { auto: true, task: { status: "in_progress", ran_at: NOW, site_change: { v: "v1", kind: "visible", label: "edit_page", where: "Your homepage", drafted_at: NOW, drafted_by: "RGA (automatic)", items: [{ label: "Main headline", before: "A", after: "Guaranteed first place" }] },
+    auto_send: { v: "v1", at: NOW, due_at: NOW, failed: [{ label: "Main headline", why: "It says a guarantee we can't back (\"Guaranteed\")." }], held: null } } },
+  autoFailedTwice: { auto: true, task: { status: "in_progress", ran_at: NOW, auto_result: { summary: "x", ran_at: NOW }, auto_failed: { at: NOW, run: NOW, why: "The draft didn't come out right twice: The run has no lines to fill." } } },
 };
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 const out = {};
@@ -116,7 +127,7 @@ try {
       // the GitHub connection panel (names_not_addresses_v1) from a fixed read-only check — never a fetch
       const ghConnOf = () => ({ ok: true, match: true, checked_at: "2026-10-28T20:00:00Z", login: "rocketgrowthagency-admin", repo: "acme/site", owner: "acme", site: "acme.test",
         rows: [{ id: "account", ok: true, title: "The account they invited is the one we post as", detail: "The client invited rocketgrowthagency-admin on Oct 26. Our key is the same account today.", ev: "Oct 26 → today" }] });
-      const state = { onboardingData: sc.gh ? { tasks: { "m1.access.website": { access: { repo: "acme/site" }, ...(sc.mergeBy ? { merge_by: { by: sc.mergeBy } } : {}) } } } : undefined, selectedClient: { id: "c1", business_name: "Acme" }, flowM1Playbook: [{ id: H, title: "Fix H1 + primary CTA", clientLabel: "Homepage headline + main button", hasRunner: true }] };
+      const state = { onboardingData: sc.gh ? { tasks: { "m1.access.website": { access: { repo: "acme/site" }, ...(sc.mergeBy ? { merge_by: { by: sc.mergeBy } } : {}) } } } : undefined, selectedClient: { id: "c1", business_name: "Acme", ...(sc.auto ? { website_url: "https://acme.test", client_portal_stage: "stage_4_onboarding" } : {}) }, flowM1Playbook: [{ id: H, title: "Fix H1 + primary CTA", clientLabel: "Homepage headline + main button", hasRunner: true }] };
       eval(SCJS);   // globalThis.rgaSiteChange
       // eslint-disable-next-line no-eval
       const api = eval(`(() => { ${code}; return { wcDraftCache, wcEditing, siteChangeAdminHtml, wcRowPill, ghPillText, ghPanelHtml, ghBandHtml }; })()`);
@@ -147,6 +158,7 @@ try {
       return { panel, pillT, text: el.textContent.replace(/\s+/g, " "), html: el.innerHTML, buttons: vis("button, a.admin-button").map((b) => b.textContent.trim()), inputs: vis("input:not([type=hidden]), select").length,
         textareas: vis("textarea").length, label: (el.querySelector(".ob-ac-st") || {}).textContent || "", pill: (api.wcRowPill(H, sc.task) || {}).text || "", nested, cards: el.querySelectorAll(".ob-ac").length, checks: el.querySelectorAll(".ob-ac-ck li").length,
         loop: [...el.querySelectorAll(".ob-wc-loop li")].map((li) => li.className), tone: (el.querySelector(".ob-ac") || {}).className || "",
+        rawInside: !!el.querySelector(".ob-ac > .ob-wc-raw"), rawOutside: !!el.querySelector(".ob-wc > .ob-wc-raw"),
         loopOneRow: (() => { const l = el.querySelector(".ob-wc-loop"); if (!l) return null; const t = [...l.children].map((x) => Math.round(x.getBoundingClientRect().top)); return new Set(t).size === 1; })(),
         // 10-28 (Chris, 10:09): every stop's name sits on one line across the trip, whatever the length of its note
         proofUnk: el.querySelectorAll(".ob-proof-r.unk").length,
@@ -158,6 +170,17 @@ try {
 } finally { await browser.close(); }
 const has = (n, re, what) => { if (!re.test(out[n].text)) fail(`${n}: ${what}`); };
 for (const [n, o] of Object.entries(out)) { if (o.cards !== 1) fail(`${n}: not ONE row-8 card (${o.cards})`); if (o.nested) fail(`${n}: a box inside the card's box`); if (/Drafted\s*Sent\s*Client approval/.test(o.text)) fail(`${n}: the old trail is back`); }
+// admin_website_steps_autopilot_v1: the steps run themselves — no Run button, the card's label is what the system is doing, RGA's only on a failed check / two failed drafts
+for (const n of ["autoQueued", "autoNotProven", "autoScheduled", "autoCheckFailed", "autoFailedTwice"]) if (out[n].buttons.some((b) => /^⚡|Draft/.test(b))) fail(`${n}: a step that runs itself still has a Run / Draft button (${out[n].buttons})`);
+if (!/Runs itself · drafts itself shortly/.test(out.autoQueued.label) || out.autoQueued.pill !== "Drafts itself") fail(`auto queued: not "Runs itself · drafts itself shortly" / "Drafts itself" (${out.autoQueued.label} · ${out.autoQueued.pill})`);
+has("autoNotProven", /ticked done before every website change went through approval[\s\S]*drafts itself again within 10 minutes/, "a step ticked before approvals doesn't say it drafts itself again");
+if (!/^Runs itself · goes to the client Nov 7, \d{1,2}( |:)/.test(out.autoScheduled.label) && !/^Runs itself · goes to the client Nov [78],/.test(out.autoScheduled.label)) fail(`auto scheduled: the label isn't "Runs itself · goes to the client <day, time>" (${out.autoScheduled.label})`);
+if (["Hold", "Edit the lines", "Send now"].some((b) => !out.autoScheduled.buttons.includes(b)) || out.autoScheduled.buttons.includes("Send for approval")) fail(`auto scheduled: not Hold · Edit the lines · Send now (${out.autoScheduled.buttons})`);
+has("autoScheduled", /every check passed\. It goes to their For your approval in 24 hours unless you hold it/, "the scheduled card doesn't say it goes in 24 hours unless held");
+if (!/^Goes out /.test(out.autoScheduled.pill)) fail(`auto scheduled: the row's chip isn't "Goes out <day>" (${out.autoScheduled.pill})`);
+if (!out.autoScheduled.rawInside || out.autoScheduled.rawOutside) fail("the run's raw output isn't inside the card");
+if (!/Your move · a check failed/.test(out.autoCheckFailed.label) || !/a guarantee we can't back[\s\S]*Nothing was sent\. Edit the lines, then send\./.test(out.autoCheckFailed.text) || !out.autoCheckFailed.buttons.includes("Edit the lines") || out.autoCheckFailed.pill !== "Check failed") fail("a failed check isn't RGA's move with the reason and Edit the lines");
+if (!/Your move · the draft didn't come out right/.test(out.autoFailedTwice.label) || !/It won't draft again by itself/.test(out.autoFailedTwice.text) || out.autoFailedTwice.pill !== "Your move") fail("a draft that failed twice isn't RGA's move with its reason");
 if (!out.draftit.buttons.includes("⚡ Draft this for me") || out.draftit.textareas) fail("draft it: no ⚡ Draft this for me, or the empty form is open before there's a draft");
 has("notproven", /Done, but not proven/, "a September tick with nothing on record reads as Done"); if (out.notproven.pill !== "Not proven") fail("not proven: the row's chip still says Done");
 has("ready", /Your move · review the draft/, "the draft isn't \"review the draft\"");

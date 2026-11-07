@@ -116,27 +116,110 @@ const A = read("admin/admin.js");
 if (!/isPage && c && !c\.removes_page \? wcMeasureHtml\(id, task\)/.test(A) || !/not enough data yet/.test(A)) fail("the live card doesn't show the numbers");
 if (!/if \(act === "measure"\)/.test(AD) || !/This reads once the page is live/.test(AD)) fail("the measure action is gone");
 
-// ── 12 · drafts itself once ──────────────────────────────────────────────────────────────────
+// ── 12 · the website steps run themselves (website_system_v2 build 12 → admin_website_steps_autopilot_v1, the owner 11-6) ──────
 const steps = [{ id: "m1.web.homepage_meta", dependsOn: ["m1.strategy.keywords_locations"] }, { id: "m1.web.h1_cta", dependsOn: ["m1.web.homepage_meta"] }, { id: "m1.web.priority_pages", dependsOn: ["m1.web.homepage_meta", "m1.gbp.services_products"] }];
 const done = { status: "done" };
 if (AR.nextStep(steps, {})) fail("a step starts with its blockers open");
 if (AR.nextStep(steps, { "m1.strategy.keywords_locations": done }).id !== "m1.web.homepage_meta") fail("the first unblocked step doesn't start");
 if (AR.nextStep(steps, { "m1.strategy.keywords_locations": done, "m1.web.homepage_meta": { status: "in_progress" } })) fail("a step starts while the one before it is open");
-for (const [what, t] of [["with a stamp", { auto_run: { at: "x" } }], ["with a draft", { ran_at: "x" }], ["with a change", { site_change: { v: 1 } }], ["done", { status: "done" }], ["in progress", { status: "in_progress" }]]) if (AR.whyNot(steps[0], { "m1.strategy.keywords_locations": done, "m1.web.homepage_meta": t }) === null) fail(`a step ${what} starts again`);
-if (AR.clientWhyNot({ source: "x", client_portal_stage: "stage_4_onboarding", website_url: "u" }, {}) === null) fail("it's on by default");
-const on = { WEBSITE_AUTO_RUN: "1" };
-if (AR.clientWhyNot({ source: "test:walk", client_portal_stage: "stage_4_onboarding", website_url: "u" }, on) === null) fail("a test client starts");
-if (AR.clientWhyNot({ client_portal_stage: "stage_1", website_url: "u" }, on) === null) fail("a client before onboarding starts");
-if (AR.clientWhyNot({ client_portal_stage: "stage_4_onboarding", website_url: "" }, on) === null) fail("a client with no website starts");
+for (const [what, t] of [["with a stamp", { auto_run: { at: "x" } }], ["with a claim", { auto_done: { start: "x" } }], ["with a draft", { ran_at: "x" }], ["with a change", { site_change: { v: 1 } }], ["done", { status: "done" }], ["in progress", { status: "in_progress" }]]) if (AR.whyNot(steps[0], { "m1.strategy.keywords_locations": done, "m1.web.homepage_meta": t }) === null) fail(`a step ${what} starts again`);
+const cl = { source: "x", client_portal_stage: "stage_4_onboarding", website_url: "u" };
+if (AR.clientWhyNot(cl, {}) !== null) fail("it isn't on by default");
+if (AR.clientWhyNot(cl, { WEBSITE_AUTO_RUN: "0" }) === null) fail("the kill switch doesn't stop it");
+if (AR.clientWhyNot({ ...cl, source: "test:walk" }, {}) === null) fail("a test client starts");
+if (AR.clientWhyNot({ ...cl, client_portal_stage: "stage_1" }, {}) === null) fail("a client before onboarding starts");
+if (AR.clientWhyNot({ ...cl, website_url: "" }, {}) === null) fail("a client with no website starts");
+// what the system does next, per state (pure)
+{
+  const T0 = Date.parse("2026-11-06T12:00:00Z"), iso = (ms) => new Date(ms).toISOString(), H = steps[1], base = { "m1.strategy.keywords_locations": done, "m1.web.homepage_meta": done };
+  const plan = (t, extra = {}, now = T0, data = {}) => AR.planStep(H, { ...base, ...extra, "m1.web.h1_cta": t }, now, data);
+  const act = (...a) => { const p = plan(...a); return p ? `${p.act}${p.sig ? `:${p.sig}` : ""}` : null; };
+  const ran = iso(T0 - 3600e3), cv = iso(T0 - 1800e3);
+  if (act({}) !== "start:start") fail("an unblocked step with no draft doesn't draft itself");
+  if (AR.planStep(H, { "m1.strategy.keywords_locations": done, "m1.web.h1_cta": {} }, T0)) fail("a step drafts with a blocker open");
+  if (act({ auto_done: { start: iso(T0 - 60e3) } }) !== null) fail("a step drafting right now is started again");
+  if (!/^fail/.test(act({ auto_done: { start: iso(T0 - 31 * 60e3) } }) || "")) fail("a run that never finished isn't handed to RGA");
+  if (act({ auto_done: { start: iso(T0 - 31 * 60e3) }, auto_failed: { run: "" } }) !== null) fail("a run that never finished starts again");
+  if (act({ status: "in_progress", ran_at: ran, auto_result: { summary: "x" } }) !== `finish:finish:${ran}`) fail("a run that's in isn't checked and saved");
+  if (act({ status: "in_progress", ran_at: ran, auto_result: {}, auto_done: { [`finish:${ran}`]: "x" } }) !== null) fail("a run is finished twice");
+  if (act({ status: "done", auto_result: { summary: "x" } }) !== "redo:redo:not_proven") fail("a step ticked before approvals doesn't draft again");
+  if (act({ status: "done", auto_result: {}, auto_done: { "redo:not_proven": "x" } }) !== null) fail("a not-proven step redrafts more than once");
+  const newer = { "m1.web.homepage_meta": { status: "done", ran_at: iso(T0 - 600e3) } };
+  if (!/^redo:redo:ood:m1\.web\.homepage_meta@/.test(act({ status: "in_progress", ran_at: ran, auto_result: {} }, newer) || "")) fail("an out-of-date draft doesn't draft again");
+  if (act({ status: "in_progress", ran_at: ran, auto_result: {}, auto_done: { [`redo:ood:m1.web.homepage_meta@${iso(T0 - 600e3)}`]: "x" } }, newer) !== `finish:finish:${ran}`) fail("an out-of-date redraft repeats");
+  const sc = { v: cv, drafted_by: AR.AUTO_WHO, items: [{ label: "Main headline", after: "x" }] }, as = (o) => ({ v: cv, at: cv, due_at: iso(T0 - 1), failed: [], held: null, ...o });
+  if (act({ ran_at: ran, site_change: sc, auto_send: as({}) }) !== `send:send:${cv}`) fail("a checked draft past its 24 hours doesn't go to the client");
+  if (act({ ran_at: ran, site_change: sc, auto_send: as({ due_at: iso(T0 + 3600e3) }) }) !== null) fail("a draft goes to the client before its 24 hours");
+  if (act({ ran_at: ran, site_change: sc, auto_send: as({ held: { at: "x" } }) }) !== null) fail("a held draft still goes to the client");
+  if (act({ ran_at: ran, site_change: sc, auto_send: as({ failed: [{ why: "x" }] }) }) !== null) fail("a draft that failed a check still goes to the client");
+  if (act({ ran_at: ran, site_change: { ...sc, v: "edited" }, auto_send: as({}) }) !== null) fail("a draft RGA edited goes out by itself");
+  if (!/^redo/.test(act({ ran_at: ran, site_change: sc }, newer) || "")) fail("the system's own out-of-date draft doesn't draft again");
+  if (act({ ran_at: ran, site_change: { ...sc, drafted_by: "chris@x" } }, newer) !== null) fail("a person's edited draft is redrafted over");
+  if (act({ ran_at: ran, site_change: sc, internal_review: { decision: "approved", change_v: cv } }) !== null) fail("a draft with the client is touched");
+  // approved: a page change on GitHub access publishes itself (snapshot → pull request → merge), each once; anything else is RGA's by hand
+  const P = steps[2], pageC = { v: cv, new_page: true, items: [{ label: "x", after: "y" }] }, appr = { site_change: pageC, approval: { decision: "approved", change_v: cv } };
+  const gh = { "m1.access.website": { status: "done", access: { repo: "o/r" } } }, pb = { ...base, "m1.gbp.services_products": done, ...gh };
+  const pp = (t, extra = {}, data = {}) => { const p = AR.planStep(P, { ...pb, ...extra, "m1.web.priority_pages": t }, T0, data); return p ? p.act : null; };
+  if (pp(appr) !== "snap") fail("an approved page doesn't take its before-snapshot");
+  if (pp(appr, {}, { site_snapshot: { at: iso(T0 - 3600e3) } }) !== "open") fail("an approved page doesn't open its pull request");
+  if (pp({ ...appr, auto_done: { [`pub:open:${cv}`]: "x" } }, {}, { site_snapshot: { at: iso(T0) } }) !== null) fail("a pull request is opened twice");
+  if (pp({ ...appr, publish_pr: { v: cv, number: 4 } }) !== "merge") fail("an open pull request isn't merged");
+  if (pp({ ...appr, publish_pr: { v: cv, number: 4 } }, { "m1.access.website": { status: "done", access: { repo: "o/r" }, merge_by: { by: "client" } } }) !== null) fail("RGA merges when the client chose to");
+  if (AR.planStep(P, { ...base, "m1.gbp.services_products": done, "m1.web.priority_pages": appr }, T0)) fail("a change with no GitHub access publishes itself");
+  if (AR.planStep({ id: "m1.web.image_seo" }, { "m1.web.image_seo": { ran_at: ran, auto_result: {} } }, T0)) fail("step 37 does more than start by itself");
+}
+// the shared rule the admin reads
+{
+  const SCx = SC, now = Date.parse("2026-11-06T12:00:00Z"), cl0 = { client_portal_stage: "stage_4_onboarding", website_url: "u" };
+  const mv = (t, o = {}) => SCx.autoMove("m1.web.h1_cta", t, { client: cl0, now, ...o });
+  if (mv({}) !== "queued" || mv({ auto_done: { start: new Date(now - 60e3).toISOString() } }) !== "drafting" || mv({ ran_at: "2026-11-06T10:00:00Z", auto_result: {} }) !== "checking") fail("the admin can't tell queued / drafting / checking apart");
+  const c = { v: "v1" };
+  if (mv({ site_change: c, auto_send: { v: "v1", failed: [] } }) !== "scheduled" || mv({ site_change: c, auto_send: { v: "v1", failed: [{ why: "x" }] } }) !== "rga" || mv({ site_change: c, auto_send: { v: "v1", held: { at: "x" } } }) !== "rga") fail("a scheduled / failed / held draft reads the wrong move");
+  if (mv({ site_change: c, internal_review: { decision: "approved", change_v: "v1" } }) !== "client") fail("a draft with the client isn't theirs");
+  if (mv({}, { client: { ...cl0, source: "test:x" } }) !== null) fail("a test client's step reads as running itself");
+  if (mv({ site_change: c, auto_send: { v: "v1", failed: [] } }, { open: ["m1.web.homepage_meta"] }) !== "waiting" || mv({}, { open: ["x"] }) !== "waiting") fail("a step whose earlier step reopened still promises a time (the server waits)");
+  if (SCx.isAutoStep("m1.web.image_seo")) fail("step 37 lost its own card");
+  const ch = SCx.cleanChange("m1.web.h1_cta", { items: [{ label: "Main headline", after: "Culver City — and the cities you serve — find you" }] });
+  if (!ch.change || /—/.test(ch.change.items[0].after)) fail("an em dash reaches the client's copy");
+  if (!SCx.autoChecks({ items: [{ label: "Opening", after: "Guaranteed results" }] }).length || SCx.autoChecks({ items: [{ label: "Main headline", after: "Plain words" }] }).length) fail("the checks don't fail a claim we can't back, or fail a clean draft");
+}
+// the sweep: claimed first, capped, a lost claim or a failed start never acts or retries
 const sweep = async (env, n = 4, failStart = false, lost = false) => { const started = [], patched = []; const clients = Array.from({ length: n }, (_, i) => ({ id: `c${i}`, client_portal_stage: "stage_4_onboarding", website_url: "u" }));
-  const r = await AR.sweepWebsiteSteps({ deps: { env, now: () => 0, steps, start: async (c, s) => { started.push(`${c}:${s}`); if (failStart) throw new Error("no"); },
+  const r = await AR.sweepWebsiteSteps({ deps: { env, now: () => 0, steps, call: async () => ({ ok: true, j: {} }), toUs: (x) => x, start: async (c, s) => { started.push(`${c}:${s}`); if (failStart) throw new Error("no"); },
     supa: async (p, init) => { if (p.startsWith("/clients")) return clients; if (init && init.method === "PATCH") { patched.push(p); return lost ? [] : [{ id: 1 }]; } return [{ id: "r", data: { tasks: { "m1.strategy.keywords_locations": done } } }]; } } }); return { r, started, patched }; };
-{ const a = await sweep({}); if (a.started.length || a.patched.length || !a.r.off) fail("off still starts drafts");
-  const b = await sweep(on); if (b.started.length !== AR.NIGHT_CAP || b.patched.length !== AR.NIGHT_CAP || !/auto_run=is\.null/.test(b.patched[0])) fail(`the sweep isn't capped, or doesn't claim first (${b.started.length})`);
-  const l = await sweep(on, 1, false, true); if (l.started.length) fail("another caller won the claim, and it starts anyway");
-  const c = await sweep(on, 1, true); if (c.patched.length !== 1 || c.started.length !== 1) fail("a start that fails falls back into a queue"); }
-if (!/sweepWebsiteSteps\(\)/.test(read("netlify/functions/metrics-daily-refresh.js"))) fail("nothing runs the sweep");
-if (/send|email/i.test(read("netlify/functions/_website-autorun.js").replace(/Nothing here emails anyone/, "").replace(/RGA reviews and sends it/, ""))) fail("the sweep sends something");
+{ const a = await sweep({ WEBSITE_AUTO_RUN: "0" }); if (a.started.length || a.patched.length || !a.r.off) fail("the kill switch still starts drafts");
+  const b = await sweep({}); if (b.started.length !== AR.NIGHT_CAP || b.patched.length !== AR.NIGHT_CAP || !/auto_n=is\.null/.test(b.patched[0] || "")) fail(`the sweep isn't capped, or doesn't claim first (${b.started.length})`);
+  const l = await sweep({}, 1, false, true); if (l.started.length) fail("another caller won the claim, and it starts anyway");
+  const c = await sweep({}, 1, true); if (c.patched.length !== 1 || c.started.length !== 1) fail("a start that fails falls back into a queue"); }
+// finish: the run's lines go out in US English with no em dash, through the checks, held 24 hours; no lines → one redraft, then RGA's
+{
+  const H = steps[1], ranAt = "2026-11-06T10:00:00Z", calls = [], patches = [];
+  const rec = { id: "r", data: { tasks: { "m1.strategy.keywords_locations": done, "m1.web.homepage_meta": { status: "done", no_change_needed: { note: "right" } }, "m1.web.h1_cta": { status: "in_progress", ran_at: ranAt, auto_result: { summary: "x" } } } } };
+  const mk = (change, startLog) => ({ env: {}, now: () => Date.parse("2026-11-06T12:00:00Z"), steps, toUs: (x) => x.replace(/optimise/g, "optimize"),
+    start: async (c, s) => startLog.push(s), call: async (fn, body) => { calls.push(body); return body.site_action === "prefill" ? { ok: true, j: { change } } : { ok: true, j: {} }; },
+    supa: async (p, init) => { if (p.startsWith("/clients")) return [{ id: "c0", client_portal_stage: "stage_4_onboarding", website_url: "u" }]; if (init && init.method === "PATCH") { patches.push(JSON.parse(init.body)); return [{ id: 1 }]; } return [rec]; } });
+  const s1 = []; await AR.sweepWebsiteSteps({ deps: mk({ kind: "visible", items: [{ label: "Line under the headline", after: "We optimise listings so customers in Culver City — and nearby — find you." }] }, s1) });
+  const save = calls.find((b) => b.site_action === "save");
+  if (!save || /—|optimise/.test(save.change.items[0].after) || !save.auto || save.auto.failed.length) fail("a finished draft isn't saved in US English with no em dash, checks passed");
+  calls.length = 0; const s2 = []; await AR.sweepWebsiteSteps({ deps: mk({ kind: "visible", items: [{ label: "Opening", after: "Guaranteed first place on Google." }] }, s2) });
+  const save2 = calls.find((b) => b.site_action === "save");
+  if (!save2 || !save2.auto.failed.length) fail("a draft with a claim we can't back is saved as passing");
+  calls.length = 0; const s3 = []; await AR.sweepWebsiteSteps({ deps: mk({ kind: "visible", items: [] }, s3) });
+  if (s3.length !== 1 || s3[0] !== "m1.web.h1_cta" || calls.some((b) => b.site_action === "save")) fail("a draft with no lines isn't redrafted once");
+  // the redraft is a model call: with the pass's cap used up it waits (homepage_meta not proven → its redraft takes the one model call)
+  rec.data.tasks["m1.web.homepage_meta"] = { status: "done" }; calls.length = 0; const s5 = []; await AR.sweepWebsiteSteps({ deps: mk({ kind: "visible", items: [] }, s5) });
+  if (s5.length !== 1) fail(`a no-lines redraft skips the model-call cap (${s5.length} started)`);
+  rec.data.tasks["m1.web.homepage_meta"] = { status: "done", no_change_needed: { note: "right" } };
+  rec.data.tasks["m1.web.h1_cta"].auto_done = { "redo:no_lines": "x" }; patches.length = 0; const s4 = []; calls.length = 0;
+  await AR.sweepWebsiteSteps({ deps: mk({ kind: "visible", items: [] }, s4) });
+  if (s4.length || !patches.some((d) => ((d.data.tasks["m1.web.h1_cta"] || {}).auto_failed || {}).why)) fail("a draft that fails twice isn't handed to RGA with its reason");
+}
+const ADx = read("netlify/functions/admin-deliverables.js");
+if (!/if \(gate\.internal && body\.auto && typeof body\.auto === "object"\) \{/.test(ADx) || !/\} else delete t\.auto_send;/.test(ADx)) fail("a person's save can set the 24-hour send, or doesn't cancel it");
+if (!/else if \(act === "auto_send"\)/.test(ADx) || !/if \(op === "hold"\) t\.auto_send = \{ \.\.\.a, held:/.test(ADx)) fail("Hold is gone");
+if (!/sweepWebsiteSteps\(\)/.test(read("netlify/functions/metrics-daily-refresh.js"))) fail("nothing runs the sweep at night");
+if (!/\[functions\."website-autopilot"\]\s*\n\s*schedule = "\*\/10 \* \* \* \*"/.test(TOML) || !/sweepWebsiteSteps\(\{ trigger: "watch" \}\)/.test(read("netlify/functions/website-autopilot-background.js"))) fail("nothing runs the website steps every 10 minutes");
+if (/sendEmail|notify-client|postmark|mailgun|resend\./i.test(read("netlify/functions/_website-autorun.js"))) fail("the sweep emails someone");
 
 // ── 14 · a made-up address ───────────────────────────────────────────────────────────────────
 const b14 = FE.slice(FE.indexOf('"m1.web.https_sitemap": async'), FE.indexOf('"m1.web.homepage_meta": async'));
@@ -150,4 +233,4 @@ if (/fetch\(|gsPost\(|wcAction\(/.test(g16)) fail("the button writes to Google b
 if (read("netlify/functions/_google-consent.js").length < 100) fail("the consent guard is gone");
 
 if (F.length) { console.error(`❌ a live page stays true: ${F.length} regression(s):\n  · ${F.join("\n  · ")}`); process.exit(1); }
-console.log("✅ a live page stays true: read back on 7 checks (couldn't check is never a pass), nightly drift reopens and a clean reading closes, Search Console at 2/4/8 weeks or \"not enough data yet\", a step drafts itself once (off by default, claim first, capped), a made-up address must 404, Google's link keeps its own checks");
+console.log("✅ a live page stays true: read back on 7 checks (couldn't check is never a pass), nightly drift reopens and a clean reading closes, Search Console at 2/4/8 weeks or \"not enough data yet\", the website steps run themselves (claimed first, capped, one redraft per reason, held 24 hours, never over RGA's edit, no em dash), a made-up address must 404, Google's link keeps its own checks");
