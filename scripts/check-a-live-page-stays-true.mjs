@@ -139,14 +139,18 @@ if (AR.clientWhyNot({ ...cl, website_url: "" }, {}) === null) fail("a client wit
   if (AR.planStep(H, { "m1.strategy.keywords_locations": done, "m1.web.h1_cta": {} }, T0)) fail("a step drafts with a blocker open");
   if (act({ auto_done: { start: iso(T0 - 60e3) } }) !== null) fail("a step drafting right now is started again");
   if (!/^fail/.test(act({ auto_done: { start: iso(T0 - 31 * 60e3) } }) || "")) fail("a run that never finished isn't handed to RGA");
-  if (act({ auto_done: { start: iso(T0 - 31 * 60e3) }, auto_failed: { run: "" } }) !== null) fail("a run that never finished starts again");
-  if (act({ status: "in_progress", ran_at: ran, auto_result: { summary: "x" } }) !== `finish:finish:${ran}`) fail("a run that's in isn't checked and saved");
-  if (act({ status: "in_progress", ran_at: ran, auto_result: {}, auto_done: { [`finish:${ran}`]: "x" } }) !== null) fail("a run is finished twice");
+  if (act({ auto_done: { start: iso(T0 - 31 * 60e3) }, auto_failed: { run: "", rev: SC.AUTO_FINISH_REV } }) !== null || act({ auto_done: { start: iso(T0 - 31 * 60e3), [`stuck:${T0 - 31 * 60e3}`]: "x" } }) !== null) fail("a run that never finished starts again");
+  const fin = `finish:finish:r${SC.AUTO_FINISH_REV}:${ran}`;
+  if (act({ status: "in_progress", ran_at: ran, auto_result: { summary: "x" } }) !== fin) fail("a run that's in isn't checked and saved");
+  if (act({ status: "in_progress", ran_at: ran, auto_result: {}, auto_done: { [`finish:r${SC.AUTO_FINISH_REV}:${ran}`]: "x" } }) !== null) fail("a run is finished twice");
+  // 11-7: a failure an OLDER reader recorded gets one look with the current reader; one recorded by the current reader is final
+  if (act({ status: "in_progress", ran_at: ran, auto_result: {}, auto_done: { [`finish:${ran}`]: "x" }, auto_failed: { run: ran, why: "x" } }) !== fin) fail("a draft an older reader failed never gets a second look");
+  if (act({ status: "in_progress", ran_at: ran, auto_result: {}, auto_failed: { run: ran, why: "x", rev: SC.AUTO_FINISH_REV } }) !== null) fail("a draft the current reader failed is looked at again");
   if (act({ status: "done", auto_result: { summary: "x" } }) !== "redo:redo:not_proven") fail("a step ticked before approvals doesn't draft again");
   if (act({ status: "done", auto_result: {}, auto_done: { "redo:not_proven": "x" } }) !== null) fail("a not-proven step redrafts more than once");
   const newer = { "m1.web.homepage_meta": { status: "done", ran_at: iso(T0 - 600e3) } };
   if (!/^redo:redo:ood:m1\.web\.homepage_meta@/.test(act({ status: "in_progress", ran_at: ran, auto_result: {} }, newer) || "")) fail("an out-of-date draft doesn't draft again");
-  if (act({ status: "in_progress", ran_at: ran, auto_result: {}, auto_done: { [`redo:ood:m1.web.homepage_meta@${iso(T0 - 600e3)}`]: "x" } }, newer) !== `finish:finish:${ran}`) fail("an out-of-date redraft repeats");
+  if (act({ status: "in_progress", ran_at: ran, auto_result: {}, auto_done: { [`redo:ood:m1.web.homepage_meta@${iso(T0 - 600e3)}`]: "x" } }, newer) !== fin) fail("an out-of-date redraft repeats");
   const sc = { v: cv, drafted_by: AR.AUTO_WHO, items: [{ label: "Main headline", after: "x" }] }, as = (o) => ({ v: cv, at: cv, due_at: iso(T0 - 1), failed: [], held: null, ...o });
   if (act({ ran_at: ran, site_change: sc, auto_send: as({}) }) !== `send:send:${cv}`) fail("a checked draft past its 24 hours doesn't go to the client");
   if (act({ ran_at: ran, site_change: sc, auto_send: as({ due_at: iso(T0 + 3600e3) }) }) !== null) fail("a draft goes to the client before its 24 hours");
@@ -194,7 +198,7 @@ const sweep = async (env, n = 4, failStart = false, lost = false) => { const sta
 // finish: the run's lines go out in US English with no em dash, through the checks, held 24 hours; no lines → one redraft, then RGA's
 {
   const H = steps[1], ranAt = "2026-11-06T10:00:00Z", calls = [], patches = [];
-  const rec = { id: "r", data: { tasks: { "m1.strategy.keywords_locations": done, "m1.web.homepage_meta": { status: "done", no_change_needed: { note: "right" } }, "m1.web.h1_cta": { status: "in_progress", ran_at: ranAt, auto_result: { summary: "x" } } } } };
+  const rec = { id: "r", data: { tasks: { "m1.strategy.keywords_locations": done, "m1.web.homepage_meta": { status: "done", no_change_needed: { note: "right" } }, "m1.web.h1_cta": { status: "in_progress", ran_at: ranAt, auto_result: { summary: "x", outcome_data: { draft: "H1: x" } } } } } };
   const mk = (change, startLog) => ({ env: {}, now: () => Date.parse("2026-11-06T12:00:00Z"), steps, toUs: (x) => x.replace(/optimise/g, "optimize"),
     start: async (c, s) => startLog.push(s), call: async (fn, body) => { calls.push(body); return body.site_action === "prefill" ? { ok: true, j: { change } } : { ok: true, j: {} }; },
     supa: async (p, init) => { if (p.startsWith("/clients")) return [{ id: "c0", client_portal_stage: "stage_4_onboarding", website_url: "u" }]; if (init && init.method === "PATCH") { patches.push(JSON.parse(init.body)); return [{ id: 1 }]; } return [rec]; } });
@@ -213,8 +217,28 @@ const sweep = async (env, n = 4, failStart = false, lost = false) => { const sta
   rec.data.tasks["m1.web.h1_cta"].auto_done = { "redo:no_lines": "x" }; patches.length = 0; const s4 = []; calls.length = 0;
   await AR.sweepWebsiteSteps({ deps: mk({ kind: "visible", items: [] }, s4) });
   if (s4.length || !patches.some((d) => ((d.data.tasks["m1.web.h1_cta"] || {}).auto_failed || {}).why)) fail("a draft that fails twice isn't handed to RGA with its reason");
+  // 11-7: a CHECK (no draft) that measured it already right is recorded as already right; one that found a problem is RGA's, with what it found, and isn't re-run
+  const chk = (outcome, summary) => { rec.data.tasks["m1.web.h1_cta"] = { status: "in_progress", ran_at: ranAt, outcome, auto_result: { summary, outcome, outcome_data: { unique_phones: 1 } } }; patches.length = 0; calls.length = 0; const st = []; return AR.sweepWebsiteSteps({ deps: mk({ kind: "visible", items: [] }, st) }).then(() => st); };
+  const c1 = await chk("consistent", "NAP audit: one phone everywhere");
+  if (c1.length || !calls.some((b) => b.site_action === "no_change" && /already right: NAP audit/.test(b.note))) fail("a check that measured it already right isn't recorded as already right (RGA's step 40: \"consistent\")");
+  const c2 = await chk("needs_fix", "Mobile PSI: 92/100  CLS=0.116");
+  const f2 = patches.map((d) => (d.data.tasks["m1.web.h1_cta"] || {}).auto_failed).find(Boolean);
+  if (c2.length || !f2 || f2.kind !== "check" || !/The check found: Mobile PSI: 92\/100/.test(f2.why)) fail("a check that found something isn't RGA's move with what it found (or it re-runs)");
 }
 const ADx = read("netlify/functions/admin-deliverables.js");
+// 11-7: the draft reader knows "**TITLE:**" with the words in backticks below (RGA's step 43 redraft read as "no lines"), and the older shapes
+{
+  const at = ADx.indexOf("  const line = (re) => {"), end = ADx.indexOf("  let html = \"\";", at);
+  if (at < 0 || end < 0) fail("the draft reader moved");
+  else {
+    const reader = (draft) => new Function("draft", `${ADx.slice(at, end)}; return line;`)(draft);
+    const r1 = reader("Here it is.\n\n---\n\n**TITLE:**\n`Local SEO Services in Culver City | Acme`\n*(52 characters)*\n\n---\n\n**META:**\n`Maps SEO for Culver City businesses.`");
+    const r2 = reader("H1: Plain words\nSUB: **Bold words**\nPRIMARY_CTA: `Book a call`"), r3 = reader("**H1**\nOld style headline");
+    if (r1(/TITLE:\s*(.+)/i) !== "Local SEO Services in Culver City | Acme" || r1(/META:\s*(.+)/i) !== "Maps SEO for Culver City businesses.") fail("a draft written **TITLE:** with the words in backticks reads as no lines");
+    if (r2(/H1:\s*(.+)/i) !== "Plain words" || r2(/SUB:\s*(.+)/i) !== "Bold words" || r2(/PRIMARY_CTA:\s*(.+)/i) !== "Book a call" || r3(/H1:\s*(.+)/i) !== "Old style headline") fail("the draft reader lost an older shape");
+  }
+}
+if (!/SiteChange\.ALREADY_RIGHT\.includes\(result\.outcome\)/.test(FE) || !SC.ALREADY_RIGHT.includes("consistent")) fail("a run that measured it already right (NAP's \"consistent\") isn't recorded as already right");
 if (!/if \(gate\.internal && body\.auto && typeof body\.auto === "object"\) \{/.test(ADx) || !/\} else delete t\.auto_send;/.test(ADx)) fail("a person's save can set the 24-hour send, or doesn't cancel it");
 if (!/else if \(act === "auto_send"\)/.test(ADx) || !/if \(op === "hold"\) t\.auto_send = \{ \.\.\.a, held:/.test(ADx)) fail("Hold is gone");
 if (!/sweepWebsiteSteps\(\)/.test(read("netlify/functions/metrics-daily-refresh.js"))) fail("nothing runs the sweep at night");

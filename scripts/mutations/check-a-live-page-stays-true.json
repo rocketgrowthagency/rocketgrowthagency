@@ -334,5 +334,47 @@
   "return (opts.open || []).length && [\"queued\", \"checking\", \"scheduled\", \"publishing\"].includes(m) ? \"waiting\" : m;",
   "return m;",
   1
+ ],
+ [
+  "the reader misses **TITLE:**",
+  "admindeliv",
+  "new RegExp(`^[\\\\s>#*-]*\\\\**${key[1]}\\\\**\\\\s*:?\\\\s*\\\\**\\\\s*$`, \"i\")",
+  "new RegExp(`^[\\\\s>#*-]*\\\\**${key[1]}\\\\**\\\\s*:?\\\\s*$`, \"i\")",
+  1
+ ],
+ [
+  "backticks reach the line",
+  "admindeliv",
+  "const clean = (x) => String(x || \"\").replace(/\\*+/g, \"\").replace(/`+/g, \"\").trim();",
+  "const clean = (x) => String(x || \"\").replace(/\\*+/g, \"\").trim();",
+  1
+ ],
+ [
+  "consistent isn't already right",
+  "sitechange",
+  "const ALREADY_RIGHT = [\"verified\", \"ok\", \"consistent\"];",
+  "const ALREADY_RIGHT = [\"verified\", \"ok\"];",
+  1
+ ],
+ [
+  "an older reader's failure is final",
+  "sitechange",
+  "(Number(x.auto_failed.rev) || 1) >= AUTO_FINISH_REV);",
+  ");",
+  1
+ ],
+ [
+  "an already-right check stays open",
+  "webautorun",
+  "      if (SC.ALREADY_RIGHT.includes(outcome)) {",
+  "      if (false) {",
+  1
+ ],
+ [
+  "a check finding re-runs",
+  "webautorun",
+  "      if (isCheck) return (await claim(",
+  "      if (false) return (await claim(",
+  1
  ]
 ]

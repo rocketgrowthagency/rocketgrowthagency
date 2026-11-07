@@ -112,7 +112,8 @@ const S = {
     auto_send: { v: "v1", at: NOW, due_at: "2099-11-07T16:00:00Z", failed: [], held: null } } },
   autoCheckFailed: { auto: true, task: { status: "in_progress", ran_at: NOW, site_change: { v: "v1", kind: "visible", label: "edit_page", where: "Your homepage", drafted_at: NOW, drafted_by: "RGA (automatic)", items: [{ label: "Main headline", before: "A", after: "Guaranteed first place" }] },
     auto_send: { v: "v1", at: NOW, due_at: NOW, failed: [{ label: "Main headline", why: "It says a guarantee we can't back (\"Guaranteed\")." }], held: null } } },
-  autoFailedTwice: { auto: true, task: { status: "in_progress", ran_at: NOW, auto_result: { summary: "x", ran_at: NOW }, auto_failed: { at: NOW, run: NOW, why: "The draft didn't come out right twice: The run has no lines to fill." } } },
+  autoFailedTwice: { auto: true, task: { status: "in_progress", ran_at: NOW, auto_result: { summary: "x", ran_at: NOW }, auto_failed: { at: NOW, run: NOW, rev: 2, why: "The draft didn't come out right twice: The run has no lines to fill." } } },
+  autoCheck: { auto: true, task: { status: "in_progress", ran_at: NOW, auto_result: { summary: "Mobile PSI: 92/100", ran_at: NOW }, auto_failed: { at: NOW, run: NOW, rev: 2, kind: "check", why: "The check found: Mobile PSI: 92/100 CLS=0.116. There's no change it can draft from that by itself." } } },
 };
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 const out = {};
@@ -180,6 +181,7 @@ has("autoScheduled", /every check passed\. It goes to their For your approval in
 if (!/^Goes out /.test(out.autoScheduled.pill)) fail(`auto scheduled: the row's chip isn't "Goes out <day>" (${out.autoScheduled.pill})`);
 if (!out.autoScheduled.rawInside || out.autoScheduled.rawOutside) fail("the run's raw output isn't inside the card");
 if (!/Your move · a check failed/.test(out.autoCheckFailed.label) || !/a guarantee we can't back[\s\S]*Nothing was sent\. Edit the lines, then send\./.test(out.autoCheckFailed.text) || !out.autoCheckFailed.buttons.includes("Edit the lines") || out.autoCheckFailed.pill !== "Check failed") fail("a failed check isn't RGA's move with the reason and Edit the lines");
+if (!/Your move · the check needs you/.test(out.autoCheck.label) || !/The check found: Mobile PSI[\s\S]*Write the change with Edit the lines/.test(out.autoCheck.text) || out.autoCheck.buttons.some((b) => /^⚡|Draft/.test(b))) fail("a check that found something isn't \"the check needs you\" with what it found");
 if (!/Your move · the draft didn't come out right/.test(out.autoFailedTwice.label) || !/It won't draft again by itself/.test(out.autoFailedTwice.text) || out.autoFailedTwice.pill !== "Your move") fail("a draft that failed twice isn't RGA's move with its reason");
 if (!out.draftit.buttons.includes("⚡ Draft this for me") || out.draftit.textareas) fail("draft it: no ⚡ Draft this for me, or the empty form is open before there's a draft");
 has("notproven", /Done, but not proven/, "a September tick with nothing on record reads as Done"); if (out.notproven.pill !== "Not proven") fail("not proven: the row's chip still says Done");
