@@ -210,6 +210,15 @@ if (process.argv.includes("--list")) {
   found.filter((f) => SURFACES[f]?.[0] === "DERIVED").forEach((f) => console.log(`    ${f.padEnd(46)} ${SURFACES[f][1]}`));
 }
 
+// 🔴 11-7 audit: RGA's OWN prices went into EVERY client's draft as "the offer" (a plumber's Google description could say "Month-to-month
+// from $625/mo"). Only RGA's own record gets them; anyone else's draft is told never to state a price.
+{
+  const FE = fs.readFileSync(path.join(SITE, "netlify/functions/flow-execute.js"), "utf8");
+  const calls = (FE.match(/(?<!function )\bpriceCtx\(\)/g) || []).length;   // the calls, not the declaration
+  if (!/require\("\.\/_blog-post"\)\.isOwnSite\(client\) \? priceCtx\(\) : "Prices: \[\[NOT SUPPLIED/.test(FE) || calls !== 1) {
+    fails++; console.log(`  🔴 RGA's own prices can reach another client's draft (priceCtx() is called ${calls}× and not only for RGA's own record)`);
+  } else console.log("  ✅ RGA's own prices go only into RGA's own drafts; every other client's draft is told there is no price to state");
+}
 if (fails) { console.log(`\n🔴 ${fails} check(s) failed — a price could be changed and left behind somewhere.`); process.exit(1); }
 console.log("\n✅ every place a price lives is accounted for.");
 process.exit(0);

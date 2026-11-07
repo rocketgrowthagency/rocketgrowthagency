@@ -1,0 +1,9 @@
+[
+ [
+  "RGA's prices reach every client's draft",
+  "flowexec",
+  "require(\"./_blog-post\").isOwnSite(client) ? priceCtx() : \"Prices: [[NOT SUPPLIED — never state a price, fee, plan or term for this business]]\",",
+  "priceCtx(),",
+  1
+ ]
+]
