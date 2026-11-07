@@ -230,8 +230,8 @@
  [
   "the card: other screens show every row",
   "admin",
-  "if (!o.full && !o.open) return",
-  "if (false) return"
+  "if (!o.full) return `<div class=\"ob-zc ${cls}\">",
+  "if (false) return `<div class=\"ob-zc ${cls}\">"
  ],
  [
   "the card: the footer control goes",

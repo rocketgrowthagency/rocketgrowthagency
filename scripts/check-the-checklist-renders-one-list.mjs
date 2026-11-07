@@ -38,6 +38,7 @@ import fs from "node:fs";
 // 🔒 THE RENDER CLIENT IS NAMED, never "whichever row comes back first" (2026-10-13): with the walk's test clients in
 // the table, an unordered `limit=1` could open a client with nothing done and measure nothing. → acceptance/clients.mjs
 import { WALK_CLIENTS } from "./acceptance/clients.mjs";
+import { createRequire } from "node:module";
 const SITE_DIR = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 
 console.log("── the onboarding checklist renders one list ──");
@@ -70,13 +71,13 @@ let puppeteer;
 try { ({ default: puppeteer } = await import("puppeteer")); }
 catch { console.log("  ⚠️  puppeteer unavailable — NOT reporting healthy."); process.exit(2); }
 
-let clientId, portalMode = null;
+let clientId, portalMode = null, clientRow = null;
 try {
-  const r = await fetch(`${SUPA_URL}/rest/v1/clients?id=eq.${WALK_CLIENTS.main.id}&select=id,portal_mode`,
+  const r = await fetch(`${SUPA_URL}/rest/v1/clients?id=eq.${WALK_CLIENTS.main.id}&select=*`,
     { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
   if (!r.ok) { console.log(`  ⚠️  could not read the client (${r.status}).`); process.exit(2); }
   const row = (await r.json())?.[0];
-  clientId = row?.id; portalMode = row?.portal_mode ?? null;
+  clientId = row?.id; portalMode = row?.portal_mode ?? null; clientRow = row || null;
   if (!clientId) { console.log("  ⚠️  no active client to open."); process.exit(2); }
 } catch (e) { console.log(`  ⚠️  could not read a client: ${e.message}`); process.exit(2); }
 
@@ -89,7 +90,14 @@ if (portalMode === "managed") {
   if (!m) { console.log("  ⚠️  INDETERMINATE — admin.js's MW_YOU moved; can't say which managed pills read You"); process.exit(2); }
   MW_YOU = new Set([...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]));
 }
-const kindShown = (s) => { const k = kindOf(s); return k === "both" && MW_YOU.has(s.id) ? "you" : k; };
+// 🔄 11-7 night fixer: admin_website_steps_autopilot_v1 (approved 11-6): a website step that runs itself for THIS client reads "Runs itself" (admin's
+// stepKind asks wcRunsItself: SC.isAutoStep(id) and no SC.autoClientWhyNot(client)). The gate lagged it and read 9 correct pills as wrong. The rule is the
+// product's own shared/site-change.js over the client row admin draws from; unreadable → can't tell, never a guess.
+let SC;
+try { SC = createRequire(import.meta.url)(SITE_DIR + "/shared/site-change.js"); } catch (e) { console.log(`  ⚠️  INDETERMINATE — shared/site-change.js unreadable: ${e.message}`); process.exit(2); }
+if (typeof SC.isAutoStep !== "function" || typeof SC.autoClientWhyNot !== "function") { console.log("  ⚠️  INDETERMINATE — site-change.js has no isAutoStep / autoClientWhyNot; can't say which steps run themselves"); process.exit(2); }
+const runsItself = (s) => !!(SC.isAutoStep(s.id) && clientRow && !SC.autoClientWhyNot(clientRow));
+const kindShown = (s) => { const k0 = kindOf(s); const k = k0 === "you" && runsItself(s) ? "auto" : k0; return k === "both" && MW_YOU.has(s.id) ? "you" : k; };
 EXPECT = { total: m1.length, client: 0, auto: 0, you: 0, both: 0 };
 m1.forEach((s) => { EXPECT[kindShown(s)]++; });
 // A "both" step belongs to BOTH views, so each view expects its own rows plus every both row.
@@ -98,7 +106,7 @@ EXPECT_VIEW = {
   client: EXPECT.client + EXPECT.both,
   auto: EXPECT.auto,
 };
-console.log(`  client mode: ${portalMode || "not chosen"}${MW_YOU.size ? ` (${MW_YOU.size} managed steps read You)` : ""}`);
+console.log(`  client mode: ${portalMode || "not chosen"}${MW_YOU.size ? ` (${MW_YOU.size} managed steps read You)` : ""}; website steps that run themselves: ${m1.filter((s) => kindOf(s) === "you" && runsItself(s)).length}`);
 
 let link;
 try {

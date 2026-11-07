@@ -758,7 +758,8 @@ Each example: actual filename + actual alt-tag string ready to copy.`,
       );
       return { summary: `Image-SEO naming kit:\n\n${draft}\n\nWorkflow per photo: rename to template → add alt tag → compress at squoosh.app → keep iPhone EXIF intact (don't strip) → upload.` };
     },
-    instructions: "Apply to ALL future uploads (GBP + website):\n1. Rename file using FILENAME_TEMPLATE\n2. Add ALT_TAG_TEMPLATE in CMS image properties\n3. Don't geotag — tested, it has no ranking effect (Google strips photo location data)\n4. Compress at squoosh.app or tinypng.com → target <200KB",
+    // 🔄 11-7 night fixer: the approved step 37 v2 text (admin_step37_image_seo_v2, live in playbooks.json since 049ee3a8), so both sources agree
+    instructions: "Draft this for me reads the photos on their website (up to 25 pages: their sitemap, else the home page links) and Claude looks at each photo that has no description, up to 40 in one draft. Icons, decorations, tracking pixels and repeats are left out; the logo gets \"<business name> logo\". A photo that won't open, or that Claude can't make out, is left for you to write, never guessed.\nCheck each line, change any with Edit, then Send: it goes to their For your approval as one website change.\nOnce they approve, put the descriptions on their site (the image settings in their builder, or the alt text in the page code), then Mark live: it reads each page back and refuses if a description isn't on its photo.\nFile names: only for photos RGA uploads from now on, by RGA's rule (their business name, what it shows, their city). Never rename a photo already on their site: it breaks the pages that show it.\nDon't geotag: tested, it has no ranking effect (Google strips photo location data).\nDONE = the approved descriptions are on their website and read back, or the check finds every photo already described.",
   },
   {
     id: "m1.gbp.photos", title: "Upload 20+ quality photos",

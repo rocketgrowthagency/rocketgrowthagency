@@ -48,6 +48,10 @@ const seeFn = (src) => cut(src, "function injectSeeClientLinks(host, steps, kind
 const whereFn = (src) => cut(src, "function clientStepWhere(o) {", "\n}\n", "clientStepWhere");
 const noComments = (t) => t.replace(/\/\*\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/.*$/gm, "$1");
 const NEWMW = cut(AJS, "// ═══ MANAGED WORKING CARDS START", "// ═══ MANAGED WORKING CARDS END", "the MANAGED WORKING CARDS block");
+// 🔄 11-7 night fixer: the who tag asks wcRunsItself (admin_website_steps_autopilot_v1, 11-6: a website step that runs itself reads "Runs itself"). Unlifted, it
+// was stubbed with a function returning a truthy string, so EVERY step read "Runs itself" and 2232 who tags "differed". The real one is lifted; this world's
+// rgaSiteChange has no auto steps, so a self-serve tag must still match the before byte for byte (the autopilot's own tags: check-a-live-page-stays-true).
+const RUNS = cut(AJS, "function wcRunsItself(id) {", "\n}\n", "wcRunsItself");
 
 const CID = "11111111-1111-1111-1111-111111111111";
 // every step id the playbook has (month 1 + monthly), so the before/after proof covers steps the dispatcher does not name too
@@ -83,8 +87,8 @@ function world({ mode = "managed", tasks = {}, src = AJS } = {}) {
   w.eval(fs.readFileSync(path.join(SITE, "shared/portal-mode.js"), "utf8"));
   w.eval(fs.readFileSync(path.join(SITE, "shared/portal-mode-words.js"), "utf8"));
   const MG = mgBlock(src), ROW = rowFn(src), KIND = kindBlock(src), SEE = seeFn(src), WHERE = whereFn(src);
-  const lifted = [MG, src === AJS ? NEWMW : "", ROW, KIND, SEE, WHERE].join("\n");
-  const names = [...new Set([...lifted.matchAll(/(?<![.\w])([A-Za-z_]\w*)\(/g)].map((m) => m[1]))].filter((n) => !/^(mg|mw)[A-Z]/.test(n) && !/^(if|for|function|return|clientStepWhere|injectSeeClientLinks|stepKind|kindTag|rowStepCardsHtml)$/.test(n) && !(n in w));
+  const lifted = [MG, src === AJS ? NEWMW : "", src === AJS ? RUNS : "", ROW, KIND, SEE, WHERE].join("\n");
+  const names = [...new Set([...lifted.matchAll(/(?<![.\w])([A-Za-z_]\w*)\(/g)].map((m) => m[1]))].filter((n) => !/^(mg|mw)[A-Z]/.test(n) && !/^(if|for|function|return|clientStepWhere|injectSeeClientLinks|stepKind|kindTag|rowStepCardsHtml|wcRunsItself)$/.test(n) && !(n in w));
   w.eval([...new Set([...ROW.matchAll(/(?<![.\w"'])([A-Z][A-Z0-9_]{2,})\b(?!["'])/g)].map((m) => m[1]))].filter((n) => !/^(MG_|MW_|KIND)/.test(n)).map((n) => `var ${n} = "__stub_${n}__";`).join("\n"));
   w.eval(names.map((n) => `var ${n} = function ${n}() { return "[${n}]"; };`).join("\n"));
   w.eval(`var renderOnboardingChecklist = () => window.__redraw(); var reloadScopeAndRerender = async () => window.__redraw(); var mergeStepTasks = (t) => { Object.assign(state.onboardingData.tasks, t); };`);

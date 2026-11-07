@@ -58,7 +58,13 @@ if (!html) indet.push("admin/index.html missing — scroll targets declared ther
 // 🔑 BRACE-MATCH EACH LISTENER, DO NOT WINDOW IT. A 900-character look-ahead reported SEVEN
 // handlers, because unrelated listeners sitting near one picked up its text. The handler's own body
 // is the only honest boundary. → feedback_a_gate_window_measured_in_characters_will_lie
-function listenerBody(from) {
+// 🔴 11-7 night fixer: a delegated match sits INSIDE the listener, so "the first arrow after it" was any arrow in the body. The
+// 11-6 step jump added `setTimeout(() => revealStep(step), 80)`, the lift began at `${tab}` and read a 3-character body with no
+// scroll in it. Start at the listener's own head: the addEventListener( before a delegated match, the one a per-render match ends on.
+function listenerBody(m) {
+  const per = /addEventListener$/.test(m[0]);
+  const from = per ? m.index + m[0].length - "addEventListener".length : code.lastIndexOf("addEventListener(", m.index);
+  if (from < 0 || (!per && m.index - from > 400)) return "";
   const brace = code.indexOf("{", code.indexOf("=>", from));
   if (brace < 0) return "";
   let d = 0;
@@ -89,7 +95,7 @@ if (handlers.length === 0) {
 
 // ── 2 + 3. IT SCROLLS, AND NEVER DOES NOTHING ───────────────────────────────────────────────────
 if (handlers.length === 1) {
-  const body = listenerBody(handlers[0].index);
+  const body = listenerBody(handlers[0]);
   if (!body) { indet.push("could not brace-match the [data-goto-tab] handler body"); }
   else {
     if (!/window\.scrollTo|scrollIntoView/.test(body)) {

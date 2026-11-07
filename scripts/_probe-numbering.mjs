@@ -64,14 +64,15 @@ try {
   // → feedback_a_flaky_gate_is_worse_than_a_failing_one · feedback_a_silent_catch_hides_an_optimisation_doing_nothing
   const countRows = () => page.evaluate(() => document.querySelectorAll(".ob-step").length);
   let n = 0, stable = 0;
-  for (let i = 0; i < 60; i++) {
+  // 11-7 night fixer: 30s → 90s. The admin's full client load was measured at 17–33 s headless on 11-6, so 30s fell short.
+  for (let i = 0; i < 180; i++) {
     const c = await countRows();
     if (c > 0 && c === n) { if (++stable >= 3) break; } else { stable = 0; }
     n = c;
     await new Promise((r) => setTimeout(r, 500));
   }
   if (!n) {
-    console.error("⚠️  INDETERMINATE — the checklist never rendered a row in 30s.");
+    console.error("⚠️  INDETERMINATE — the checklist never rendered a row in 90s.");
     console.error("   This is the PROBE failing to see the page, not proof the admin is broken.");
     console.error("   Check it by hand: " + `${SITE}/admin/?view=client&id=${clientId}&tab=client-setup`);
     process.exit(2);
