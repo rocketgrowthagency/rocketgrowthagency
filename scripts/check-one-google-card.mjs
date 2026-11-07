@@ -189,7 +189,8 @@ if (!P["card with a time"] || !/^Last checked Oct 16\b/.test(P["card with a time
 // a refusal: the blue Fix it, UNDER the card, and nothing else
 { const g = P.__cs["10 Google said"]; if (g && (g.under !== "Pick another link" || !g.primary || g.inCard || g.st?.kind !== "bad")) fail(`a refusal's card has no blue button under it, or no red status row (${g.under} · ${JSON.stringify(g.st)})`); }
 if (A._rows) {
-  const want4 = [EDGE.you, EDGE.rga, EDGE.rga, EDGE.ok];
+  // admin_done_tick_one_green_v1 (approved 11-6, "make sure always same color"): a Done marker is the checklist's one Done green, not the card's edge
+  const want4 = [EDGE.you, EDGE.rga, EDGE.rga, "rgb(22, 163, 74)"];
   if (JSON.stringify(A._rows.markers) !== JSON.stringify(want4)) fail(`admin's Google row markers don't take their card's colour inside real rows (${A._rows.markers.join(" | ")})`);
   if (A._rows.goText === A._rows.goBg) fail(`the blue "Open Google Business Profile" button's text is the same colour as the button (${A._rows.goText})`);
 }
