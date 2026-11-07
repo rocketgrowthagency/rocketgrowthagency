@@ -52,8 +52,13 @@ for (const [name, block] of [["showView flags", flags], ["getRequestedView", req
 }
 if (fail) { console.error("\n[admin-views] INDETERMINATE — the registries could not be read"); process.exit(2); }
 
-// The views showView knows about are the source of truth for "what exists".
-const views = [...new Set([...flags.matchAll(/^\s*([a-zA-Z]+):\s*name === "([a-z-]+)"/gm)].map((m) => m[2]))];
+// What exists = every view showView knows about PLUS every view the sidebar can open (NAV_FOR_VIEW).
+// 🔴 2026-11-06: reading showView alone meant a view missing from showView was never checked at all.
+// Docs had a sidebar button and no flag, so this gate passed while Docs was a blank page for 6 weeks.
+const views = [...new Set([
+  ...[...flags.matchAll(/^\s*([a-zA-Z]+):\s*name === "([a-z-]+)"/gm)].map((m) => m[2]),
+  ...[...navMap.matchAll(/^\s*"?([a-z-]+)"?:\s*"open[A-Za-z]+Button"/gm)].map((m) => m[1]),
+])];
 if (views.length < 5) bad(`only ${views.length} view(s) parsed out of showView — the shape has changed and this gate is reading the wrong thing`);
 
 // 🔑 NOT EVERY VIEW IS NAVIGABLE. `auth` and `booting` are lifecycle states — there is no URL for
