@@ -1,105 +1,105 @@
 [
-  [
-    "the detected clause is dropped from the decision — the original defect",
-    "exec",
-    "(!isHybrid && !isDetected)",
-    "(!isHybrid)",
-    1
-  ],
-  [
-    "the flag reads a property playbooks.json never sets",
-    "exec",
-    "stepDef?.clientDone === \"detected\"",
-    "stepDef?.clientDoneMode === \"detected\"",
-    1
-  ],
-  [
-    "the flag is pinned to a word no step uses",
-    "exec",
-    "=== \"detected\"",
-    "=== \"observed\"",
-    1
-  ],
-  [
-    "a runner can no longer report that it finished the job",
-    "exec",
-    "runnerCompleted || (!isHybrid && !isDetected)",
-    "(!isHybrid && !isDetected)",
-    1
-  ],
-  [
-    "over-corrected: only an explicit claim finishes anything, so plain automated steps never complete",
-    "exec",
-    "const isDone = result?.completed === false ? false : (runnerCompleted || (!isHybrid && !isDetected));",
-    "const isDone = result?.completed === false ? false : runnerCompleted;",
-    1
-  ],
-  [
-    "the decision is renamed, so the gate can no longer find what it judges",
-    "exec",
-    "const isDone = result?.completed === false",
-    "const isStepDone = result?.completed === false",
-    2
-  ],
-  [
-    "the detected flag is renamed, so the lifted rule no longer compiles against it",
-    "exec",
-    "const isDetected = stepDef",
-    "const isDetectedStep = stepDef",
-    2
-  ],
-  [
-    "a failed measurement (indeterminate) is recorded done again",
-    "exec",
-    "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;",
-    "if (result && (result.outcome === \"error\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;"
-  ],
-  [
-    "an error outcome is recorded done again",
-    "exec",
-    "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;",
-    "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;"
-  ],
-  [
-    "the veto overrides a runner's own completed:true",
-    "exec",
-    "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;",
-    "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\" || result.outcome === \"manual_required\")) result.completed = false;"
-  ],
-  [
-    "Google-not-connected (manual_required) is recorded done again",
-    "exec",
-    "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;",
-    "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\") && result.completed !== true) result.completed = false;"
-  ],
-  [
-    "a runner with no Google location returns no outcome again (recorded done)",
-    "exec",
-    "return { summary: \"No GBP location linked\", outcome: \"indeterminate\" }",
-    "return { summary: \"No GBP location linked\" }"
-  ],
-  [
-    "a draft completes the step again",
-    "exec",
-    "if (result && DRAFT_CALLS > 0 && result.completed !== true && result.outcome !== \"verified\") { result.completed = false; if (!result.outcome) result.outcome = \"draft_ready\"; }",
-    "if (result && DRAFT_CALLS > 99) {}"
-  ],
-  [
-    "a measured run that also drafted stays open",
-    "exec",
-    "if (result && DRAFT_CALLS > 0 && result.completed !== true && result.outcome !== \"verified\") { result.completed = false; if (!result.outcome) result.outcome = \"draft_ready\"; }",
-    "if (result && DRAFT_CALLS > 0 && result.completed !== true) { result.completed = false; if (!result.outcome) result.outcome = \"draft_ready\"; }"
-  ],
-  [
-    "aiDraft stops counting",
-    "exec",
-    "{ maxTokens = 400, temperature = 0.6 } = {}) {\n  DRAFT_CALLS++;\n",
-    "{ maxTokens = 400, temperature = 0.6 } = {}) {\n"
-  ],
-  [
-    "the counter is never reset",
-    "exec",
-    "    DRAFT_CALLS = 0;\n    const result = await executor(",
-    "    const result = await executor("
-  ]
+ [
+  "the detected clause is dropped from the decision — the original defect",
+  "exec",
+  "(!isHybrid && !isDetected)",
+  "(!isHybrid)",
+  1
+ ],
+ [
+  "the flag reads a property playbooks.json never sets",
+  "exec",
+  "stepDef?.clientDone === \"detected\"",
+  "stepDef?.clientDoneMode === \"detected\"",
+  1
+ ],
+ [
+  "the flag is pinned to a word no step uses",
+  "exec",
+  "=== \"detected\"",
+  "=== \"observed\"",
+  1
+ ],
+ [
+  "a runner can no longer report that it finished the job",
+  "exec",
+  "runnerCompleted || (!isHybrid && !isDetected)",
+  "(!isHybrid && !isDetected)",
+  1
+ ],
+ [
+  "over-corrected: only an explicit claim finishes anything, so plain automated steps never complete",
+  "exec",
+  "const isDone = result?.completed === false ? false : (runnerCompleted || (!isHybrid && !isDetected));",
+  "const isDone = result?.completed === false ? false : runnerCompleted;",
+  1
+ ],
+ [
+  "the decision is renamed, so the gate can no longer find what it judges",
+  "exec",
+  "const isDone = result?.completed === false",
+  "const isStepDone = result?.completed === false",
+  2
+ ],
+ [
+  "the detected flag is renamed, so the lifted rule no longer compiles against it",
+  "exec",
+  "const isDetected = stepDef",
+  "const isDetectedStep = stepDef",
+  2
+ ],
+ [
+  "a failed measurement (indeterminate) is recorded done again",
+  "exec",
+  "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;",
+  "if (result && (result.outcome === \"error\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;"
+ ],
+ [
+  "an error outcome is recorded done again",
+  "exec",
+  "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;",
+  "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;"
+ ],
+ [
+  "the veto overrides a runner's own completed:true",
+  "exec",
+  "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;",
+  "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\" || result.outcome === \"manual_required\")) result.completed = false;"
+ ],
+ [
+  "Google-not-connected (manual_required) is recorded done again",
+  "exec",
+  "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;",
+  "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\") && result.completed !== true) result.completed = false;"
+ ],
+ [
+  "a runner with no Google location returns no outcome again (recorded done)",
+  "exec",
+  "return { summary: \"No GBP location linked\", outcome: \"indeterminate\" }",
+  "return { summary: \"No GBP location linked\" }"
+ ],
+ [
+  "a draft completes the step again",
+  "exec",
+  "if (result && DRAFT_CALLS > 0 && result.completed !== true && result.outcome !== \"verified\") { result.completed = false; if (!result.outcome) result.outcome = \"draft_ready\"; }",
+  "if (result && DRAFT_CALLS > 99) {}"
+ ],
+ [
+  "a measured run that also drafted stays open",
+  "exec",
+  "if (result && DRAFT_CALLS > 0 && result.completed !== true && result.outcome !== \"verified\") { result.completed = false; if (!result.outcome) result.outcome = \"draft_ready\"; }",
+  "if (result && DRAFT_CALLS > 0 && result.completed !== true) { result.completed = false; if (!result.outcome) result.outcome = \"draft_ready\"; }"
+ ],
+ [
+  "aiDraft stops counting",
+  "exec",
+  "{ maxTokens = 400, temperature = 0.6, models = null, info = null } = {}) {\n  DRAFT_CALLS++;\n",
+  "{ maxTokens = 400, temperature = 0.6, models = null, info = null } = {}) {\n"
+ ],
+ [
+  "the counter is never reset",
+  "exec",
+  "    DRAFT_CALLS = 0;\n    const result = await executor(",
+  "    const result = await executor("
+ ]
 ]

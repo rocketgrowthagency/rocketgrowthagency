@@ -394,7 +394,7 @@
   [
     "admin.js's release stamp isn't bumped",
     "adminhtml",
-    "/admin/admin.js?v=20261107c",
+    "/admin/admin.js?v=20261107d",
     "/admin/admin.js?v=20261106f",
     1
   ],

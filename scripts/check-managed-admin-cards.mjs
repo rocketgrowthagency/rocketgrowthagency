@@ -357,7 +357,7 @@ try {
   { const used = new Set([...BLOCK.matchAll(/ob-mg[\w-]*/g)].map((m) => m[0]));
     must(used.size >= 8 && [...used].every((c) => new RegExp(`\\.${c}\\b`).test(ACSS)), "css: a managed-card class has no rule in admin.css"); }
   // the version stamps: admin's cache-buster moved, and the shared module has its own
-  { const idx = read("admin/index.html"); must(/admin\.js\?v=20261106[h-z]/.test(idx), "release: admin.js ?v= isn't bumped to 20261106h or later"); must(/hours-editor\.js\?v=\d+[a-z]/.test(AJS), "release: the shared module has no ?v= of its own"); }
+  { const idx = read("admin/index.html"); const rel = (idx.match(/admin\.js\?v=(\d{8}[a-z]*)/) || [])[1] || ""; must(rel.length >= 9 && (rel.slice(0, 8) > "20261106" || (rel.slice(0, 8) === "20261106" && rel.slice(8) >= "h")), "release: admin.js ?v= isn't bumped to 20261106h or later"); /* any later stamp counts (it read only Nov 6 ones) */ must(/hours-editor\.js\?v=\d+[a-z]/.test(AJS), "release: the shared module has no ?v= of its own"); }
 } catch (e) { fail(`the cards threw while being drawn or pressed (a card that throws is a broken card): ${String(e && e.stack || e).slice(0, 500)}`); }
 
 if (F.length) { console.error(`❌ managed admin cards BROKEN (${F.length} of ${runs} checks):`); for (const m of F) console.error("  · " + m); process.exit(1); }

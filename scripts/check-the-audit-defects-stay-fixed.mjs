@@ -45,7 +45,9 @@ for (const id of ["m1.gbp.optimize_categories", "m1.gbp.services_products", "m1.
   if (!/const _plan = await lockedPlanFor\(client\.id\);/.test(b) || !/return PLAN_NOT_LOCKED;/.test(b)) F(`#3 ${id} no longer waits for the locked keyword plan`);
   // the page steps hand the plan to the one pipeline (draftOnePage), and that pipeline writes from it
   const viaPipeline = PAGE_STEPS.includes(id) && /draftOnePage\(\{ client, _plan,/.test(b) && /async function draftOnePage\([\s\S]{0,1800}planBlock\(_plan\)/.test(FE);
-  if (!/planBlock\(_plan\)/.test(b) && !viaPipeline) F(`#3 ${id} no longer writes from the locked plan`);
+  // title_meta_recipe_v1 (11-7): step 43 hands the plan to its recipe, which puts the plan's keywords in the evidence the model gets
+  const viaRecipe = id === "m1.web.homepage_meta" && /draftTitleMeta\(\{ client, tasks: data\.tasks \|\| \{\}, data, plan: _plan,/.test(b) && /The plan's keywords, best first: \$\{pack\.keywords\.join/.test((() => { try { return fs.readFileSync(`${SITE}/netlify/functions/_title-meta.js`, "utf8"); } catch { return ""; } })());
+  if (!/planBlock\(_plan\)/.test(b) && !viaPipeline && !viaRecipe) F(`#3 ${id} no longer writes from the locked plan`);
 }
 if (/Suggest 3 sub-locations/i.test(FE)) F("#2 a draft invents its own sub-locations again");
 // 10-27 (rga_first_site_change_v1): the city page takes the plan's sub-locations as its areas (planLocations), with planBlock in the prompt

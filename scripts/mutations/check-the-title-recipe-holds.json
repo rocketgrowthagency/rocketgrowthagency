@@ -1,0 +1,79 @@
+[
+ [
+  "an invented price passes",
+  "titlemeta",
+  "if (!facts.includes(m.replace(/\\s/g, \"\"))) bad.push(`${m} isn't a price on file`);",
+  "if (false) bad.push(\"\");",
+  1
+ ],
+ [
+  "a phone that isn't theirs passes",
+  "titlemeta",
+  "if (!pack.phone || digits(m) !== digits(pack.phone)) bad.push(",
+  "if (false) bad.push(",
+  1
+ ],
+ [
+  "the plan keyword isn't needed",
+  "titlemeta",
+  "add(\"keyword_city\", rank >= 0 && (!city || norm(title).includes(norm(city))),",
+  "add(\"keyword_city\", true,",
+  1
+ ],
+ [
+  "a title over 60 goes out",
+  "titlemeta",
+  "title && title.length <= TITLE_MAX && px <= TITLE_PX",
+  "!!title",
+  1
+ ],
+ [
+  "a duplicate title passes",
+  "titlemeta",
+  "add(\"not_duplicate\", !dup,",
+  "add(\"not_duplicate\", true,",
+  1
+ ],
+ [
+  "the winner isn't the plan's highest keyword",
+  "titlemeta",
+  "a.r.rank - b.r.rank || ",
+  "",
+  1
+ ],
+ [
+  "the model isn't pinned",
+  "titlemeta",
+  "{ maxTokens: 4000, temperature: 0.4, models: MODELS, info }",
+  "{ maxTokens: 4000, temperature: 0.4, info }",
+  1
+ ],
+ [
+  "no-price clients are told nothing",
+  "titlemeta",
+  "\"Prices: none on file (never state a price, fee, plan or term)\"",
+  "\"\"",
+  1
+ ],
+ [
+  "doing worse on few views",
+  "admindeliv",
+  "from: new Date(Date.parse(p0.at) - 29 * 864e5)",
+  "from: new Date(Date.parse(p0.at))",
+  1
+ ],
+ [
+  "worse ignores the 100 views",
+  "pagemeasure",
+  "w.impressions < 100 || ",
+  "",
+  1
+ ],
+ [
+  "the brand counts toward a keyword",
+  "titlemeta",
+  "const rank = keywordRank(noBrand, pack.keywords, places);",
+  "const rank = keywordRank(title, pack.keywords, places);",
+  1
+ ]
+]

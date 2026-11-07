@@ -29,7 +29,7 @@ const code = [line(/^const WC_TILE = [^\n]*;$/m, "WC_TILE"), line(/^const WC_KIN
   // publish_safety_checks_v1 (10-28): the safety panel, who merged, the after-check
   line(/^const wcSafetyCache = [^\n]*$/m, "wcSafetyCache"), line(/^const wcRestAsked = [^\n]*$/m, "wcRestAsked"), line(/^const WC_DAY = [^\n]*;$/m, "WC_DAY"), fn("ghIdHtml"), fn("ghPillText"), fn("ghClientName"), fn("ghBandHtml"), fn("ghPanelHtml"), fn("wcSafetyPanel"), fn("wcMergedHtml"), fn("wcRestHtml"), fn("wcProofHtml"), line(/^const WC_EYE = [^\n]*;$/m, "WC_EYE"), line(/^const wcPathOf = [^\n]*;$/m, "wcPathOf"), fn("wcWhatHtml"),
   // admin_website_steps_autopilot_v1 (11-6): the card while the system has the step, the raw output inside the card
-  line(/^let wcStepNoOf = [^\n]*$/m, "wcStepNoOf"), fn("wcRunsItself"), fn("wcAutoMove"), line(/^const WC_CLOCK = [^\n]*;$/m, "WC_CLOCK"), fn("wcDue"), fn("wcAutoCardHtml"), fn("wcRawHtml"), fn("siteChangeAdminHtml")].join("\n");
+  line(/^let wcStepNoOf = [^\n]*$/m, "wcStepNoOf"), fn("wcRunsItself"), fn("wcAutoMove"), line(/^const WC_CLOCK = [^\n]*;$/m, "WC_CLOCK"), fn("wcDue"), fn("wcAutoCardHtml"), line(/^const TM_CHECK = [^\n]*;$/m, "TM_CHECK"), fn("wcRecipeHtml"), fn("wcRawHtml"), fn("siteChangeAdminHtml")].join("\n");
 
 let puppeteer; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer isn't installed"); process.exit(2); }

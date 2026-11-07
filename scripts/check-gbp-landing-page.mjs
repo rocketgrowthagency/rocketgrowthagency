@@ -345,7 +345,10 @@ if (!/try \{\s*const gl = await require\("\.\/_gbp-landing-run"\)\.sweepLanding\
 // ── the steps that aim at the homepage use the saved page ──
 if (!/GL\.pageFor\(tasks, client\)/.test(deliv) && !/_gbp-landing"\)[\s\S]{0,80}pageFor\(tasks, client\)/.test(deliv)) F("the prefill for the title and headline steps doesn't use the saved page");
 if (!/c\.page_url = pg \? pg\.url : site/.test(deliv)) F("the prefill must fall back to the homepage");
-if ((exec.match(/\$\{await pageBlock\(client\)\}/g) || []).length < 2) F("both the title and the headline drafts must be aimed at the saved page");
+// title_meta_recipe_v1 (11-7): the title step's recipe reads the saved page itself (GL.pageFor in _title-meta.js gatherEvidence); the headline step keeps pageBlock
+{ const TMsrc = (() => { try { return fs.readFileSync(path.join(SITE, "netlify/functions/_title-meta.js"), "utf8"); } catch { return ""; } })();
+  const titleAims = /require\("\.\/_title-meta"\)\.draftTitleMeta\(/.test(exec) ? /GL = require\("\.\/_gbp-landing"\), pg = GL\.pageFor\(tasks \|\| \{\}, client\)/.test(TMsrc) : (exec.match(/\$\{await pageBlock\(client\)\}/g) || []).length >= 2;
+  if (!titleAims || (exec.match(/\$\{await pageBlock\(client\)\}/g) || []).length < 1) F("both the title and the headline drafts must be aimed at the saved page"); }
 if (!/pageFor\(recs\?\.\[0\]\?\.data\?\.tasks \|\| \{\}, client\)/.test(exec)) F("the draft's page comes from somewhere other than the saved decision");
 
 // ── the card, rendered from admin.js ──
