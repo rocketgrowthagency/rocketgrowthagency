@@ -28,8 +28,8 @@ const yes = (name, v) => { if (!v) F.push(name); };
 const DB = "https://fake-db.test", SITEURL = "https://fake-site.test", HOOK = "https://fake-hook.test/x", SECRET = "fake-internal-secret-value";
 Object.assign(process.env, { SUPABASE_URL: DB, SUPABASE_SERVICE_ROLE_KEY: "fake-service-key-value", SUPABASE_ANON_KEY: "fake-anon", INTERNAL_FN_SECRET: SECRET, URL: SITEURL });
 delete process.env.RGA_NOTIFICATION_WEBHOOK_URL;
-const W = { rows: [], activity: [], clients: [{ id: "rga-client", business_name: "Rocket Growth Agency" }], mode: "ok", notifyCalls: 0, hookCalls: 0, notifyBroken: false, realCalls: [], hookOk: true };
-const reset = () => { W.rows = []; W.activity = []; W.notifyCalls = 0; W.hookCalls = 0; W.mode = "ok"; W.notifyBroken = false; W.clients = [{ id: "rga-client", business_name: "Rocket Growth Agency" }]; delete process.env.RGA_NOTIFICATION_WEBHOOK_URL; };
+const W = { rows: [], activity: [], clients: [{ id: "rga-client", business_name: "Rocket Growth Agency" }], mode: "ok", notifyCalls: 0, hookCalls: 0, notifyBroken: false, realCalls: [], hookOk: true, gmail: "none", gmailSends: [] };
+const reset = () => { W.gmail = "none"; W.gmailSends = []; W.rows = []; W.activity = []; W.notifyCalls = 0; W.hookCalls = 0; W.mode = "ok"; W.notifyBroken = false; W.clients = [{ id: "rga-client", business_name: "Rocket Growth Agency" }]; delete process.env.RGA_NOTIFICATION_WEBHOOK_URL; };
 const res = (status, body) => new Response(typeof body === "string" ? body : JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 let nextId = 1, notifyRga;
 globalThis.fetch = async (input, init = {}) => {
@@ -42,7 +42,18 @@ globalThis.fetch = async (input, init = {}) => {
     const out = await notifyRga.handler({ httpMethod: "POST", headers: init.headers, body: init.body });
     return res(out.statusCode, out.body);
   }
+  // 🔒 11-7: alerts are emailed to hello@ as RGA (_gmail.sendAsRga). Google's sign-in and Gmail are fakes too.
+  if (u === "https://oauth2.googleapis.com/token") return res(200, { access_token: "fake-access" });
+  if (u.startsWith("https://gmail.googleapis.com/")) {
+    if (W.gmail === "refuse") return res(403, { error: { message: "refused" } });
+    const raw = Buffer.from(JSON.parse(init.body).raw, "base64url").toString("utf8");
+    const head = raw.split("\r\n\r\n")[0].replace(/\r\n /g, "");
+    const words = (v) => v.replace(/=\?UTF-8\?B\?([^?]+)\?=/g, (_, b) => Buffer.from(b, "base64").toString("utf8"));
+    W.gmailSends.push({ to: (/^To: (.*)$/m.exec(head) || [])[1] || "", subject: words((/^Subject: (.*)$/m.exec(head) || [])[1] || "") });
+    return res(200, { id: `m${W.gmailSends.length}` });
+  }
   if (!u.startsWith(DB)) { W.realCalls.push(`${m} ${u}`); throw new Error(`a real address was called: ${u}`); }
+  if (u.includes("/rest/v1/rga_google_credentials")) return res(200, W.gmail === "none" ? [] : [{ refresh_token: "plain-refresh", google_email: "hello@rocketgrowthagency.com", scopes: "https://www.googleapis.com/auth/gmail.send" }]);
   if (u.includes("/auth/v1/user")) return String((init.headers || {}).Authorization).includes("good-token") ? res(200, { id: "u1", email: "a@b.c" }) : res(401, {});
   if (u.includes("/rest/v1/profiles")) return res(200, [{ workspace_id: "w1" }]);
   if (u.includes("/rest/v1/clients")) return res(200, W.clients.slice(0, 1));
@@ -175,6 +186,25 @@ const liveMessages = () => W.activity.filter((a) => /_(failed|error)$/.test(a.pa
   await pass(T0 + 2 * DAY + HOUR);
   eq("a new failure is a first alert again", alerts().at(-1)?.count, 1);
   eq("and it was sent", W.notifyCalls, 3);
+}
+{ // 🔒 11-7, the owner: "fix all issues". An alert is emailed to hello@ as well, and the record says which route it took.
+  reset(); W.gmail = "ok";
+  ran(Date.parse("2026-10-31T08:00:00Z"), { ok: false, error: "the job broke" });
+  await pass(T0);
+  eq("emailed: one email", W.gmailSends.length, 1);
+  yes("emailed: to hello@", /hello@rocketgrowthagency\.com/.test(W.gmailSends[0]?.to || ""));
+  yes("emailed: the subject names the job", /^System health: Billing check/.test(W.gmailSends[0]?.subject || ""));
+  yes("emailed: the record says activity+email", /via activity\+email/.test(alerts()[0]?.note || ""));
+  reset(); W.gmail = "ok"; W.clients = [];   // Messages can't take it: the email alone is a delivery
+  ran(Date.parse("2026-10-31T08:00:00Z"), { ok: false, error: "x" });
+  await pass(T0);
+  eq("email only: delivered", alerts()[0]?.ok, true);
+  yes("email only: the record says email", /via email$/.test(alerts()[0]?.note || ""));
+  reset(); W.gmail = "refuse"; W.clients = [];   // neither route: not delivered, and the email's own failure is the reason
+  ran(Date.parse("2026-10-31T08:00:00Z"), { ok: false, error: "x" });
+  await pass(T0);
+  eq("neither: not delivered", alerts()[0]?.ok, false);
+  yes("neither: the email's failure is on record", /email: Gmail/i.test(alerts()[0]?.error || "") || /email:/.test(alerts()[0]?.error || ""));
 }
 { // not delivered
   reset(); W.clients = [];   // no RGA client, no webhook: notify-rga truly can't deliver
@@ -354,7 +384,10 @@ const liveMessages = () => W.activity.filter((a) => /_(failed|error)$/.test(a.pa
   eq("a webhook nothing has proved", j.alerts.tag, "Not proven");
   eq("a webhook nothing has proved isn't green", j.alerts.tone, "unk");
   delete process.env.RGA_NOTIFICATION_WEBHOOK_URL;
-  eq("no webhook is said plainly", JSON.parse((await read()).body).alerts.tag, "Messages only");
+  eq("no webhook, no emailed alert yet: not proven", JSON.parse((await read()).body).alerts.tag, "Not proven");
+  W.rows.push({ id: "e", job: "alert:y", ok: true, note: "failed · via activity+email", started_at: new Date().toISOString(), finished_at: new Date().toISOString() });
+  eq("an emailed alert proves the email", JSON.parse((await read()).body).alerts.tone, "ok");
+  W.rows = W.rows.filter((r) => r.id !== "e");
   W.rows.push({ id: "a", job: "alert:x", ok: true, note: "failed · via webhook+activity", started_at: new Date().toISOString(), finished_at: new Date().toISOString() });
   process.env.RGA_NOTIFICATION_WEBHOOK_URL = HOOK;
   eq("a webhook that delivered is proven", JSON.parse((await read()).body).alerts.tone, "ok");
