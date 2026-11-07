@@ -114,8 +114,8 @@ const S = {
     auto_send: { v: "v1", at: NOW, due_at: "2099-11-08T19:10:00Z", failed: [], fixed: [{ label: "Description under the title", removed: "same-day start available" }], held: null, rev: 2 } } },
   autoCheckFailed: { auto: true, task: { status: "in_progress", ran_at: NOW, site_change: { v: "v1", kind: "visible", label: "edit_page", where: "Your homepage", drafted_at: NOW, drafted_by: "RGA (automatic)", items: [{ label: "Main headline", before: "A", after: "Guaranteed first place" }] },
     auto_send: { v: "v1", at: NOW, due_at: NOW, failed: [{ label: "Main headline", why: "It says a guarantee we can't back (\"Guaranteed\")." }], held: null } } },
-  autoFailedTwice: { auto: true, task: { status: "in_progress", ran_at: NOW, auto_result: { summary: "x", ran_at: NOW }, auto_failed: { at: NOW, run: NOW, rev: 2, why: "The draft didn't come out right twice: The run has no lines to fill." } } },
-  autoCheck: { auto: true, task: { status: "in_progress", ran_at: NOW, auto_result: { summary: "Mobile PSI: 92/100", ran_at: NOW }, auto_failed: { at: NOW, run: NOW, rev: 2, kind: "check", why: "The check found: Mobile PSI: 92/100 CLS=0.116. There's no change it can draft from that by itself." } } },
+  autoFailedTwice: { auto: true, task: { status: "in_progress", ran_at: NOW, auto_result: { summary: "x", ran_at: NOW }, auto_failed: { at: NOW, run: NOW, rev: 3, why: "The draft didn't come out right twice: The run has no lines to fill." } } },
+  autoCheck: { auto: true, task: { status: "in_progress", ran_at: NOW, auto_result: { summary: "Mobile PSI: 92/100", ran_at: NOW }, auto_failed: { at: NOW, run: NOW, rev: 3, kind: "check", why: "The check found: Mobile PSI: 92/100 CLS=0.116. There's no change it can draft from that by itself." } } },
 };
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 const out = {};

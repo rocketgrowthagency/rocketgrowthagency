@@ -113,7 +113,7 @@ if (M1.buildMonth1Report({ client: { business_name: "X" }, tasks: {}, playbook: 
 const FE = read("netlify/functions/flow-execute.js");
 if (!/require\("\.\/_page-measure"\)\.measureLivePages\(\{ tasks, supa, clientId: client\.id/.test(FE) || !/buildMonth1Report\(\{ client, tasks, pageMeasures,/.test(FE)) fail("the Month 1 report isn't given the numbers");
 const A = read("admin/admin.js");
-if (!/isPage && c && !c\.removes_page \? wcMeasureHtml\(id, task\)/.test(A) || !/not enough data yet/.test(A)) fail("the live card doesn't show the numbers");
+if (!/\(isPage \|\| id === "m1\.web\.homepage_meta"\) && c && !c\.removes_page \? wcMeasureHtml\(id, task\)|isPage && c && !c\.removes_page \? wcMeasureHtml\(id, task\)/.test(A) || !/not enough data yet/.test(A)) fail("the live card doesn't show the numbers");
 if (!/if \(act === "measure"\)/.test(AD) || !/This reads once the page is live/.test(AD)) fail("the measure action is gone");
 
 // ── 12 · the website steps run themselves (website_system_v2 build 12 → admin_website_steps_autopilot_v1, the owner 11-6) ──────
@@ -221,6 +221,10 @@ const sweep = async (env, n = 4, failStart = false, lost = false) => { const sta
   const chk = (outcome, summary) => { rec.data.tasks["m1.web.h1_cta"] = { status: "in_progress", ran_at: ranAt, outcome, auto_result: { summary, outcome, outcome_data: { unique_phones: 1 } } }; patches.length = 0; calls.length = 0; const st = []; return AR.sweepWebsiteSteps({ deps: mk({ kind: "visible", items: [] }, st) }).then(() => st); };
   const c1 = await chk("consistent", "NAP audit: one phone everywhere");
   if (c1.length || !calls.some((b) => b.site_action === "no_change" && /already right: NAP audit/.test(b.note))) fail("a check that measured it already right isn't recorded as already right (RGA's step 40: \"consistent\")");
+  // 11-7 (RGA's step 45): an OLD draft with no outcome and no data is a draft that didn't come out (it redrafts), never a check finding
+  { rec.data.tasks["m1.web.h1_cta"] = { status: "in_progress", auto_result: { summary: "=== Google Business Profile Optimization ===\n# A headline" } }; patches.length = 0; calls.length = 0; const st0 = [];
+    await AR.sweepWebsiteSteps({ deps: mk({ kind: "visible", items: [] }, st0) });
+    if (st0.length !== 1 || patches.some((d) => ((d.data.tasks["m1.web.h1_cta"] || {}).auto_failed || {}).kind === "check")) fail("an old draft with no data reads as a check finding instead of redrafting (RGA's step 45)"); }
   const c2 = await chk("needs_fix", "Mobile PSI: 92/100  CLS=0.116");
   const f2 = patches.map((d) => (d.data.tasks["m1.web.h1_cta"] || {}).auto_failed).find(Boolean);
   if (c2.length || !f2 || f2.kind !== "check" || !/The check found: Mobile PSI: 92\/100/.test(f2.why)) fail("a check that found something isn't RGA's move with what it found (or it re-runs)");

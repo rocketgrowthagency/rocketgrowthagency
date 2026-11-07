@@ -411,5 +411,12 @@
   "return fx.fixed.length && !again.length ?",
   "return fx.fixed.length ?",
   1
+ ],
+ [
+  "an old draft reads as a check",
+  "webautorun",
+  "const isCheck = measured && !od.draft",
+  "const isCheck = !od.draft",
+  1
  ]
 ]
