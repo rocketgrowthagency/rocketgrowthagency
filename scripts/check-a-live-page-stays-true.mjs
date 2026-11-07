@@ -151,7 +151,7 @@ if (AR.clientWhyNot({ ...cl, website_url: "" }, {}) === null) fail("a client wit
   const newer = { "m1.web.homepage_meta": { status: "done", ran_at: iso(T0 - 600e3) } };
   if (!/^redo:redo:ood:m1\.web\.homepage_meta@/.test(act({ status: "in_progress", ran_at: ran, auto_result: {} }, newer) || "")) fail("an out-of-date draft doesn't draft again");
   if (act({ status: "in_progress", ran_at: ran, auto_result: {}, auto_done: { [`redo:ood:m1.web.homepage_meta@${iso(T0 - 600e3)}`]: "x" } }, newer) !== fin) fail("an out-of-date redraft repeats");
-  const sc = { v: cv, drafted_by: AR.AUTO_WHO, items: [{ label: "Main headline", after: "x" }] }, as = (o) => ({ v: cv, at: cv, due_at: iso(T0 - 1), failed: [], held: null, ...o });
+  const sc = { v: cv, drafted_by: AR.AUTO_WHO, items: [{ label: "Main headline", after: "x" }] }, as = (o) => ({ v: cv, at: cv, due_at: iso(T0 - 1), failed: [], held: null, rev: SC.AUTO_CHECKS_REV, ...o });
   if (act({ ran_at: ran, site_change: sc, auto_send: as({}) }) !== `send:send:${cv}`) fail("a checked draft past its 24 hours doesn't go to the client");
   if (act({ ran_at: ran, site_change: sc, auto_send: as({ due_at: iso(T0 + 3600e3) }) }) !== null) fail("a draft goes to the client before its 24 hours");
   if (act({ ran_at: ran, site_change: sc, auto_send: as({ held: { at: "x" } }) }) !== null) fail("a held draft still goes to the client");
@@ -226,6 +226,26 @@ const sweep = async (env, n = 4, failStart = false, lost = false) => { const sta
   if (c2.length || !f2 || f2.kind !== "check" || !/The check found: Mobile PSI: 92\/100/.test(f2.why)) fail("a check that found something isn't RGA's move with what it found (or it re-runs)");
 }
 const ADx = read("netlify/functions/admin-deliverables.js");
+// admin_steps_43_44_v1 + admin_steps_43_50_auto_v1 (11-7): a timing promise fails unless it's on their site; the system takes out what it flagged and checks again
+{
+  const d43 = { items: [{ label: "Description under the title", after: "Maps SEO for Culver City businesses. Month-to-month from $625/mo. Call (424) 242-2040, same-day start available." }] };
+  const f = SC.autoChecks(d43, { siteText: "<p>$625 a month. Cancel anytime</p>" });
+  if (!f.some((x) => x.text === "same-day")) fail("a timing promise that isn't on their site passes the checks (RGA's step 43: \"same-day start available\")");
+  if (SC.autoChecks(d43, { siteText: "We offer a same-day start." }).length) fail("a timing promise already on their site is flagged");
+  const fx = SC.autoFix(d43, f);
+  if (fx.change.items[0].after !== "Maps SEO for Culver City businesses. Month-to-month from $625/mo. Call (424) 242-2040." || fx.fixed[0].removed !== "same-day start available" || SC.autoChecks(fx.change).length) fail(`the system doesn't take out the flagged clause by itself (${fx.change.items[0].after})`);
+  const g = { items: [{ label: "Opening", after: "Guaranteed first place on Google." }] };
+  if (SC.autoFix(g, SC.autoChecks(g)).fixed.length) fail("a fix that would empty a line is made (that one stays RGA's)");
+  const T0 = Date.parse("2026-11-07T12:00:00Z"), cv = "2026-11-07T10:00:00.000Z", sc0 = { v: cv, drafted_by: AR.AUTO_WHO, items: [{ label: "x", after: "y" }] };
+  const base0 = { "m1.strategy.keywords_locations": done, "m1.web.homepage_meta": done };
+  const pl = (a) => AR.planStep(steps[1], { ...base0, "m1.web.h1_cta": { ran_at: cv, site_change: sc0, auto_send: { v: cv, due_at: "2026-11-07T11:00:00Z", failed: [], ...a } } }, T0);
+  if ((pl({}) || {}).act !== "recheck" || (pl({ rev: SC.AUTO_CHECKS_REV }) || {}).act !== "send") fail("a waiting draft checked before a check was added isn't checked again before it goes");
+  const calls2 = [];
+  const fk = { siteText: async () => "", call: async (fn, b) => { calls2.push(b); return { ok: true, j: {} }; } };
+  const r1 = await AR.checkAndFix(fk, { id: "c" }, d43);
+  if (r1.failed.length || !r1.fixed.length || /same-day/.test(r1.change.items[0].after)) fail("checkAndFix doesn't fix and pass the step 43 draft");
+}
+if (!/const keep = Date\.parse\(body\.auto\.due_at \|\| ""\), due = Number\.isFinite\(keep\) && keep > Date\.parse\(now\)/.test(ADx)) fail("the system's own fix of a waiting draft restarts its 24 hours (or can make it go sooner)");
 // 11-7: the draft reader knows "**TITLE:**" with the words in backticks below (RGA's step 43 redraft read as "no lines"), and the older shapes
 {
   const at = ADx.indexOf("  const line = (re) => {"), end = ADx.indexOf("  let html = \"\";", at);

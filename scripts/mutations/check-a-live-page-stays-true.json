@@ -376,5 +376,40 @@
   "      if (isCheck) return (await claim(",
   "      if (false) return (await claim(",
   1
+ ],
+ [
+  "a timing promise passes",
+  "sitechange",
+  "for (const i of lines) { const m = String(i.after).match(TIMING); if (m && !(site && site.includes(norm(m[0])))) out.push(",
+  "for (const i of []) { const m = String(i.after).match(TIMING); if (m && !(site && site.includes(norm(m[0])))) out.push(",
+  1
+ ],
+ [
+  "a timing promise on their site is flagged",
+  "sitechange",
+  "if (m && !(site && site.includes(norm(m[0])))) out.push(",
+  "if (m) out.push(",
+  1
+ ],
+ [
+  "the fix empties a line",
+  "sitechange",
+  "      if (!after) continue;\n",
+  "",
+  1
+ ],
+ [
+  "a waiting draft isn't re-checked",
+  "webautorun",
+  "(Number(a.rev) || 1) < SC.AUTO_CHECKS_REV && !done[",
+  "false && !done[",
+  1
+ ],
+ [
+  "the fix isn't checked again",
+  "webautorun",
+  "return fx.fixed.length && !again.length ?",
+  "return fx.fixed.length ?",
+  1
  ]
 ]

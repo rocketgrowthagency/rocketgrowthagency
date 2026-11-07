@@ -29,7 +29,7 @@ const code = [line(/^const WC_TILE = [^\n]*;$/m, "WC_TILE"), line(/^const WC_KIN
   // publish_safety_checks_v1 (10-28): the safety panel, who merged, the after-check
   line(/^const wcSafetyCache = [^\n]*$/m, "wcSafetyCache"), line(/^const wcRestAsked = [^\n]*$/m, "wcRestAsked"), line(/^const WC_DAY = [^\n]*;$/m, "WC_DAY"), fn("ghIdHtml"), fn("ghPillText"), fn("ghClientName"), fn("ghBandHtml"), fn("ghPanelHtml"), fn("wcSafetyPanel"), fn("wcMergedHtml"), fn("wcRestHtml"), fn("wcProofHtml"), line(/^const WC_EYE = [^\n]*;$/m, "WC_EYE"), line(/^const wcPathOf = [^\n]*;$/m, "wcPathOf"), fn("wcWhatHtml"),
   // admin_website_steps_autopilot_v1 (11-6): the card while the system has the step, the raw output inside the card
-  fn("wcRunsItself"), fn("wcAutoMove"), line(/^const WC_CLOCK = [^\n]*;$/m, "WC_CLOCK"), fn("wcDue"), fn("wcAutoCardHtml"), fn("wcRawHtml"), fn("siteChangeAdminHtml")].join("\n");
+  line(/^let wcStepNoOf = [^\n]*$/m, "wcStepNoOf"), fn("wcRunsItself"), fn("wcAutoMove"), line(/^const WC_CLOCK = [^\n]*;$/m, "WC_CLOCK"), fn("wcDue"), fn("wcAutoCardHtml"), fn("wcRawHtml"), fn("siteChangeAdminHtml")].join("\n");
 
 let puppeteer; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer isn't installed"); process.exit(2); }
@@ -110,6 +110,8 @@ const S = {
   autoScheduled: { auto: true, task: { status: "in_progress", ran_at: NOW, auto_result: { summary: "Headline: Local SEO That Puts Your Business on the Map\nButton: Get Your Free Audit", ran_at: NOW },
     site_change: { v: "v1", kind: "visible", label: "edit_page", where: "Your homepage", drafted_at: NOW, drafted_by: "RGA (automatic)", items: [{ label: "Main headline", before: "Rank Higher on Google Maps", after: "Local SEO That Puts Your Business on the Map" }] },
     auto_send: { v: "v1", at: NOW, due_at: "2099-11-07T16:00:00Z", failed: [], held: null } } },
+  autoFixed: { auto: true, task: { status: "in_progress", ran_at: NOW, site_change: { v: "v1", kind: "visible", label: "edit_page", where: "Your homepage", drafted_at: NOW, drafted_by: "RGA (automatic)", items: [{ label: "Description under the title", before: "A", after: "Call (424) 242-2040." }] },
+    auto_send: { v: "v1", at: NOW, due_at: "2099-11-08T19:10:00Z", failed: [], fixed: [{ label: "Description under the title", removed: "same-day start available" }], held: null, rev: 2 } } },
   autoCheckFailed: { auto: true, task: { status: "in_progress", ran_at: NOW, site_change: { v: "v1", kind: "visible", label: "edit_page", where: "Your homepage", drafted_at: NOW, drafted_by: "RGA (automatic)", items: [{ label: "Main headline", before: "A", after: "Guaranteed first place" }] },
     auto_send: { v: "v1", at: NOW, due_at: NOW, failed: [{ label: "Main headline", why: "It says a guarantee we can't back (\"Guaranteed\")." }], held: null } } },
   autoFailedTwice: { auto: true, task: { status: "in_progress", ran_at: NOW, auto_result: { summary: "x", ran_at: NOW }, auto_failed: { at: NOW, run: NOW, rev: 2, why: "The draft didn't come out right twice: The run has no lines to fill." } } },
@@ -172,15 +174,18 @@ try {
 const has = (n, re, what) => { if (!re.test(out[n].text)) fail(`${n}: ${what}`); };
 for (const [n, o] of Object.entries(out)) { if (o.cards !== 1) fail(`${n}: not ONE row-8 card (${o.cards})`); if (o.nested) fail(`${n}: a box inside the card's box`); if (/Drafted\s*Sent\s*Client approval/.test(o.text)) fail(`${n}: the old trail is back`); }
 // admin_website_steps_autopilot_v1: the steps run themselves — no Run button, the card's label is what the system is doing, RGA's only on a failed check / two failed drafts
-for (const n of ["autoQueued", "autoNotProven", "autoScheduled", "autoCheckFailed", "autoFailedTwice"]) if (out[n].buttons.some((b) => /^⚡|Draft/.test(b))) fail(`${n}: a step that runs itself still has a Run / Draft button (${out[n].buttons})`);
+for (const n of ["autoQueued", "autoNotProven", "autoScheduled", "autoFixed", "autoCheckFailed", "autoFailedTwice"]) if (out[n].buttons.some((b) => /^⚡|Draft/.test(b))) fail(`${n}: a step that runs itself still has a Run / Draft button (${out[n].buttons})`);
 if (!/Runs itself · drafts itself shortly/.test(out.autoQueued.label) || out.autoQueued.pill !== "Drafts itself") fail(`auto queued: not "Runs itself · drafts itself shortly" / "Drafts itself" (${out.autoQueued.label} · ${out.autoQueued.pill})`);
 has("autoNotProven", /ticked done before every website change went through approval[\s\S]*drafts itself again within 10 minutes/, "a step ticked before approvals doesn't say it drafts itself again");
 if (!/^Runs itself · goes to the client Nov 7, \d{1,2}( |:)/.test(out.autoScheduled.label) && !/^Runs itself · goes to the client Nov [78],/.test(out.autoScheduled.label)) fail(`auto scheduled: the label isn't "Runs itself · goes to the client <day, time>" (${out.autoScheduled.label})`);
 if (["Hold", "Edit the lines", "Send now"].some((b) => !out.autoScheduled.buttons.includes(b)) || out.autoScheduled.buttons.includes("Send for approval")) fail(`auto scheduled: not Hold · Edit the lines · Send now (${out.autoScheduled.buttons})`);
-has("autoScheduled", /every check passed\. It goes to their For your approval in 24 hours unless you hold it/, "the scheduled card doesn't say it goes in 24 hours unless held");
+has("autoScheduled", /every check passed\. It goes to their For your approval on Nov \d+, \d{1,2}[^.]* unless you hold it/, "the scheduled card doesn't say when it goes unless held");
+has("autoFixed", /every check passed\. It fixed one thing by itself: took out “same-day start available”/, "a draft the system fixed by itself doesn't say what it took out");
 if (!/^Goes out /.test(out.autoScheduled.pill)) fail(`auto scheduled: the row's chip isn't "Goes out <day>" (${out.autoScheduled.pill})`);
 if (!out.autoScheduled.rawInside || out.autoScheduled.rawOutside) fail("the run's raw output isn't inside the card");
 if (!/Your move · a check failed/.test(out.autoCheckFailed.label) || !/a guarantee we can't back[\s\S]*Nothing was sent\. Edit the lines, then send\./.test(out.autoCheckFailed.text) || !out.autoCheckFailed.buttons.includes("Edit the lines") || out.autoCheckFailed.pill !== "Check failed") fail("a failed check isn't RGA's move with the reason and Edit the lines");
+if (!/\$\{\(\) => \{\n\s*\/\/ 🔒 admin_steps_43_44_v1/.test(A) && !/Waits for step \$\{escapeHtml\(bNo1\)\}/.test(A)) fail("a waiting website step's row says \"Locked · until step N · title\" instead of \"Waits for step N\"");
+if (!/label: `Runs itself · waits for \$\{no \? `step \$\{escapeHtml\(no\)\}` : "an earlier step"\}`/.test(A) || !/is \$\{theirs\}\$\{fmWhy\}/.test(A)) fail("the waiting card doesn't name the step by number and whose move it is");
 if (!/Your move · the check needs you/.test(out.autoCheck.label) || !/The check found: Mobile PSI[\s\S]*Write the change with Edit the lines/.test(out.autoCheck.text) || out.autoCheck.buttons.some((b) => /^⚡|Draft/.test(b))) fail("a check that found something isn't \"the check needs you\" with what it found");
 if (!/Your move · the draft didn't come out right/.test(out.autoFailedTwice.label) || !/It won't draft again by itself/.test(out.autoFailedTwice.text) || out.autoFailedTwice.pill !== "Your move") fail("a draft that failed twice isn't RGA's move with its reason");
 if (!out.draftit.buttons.includes("⚡ Draft this for me") || out.draftit.textareas) fail("draft it: no ⚡ Draft this for me, or the empty form is open before there's a draft");
