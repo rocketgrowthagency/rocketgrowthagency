@@ -289,7 +289,7 @@
  [
   "a stuck run is never handed back",
   "webautorun",
-  "return now - claim >= SC.AUTO_STUCK_MS && !failed ? { act: \"fail\"",
+  "return now - claim >= SC.AUTO_STUCK_MS && !failed && !done[`stuck:${claim}`] ? { act: \"fail\"",
   "return false ? { act: \"fail\"",
   1
  ],
