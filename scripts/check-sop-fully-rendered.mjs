@@ -124,6 +124,14 @@ console.log(`  …of which have a runner      : ${withRunner}`);
 console.log(`  curated objectives covering  : ${curated}`);
 console.log(`  month2plus steps             : ${m2.length}`);
 
+// 5. admin_done_tick_one_green_v1 (approved 11-6, "make sure always same color"): every Done tick is the same green
+{
+  const css = fs.readFileSync(path.join(WEB, "admin", "admin.css"), "utf8");
+  const bg = (re) => { const m = css.match(re); return m ? m[1].replace(/\s+/g, "").toLowerCase() : null; };
+  const plain = bg(/\.ob-step\.done \.ob-num \{[^}]*background:([^;}]+)/), google = bg(/\.ob-step\[data-g\] \.ob-num\.g-ok \{[^}]*background:([^;}]+)/);
+  if (!plain || !google || plain !== google) { fails.push("done tick colors"); console.log(`  🔴 a Done tick isn't the same green everywhere (checklist ${plain}, Google-card rows ${google})`); }
+  else console.log("  ✅ every Done tick is the same green");
+}
 // 4. 11-6 (the owner's screenshot): the photo step waiting on the client's photos was the next-action card's "Your move · ⚡ Draft this for me"
 // while its row read "Client's move". In the one sequencer it waits on the client unless the row's own rule says it's RGA's (review / rgaN).
 {
