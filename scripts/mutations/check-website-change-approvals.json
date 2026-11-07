@@ -186,5 +186,19 @@
   "// POST { client_id, action: \"auto\" }",
   "// pushes through api.github.com\n// POST { client_id, action: \"auto\" }",
   1
+ ],
+ [
+  "a rewritten line is marked word by word",
+  "portal",
+  "  return mixed ? Infinity : n;",
+  "  return n;",
+  1
+ ],
+ [
+  "the rewrite shows word marks",
+  "portal",
+  "const diff = (i) => (i.before && i.after && ibChangedPlaces(i.before, i.after) >= 3",
+  "const diff = (i) => (false",
+  1
  ]
 ]

@@ -68,7 +68,7 @@ try {
     await page.close();
   }
   // 🔒 for_your_approval_add_remove_v5 (approved 10-28): the REAL card for a page to add / take off, in Chrome with portal.css
-  const pcode = code + "\n" + ["ibDiff", "ibChgHtml", "ibPreviewHtml", "ibChangeHtml", "ibCrumb", "ibReadTime", "ibPaneHtml"].map(lift).join("\n");   // the old long card too, so a fall-back is SEEN (fails), not a crash
+  const pcode = code + "\n" + ["ibDiffParts", "ibChangedPlaces", "ibDiff", "ibChgHtml", "ibPreviewHtml", "ibChangeHtml", "ibCrumb", "ibReadTime", "ibPaneHtml"].map(lift).join("\n");   // the old long card too, so a fall-back is SEEN (fails), not a crash
   for (const [name, change] of [["addCard", { ...add, items: [{ label: "Page title", role: "title", after: "Website access check | Rocket Growth Agency" }] }],
     ["rmCard", { ...add, label: "remove_page", removes_page: true, new_page: false, preview_url: null, removed_title: "Website access check | Rocket Growth Agency", items: [{ label: "What stops working", before: "acme.test/rga-access-test/", after: "", note: "x" }] }]]) {
     const page = await b.newPage(); await page.setViewport({ width: 900, height: 900 });

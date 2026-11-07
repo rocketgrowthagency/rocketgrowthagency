@@ -165,6 +165,7 @@ for (const [re, what] of [
   [/class="ib-qi\$\{e === pick \? " on" : ""\}/, "the queue (left) with the selected item"],
   [/data-ib-pane="\$\{e\.id\}"/, "one pane per item (right)"],
   [/function ibDiff\(before, after\)/, "the inline before/after (removed words struck out, new words green)"],
+  [/ibChangedPlaces\(i\.before, i\.after\) >= 3\s*\n?\s*\? `<div class="ib-diff" data-ib-rewrite>/, "a rewritten line reads whole, Today then New (portal_change_lines_v1)"],
   [/How it looks in Google/, "the Google preview"], [/data-ib-gp="now"[\s\S]{0,200}data-ib-gp="after"/, "the Google preview's Now / After switch"],
   [/<b>Nothing visible changes<\/b>/, "code changes as plain tiles"], [/Show the code \(for your developer\)/, "Show the code"],
   [/<b>Why this helps<\/b>/, "Why this helps"], [/data-ib-do="approved">\$\{IB_ICON\.check\}/, "Approve this change"],
@@ -175,4 +176,17 @@ for (const [re, what] of [
 ]) if (!re.test(P)) fail(`the client's inbox lost: ${what}`);
 
 if (F.length) { console.error("🔴 website change approvals regressed:"); for (const f of F) console.error("   · " + f); process.exit(1); }
+// 🔒 portal_change_lines_v1 (approved 11-7, the owner's 1:43 PM screenshot): a rewritten line reads whole; a small edit keeps the word marks
+{
+  const P = fs.readFileSync(path.join(SITE, "portal", "portal.js"), "utf8"), a = P.indexOf("function ibDiffParts"), b = P.indexOf("function ibReadTime");
+  if (a < 0 || b < a) { console.error("  ✗ the portal's line diff moved"); process.exitCode = 1; }
+  else {
+    const D = new Function("escapeHtml", `${P.slice(a, b)}; return { ibChangedPlaces };`)((x) => String(x));
+    const rewrites = [["Local SEO & Google Maps Agency | Rocket Growth Agency", "Local SEO Services in Culver City | Rocket Growth Agency"], ["We set up and keep up your Google Business Profile, clean up your listings, and improve the pages Google reads. See where you rank, free.", "Google Business Profile & Maps SEO for Culver City businesses. Month-to-month from $625/mo. Call (424) 242-2040."], ["A b c d e f g", "A x c y e z g"]];
+    const small = [["Plumber in Culver City", "Emergency Plumber in Culver City"], ["Call us today for a quote", "Call us today for a free quote on Saturday"], ["Best plumber in town", "Trusted plumber in town"]];
+    for (const [x, y] of rewrites) if (D.ibChangedPlaces(x, y) < 3) { console.error(`  ✗ a rewritten line is marked word by word: "${y}"`); process.exitCode = 1; }
+    for (const [x, y] of small) if (D.ibChangedPlaces(x, y) >= 3) { console.error(`  ✗ a small edit loses its word marks: "${y}"`); process.exitCode = 1; }
+  }
+}
+
 console.log(`✅ Website changes: all ${webSteps.length} Month 1 website steps go through For your approval (${Object.keys(SC.STEPS).length} as structured changes, ${SC.COPY_STEPS.length} as page copy) · the loop runs: draft → send → the client sees it → a stale version is refused → approval freezes it → Mark live reads the page back → done → Ask to undo · no run or Mark done skips it · the inbox renders the change`);
