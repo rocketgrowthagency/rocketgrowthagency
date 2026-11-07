@@ -88,6 +88,13 @@ for (const v of views) {
     bad(`"${v}" is not in buildAdminUrl — navigating there produces a URL with no ?view=, so the `
       + `view is lost on reload and a magic-link hash can be dropped with it`);
   }
+  // 🔴 ROUND TRIP: the link a view writes must read back as THAT view. 2026-11-06: Pipeline ("list") wrote
+  // `?view=clients`, which getRequestedView reads as the Clients tab, so a reload of Pipeline opened Clients.
+  // Both registries had an entry for "list", so the two checks above passed.
+  const wrote = (builder.match(new RegExp(`view === "${v}"[^{]*\\{\\s*url\\.searchParams\\.set\\("view", "([a-z-]+)"\\)`)) || [])[1];
+  if (wrote && !new RegExp(`rawView === "${wrote}"\\) return "${v}"`).test(requested)) {
+    bad(`"${v}" writes ?view=${wrote}, and a reload reads that back as another view — the page changes on reload`);
+  }
   if (!NO_FIXED_NAV[v] && !new RegExp(`(^|\\s)"?${v}"?:\\s*"`, "m").test(navMap)) {
     bad(`"${v}" is not in NAV_FOR_VIEW — the right view renders under the wrong sidebar highlight`);
   }

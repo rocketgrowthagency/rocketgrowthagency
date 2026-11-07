@@ -163,7 +163,10 @@ const GREEN = /class="ob-zc ok"|All clear/;
   has("a problem never hides in a group", prob, /<b>a<\/b>/); has("a problem never hides in a group", prob, /<b>b<\/b>/);
   const fold = box.card(data([row("a", "bad")]), { full: false });
   has("on other screens only the header", fold, /1 job needs a look/); has("on other screens only the header", fold, /data-sh-open/); hasnt("on other screens only the header", fold, /ob-zc-place/);
-  has("opened", box.card(data([row("a", "bad")]), { full: false, open: true }), /ob-zc-place/);
+  // Approved admin_system_health_tab_v1 (11-6): the short card's button is "Open" and goes to the System health tab, where the
+  // rows draw in full. It no longer unfolds in place.
+  has("the short card's button", fold, /data-sh-open>Open</);
+  has("on its own tab", box.card(data([row("a", "bad")]), { full: true }), /ob-zc-place/);
   const withAlert = card(data([{ ...row("a", "bad"), alert: { line: "The alert could not be delivered (tried Oct 31)" } }]));
   has("an undelivered alert shows", withAlert, /could not be delivered/);
   const hostile = card(data([{ ...row("a", "bad"), line: "<img src=x onerror=1>" }]));
