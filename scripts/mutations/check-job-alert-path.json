@@ -80,14 +80,14 @@
  [
   "notify's answer isn't read",
   "jobwatcher",
-  "if (j.delivered === false) return { delivered: false, via: null, error: \"notify-rga said nothing received it\" };",
-  ""
+  "const logged = j.delivered === true;",
+  "const logged = true;"
  ],
  [
   "notify's error status isn't read",
   "jobwatcher",
-  "if (!r.ok) return { delivered: false, via: null, error: `notify-rga HTTP ${r.status}` };",
-  ""
+  "const why = !r.ok ? `notify-rga HTTP ${r.status}` :",
+  "const why = false ? `notify-rga HTTP ${r.status}` :"
  ],
  [
   "a throw from notify kills the pass",
@@ -242,19 +242,37 @@
  [
   "a webhook nobody proved reads OK",
   "adminhealthfn",
-  "return { tone: \"unk\", tag: \"Not proven\",",
-  "return { tone: \"ok\", tag: \"Not proven\","
+  "return { tone: \"unk\", tag: \"Not proven\", line: \"A webhook is set",
+  "return { tone: \"ok\", tag: \"Not proven\", line: \"A webhook is set"
  ],
  [
   "no webhook reads fine",
   "adminhealthfn",
-  "if (!webhookSet) return { tone: \"unk\", tag: \"Messages only\",",
+  "if (!webhookSet) return { tone: \"unk\", tag: \"Not proven\",",
   "if (!webhookSet) return { tone: \"ok\", tag: \"OK\","
  ],
  [
   "a reply that doesn't say reads as delivered",
   "jobwatcher",
-  "return { delivered: j.delivered === true, via: j.via || null,",
-  "return { delivered: true, via: j.via || null,"
+  "const logged = j.delivered === true;",
+  "const logged = j.delivered !== false;"
+ ],
+ [
+  "email alone isn't a delivery (11-7)",
+  "jobwatcher",
+  "if (logged || emailed) return { delivered: true, via, error: null };",
+  "if (logged) return { delivered: true, via, error: null };"
+ ],
+ [
+  "the alert isn't emailed at all (11-7)",
+  "jobwatcher",
+  "        emailed = sent.suppressed !== true;\n",
+  "        emailed = false;\n"
+ ],
+ [
+  "the Alerts row reads OK with no emailed alert (11-7)",
+  "adminhealthfn",
+  "if (via && /email/.test(via)) return { tone: \"ok\"",
+  "if (true) return { tone: \"ok\""
  ]
 ]

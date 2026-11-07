@@ -395,6 +395,7 @@ const NOT_PREFLIGHT = {
   'check-rank-schedule.mjs': 'the map ranking really runs (rank grid park lifted, 10-31): locked main keyword, two scans a month at 10:00 client time, recorded, failed pin vs not ranked, cost and provider count; fakes only; runs in daily-health-check.sh',
   'check-system-health-covers-every-job.mjs': 'every scheduled job is on the System health list and wrapped (admin_system_health_v1, 10-31); files + the Mac\'s own plists, runs in daily-health-check.sh',
   'check-job-status-reads-true.mjs': 'the System health states and card on fakes (admin_system_health_v1, 10-31); files only, runs in daily-health-check.sh',
+  'check-airtable-refusals-are-never-silent.mjs': 'website functions: every Airtable caller checks the answer (the Nov 3-6 outage, 11-7); static plus the helper on fakes, nothing real called; runs in daily-health-check.sh',
   'check-job-alert-path.mjs': 'the monthly test: a job broken on a fake proves the alert path (admin_system_health_v1, 10-31); nothing real called, runs in daily-health-check.sh',
   'check-job-watcher-ran.mjs': 'the Mac watches the watcher (admin_system_health_v1, 10-31); one read, guarded by db-health in daily-health-check.sh',
   'check-the-weekly-audit-is-read-only.mjs': 'the weekly audit job stays read-only (Chris 10-31); files only, runs in daily-health-check.sh',

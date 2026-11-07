@@ -1,0 +1,58 @@
+[
+ [
+  "Docs drops out of showView again (blank page, 8-21 to 11-6)",
+  "admin",
+  "    docs: name === \"docs\",\n",
+  "",
+  1
+ ],
+ [
+  "Docs is never un-hidden",
+  "admin",
+  "  if (els.docsView) els.docsView.hidden = !flags.docs;\n",
+  "",
+  1
+ ],
+ [
+  "Pipeline writes the Clients tab's link again (reload opened Clients, 11-6)",
+  "admin",
+  "    url.searchParams.set(\"view\", \"pipeline\");",
+  "    url.searchParams.set(\"view\", \"clients\");",
+  1
+ ],
+ [
+  "System health tab missing from the reload list",
+  "admin",
+  "  if (rawView === \"system-health\") return \"system-health\";\n",
+  "",
+  1
+ ],
+ [
+  "System health tab writes no link",
+  "admin",
+  "  } else if (view === \"system-health\") {\n    url.searchParams.set(\"view\", \"system-health\");\n",
+  "",
+  1
+ ],
+ [
+  "System health tab has no opener on a deep link",
+  "admin",
+  "      \"system-health\": handleOpenSystemHealth,\n",
+  "",
+  1
+ ],
+ [
+  "System health tab has no CSS that reveals it",
+  "admincss",
+  "body.admin-body[data-admin-view=\"system-health\"] [id=\"systemHealthView\"],\n",
+  "",
+  1
+ ],
+ [
+  "the login screen stays on top of System health",
+  "admincss",
+  "body.admin-body[data-admin-view=\"system-health\"] .admin-lock-shell,\n",
+  "",
+  1
+ ]
+]

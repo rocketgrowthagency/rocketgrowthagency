@@ -113,6 +113,9 @@ export const FILES = {
   jobcheckinlib: "netlify/functions/_job-checkin.js",
   jobcheckinfn: "netlify/functions/job-checkin.js",
   jobwatcher: "netlify/functions/job-watcher.js",
+  // the Nov 3-6 Airtable outage (11-7): the shared refusal check + one caller that must keep using it
+  airtableok: "netlify/functions/_airtable-ok.js",
+  trackopenfn: "netlify/functions/track-open.js",
   adminhealthfn: "netlify/functions/admin-system-health.js",
   jobsql: "supabase/job_checkins.sql",
   jobcheckinmac: "scraper:scripts/job-checkin.mjs",

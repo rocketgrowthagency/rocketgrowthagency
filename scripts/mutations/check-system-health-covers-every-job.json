@@ -42,10 +42,10 @@
   "label: \"Morning check\", cron: \"45 7 * * *\""
  ],
  [
-  "weekly audit claimed as running with no LaunchAgent",
+  "weekly audit still says Not installed while its LaunchAgent is installed (11-7)",
   "jobmanifest",
-  "keep_days: 400, installed: false,",
-  "keep_days: 400,"
+  "keep_days: 400 },   // installed by the owner 11-7",
+  "keep_days: 400, installed: false },   // installed by the owner 11-7"
  ],
  [
   "the morning check stops posting its start",

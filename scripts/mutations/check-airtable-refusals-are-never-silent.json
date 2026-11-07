@@ -1,0 +1,37 @@
+[
+ [
+  "errors[] (plural) is ignored again: the Nov 3-6 bug",
+  "airtableok",
+  "const e = d.error || (Array.isArray(d.errors) && d.errors[0]);\n  if (r.ok && !e) return;",
+  "const e = d.error;\n  if (r.ok && !e) return;",
+  1
+ ],
+ [
+  "the HTTP status is not checked",
+  "airtableok",
+  "if (r.ok && !e) return;",
+  "if (!e) return;",
+  1
+ ],
+ [
+  "the billing limit stops saying it in plain words",
+  "airtableok",
+  "used up its requests for this month",
+  "hit a limit",
+  1
+ ],
+ [
+  "a refusal is no longer logged",
+  "airtableok",
+  "    console.error(`[${fn}] Airtable refused (lead ${leadId || \"none\"}): HTTP ${r.status}${code ? ` ${code}` : \"\"}`);\n",
+  "",
+  1
+ ],
+ [
+  "track-open stops using the shared check",
+  "trackopenfn",
+  "const { airtableLogRefusal } = require(\"./_airtable-ok\");",
+  "const airtableLogRefusal = async () => {};",
+  1
+ ]
+]

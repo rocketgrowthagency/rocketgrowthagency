@@ -91,7 +91,10 @@ for (const v of views) {
   // 🔴 ROUND TRIP: the link a view writes must read back as THAT view. 2026-11-06: Pipeline ("list") wrote
   // `?view=clients`, which getRequestedView reads as the Clients tab, so a reload of Pipeline opened Clients.
   // Both registries had an entry for "list", so the two checks above passed.
-  const wrote = (builder.match(new RegExp(`view === "${v}"[^{]*\\{\\s*url\\.searchParams\\.set\\("view", "([a-z-]+)"\\)`)) || [])[1];
+  // 🔴 Comment lines may sit between the `if` and the set (11-7: the comment on the Pipeline fix hid it from this read,
+  // and a link this gate can't read was skipped, not reported). A branch that exists and can't be read is now a failure.
+  const wrote = (builder.match(new RegExp(`view === "${v}"[^{]*\\{(?:\\s*\\/\\/[^\\n]*)*\\s*url\\.searchParams\\.set\\("view", "([a-z-]+)"\\)`)) || [])[1];
+  if (!wrote && new RegExp(`view === "${v}"`).test(builder)) bad(`"${v}": can't read which ?view= its branch in buildAdminUrl writes — the round trip is unchecked`);
   if (wrote && !new RegExp(`rawView === "${wrote}"\\) return "${v}"`).test(requested)) {
     bad(`"${v}" writes ?view=${wrote}, and a reload reads that back as another view — the page changes on reload`);
   }
@@ -106,6 +109,8 @@ for (const v of views) {
   const camel = v.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
   const shows = new RegExp(`hidden = !flags\\.${camel}\\b`).test(src) || new RegExp(`flags\\.${camel}\\b`).test(src);
   if (!shows) bad(`nothing reads flags.${camel} — "${v}" would never be revealed by showView`);
+  // 🔴 And the flag must exist: reading flags.docs while showView never sets it is `hidden = !undefined`, always hidden (Docs, 8-21 to 11-6).
+  if (!new RegExp(`^\\s*"?${camel}"?:\\s*name === "${v}"`, "m").test(flags)) bad(`showView's flags never set "${v}" — flags.${camel} is undefined, so the view stays hidden`);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════

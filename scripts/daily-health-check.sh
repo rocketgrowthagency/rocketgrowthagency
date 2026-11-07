@@ -644,6 +644,7 @@ run check-system-health-covers-every-job.mjs "every scheduled job is on the list
 run check-job-status-reads-true.mjs "a job's state is worked out right, and empty, unknown and not-set-up never read as OK on the admin card"
 run check-job-alert-path.mjs "break a job on a fake: the check-in records it, the watcher alerts once then daily, a success clears it, an undelivered alert is on record"
 run check-job-watcher-ran.mjs "the hourly job watcher itself ran (the Mac watches the watcher)"
+run check-airtable-refusals-are-never-silent.mjs "an Airtable refusal is never read as no records or done: every caller checks the answer through _airtable-ok, and the helper throws on every refusal shape (the Nov 3-6 outage)"
 run check-the-contract-promises-only-what-the-code-does.mjs "the agreement promises only what the code does; the public pages drop the 60-day claim and the double price"
 run check-audit-decisions.mjs "the seven audit decisions (approved 10-31): bulk photos at 5 a day, Everything on Google, a service-area client can finish step 10 in one count, the kept copy says what's true, one press for an approved description behind the two guards, up to 48 hours as an estimate, the listings check once per client"
 run check-step10-photo-truth.mjs "step 10 says only what Google tells us (Chris 10-30): no green until a test proves it, the count leaves out a hidden logo and second copies, Keep undoes, the only visible photo stays, up to 5 a day, RGA notices really send"
