@@ -132,7 +132,8 @@ if (AR.clientWhyNot({ ...cl, website_url: "" }, {}) === null) fail("a client wit
 // what the system does next, per state (pure)
 {
   const T0 = Date.parse("2026-11-06T12:00:00Z"), iso = (ms) => new Date(ms).toISOString(), H = steps[1], base = { "m1.strategy.keywords_locations": done, "m1.web.homepage_meta": done };
-  const plan = (t, extra = {}, now = T0, data = {}) => AR.planStep(H, { ...base, ...extra, "m1.web.h1_cta": t }, now, data);
+  // step 44 drafts by a locked recipe now: a fixture marks its one "redraft by the recipe" as used, so these cases test the rest (that rule has its own case below)
+  const plan = (t, extra = {}, now = T0, data = {}) => AR.planStep(H, { ...base, ...extra, "m1.web.h1_cta": { ...t, auto_done: { "redo:recipe": "x", ...(t.auto_done || {}) } } }, now, data);
   const act = (...a) => { const p = plan(...a); return p ? `${p.act}${p.sig ? `:${p.sig}` : ""}` : null; };
   const ran = iso(T0 - 3600e3), cv = iso(T0 - 1800e3);
   if (act({}) !== "start:start") fail("an unblocked step with no draft doesn't draft itself");
@@ -160,6 +161,10 @@ if (AR.clientWhyNot({ ...cl, website_url: "" }, {}) === null) fail("a client wit
   if (!/^redo/.test(act({ ran_at: ran, site_change: sc }, newer) || "")) fail("the system's own out-of-date draft doesn't draft again");
   if (act({ ran_at: ran, site_change: { ...sc, drafted_by: "chris@x" } }, newer) !== null) fail("a person's edited draft is redrafted over");
   if (act({ ran_at: ran, site_change: sc, internal_review: { decision: "approved", change_v: cv } }) !== null) fail("a draft with the client is touched");
+  // headline_cta_recipe_v1: the system's own draft from before its step had a recipe redrafts by it, once, even held (RGA's 44 was held for this)
+  { const p0 = AR.planStep(H, { ...base, "m1.web.h1_cta": { ran_at: ran, site_change: sc, auto_send: as({ held: { at: "x" } }) } }, T0);
+    const p1 = AR.planStep(H, { ...base, "m1.web.h1_cta": { ran_at: ran, site_change: sc, auto_send: as({ held: { at: "x" } }), auto_done: { "redo:recipe": "x" } } }, T0);
+    if (!p0 || p0.sig !== "redo:recipe" || p1) fail("a draft from before the recipe doesn't redraft by it once (or redrafts twice)"); }
   // approved: a page change on GitHub access publishes itself (snapshot → pull request → merge), each once; anything else is RGA's by hand
   const P = steps[2], pageC = { v: cv, new_page: true, items: [{ label: "x", after: "y" }] }, appr = { site_change: pageC, approval: { decision: "approved", change_v: cv } };
   const gh = { "m1.access.website": { status: "done", access: { repo: "o/r" } } }, pb = { ...base, "m1.gbp.services_products": done, ...gh };

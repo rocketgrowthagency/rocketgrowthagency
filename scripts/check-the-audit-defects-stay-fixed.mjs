@@ -46,7 +46,9 @@ for (const id of ["m1.gbp.optimize_categories", "m1.gbp.services_products", "m1.
   // the page steps hand the plan to the one pipeline (draftOnePage), and that pipeline writes from it
   const viaPipeline = PAGE_STEPS.includes(id) && /draftOnePage\(\{ client, _plan,/.test(b) && /async function draftOnePage\([\s\S]{0,1800}planBlock\(_plan\)/.test(FE);
   // title_meta_recipe_v1 (11-7): step 43 hands the plan to its recipe, which puts the plan's keywords in the evidence the model gets
-  const viaRecipe = id === "m1.web.homepage_meta" && /draftTitleMeta\(\{ client, tasks: data\.tasks \|\| \{\}, data, plan: _plan,/.test(b) && /The plan's keywords, best first: \$\{pack\.keywords\.join/.test((() => { try { return fs.readFileSync(`${SITE}/netlify/functions/_title-meta.js`, "utf8"); } catch { return ""; } })());
+  const src = (f) => { try { return fs.readFileSync(`${SITE}/netlify/functions/${f}`, "utf8"); } catch { return ""; } };
+  const viaRecipe = (id === "m1.web.homepage_meta" && /draftTitleMeta\(\{ client, tasks: data\.tasks \|\| \{\}, data, plan: _plan,/.test(b) && /The plan's keywords, best first: \$\{pack\.keywords\.join/.test(src("_title-meta.js")))
+    || (id === "m1.web.h1_cta" && /draftHeadline\(\{ client, tasks: data\.tasks \|\| \{\}, data, plan: _plan,/.test(b) && /The plan's keywords, best first: \$\{pack\.keywords\.join/.test(src("_headline-cta.js")));   // headline_cta_recipe_v1
   if (!/planBlock\(_plan\)/.test(b) && !viaPipeline && !viaRecipe) F(`#3 ${id} no longer writes from the locked plan`);
 }
 if (/Suggest 3 sub-locations/i.test(FE)) F("#2 a draft invents its own sub-locations again");

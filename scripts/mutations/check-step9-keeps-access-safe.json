@@ -51,7 +51,7 @@
  [
   "a self-settling step offers Undo again",
   "admin",
-  "const undoBtn = o.selfSettles ? \"\"",
+  "const undoBtn = o.selfSettles || wcRunsItself(o.flowId) ? \"\"",
   "const undoBtn = false ? \"\"",
   1
  ],

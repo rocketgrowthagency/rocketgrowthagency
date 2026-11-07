@@ -1,0 +1,51 @@
+[
+ [
+  "the line isn't read",
+  "headlinecta",
+  "return { headline: textOf(h[1]), sub: p ? textOf(p[1]) : \"\",",
+  "return { headline: textOf(h[1]), sub: \"\",",
+  1
+ ],
+ [
+  "the button isn't read",
+  "headlinecta",
+  "button: a ? textOf(a[a.length - 1]) : \"\",",
+  "button: \"\",",
+  1
+ ],
+ [
+  "a headline without the city passes",
+  "headlinecta",
+  "add(\"keyword_city\", rank >= 0 && hasCity,",
+  "add(\"keyword_city\", rank >= 0,",
+  1
+ ],
+ [
+  "a made-up offer passes",
+  "headlinecta",
+  "add(\"button_offer\", B && !missing.length,",
+  "add(\"button_offer\", !!B,",
+  1
+ ],
+ [
+  "the brand counts in the headline",
+  "headlinecta",
+  "const rank = TM.keywordRank(noBrand, pack.keywords, places);",
+  "const rank = TM.keywordRank(H, pack.keywords, places);",
+  1
+ ],
+ [
+  "the reader treats the line as New",
+  "admindeliv",
+  "c.items[1].before = hero.sub; c.items[2].before = hero.button;",
+  "",
+  1
+ ],
+ [
+  "an old draft never meets the recipe",
+  "webautorun",
+  "if (RECIPE_STEPS.includes(key) && c.drafted_by === AUTO_WHO && !ar0.recipe && !done[\"redo:recipe\"] && step.hasRunner !== false) return { act: \"redo\", sig: \"redo:recipe\" };",
+  "",
+  1
+ ]
+]
