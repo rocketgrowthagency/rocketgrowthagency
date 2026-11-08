@@ -359,7 +359,7 @@
  [
   "an older reader's failure is final",
   "sitechange",
-  "(Number(x.auto_failed.rev) || 1) >= AUTO_FINISH_REV);",
+  " && (Number(x.auto_failed.rev) || 1) >= AUTO_FINISH_REV);",
   ");",
   1
  ],
@@ -380,15 +380,15 @@
  [
   "a timing promise passes",
   "sitechange",
-  "for (const i of lines) { const m = String(i.after).match(TIMING); if (m && !(site && site.includes(norm(m[0])))) out.push(",
-  "for (const i of []) { const m = String(i.after).match(TIMING); if (m && !(site && site.includes(norm(m[0])))) out.push(",
+  "for (const i of lines) for (const m of [...new Set((String(i.after).match(new RegExp(TIMING.source, \"gi\")) || []))])",
+  "for (const i of []) for (const m of [...new Set((String(i.after).match(new RegExp(TIMING.source, \"gi\")) || []))])",
   1
  ],
  [
   "a timing promise on their site is flagged",
   "sitechange",
-  "if (m && !(site && site.includes(norm(m[0])))) out.push(",
-  "if (m) out.push(",
+  "if (!(site && site.includes(norm(m)))) out.push({ label: i.label, text: m,",
+  "if (true) out.push({ label: i.label, text: m,",
   1
  ],
  [
@@ -417,6 +417,20 @@
   "webautorun",
   "const isCheck = measured && !od.draft",
   "const isCheck = !od.draft",
+  1
+ ],
+ [
+  "the fix merges lines",
+  "sitechange",
+  "const after = [...lines.slice(0, li), ...(lineNow ? [lineNow] : []), ...lines.slice(li + 1)].join(\"\\n\")",
+  "const after = [...lines.slice(0, li), ...(lineNow ? [lineNow] : []), ...lines.slice(li + 1)].join(\" \")",
+  1
+ ],
+ [
+  "same business day passes",
+  "sitechange",
+  "/\\bsame[- ](?:business[- ])?day\\b|",
+  "/\\bsame[- ]day\\b|",
   1
  ]
 ]

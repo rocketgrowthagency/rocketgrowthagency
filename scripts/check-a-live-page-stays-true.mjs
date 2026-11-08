@@ -247,6 +247,13 @@ const ADx = read("netlify/functions/admin-deliverables.js");
   if (SC.autoChecks(d43, { siteText: "We offer a same-day start." }).length) fail("a timing promise already on their site is flagged");
   const fx = SC.autoFix(d43, f);
   if (fx.change.items[0].after !== "Maps SEO for Culver City businesses. Month-to-month from $625/mo. Call (424) 242-2040." || fx.fixed[0].removed !== "same-day start available" || SC.autoChecks(fx.change).length) fail(`the system doesn't take out the flagged clause by itself (${fx.change.items[0].after})`);
+  // 11-7: the fix keeps line breaks (it merged a page's questions into one block and the section vanished), and finds every timing promise in a line
+  { const q = { items: [{ label: "Questions answered", after: "How quickly can you start?\nWe can begin the same day you reach out. We schedule a kickoff call.\n\nWhat does it cost?\n$625 a month." }, { label: "How we work", after: "We call you, usually the same day, so we understand. You reach us the same business day." }] };
+    const qx = SC.autoFix(q, SC.autoChecks(q));
+    if (qx.change.items[0].after !== "How quickly can you start?\nWe schedule a kickoff call.\n\nWhat does it cost?\n$625 a month." || SC.autoChecks(qx.change).length) fail("the fix merges a page's lines, or leaves a second timing promise (same business day)"); }
+  // 11-7: what's left after a clause goes must still be a sentence ("If something urgent comes up after we have started." isn't one)
+  { const u = { items: [{ label: "Q", after: "How quickly?\nWe start soon. If something urgent comes up after we have started, we respond the same business day.\n\nNext?" }] };
+    if (SC.autoFix(u, SC.autoChecks(u)).change.items[0].after !== "How quickly?\nWe start soon.\n\nNext?") fail("the fix leaves half a sentence behind (an 'If…' clause on its own)"); }
   const g = { items: [{ label: "Opening", after: "Guaranteed first place on Google." }] };
   if (SC.autoFix(g, SC.autoChecks(g)).fixed.length) fail("a fix that would empty a line is made (that one stays RGA's)");
   const T0 = Date.parse("2026-11-07T12:00:00Z"), cv = "2026-11-07T10:00:00.000Z", sc0 = { v: cv, drafted_by: AR.AUTO_WHO, items: [{ label: "x", after: "y" }] };
@@ -257,6 +264,9 @@ const ADx = read("netlify/functions/admin-deliverables.js");
   const fk = { siteText: async () => "", call: async (fn, b) => { calls2.push(b); return { ok: true, j: {} }; } };
   const r1 = await AR.checkAndFix(fk, { id: "c" }, d43);
   if (r1.failed.length || !r1.fixed.length || /same-day/.test(r1.change.items[0].after)) fail("checkAndFix doesn't fix and pass the step 43 draft");
+  // a fix that still fails its checks isn't used: the draft stays RGA's with its failures (a half-working fix stands in for one)
+  { const real = SC.autoFix; SC.autoFix = (c) => ({ change: c, fixed: [{ label: "x", text: "y" }] });
+    try { const r2 = await AR.checkAndFix(fk, { id: "c" }, d43); if (!r2.failed.length || r2.fixed.length) fail("a fix that still fails its checks is used (the fix isn't checked again)"); } finally { SC.autoFix = real; } }
 }
 if (!/const keep = Date\.parse\(body\.auto\.due_at \|\| ""\), due = Number\.isFinite\(keep\) && keep > Date\.parse\(now\)/.test(ADx)) fail("the system's own fix of a waiting draft restarts its 24 hours (or can make it go sooner)");
 // 11-7: the draft reader knows "**TITLE:**" with the words in backticks below (RGA's step 43 redraft read as "no lines"), and the older shapes
