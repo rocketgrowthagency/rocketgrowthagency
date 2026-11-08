@@ -52,7 +52,7 @@ if (AR.ghPublishes("m1.web.schema", t41, tk({ repo: "acme/site", publish: "rga_d
 if (AR.ghPublishes("m1.web.tracking", { site_change: { kind: "code", code: `<script src="https://www.googletagmanager.com/gtag/js?id=G-1"></script>` } }, tk({ repo: "acme/site" }))) fail("a tracking tag is published into one page by itself");
 if (!/if \(c\.kind === "code" && require\("\.\/_schema-merge"\)\.isPageCode\(c\.code\)\) return buildCodeChange\(key, c, client, tasks, clientId\);/.test(AD)) fail("an approved code change isn't built into the page file it goes in");
 if (!/let meta = await GA\.repoFileMeta\(token, fetch, repo, path\);[\s\S]{0,200}html = meta\.text; base_sha = meta\.sha;/.test(AD)) fail("a code change is built from somewhere other than their repository's own file (and its blob sha)");
-if (!/const isCode = ac\.kind === "code" && require\("\.\/_schema-merge"\)\.isPageCode\(ac\.code\)/.test(AD) || !/if \(!isCode && \(!\(ac\.new_page/.test(AD)) fail("the pull request still refuses an approved code change");
+if (!/const isCode = ac\.kind === "code" && require\("\.\/_schema-merge"\)\.isPageCode\(ac\.code\)/.test(AD) || !/if \(!isCode && !isLinks && \(!\(ac\.new_page/.test(AD)) fail("the pull request still refuses an approved code change");
 if (!/if \(acc\.publish === "rga_deploy"\) return json\(409/.test(AD)) fail("a pull request can be opened against a site RGA deploys itself");
 if (!/const missing = c\.kind === "code" && SMr\.isPageCode\(c\.code\) \? SMr\.codeReadBack\(c\.code, servedHtml, \{ oneBusiness: key === "m1\.web\.schema" \}\)\.missing/.test(AD)) fail("Mark live doesn't read a code change back field by field");
 

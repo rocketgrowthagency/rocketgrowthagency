@@ -128,8 +128,8 @@
  [
   "a removed gone page reads as drift",
   "sitechangewatch",
-  "const missing = c.removes_page ? RB.driftOf(c, html, key).missing : gone ?",
-  "const missing = gone ?",
+  "missing = c.removes_page ? RB.driftOf(c, html, key).missing : gone ?",
+  "missing = gone ?",
   1
  ],
  [

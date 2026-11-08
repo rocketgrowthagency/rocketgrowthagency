@@ -86,7 +86,7 @@
  [
   "any change can open a pull request",
   "admindeliv",
-  "if (!isCode && (!(ac.new_page || ac.removes_page || ac.edits_page) || !((SC.STEPS[key] || {}).test || (SC.STEPS[key] || {}).page))) return json(409,",
+  "if (!isCode && !isLinks && (!(ac.new_page || ac.removes_page || ac.edits_page) || !((SC.STEPS[key] || {}).test || (SC.STEPS[key] || {}).page))) return json(409,",
   "if (false) return json(409,",
   1
  ],

@@ -1,0 +1,177 @@
+[
+ [
+  "menu links count as words",
+  "internallinks",
+  ".replace(/<(header|nav|footer)\\b[\\s\\S]*?<\\/\\1>/gi, \" \");\n  const words",
+  " ;\n  const words",
+  1
+ ],
+ [
+  "a partial read names orphans",
+  "internallinks",
+  "const complete = !unread.length;",
+  "const complete = true;",
+  1
+ ],
+ [
+  "a menu-reached page is unreachable",
+  "internallinks",
+  "!inLinks.get(p.path) && !inNav.has(p.path)).map",
+  "!inLinks.get(p.path)).map",
+  1
+ ],
+ [
+  "a folder's own page is an orphan",
+  "internallinks",
+  "&& inNav.has(p.path) && !hubs.has(p.path)).map",
+  "&& inNav.has(p.path)).map",
+  1
+ ],
+ [
+  "thin service pages aren't found",
+  "internallinks",
+  "money.filter((p) => inLinks.get(p.path) < 3)",
+  "money.filter((p) => inLinks.get(p.path) < 0)",
+  1
+ ],
+ [
+  "click here passes",
+  "internallinks",
+  "const GENERIC = /^(click here|",
+  "const GENERIC = /^(NEVER|",
+  1
+ ],
+ [
+  "the homepage gets new links",
+  "internallinks",
+  "s.path !== tp && s.path !== \"/\" && !hubs.has(s.path)",
+  "s.path !== tp",
+  1
+ ],
+ [
+  "a page linking already gets another",
+  "internallinks",
+  "&& !s.links.some((l) => l.to === tp)",
+  "",
+  1
+ ],
+ [
+  "no cap per page",
+  "internallinks",
+  "&& (used.get(s.path) || 0) < cap",
+  "",
+  1
+ ],
+ [
+  "one shared word is enough",
+  "internallinks",
+  "shared(s).length < 2 ? 0 :",
+  "shared(s).length < 1 ? 0 :",
+  1
+ ],
+ [
+  "the title doesn't outweigh the paragraphs",
+  "internallinks",
+  "n + 3 * idf(w), 0)",
+  "n + 0 * idf(w), 0)",
+  1
+ ],
+ [
+  "plurals don't match",
+  "internallinks",
+  "const stem = (w) => w.replace(/ies$/, \"y\").replace(/(?<=[^s])s$/, \"\");",
+  "const stem = (w) => w;",
+  1
+ ],
+ [
+  "a call to action gets a sentence",
+  "internallinks",
+  "!/[—–~\\d]/.test(p)",
+  "true",
+  1
+ ],
+ [
+  "the link words needn't name the page",
+  "internallinks",
+  "if (!wordsIn(anchor).some((w) => wordsIn(pair.target_name).includes(w))) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "a number passes",
+  "internallinks",
+  "if (/\\d/.test(sentence)) return { problem: \"the sentence adds a number\" };",
+  "",
+  1
+ ],
+ [
+  "a changed paragraph still gets it",
+  "internallinks",
+  "if (hits.length !== 1) {",
+  "if (hits.length > 99) {",
+  1
+ ],
+ [
+  "the read back sees a missing link",
+  "internallinks",
+  ".filter((i) => !new RegExp(",
+  ".filter((i) => false && !new RegExp(",
+  1
+ ],
+ [
+  "step 50 reads 30 pages",
+  "flowexec",
+  "CP.sitemapUrls(ctx.smXml).slice(0, 600);",
+  "CP.sitemapUrls(ctx.smXml).slice(0, 30);",
+  1
+ ],
+ [
+  "step 50 claims on a partial read",
+  "flowexec",
+  "if (unread.length > Math.max(1, urls.length * 0.05)) return { summary: `Couldn't read ${unread.length} of their ${urls.length} pages, so which pages",
+  "if (false) return { summary: `Couldn't read ${unread.length} of their ${urls.length} pages, so which pages",
+  1
+ ],
+ [
+  "the batch isn't built",
+  "admindeliv",
+  "  if (key === \"m1.web.internal_linking\" && (c.items || []).some((i) => i.link && i.page)) return buildLinkChange(key, c, client, tasks, clientId);\n",
+  "",
+  1
+ ],
+ [
+  "the batch isn't read back",
+  "admindeliv",
+  "const linkLines = key === \"m1.web.internal_linking\" ?",
+  "const linkLines = false ?",
+  1
+ ],
+ [
+  "the cleaner drops the link",
+  "sitechange",
+  "...(stepId === \"m1.web.internal_linking\" && i && i.link && web(i.page, 400) ?",
+  "...(false ?",
+  1
+ ],
+ [
+  "the batch doesn't publish itself",
+  "webautorun",
+  " || (key === \"m1.web.internal_linking\" && (c.items || []).some((i) => i.link && i.page)));",
+  ");",
+  1
+ ],
+ [
+  "the batch isn't watched",
+  "pagereadback",
+  " || (c.items || []).some((i) => i.link && i.page));",
+  ");",
+  1
+ ],
+ [
+  "the publisher can't do links",
+  "publishown",
+  "if (pl.kind === \"links\") {",
+  "if (false) {",
+  1
+ ]
+]
