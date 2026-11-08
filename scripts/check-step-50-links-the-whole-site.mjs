@@ -114,6 +114,8 @@ if (IL.linksMissing([item], ed.html).length || !IL.linksMissing([item], html).le
 
 // the step, end to end
 const h = FE.slice(FE.indexOf('"m1.web.internal_linking": async'), FE.indexOf('"m1.web.internal_linking": async') + 6000);
+{ const hv = FE.slice(FE.indexOf("const HEAVY = new Set(["), FE.indexOf("]);", FE.indexOf("const HEAVY = new Set([")));
+  if (!/"m1\.web\.internal_linking"/.test(hv)) fail("step 50 runs in the short runner (reading every page would time out at 26 seconds)"); }
 if (/slice\(0, 30\)/.test(h) || !/CP\.sitemapUrls\(ctx\.smXml\)\.slice\(0, 600\)/.test(h)) fail("step 50 reads only some of the pages (it read the first 30 of RGA's 261)");
 if (!/if \(unread\.length > Math\.max\(1, urls\.length \* 0\.05\)\) return \{[\s\S]{0,200}outcome: "indeterminate"/.test(h)) fail("step 50 says which pages nothing links to with pages unread");
 if (!/IL\.sentencePrompt\(pair\)/.test(h) || !/SiteChange\.autoChecks\(\{ items: \[\{ label: "x", after: r\.sentence \}\] \}/.test(h) || !/outcome: items\.length \? "draft_ready" : "verified"/.test(h)) fail("step 50 doesn't draft the sentences, check them like any draft, or finish as checked when nothing's missing");

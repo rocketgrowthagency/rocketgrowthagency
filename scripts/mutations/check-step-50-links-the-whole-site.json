@@ -173,5 +173,12 @@
   "if (pl.kind === \"links\") {",
   "if (false) {",
   1
+ ],
+ [
+  "step 50 runs in the short runner",
+  "flowexec",
+  "    \"m1.web.internal_linking\",\n",
+  "",
+  1
  ]
 ]
