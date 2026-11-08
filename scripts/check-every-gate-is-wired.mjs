@@ -438,6 +438,8 @@ const NOT_PREFLIGHT = {
   'check-business-details-start-from-the-page.mjs': 'the WEBSITE repo\'s step 41 business-code merge (schema_merge_v1, 11-7) on fakes; no bearing on tonight\'s video pipeline.',
   'check-code-changes-publish-themselves.mjs': 'the WEBSITE repo\'s code-change publishing (schema_merge_v1 parts 2-3, 11-7) on fakes; no bearing on tonight\'s video pipeline.',
   'check-step-50-links-the-whole-site.mjs': 'the WEBSITE repo\'s step 50 whole-site links (page_placement_and_links_v1 part 3, 11-7) on fakes; no bearing on tonight\'s video pipeline.',
+  'check-place-pages-follow-the-research.mjs': 'the WEBSITE repo\'s steps 46-47 place rules (website_steps_46_50_research_v1, 11-7) on fakes; no bearing on tonight\'s video pipeline.',
+  'check-step-48-uses-first-hand-material.mjs': 'the WEBSITE repo\'s step 48 material sources (website_steps_46_50_research_v1, 11-7); no bearing on tonight\'s video pipeline.',
   'check-the-title-recipe-holds.mjs': 'the WEBSITE repo\'s step 43 recipe (title_meta_recipe_v1, 11-7) on fakes: evidence, pinned model, rule checks, rule pick, measured after; no bearing on tonight\'s video pipeline. Runs in daily-health-check.sh.',
   'check-a-live-page-stays-true.mjs': 'the WEBSITE repo\'s read-back, nightly watch, per-page Search Console and website auto-run (website_system_v2 builds 10-12, 14, 16) on fakes, no bearing on tonight\'s scrape or video run. Runs in daily-health-check.sh.',
   'check-the-page-builder.mjs': 'the WEBSITE repo\'s page builder, brief and quality rules (website_system_v2 builds 3 to 6, 15) on fixtures, files only, no bearing on tonight\'s scrape or video run. Runs in daily-health-check.sh.',

@@ -1,0 +1,93 @@
+[
+ [
+  "a national business gets city pages",
+  "placepages",
+  "if (m === \"national_one_office\") return",
+  "if (false) return",
+  1
+ ],
+ [
+  "a storefront gets city pages",
+  "placepages",
+  "if (m === \"multi_location\") return",
+  "if (false) return",
+  1
+ ],
+ [
+  "the home city gets a page",
+  "placepages",
+  ".filter((p) => !home || low(p) !== low(home.city))",
+  "",
+  1
+ ],
+ [
+  "a place without proof gets a page",
+  "placepages",
+  "if (searches.length || mine.length) out.push(",
+  "out.push(",
+  1
+ ],
+ [
+  "unseen searches count as proof",
+  "placepages",
+  "&& (Number(r.impressions) || 0) > 0)",
+  ")",
+  1
+ ],
+ [
+  "facts don't come first",
+  "placepages",
+  "(b.facts.length * 10 + b.searches.length) - (a.facts.length * 10 + a.searches.length)",
+  "0",
+  1
+ ],
+ [
+  "names aren't swapped out",
+  "placepages",
+  ".replace(new RegExp(String(p).replace(/[.*+?^${}()|[\\]\\\\]/g, \"\\\\$&\"), \"gi\"), \"PLACE\")",
+  "",
+  1
+ ],
+ [
+  "step 46 ignores the model",
+  "flowexec",
+  "const rule = PL.placeRule(client);\n    if (rule.stop) return { summary: rule.stop.summary, outcome: rule.stop.outcome };",
+  "const rule = PL.placeRule(client);",
+  1
+ ],
+ [
+  "step 46 gets no place facts",
+  "flowexec",
+  "place_facts: [...cand.facts, ...cand.searches.map((q) => `People here search for \"${q}\"`)] }, ctx,\n",
+  "place_facts: [] }, ctx,\n",
+  1
+ ],
+ [
+  "a swapped copy is kept",
+  "flowexec",
+  "if (swapped.length >= 2) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "the words ignore the place facts",
+  "pagebuilder",
+  "+ ((plan.place_facts || []).length ?",
+  "+ (false ?",
+  1
+ ],
+ [
+  "step 47 skips the service page check",
+  "flowexec",
+  "if (!r.plan || !PB.pageForService(urls, r.plan.service)) continue;",
+  "if (!r.plan) continue;",
+  1
+ ],
+ [
+  "step 47 skips the searches check",
+  "flowexec",
+  "      if (!own.length) continue;   // nobody searches for this service in this place\n",
+  "",
+  1
+ ]
+]

@@ -126,7 +126,7 @@ if (!cl.change || !cl.change.items[0].link || cl.change.items[0].link.href !== "
 const t50 = { site_change: { kind: "batch", items: [item] } };
 if (!AR.ghPublishes("m1.web.internal_linking", t50, { "m1.access.website": { access: { repo: "acme/site" } } })) fail("an approved link batch doesn't publish itself");
 if (!RB.liveKeys({ "m1.web.internal_linking": { site_change: { v: "1", kind: "batch", items: [item] }, published: { v: "1" } } }).includes("m1.web.internal_linking")) fail("a live link batch isn't watched nightly");
-if (!/const linkItems = \(c\.items \|\| \[\]\)\.filter\(\(i\) => i\.link && i\.page\);/.test(WATCH) || !/IL\.linksMissing\(/.test(WATCH)) fail("the nightly watch doesn't read each link back on its own page");
+if (!/const linkItems = [^\n]*: \(c\.items \|\| \[\]\)\.filter\(\(i\) => i\.link && i\.page\);/.test(WATCH) || !/IL\.linksMissing\(/.test(WATCH)) fail("the nightly watch doesn't read each link back on its own page");
 const pub = { site_change: { v: "1", kind: "batch", items: [item] }, site_build: { v: "1", files: [{ path: "blog/finding-hidden-leaks/index.html", action: "edit", sha: "l", place: { kind: "links", items: [item] } }] }, approval: { approved_build: [{ path: "blog/finding-hidden-leaks/index.html", action: "edit", sha: "l" }] } };
 const lf = PUB.localFiles("m1.web.internal_linking", pub, () => html);
 if (lf.error || !lf.files.length || !lf.files[0].text.includes(`<a href="/services/leak-detection/">leak detection</a>`)) fail(`the Mac publisher doesn't put up an approved link batch (${lf.error || ""})`);

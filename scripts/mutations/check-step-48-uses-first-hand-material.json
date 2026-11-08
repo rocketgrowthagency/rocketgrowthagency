@@ -1,0 +1,30 @@
+[
+ [
+  "photos aren't material",
+  "flowexec",
+  "const facts = [...facts0, ...photoFacts.slice(0, 3), ...asked];",
+  "const facts = [...facts0];",
+  1
+ ],
+ [
+  "unpublished photos count",
+  "flowexec",
+  "if (h && h.published && h.change) for (const it of h.change.items || []) if (it.after && it.src) photoFacts.push",
+  "if (h && h.change) for (const it of h.change.items || []) if (it.src) photoFacts.push",
+  1
+ ],
+ [
+  "any search is a question",
+  "flowexec",
+  "const QUESTION = /^(how|what|why|when|which|can|does|do|should|is|are|who|where)\\b|\\b(cost|price|how much)\\b/i;",
+  "const QUESTION = /./i;",
+  1
+ ],
+ [
+  "a rare question counts",
+  "flowexec",
+  "&& (Number(r.impressions) || 0) >= 5)",
+  ")",
+  1
+ ]
+]

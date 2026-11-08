@@ -83,8 +83,8 @@ for (const [what, patch] of [["a made-up count", { intro: "We have 200+ customer
 const prompt = PB.wordsPrompt({ kind: "service", service: "Panel upgrades", page_for: "Panel upgrades", searches: ["x"] }, "Sparks", null, null);
 if (!/Never state a number, a result, a ranking, a review count, a price or a guarantee, and never quote a customer/.test(prompt)) fail("the prompt no longer forbids invented numbers, prices and quotes");
 if (!/"m1\.web\.priority_pages": async[\s\S]{0,4500}draftOnePage\(\{ client, _plan, plan: r\.plan, ctx, page_of: r\.page_of \}\)/.test(FE)) fail("service pages don't go through the one pipeline");
-if (!/"m1\.web\.location_pages": async[\s\S]{0,900}draftOnePage\(\{ client, _plan, plan:/.test(FE)) fail("the city page doesn't go through the one pipeline");
-if (!/"m1\.web\.service_location_matrix": async[\s\S]{0,1900}draftOnePage\(\{ client, _plan, plan: r\.plan, ctx \}\)/.test(FE)) fail("service × area pages don't go through the one pipeline");
+if (!/"m1\.web\.location_pages": async[\s\S]{0,4000}draftOnePage\(\{ client, _plan, plan:/.test(FE)) fail("the city page doesn't go through the one pipeline");
+if (!/"m1\.web\.service_location_matrix": async[\s\S]{0,5000}draftOnePage\(\{ client, _plan, plan: \{ \.\.\.r\.plan, searches: own, place_facts:/.test(FE)) fail("service × area pages don't go through the one pipeline");
 if (/"m1\.web\.blog_seed": async[\s\S]{0,400}draftOnePage/.test(FE)) fail("the blog was pulled into the page builder (it keeps its own system)");
 const d1 = PB.draftOf({ kind: "service", page_for: "Panel upgrades", url: "u", path: "/p/", links: [], areas: [], searches: [], files: [] }, good, { proof: { result: "Fixed it.", quote: "Great", quote_name: "Dana" }, page_of: { at: 1, of: 2 } });
 if (d1.result !== "Fixed it." || d1.quote !== "“Great” Dana" || !d1.page_of) fail("the draft loses the proof or which page it is");

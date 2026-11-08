@@ -995,7 +995,7 @@ WRITE THE FULL TEXT. Min ${a.min} words across the body. Voice: knowledgeable, c
     instructions: "Up to 2 posts, only while the client has real material (a job, a photo, a number they gave us). With none, publish 0: that is fine.\n1. The card checks first whether their site has a blog. It says found, didn't find or couldn't check, never a flat \"no blog\". If it found none, ask before adding a blog page.\n2. Draft: the post is written from their material only, and its address comes from the check.\n3. Read it, then Send for approval. It builds the real page and a private preview, and shows in the client's For your approval. Nothing goes up without their yes to that exact version.\n4. Once they approve: on GitHub access, open the pull request and merge it; on a builder, publish it there. It finishes when it reads back live.\n5. A second post needs a second fact. No material left: record 0 more and move on.",
   },
   {
-    id: "m1.web.expanded_schema", title: "Add Service + FAQPage + Breadcrumb schema",
+    id: "m1.web.expanded_schema", title: "Add Service + Breadcrumb schema",
     type: "hybrid", dependsOn: ["m1.web.schema", "m1.web.priority_pages", "m1.web.location_pages"],
     actionLabel: "⚡ Generate",
     async run({ client }) {
@@ -1009,9 +1009,7 @@ WRITE THE FULL TEXT. Min ${a.min} words across the body. Voice: knowledgeable, c
       }));
       return { summary: `Generated Service schema for ${snippets.length} services. Paste each into corresponding service page <head>.\n\n${JSON.stringify(snippets, null, 2)}` };
     },
-    instructions: `Per service page: Service + BreadcrumbList schema. Add a short visible FAQ only for questions customers really ask; FAQPage markup is optional and must match what's visible (publish both or neither). Google ended FAQ rich results on May 7, 2026, so the markup earns no search display: never promise one.
-No AggregateRating: Google doesn't show stars for a business's own reviews marked up on its own site.
-Check BreadcrumbList at https://search.google.com/test/rich-results (it doesn't report every type).`,
+    instructions: `Per real service page: Service + BreadcrumbList code, read from the page itself, its provider the homepage's business record (by @id). No FAQPage: Google stopped showing FAQ rich results on May 7, 2026; questions stay visible on the page. Merged with the page's existing code, published and read back by the code pipeline (website_steps_46_50_research_v1).`,
   },
   {
     id: "m1.web.internal_linking", title: "Build silo internal-link architecture",

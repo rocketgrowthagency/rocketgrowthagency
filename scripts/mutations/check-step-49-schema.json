@@ -1,38 +1,65 @@
 [
  [
-  "breadcrumbs dropped",
-  "exec",
-  "      pages.push({ svc, service, crumbs, faq, qa });",
-  "      pages.push({ svc, service, crumbs: {}, faq, qa });"
+  "step 49 writes FAQ code",
+  "flowexec",
+  "\"@type\": \"Service\", name, serviceType: name,",
+  "\"@type\": \"Service\", \"x\": \"FAQPage\", name, serviceType: name,",
+  1
  ],
  [
-  "the breadcrumb guesses a URL",
-  "exec",
-  "name: svc, item: \"{{PAGE_URL}}\" }",
-  "name: svc, item: `${site}/services/${svc}` }"
+  "the provider isn't the homepage's record",
+  "flowexec",
+  "const bizId = (biz && biz[\"@id\"]) || `${base}/#business`;",
+  "const bizId = `${base}/#business`;",
+  1
  ],
  [
-  "FAQ markup from any draft",
-  "exec",
-  "if (qa.length >= 2) faq =",
-  "if (true) faq ="
+  "the breadcrumb skips the hub",
+  "flowexec",
+  "...(hubUrl ? [{ \"@type\": \"ListItem\", position: 2,",
+  "...(false ? [{ \"@type\": \"ListItem\", position: 2,",
+  1
  ],
  [
-  "AggregateRating comes back",
-  "exec",
-  "      if (client.primary_market) service.areaServed = client.primary_market;",
-  "      if (client.primary_market) service.areaServed = client.primary_market;\n      service.aggregateRating = { \"@type\": \"AggregateRating\", ratingValue: 5, reviewCount: 10 };"
+  "a national business serves its city",
+  "flowexec",
+  "const area = national ? \"United States\" :",
+  "const area = false ? \"United States\" :",
+  1
  ],
  [
-  "areaServed published with no market",
-  "exec",
-  "      if (client.primary_market) service.areaServed = client.primary_market;",
-  "      service.areaServed = client.primary_market || \"\";"
+  "step 49 drafts blind",
+  "flowexec",
+  "if (!home) return { summary: `Couldn't read ${base}/, so the business record",
+  "if (false) return { summary: `Couldn't read ${base}/, so the business record",
+  1
  ],
  [
-  "step 49 leaves the background runner",
-  "exec",
-  "    \"m1.web.expanded_schema\",\n",
-  "    \"m1.web.expanded_schema_off\",\n"
+  "old Service code is doubled",
+  "schemamerge",
+  "if (nodes.length && nodes.every((n) => typesOf(n).some((t) => kinds.has(t)))) stripped = stripped.replace(m[0], \"\");",
+  "",
+  1
+ ],
+ [
+  "other code is taken out too",
+  "schemamerge",
+  "nodes.every((n) => typesOf(n).some((t) => kinds.has(t)))",
+  "true",
+  1
+ ],
+ [
+  "the cleaner drops the pages",
+  "sitechange",
+  "...(kind === \"code\" && Array.isArray(o.pages) && o.pages.length ?",
+  "...(false ?",
+  1
+ ],
+ [
+  "pages aren't read in",
+  "admindeliv",
+  "c.pages = pages.map((x) => ({ url: x.url, name: x.name, path: x.path, code: x.code }));",
+  "c.pages = [];",
+  1
  ]
 ]
