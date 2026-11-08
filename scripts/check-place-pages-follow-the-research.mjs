@@ -50,6 +50,7 @@ if (!/place_facts: \[\.\.\.cand\.facts, \.\.\.cand\.searches\.map\(/.test(h46)) 
 if (!/const swapped = PL\.swappedName\(/.test(FE) || !/if \(swapped\.length >= 2\) return \{[\s\S]{0,300}outcome: "indeterminate"/.test(FE)) fail("a swapped-name draft is kept");
 const h47 = FE.slice(FE.indexOf('"m1.web.service_location_matrix": async'), FE.indexOf('"m1.web.service_location_matrix": async') + 5000);
 if (!/if \(!r\.plan \|\| !PB\.pageForService\(urls, r\.plan\.service\)\) continue;/.test(h47) || !/if \(!own\.length\) continue;/.test(h47) || !/PL\.placesWithProof\(/.test(h47) || !/if \(rule\.stop\) return/.test(h47)) fail("step 47 builds a service × place page without the service's page, real searches and proof (or ignores the business model)");
+if (!/for \(const u of existing\.slice\(0, 60\)\) \{/.test(h47) || !/if \(existing\.length && read < Math\.min\(existing\.length, 60\)\) return \{[\s\S]{0,250}outcome: "indeterminate"/.test(h47)) fail("step 47 calls its existing pages checked after reading some of them (it read 8 of RGA's 50)");
 if (/const r = PB\.planServiceAreaPage\(\{ site: ctx\.site, client, tasks: ctx\.tk, sitemapXml: ctx\.smXml, sitemapUrl: ctx\.smXml \? ctx\.smUrl : "", gbpAreas: ctx\.gbpAreas, planLocations: _plan\.locations/.test(h47)) fail("step 47 still builds the first service × place pair on the plan, proof or not");
 
 if (bad.length) { console.error(`❌ place pages follow the research — ${bad.length} regression(s):`); for (const b of bad) console.error(`  · ${b}`); process.exit(1); }

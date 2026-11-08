@@ -89,5 +89,19 @@
   "      if (!own.length) continue;   // nobody searches for this service in this place\n",
   "",
   1
+ ],
+ [
+  "step 47 reads 8 pages",
+  "flowexec",
+  "for (const u of existing.slice(0, 60)) {",
+  "for (const u of existing.slice(0, 8)) {",
+  1
+ ],
+ [
+  "a partial read is checked",
+  "flowexec",
+  "if (existing.length && read < Math.min(existing.length, 60)) return",
+  "if (false) return",
+  1
  ]
 ]
