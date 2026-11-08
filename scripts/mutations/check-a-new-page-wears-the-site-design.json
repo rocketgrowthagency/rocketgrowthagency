@@ -177,7 +177,7 @@
  [
   "the page's own fix isn't made",
   "pagedesign",
-  "const again = fixSlots(SC, slots, failed.map((f) => f.text));",
+  "const again = fixSlots(SC, slots, failed.map((f) => f.text), kept);",
   "const again = null;",
   1
  ],
@@ -256,6 +256,48 @@
   "pagedesign",
   "const toFit = (x, max) => { if (x.length <= max) return x;",
   "const toFit = (x, max) => { if (true) return x;",
+  1
+ ],
+ [
+  "a number dropped from a row that stays passes",
+  "pagedesign",
+  "if (tpl.slots.some((o, k) => k !== i && o.row === s.row && out[k]))",
+  "if (false)",
+  1
+ ],
+ [
+  "kept lines are judged",
+  "pagedesign",
+  "x && !kept.includes(i)).join(",
+  "x).join(",
+  1
+ ],
+ [
+  "kept lines are cut",
+  "pagedesign",
+  "x.includes(t) && !kept.includes(i) ?",
+  "x.includes(t) ?",
+  1
+ ],
+ [
+  "speed promises pass",
+  "sitechange",
+  "\"a promise about how fast results come\"]];",
+  "\"a promise about how fast results come\"]].slice(0, -1);",
+  1
+ ],
+ [
+  "the cleaner drops kept",
+  "sitechange",
+  "kept: (Array.isArray(o.design.kept) ? o.design.kept : [])",
+  "kept: ([])",
+  1
+ ],
+ [
+  "the draft doesn't record kept",
+  "flowexec",
+  "slots: fitted, kept, fitted_at",
+  "slots: fitted, fitted_at",
   1
  ]
 ]

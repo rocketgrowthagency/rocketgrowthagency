@@ -30,7 +30,7 @@ const TPL_MAIN = `
   <a class="btn" href="/contact/">Book a visit</a><div class="card" aria-label="Sample drain report"><img src="/img/drain.jpg" alt="A drain"><p class="cap">Sample report, made-up home.</p><ul><li>Kitchen sink</li><li>Main line</li></ul></div></section>
 <section><p class="eyebrow">What You Get</p><h2>Clear drains that stay clear</h2><figure class="team"><img src="/img/team.jpg" alt="Our team"><figcaption>Our drain crew at work</figcaption></figure><div class="cards"><div class="c"><svg><text>icon</text></svg><h3>Camera check</h3><p>We look inside the pipe first.</p></div><div class="c"><h3>Hydro jetting</h3><p>High pressure water clears the line.</p></div></div></section>
 <section><p class="eyebrow">How It Works</p><h2>Look, clear, test</h2><ol><li><span class="n">1</span><h3>Look</h3><p>We find the blockage.</p></li><li><span class="n">2</span><h3>Clear</h3><p>We clear it.</p></li></ol></section>
-<section class="sample"><h2>Your drain report</h2><p>Scores from 0 to 100 for each line.</p><span class="score">72</span></section>
+<section class="sample"><h2>Your drain report</h2><p>Scores from 0 to 100 for each line.</p><span class="score">72</span><div class="row"><span>Pipes</span><span class="bar" style="width:64%"></span><span>64</span></div></section>
 <section><p class="eyebrow">Related</p><a href="/services/water-heaters/">Water heaters &rarr;</a><a href="/services/leak-detection/">Leak detection</a></section>
 <section><p class="eyebrow">FAQ</p><details><summary>Do you work weekends?</summary><p>Yes, on Saturdays by appointment.</p></details><details><summary>Is the camera check extra?</summary><p>It comes with every visit.</p></details></section>
 <section class="trust"><span>Licensed and insured plumbers</span><span>Upfront quotes</span></section>`;
@@ -78,7 +78,7 @@ else {
   set("Clear drains that stay clear", "Leaks found without tearing walls open"); set("Camera check", "Acoustic listening"); set("We look inside the pipe first.", "We listen for water moving where it shouldn't.");
   set("Hydro jetting", "Thermal imaging"); set("High pressure water clears the line.", "A heat camera shows wet spots behind walls.");
   set("Look, clear, test", "Listen, find, fix"); set("Look", "Listen"); set("We find the blockage.", "We trace the sound."); set("Clear", "Find"); set("We clear it.", "We mark the spot.");
-  set("Your drain report", ""); set("Scores from 0 to 100 for each line.", ""); set("72", "");
+  set("Your drain report", ""); set("Scores from 0 to 100 for each line.", ""); set("72", ""); set("Pipes", ""); set("64", "");
   set("Related", "Related"); set("Water heaters →", "Water heaters →"); set("Leak detection", "Drain cleaning");
   set("Do you work weekends?", "Do you work weekends?"); set("Yes, on Saturdays by appointment.", "Yes, on Saturdays by appointment."); set("Is the camera check extra?", "Do you cut into walls?"); set("It comes with every visit.", "Only when the leak is found and you say yes.");
   const content = "Leak detection. Saturdays by appointment. Water heaters. Drain cleaning. Acme Plumbing serves Springfield.";
@@ -88,6 +88,8 @@ else {
   // each bad fit differs from the good one in ONE slot, so the rule it names is the one that caught it
   const chk = (f, o = {}) => PD.checkFit({ slots: f }, tpl, { pageFor: "Leak detection", content, shared: sharedAll, ...o }).problems || [];
   if (!chk(fit.slice(1)).some((p) => /answered/.test(p))) fail("a fit with the wrong number of slots passes");
+  { const f = [...fit]; f[ix("Your drain report")] = "Your leak report"; f[ix("Pipes")] = "Walls"; if (!chk(f).some((p) => /a number was dropped from a row that stays/.test(p))) fail("a number dropped from a row that stays passes (a bar with nothing on it)"); }
+  { const f = [...fit]; f[ix("Pipes")] = "Walls"; f[ix("64")] = "64"; f[ix("Your drain report")] = "Your leak report"; if (chk(f).some((p) => /row that stays/.test(p))) fail("a sample kept whole, its number as it was, is refused"); }
   // keyed by slot number (RGA's first real run answered 68 for 66 slots as a list)
   { const keyed = Object.fromEntries(fit.map((x, i) => [String(i), x]));
     const kp = (o) => PD.checkFit({ slots: o }, tpl, { pageFor: "Leak detection", content, shared: sharedAll });
@@ -115,7 +117,7 @@ else {
   if (!r.html) fail("a good fit isn't placed");
   else {
     if (/<img|<figure|Our drain crew|Sample report|Kitchen sink|class="card"/.test(r.html)) fail("the template's picture or its sample card survives (a card whose words were all dropped must go)");
-    if (/class="sample"|Your drain report|72/.test(r.html)) fail("a section whose words were all dropped survives as an empty box");
+    if (/class="sample"|Your drain report|72|class="row"/.test(r.html)) fail("a section whose words were all dropped survives as an empty box");
     if (/aria-label="Sample drain report"/.test(r.html)) fail("a label the template gave its own part survives");
     if (/href="\/services\/leak-detection\/"/.test(r.html) || !/href="\/services\/drain-cleaning\/">Drain cleaning</.test(r.html)) fail("a link to the new page itself isn't pointed at the template page");
     if (!/<span class="n">1<\/span><h3>Listen<\/h3>/.test(r.html) || !/<svg><text>icon<\/text><\/svg><h3>Acoustic listening/.test(r.html) || !/Licensed and insured plumbers/.test(r.html)) fail("the layout isn't kept (step numbers, icons, the trust band)");
@@ -141,6 +143,17 @@ else {
   const fit3 = [...fit]; fit3[ix("We find the blockage.")] = "We guarantee we find every leak.";
   const f3 = PD.designFollows(SC, { ...before, design: { ...before.design, slots: fit3 } }, before, {});
   if (f3.design && f3.design.slots.some((x) => /guarantee/.test(x))) fail("the page as built keeps a claim the lines' checks refuse");
+  // only the new words are judged: a line kept from their own page is on their site already, and is never cut
+  { const g = [...fit]; g[ix("Do you work weekends?")] = "Do you guarantee a fixed price?"; const at = ix("Do you work weekends?");
+    const keptOn = PD.designFollows(SC, { ...before, design: { ...before.design, slots: g, kept: [at] } }, before, {});
+    if (!keptOn.design || keptOn.design.slots[at] !== "Do you guarantee a fixed price?") fail("a line kept from their own page is judged and cut by the page's checks (its answer left alone)");
+    const notKept = PD.designFollows(SC, { ...before, design: { ...before.design, slots: g, kept: [] } }, before, {});
+    if (notKept.design && notKept.design.slots[at] === "Do you guarantee a fixed price?") fail("a NEW line with a guarantee passes the page's checks"); }
+  { const g = [...fit], at = ix("Do you work weekends?"), nw = ix("We find the blockage."); g[at] = "Do you guarantee a fixed price?"; g[nw] = "We trace the sound. We guarantee it.";
+    const both = PD.designFollows(SC, { ...before, design: { ...before.design, slots: g, kept: [at] } }, before, {});
+    if (!both.design || both.design.slots[at] !== "Do you guarantee a fixed price?" || both.design.slots[nw] !== "We trace the sound.") fail("fixing a new line also cuts a kept line with the same words (or the new one isn't fixed)"); }
+  if (!SC.riskyClaims({ items: [{ label: "x", after: "We get to work, no waiting weeks to see movement." }] }).some((r) => /how fast results come/.test(r.what)) || !SC.riskyClaims({ items: [{ label: "x", after: "Most clients see results in weeks." }] }).length) fail("a promise about how fast results come passes (RGA's step 45: 'no waiting weeks to see movement')");
+  if (SC.riskyClaims({ items: [{ label: "x", after: "We report every week so you see the work." }] }).length) fail("a plain line about weekly reporting is read as a speed promise");
   const gotSync = await AR.checkAndFix({ siteText: async () => "" }, { id: "c" }, before);
   if (!gotSync.change.design || gotSync.change.design.slots.some((x) => /same day/.test(x))) fail("checkAndFix doesn't carry the fix onto the page as built");
 }
@@ -149,6 +162,9 @@ else {
 const cleaned = SC.cleanChange("m1.web.priority_pages", { kind: "copy", new_page: true, page_url: NEW_URL, files: [{ path: "services/leak-detection/index.html", action: "add" }], items: [{ label: "Main headline", after: "x" }], design: { template_url: TPL_URL, template_key: "k", items_key: "i", slots: ["a — b", ""] } });
 if (!SC.STEPS["m1.web.priority_pages"]) fail("the priority pages step moved (the cleaner case needs a new-page step)");
 else if (!cleaned.change || !cleaned.change.design || cleaned.change.design.slots[0] !== SC.noDashes("a — b")) fail("the cleaner drops a new page's design, or keeps an em dash in it");
+const cleaned2 = SC.cleanChange("m1.web.priority_pages", { kind: "copy", new_page: true, page_url: NEW_URL, files: [{ path: "services/leak-detection/index.html", action: "add" }], items: [{ label: "Main headline", after: "x" }], design: { template_url: TPL_URL, template_key: "k", items_key: "i", slots: ["a", "b"], kept: [1, "x", -2] } });
+if (!cleaned2.change || JSON.stringify(cleaned2.change.design.kept) !== "[1]") fail("the cleaner loses which lines were kept from their own page (or keeps a bad one)");
+if (!/const kept = fitted\.map\(\(x, i\) => \(x && x === tpl\.slots\[i\]\.text \? i : -1\)\)/.test(FE) || !/slots: fitted, kept, fitted_at/.test(FE)) fail("the draft doesn't record which lines it kept from their own page");
 if (!/page_draft\.design = fit\.design; else page_draft\.design_skipped = fit\.why/.test(FE) || !/for \(let n = 0; n < 3; n\+\+\)/.test(FE.slice(FE.indexOf("async function fitDesign"), FE.indexOf("async function fitDesign") + 3000))) fail("the draft doesn't fit the words to the site's design (two more tries, else the plain page and why)");
 if (!/SiteChange\.duplicateSentences\(changed\.join/.test(FE) || !/SiteChange\.autoChecks\(line, \{ siteText \}\)/.test(FE)) fail("the fitted words don't pass the same checks as the draft (claims, timing, copying from their pages)");
 if (!/c\.design = \{ \.\.\.od\.page_draft\.design, items_key: require\("\.\/_page-design"\)\.itemsKey\(c\.items\) \}/.test(AD)) fail("the draft reader doesn't carry the design, keyed to its lines");
