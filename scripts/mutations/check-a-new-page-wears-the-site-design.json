@@ -93,8 +93,8 @@
  [
   "an overlong slot passes",
   "pagedesign",
-  "if (x.length > Math.max(",
-  "if (false && x.length > Math.max(",
+  "if (x.length > maxLen(s.text))",
+  "if (false)",
   1
  ],
  [
@@ -193,6 +193,20 @@
   "pagedesign",
   "if (extra.length) return",
   "if (false) return",
+  1
+ ],
+ [
+  "a call to action elsewhere isn't shared",
+  "pagedesign",
+  "(words(s.text) >= 4 && any.filter(",
+  "(false && any.filter(",
+  1
+ ],
+ [
+  "the content's own words can't be kept",
+  "pagedesign",
+  "&& !have.toLowerCase().includes(x.toLowerCase())) problems.push",
+  "&& true) problems.push",
   1
  ]
 ]

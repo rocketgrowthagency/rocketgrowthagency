@@ -48,6 +48,8 @@ else {
   if (tpl.subject !== "Drain Cleaning") fail(`the template's subject isn't read from its title ("${tpl.subject}")`);
   if (PD.renderMain(tpl.main, texts).html !== tpl.main.replace(/<figure[\s\S]*?<\/figure>/g, "").replace(/<img[^>]*>/g, "").replace(/ aria-label="Sample drain report"/, "")) fail("placing the template's own words doesn't give the template back exactly, less its pictures and its parts' labels (the layout is changed by the build)");
   const shared = PD.sharedLines(tpl, [OTHER]);
+  if (!PD.sharedLines(tpl, [page("Pipes | Acme", "<div><b>Licensed and insured plumbers</b></div>")]).includes("span|licensed and insured plumbers")) fail("a call-to-action line the site's other pages show in another place isn't the site's (4+ words)");
+  if (PD.sharedLines(tpl, [page("Pipes | Acme", "<div><b>Drain Cleaning</b></div>")]).includes("p|drain cleaning")) fail("a short label shown elsewhere in another place counts as the site's (it's how 'GBP Optimization' got through)");
   if (!shared.includes("span|licensed and insured plumbers") || !shared.includes("p|what you get") || shared.includes("p|drain cleaning")) fail("the site's shared lines aren't told apart by place (a trust band shared; another page's LINK 'Drain Cleaning' isn't this page's label)");
 
   // a good fit for the new page about leak detection
@@ -63,20 +65,22 @@ else {
   set("Related", "Related"); set("Water heaters →", "Water heaters →"); set("Leak detection", "Drain cleaning");
   set("Do you work weekends?", "Do you work weekends?"); set("Yes, on Saturdays by appointment.", "Yes, on Saturdays by appointment."); set("Is the camera check extra?", "Do you cut into walls?"); set("It comes with every visit.", "Only when the leak is found and you say yes.");
   const content = "Leak detection. Saturdays by appointment. Water heaters. Drain cleaning. Acme Plumbing serves Springfield.";
-  const ok = PD.checkFit({ slots: fit }, tpl, { pageFor: "Leak detection", content, shared: [...shared, "p|related", "summary|do you work weekends?", "p|yes, on saturdays by appointment.", "a|water heaters →"] });
+  const sharedAll = [...shared, "p|related", "summary|do you work weekends?", "p|yes, on saturdays by appointment.", "a|water heaters →"];
+  const ok = PD.checkFit({ slots: fit }, tpl, { pageFor: "Leak detection", content, shared: sharedAll });
   if (ok.problems) fail(`a good fit is refused: ${ok.problems.join("; ")}`);
-  const chk = (f, o = {}) => PD.checkFit({ slots: f }, tpl, { pageFor: "Leak detection", content, shared, ...o }).problems || [];
+  // each bad fit differs from the good one in ONE slot, so the rule it names is the one that caught it
+  const chk = (f, o = {}) => PD.checkFit({ slots: f }, tpl, { pageFor: "Leak detection", content, shared: sharedAll, ...o }).problems || [];
   if (!chk(fit.slice(1)).some((p) => /answered/.test(p))) fail("a fit with the wrong number of slots passes");
   // keyed by slot number (RGA's first real run answered 68 for 66 slots as a list)
   { const keyed = Object.fromEntries(fit.map((x, i) => [String(i), x]));
-    const kp = (o) => PD.checkFit({ slots: o }, tpl, { pageFor: "Leak detection", content, shared: [...shared, "p|related", "summary|do you work weekends?", "p|yes, on saturdays by appointment.", "a|water heaters →"] });
+    const kp = (o) => PD.checkFit({ slots: o }, tpl, { pageFor: "Leak detection", content, shared: sharedAll });
     if (kp(keyed).problems) fail(`a good fit keyed by slot number is refused: ${kp(keyed).problems.join("; ")}`);
     const miss = { ...keyed }; delete miss["3"]; if (!(kp(miss).problems || []).some((p) => /no answer for slot 3/.test(p))) fail("a keyed fit missing a slot passes");
     if (!(kp({ ...keyed, [String(fit.length)]: "x" }).problems || []).some((p) => /don't exist/.test(p))) fail("a keyed fit with a slot that doesn't exist passes"); }
   { const f = [...fit]; tpl.slots.forEach((s, i) => { if (s.tag === "h1") f[i] = ""; }); if (!chk(f).some((p) => /headline was dropped/.test(p))) fail("a fit that drops the headline passes"); }
   { const f = [...fit]; f[ix("Drain cleaning in")] = "Plumbing help in"; if (!chk(f).some((p) => /doesn't name/.test(p))) fail("a headline that doesn't name the page passes"); }
   { const f = [...fit]; f[ix("We look inside the pipe first.")] = "We look inside the pipe first."; if (!chk(f).some((p) => /kept the other page's words/.test(p))) fail("a line kept from the template page passes"); }
-  { const f = [...fit]; f[ix("Drain Cleaning")] = "Drain Cleaning"; if (!chk(f).some((p) => /kept the other page's words/.test(p))) fail("the template's own label kept word for word passes (it's another page's LINK, not a shared label)"); }
+  { const f = [...fit]; f[ix("Drain Cleaning")] = "Drain Cleaning"; if (!chk(f).some((p) => /kept the other page's words|still says what the other page is about/.test(p))) fail("the template's own label kept word for word passes (it's another page's LINK, not a shared label)"); }
   { const f = [...fit]; f[ix("Clear drains that stay clear")] = "Drain cleaning and leaks, found fast"; if (!chk(f).some((p) => /still says what the other page is about/.test(p))) fail("a heading that still names what the template page is about passes"); }
   { const f = [...fit]; f[ix("We find the blockage.")] = "We find 9 out of 10 leaks."; if (!chk(f).some((p) => /adds a number \(9\)/.test(p))) fail("a fit that adds a number passes"); }
   { const f = [...fit]; f[ix("We find the blockage.")] = "We trace the sound. ".repeat(12); if (!chk(f).some((p) => /far longer/.test(p))) fail("a slot far longer than its place passes"); }
@@ -121,7 +125,7 @@ else {
 const cleaned = SC.cleanChange("m1.web.priority_pages", { kind: "copy", new_page: true, page_url: NEW_URL, files: [{ path: "services/leak-detection/index.html", action: "add" }], items: [{ label: "Main headline", after: "x" }], design: { template_url: TPL_URL, template_key: "k", items_key: "i", slots: ["a — b", ""] } });
 if (!SC.STEPS["m1.web.priority_pages"]) fail("the priority pages step moved (the cleaner case needs a new-page step)");
 else if (!cleaned.change || !cleaned.change.design || cleaned.change.design.slots[0] !== SC.noDashes("a — b")) fail("the cleaner drops a new page's design, or keeps an em dash in it");
-if (!/page_draft\.design = fit\.design; else page_draft\.design_skipped = fit\.why/.test(FE) || !/for \(let n = 0; n < 2; n\+\+\)/.test(FE.slice(FE.indexOf("async function fitDesign"), FE.indexOf("async function fitDesign") + 3000))) fail("the draft doesn't fit the words to the site's design (one more try, else the plain page and why)");
+if (!/page_draft\.design = fit\.design; else page_draft\.design_skipped = fit\.why/.test(FE) || !/for \(let n = 0; n < 3; n\+\+\)/.test(FE.slice(FE.indexOf("async function fitDesign"), FE.indexOf("async function fitDesign") + 3000))) fail("the draft doesn't fit the words to the site's design (two more tries, else the plain page and why)");
 if (!/SiteChange\.duplicateSentences\(changed\.join/.test(FE) || !/SiteChange\.autoChecks\(line, \{ siteText \}\)/.test(FE)) fail("the fitted words don't pass the same checks as the draft (claims, timing, copying from their pages)");
 if (!/c\.design = \{ \.\.\.od\.page_draft\.design, items_key: require\("\.\/_page-design"\)\.itemsKey\(c\.items\) \}/.test(AD)) fail("the draft reader doesn't carry the design, keyed to its lines");
 if (!/PD\.templateKey\(tplMain\) !== c\.design\.template_key \? "its template page changed/.test(AD) || !/PD\.itemsKey\(c\.items\) !== c\.design\.items_key \? "the words were edited/.test(AD)) fail("the build uses a fit whose template page changed or whose words were edited");
