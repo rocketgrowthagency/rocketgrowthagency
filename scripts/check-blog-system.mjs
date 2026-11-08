@@ -467,7 +467,9 @@ const V = (rows, o = {}) => S.weeklyVerdicts({ rows, now: NOW, events: o.events 
   const fn = (/async function blogFromMaterial\(client\) \{[\s\S]*?\n\}\n/.exec(FE) || [""])[0];
   if (!fn) moved("blogFromMaterial");
   if (!/clientBlogPlan/.test(fn) || !/0 posts is fine[\s\S]{0,80}outcome: "noop"/.test(fn) || !/published: false/.test(fn)) fail("the blog runner doesn't decide from material, say 0 is fine, or mark its draft unpublished");
-  if (/openPullRequest|api\.github\.com|GA\.|writeFile|site_change|publish_pr/.test(fn)) fail("the blog runner can put something on a client's site");
+  // website_steps_46_50_research_v1 #48 (approved 11-7): the runner READS the image step's published record (iseo.site_change / _log) for
+  // first-hand photo facts. Only that read is excused; an assignment to it, or any other site_change, still fails (11-7 night fixer)
+  if (/openPullRequest|api\.github\.com|GA\.|writeFile|site_change|publish_pr/.test(fn.replace(/\biseo\.site_change(?:_log)?\b(?!\s*=(?!=))/g, ""))) fail("the blog runner can put something on a client's site");
   // the upload was built 11-01 (admin_blog_step_v1): the row must say the client's yes comes first and that it only finishes read back. check-a-blog-post-goes-through-the-website-pipeline runs it.
   if (!/nothing goes up without their yes/i.test(row && row.instructions || "") || !/reads back live/i.test(row && row.instructions || "")) fail("the Monthly blog row doesn't say the client's yes comes first and it finishes only when it reads back");
   const heavy = (/const HEAVY = new Set\(\[[\s\S]*?\]\);/.exec(FE) || [""])[0];

@@ -353,7 +353,9 @@ try {
   { const used = new Set([...NEWMW.matchAll(/ob-(?:mg|zc|gq)[\w-]*/g)].map((m) => m[0])), has = (c) => new RegExp(`\\.${c}(?![\\w-])`).test(ACSS), own = (c) => new RegExp(`\\.${c}(?![\\w-])\\s*[{,]`).test(ACSS);
     must(used.size >= 6 && [...used].every(has), `css: a class the working cards use has no rule in admin.css (${[...used].filter((c) => !has(c)).join(", ")})`);
     for (const c of ["ob-mg-row", "ob-mg-now", "ob-mg-msg", "ob-mg-last", "ob-mg-opt", "ob-mg-told"]) must(own(c), `css: ${c} has no rule of its own in admin.css`); }
-  { const idx = read("admin/index.html"); must(/admin\.js\?v=20261106[h-z]/.test(idx) && /admin\.css\?v=20261106[h-z]/.test(idx), "release: admin's ?v= isn't bumped to 20261106h or later"); }
+  // 🔑 "20261106h OR LATER" is a comparison, not a pattern: [h-z] on the 6th went red on the 7th's 20261107q (11-7 night fixer)
+  { const idx = read("admin/index.html"), at = (f) => (idx.match(new RegExp(`admin\\.${f}\\?v=(\\d{8}[a-z]?)`)) || [])[1] || "";
+    must(at("js") >= "20261106h" && at("css") >= "20261106h", "release: admin's ?v= isn't bumped to 20261106h or later"); }
   { const typed = [...noComments(NEWMW).matchAll(/["'`]([^"'`\n]*\b[Ss]tep (\d+)\b[^"'`\n]*)["'`]/g)].filter((m) => !/\/\/ /.test(m[0]));
     must(typed.length === 0, `copy: a step number is typed in the working cards (${typed.map((m) => m[1]).join(" | ")}); numbers come from the sheet/helpers`); }
 } catch (e) { fail(`the cards threw while being drawn or pressed (a card that throws is a broken card): ${String(e && e.stack || e).slice(0, 600)}`); }

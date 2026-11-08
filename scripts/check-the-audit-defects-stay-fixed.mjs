@@ -53,7 +53,10 @@ for (const id of ["m1.gbp.optimize_categories", "m1.gbp.services_products", "m1.
 }
 if (/Suggest 3 sub-locations/i.test(FE)) F("#2 a draft invents its own sub-locations again");
 // 10-27 (rga_first_site_change_v1): the city page takes the plan's sub-locations as its areas (planLocations), with planBlock in the prompt
-if (!/planLocations: _plan\.locations \|\| \[\]/.test(block("m1.web.location_pages")) ) F("#2 the location pages do not name the plan's sub-locations");
+// 11-7 (website_steps_46_50_research_v1): the block names planLocations twice, the places with proof AND the page's own areas; one
+// regex over the block was satisfied by either, so the page could lose the plan's areas unseen. Each call is checked (11-7 night fixer)
+{ const L = block("m1.web.location_pages");
+  if (!/PL\.placesWithProof\(\{[^;]*planLocations: _plan\.locations \|\| \[\]/.test(L) || !/CP\.planPage\(\{[^;]*planLocations: _plan\.locations \|\| \[\]/.test(L)) F("#2 the location pages do not name the plan's sub-locations"); }
 if (!/planLocations: _plan\.locations \|\| \[\]/.test(block("m1.web.service_location_matrix")) || !/CP\.areaNames\(c \? \[c\.city\] : \[\], _plan\.locations,/.test(block("m1.web.service_location_matrix"))) F("#2 the matrix does not name the plan's sub-locations");
 // universal: the category shortlist never pins one trade's categories first
 if (/marketing\|advertis/.test(block("m1.gbp.optimize_categories"))) F("the category shortlist pins marketing categories first again — RGA's trade, not the client's");

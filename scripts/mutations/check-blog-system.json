@@ -509,5 +509,12 @@
   "<title>Local SEO for Deck Builders: Rank in Google Maps | RGA</title>",
   "<title>Local SEO for Deck Builders: How to Rank in the Google Maps Top 3 | RGA</title>",
   1
+ ],
+ [
+  "the blog runner writes the image step's site change",
+  "exec",
+  "  for (const h of [...(iseo.site_change_log || [])",
+  "  iseo.site_change = { items: [] };\n  for (const h of [...(iseo.site_change_log || [])",
+  1
  ]
 ]

@@ -30,8 +30,10 @@ if (!/return require\("\.\/_page-speed"\)\.judge\(await r\.json\(\)\);/.test(FE)
 if (!/!done\["redo:speed_v1"\]/.test(AR) || !/redo:recheck:\$\{sp\.recheck_at\}/.test(AR)) fail("an old reading isn't measured again by the recipe, or a watched reading isn't re-read when due");
 // #3 of the same approval (RGA's step 45): a line outside the main area that's on most of the site's other pages is the site's shared banner
 { const PF = req(path.join(SITE, "netlify/functions/_page-file.js"));
-  const page = (own) => `<html><body><header>Nav</header><main><h1>x</h1></main><section class="cta">Book Your Free Growth Audit today</section>${own ? `<section>${own}</section>` : ""}<footer>Foot</footer></body></html>`;
-  const extra = PF.pageOnlyWords(page("This sentence belongs to the template page only, nowhere else"), page(""), [page(""), page("")]);
+  const page = (own, banner = true) => `<html><body><header>Nav</header><main><h1>x</h1></main>${banner ? `<section class="cta">Book Your Free Growth Audit today</section>` : ""}${own ? `<section>${own}</section>` : ""}<footer>Foot</footer></body></html>`;
+  // 🔑 the 11-7 case: the ONE page it was compared with has no banner, most of the others do (a reference that also carried the banner
+  // could not tell "on the compared page" from "on most pages", so dropping the others went unseen; 11-7 night fixer)
+  const extra = PF.pageOnlyWords(page("This sentence belongs to the template page only, nowhere else"), page("", false), [page(""), page(""), page("")]);
   if (extra.some((x) => /Book Your Free Growth Audit/.test(x))) fail("a banner on most of the site's pages counts as the template's own words (step 45)");
   if (!extra.some((x) => /belongs to the template page only/.test(x))) fail("a line only the template has slips through"); }
 if (bad.length) { console.error(`❌ step 17 — ${bad.length} regression(s):`); for (const b of bad) console.error(`  · ${b}`); process.exit(1); }

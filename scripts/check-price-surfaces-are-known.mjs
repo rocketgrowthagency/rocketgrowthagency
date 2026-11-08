@@ -149,9 +149,12 @@ const PRICE_CODE  = /(?:return|=|:)\s*(?:1250|625|1875|2500|3750|5000|1500|3500|
 console.log("── every price surface is known and classified ──");
 if (!fs.existsSync(SITE)) { console.log(`  ⚠️  missing: ${SITE}`); process.exit(2); }
 
+// 🔑 The LIST comes from the real repo, the CONTENTS from SITE: a mutation copy has no .git, so `ls-files` on it can never run and
+// the 11-7 mutations were never judged (exit 2). Same as check-internal-files-are-not-public. (11-7 night fixer)
+const REAL = "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 let files;
 try {
-  files = execFileSync("git", ["-C", SITE, "ls-files"], { encoding: "utf8" }).split("\n").filter(Boolean);
+  files = execFileSync("git", ["-C", fs.existsSync(path.join(SITE, ".git")) ? SITE : REAL, "ls-files"], { encoding: "utf8", maxBuffer: 1 << 28 }).split("\n").filter(Boolean);
 } catch (e) {
   console.log(`  ⚠️  could not list files: ${e.message}`);
   process.exit(2); // 🔴 exit 2 — could not tell, not "passed".

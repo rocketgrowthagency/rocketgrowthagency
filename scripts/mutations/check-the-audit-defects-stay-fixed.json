@@ -7,6 +7,13 @@
   1
  ],
  [
+  "the city page's places with proof skip the plan's sub-locations",
+  "exec",
+  "const cands = PL.placesWithProof({ client, planLocations: _plan.locations || []",
+  "const cands = PL.placesWithProof({ client, planLocations: []",
+  1
+ ],
+ [
   "description ignores the plan",
   "exec",
   "GBP descriptions. HARD LIMIT: 750 chars. Lead with what + where, mention 2-3 services, end with contact action. Plain prose, no bullets, no emojis.`,\n      `${clientCtx(client)}${planBlock(_plan)}`",

@@ -85,6 +85,14 @@ const run = async (client, o = {}) => { const d = deps(o); const r = await TM.dr
   if (TM.checkOption({ title: OPTIONS[0].title, description: "Since 2015 in Culver City. Call (424) 242-2040." }, { ...pack, otherTitles: [] }).ok) fail("a number that isn't on file (a year) passes");
   // 11-7, the first real run: the brand's own words don't count toward a keyword ("| Rocket Growth Agency" is not "local seo AGENCY")
   if (TM.checkOption({ title: "Google Maps Local SEO in Culver City | Rocket Growth Agency", description: "Culver City. Call (424) 242-2040." }, { ...pack, otherTitles: [] }).checks.find((c) => c.id === "keyword_city").ok) fail("the business name's words count toward a plan keyword");
+  // 11-7 night fixer: two failure tests went uncaught. Case 1's losers fail other checks, so nothing proved the PLAN's order picks the
+  // winner, and a phone was only ever their own. Both checked here directly.
+  { const P0 = { ...pack, otherTitles: [] }, d = "Local SEO for Culver City businesses. Call (424) 242-2040.";
+    const hi = { title: "Local SEO Services in Culver City | Rocket Growth Agency", description: d }, lo = { title: "Local SEO Agency in Culver City | Rocket Growth Agency", description: d };
+    if (!TM.checkOption(hi, P0).ok || !TM.checkOption(lo, P0).ok) fail("the plan-order fixture doesn't pass its own checks");
+    else if (TM.pickOption([hi, lo], P0) !== 0) fail("the winner isn't the plan's highest keyword (the shorter, lower-ranked title won)");
+    const f = TM.checkOption({ ...hi, description: "Local SEO for Culver City businesses. Call (310) 555-0199." }, P0).checks.find((c) => c.id === "facts");
+    if (f.ok || !/isn't their phone/.test(f.what)) fail("a phone that isn't theirs passes"); }
   if (TM.parseOptions("no json here").length !== 0 || TM.parseOptions(`x {"options":[{"title":"a","description":"b"}]} y`).length !== 1) fail("the model's answer isn't read safely");
 }
 // measured after: the 28 days before, and "doing worse" only with 100+ views and a lower click rate

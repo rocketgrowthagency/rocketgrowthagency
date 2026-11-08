@@ -75,6 +75,13 @@ const run = async (client, o) => {
   const { r, seen } = await run(RGA, { html, options: [{ headline: "Local SEO Services in Culver City", sub: "Local SEO and Google Business Profile help for Culver City businesses.", button: "Book a call", why: "" }] });
   if (!/goes to https:\/\/cal\.example\.com\/rga/.test(seen.user) || !r.outcome_data.recipe.options[0].ok) fail("booking: the button's target isn't given, or a booking button that matches fails");
 }
+// 6 · a plan keyword without the city fails the keyword + city check (case 1's old headline has neither, so it can't tell the city
+// from the keyword; 11-7 night fixer)
+{
+  const { r } = await run(RGA, { html: RGA_PAGE, options: [{ headline: "Google Business Profile Optimization That Works", sub: "We set up the Google Business Profile for Culver City businesses.", button: "Get your free audit", why: "" }] });
+  const kc = r.outcome_data.recipe.options[0].checks.find((c) => c.id === "keyword_city");
+  if (kc.ok || !/but not Culver City/.test(kc.what)) fail(`no city: a headline with a plan keyword but not the city passes (${kc.what})`);
+}
 // none passes → no lines, every reason
 {
   const { r } = await run(RGA, { html: RGA_PAGE, options: [{ headline: "x", sub: "", button: "", why: "" }] });
