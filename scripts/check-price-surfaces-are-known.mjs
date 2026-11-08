@@ -50,6 +50,7 @@ const SURFACES = {
   "shared/busy.js":                             ["EXCLUDED", "the master busy state (every control that waits on the server spins) — wraps fetch, renders no text, quotes no price; matched only because it loads in every portal/admin page"],
   "netlify/functions/_blog-chain.js":           ["EXCLUDED", "the blog proposal-to-draft chain (blog_system_v1 steps 9-12): `PRICE_PER_M` is the assumed price of AI tokens, used to show a spending cap; it is not an offer price, and the file quotes no plan or price of ours"],
   "netlify/functions/_page-brief.js":           ["EXCLUDED", "the page brief (website_system_v2 build 3): word counts, a row limit and timeouts, not prices; the file quotes no price or plan"],
+  "netlify/functions/_page-speed.js":           ["EXCLUDED", "step 17's speed lines (step17_speed_and_send_now_v1): 2500 is Google's LCP line in milliseconds, 200 its INP / TBT line; the file quotes no price or plan"],
   "netlify/functions/_page-measure.js":         ["EXCLUDED", "Search Console per page (website_system_v2 build 11): row limits and timeouts, not prices; the file quotes no price or plan"],
   "netlify/functions/_publish-safety.js":       ["EXCLUDED", "the website-change safety checks (publish_safety_checks_v1) — `perPageMs = 3500` is a page-read timeout in milliseconds, not a price; the file quotes no price or plan"],
   "netlify/functions/site-preview.js":          ["EXCLUDED", "the private preview of a built page + the out-of-date card (preview_not_current_v1, 10-29) — the numbers are the RGA logo's SVG drawing (viewBox 1046, path points), not a price; it quotes no price or plan"],
@@ -218,6 +219,10 @@ if (process.argv.includes("--list")) {
   if (!/require\("\.\/_blog-post"\)\.isOwnSite\(client\) \? priceCtx\(\) : "Prices: \[\[NOT SUPPLIED/.test(FE) || calls !== 1) {
     fails++; console.log(`  🔴 RGA's own prices can reach another client's draft (priceCtx() is called ${calls}× and not only for RGA's own record)`);
   } else console.log("  ✅ RGA's own prices go only into RGA's own drafts; every other client's draft is told there is no price to state");
+  // 11-7: how RGA is paid (card only, no cash) went to EVERY client's draft too
+  const pay = FE.split("\n").filter((l) => /Payment: card \(Visa/.test(l));
+  if (pay.length !== 1 || !/isOwnSite\(client\) \? "Payment: card/.test(pay[0])) { fails++; console.log("  🔴 how RGA is paid (card only, no cash) can reach another client's draft"); }
+  else console.log("  ✅ how RGA is paid goes only into RGA's own drafts");
 }
 if (fails) { console.log(`\n🔴 ${fails} check(s) failed — a price could be changed and left behind somewhere.`); process.exit(1); }
 console.log("\n✅ every place a price lives is accounted for.");

@@ -5,5 +5,12 @@
   "require(\"./_blog-post\").isOwnSite(client) ? priceCtx() : \"Prices: [[NOT SUPPLIED — never state a price, fee, plan or term for this business]]\",",
   "priceCtx(),",
   1
+ ],
+ [
+  "RGA's payment terms reach every client",
+  "flowexec",
+  "require(\"./_blog-post\").isOwnSite(client) ? \"Payment: card (Visa, Mastercard, Amex) through a secure checkout link. No cash or checks.\" : \"\",",
+  "\"Payment: card (Visa, Mastercard, Amex) through a secure checkout link. No cash or checks.\",",
+  1
  ]
 ]
