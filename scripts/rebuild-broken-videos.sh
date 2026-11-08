@@ -339,8 +339,7 @@ fi
 say "deploying ${#OK[@]} rebuilt video(s)…"
 TOK=$(grep -E '^NETLIFY_AUTH_TOKEN=' "$SCRAPER/.env" | head -1 | cut -d= -f2-)
 SITE="38f275c7-a4a8-4531-9989-1fc1ccb78f9e"
-CUR=$(curl -s -H "Authorization: Bearer $TOK" "https://api.netlify.com/api/v1/sites/$SITE" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{console.log(JSON.parse(d).published_deploy?.id||'')})")
-curl -s -X POST -H "Authorization: Bearer $TOK" "https://api.netlify.com/api/v1/deploys/$CUR/unlock" -o /dev/null
+# (deploy-site.sh handles the lock itself; unlocking here as well left a window for a queued build.)
 # 🔴 2026-10-09 — COMMIT THE LANDING PAGES FIRST. deploy-site.sh ships the COMMIT and holds back every
 # untracked file; this script never committed, so on 10-07 and 10-08 nine rebuilt leads went live with
 # their video.mp4 (gitignored → always deployed) but WITHOUT index.html — /v/<slug>/ served the homepage
@@ -355,6 +354,9 @@ git -C "$WEB" -c user.name=rocketgrowthagency -c user.email=hello@rocketgrowthag
 # 🔴 2026-09-08 — production is deliberately LOCKED and a bare `netlify deploy --prod` is REFUSED.
 # deploy-site.sh unlocks, deploys the working tree, publishes ITS OWN deploy id (a queued git
 # build otherwise wins the race and ships a video-less site), re-locks, and verifies by content.
+# 🔒 rga_videos_to_storage_v1 (11-8): the site forwards /v/<slug>/video.mp4 to file storage, so each rebuilt video REPLACES its stored copy
+# (read back identical, skips ahead) before the pages go live. One that didn't reach storage fails the check below and isn't published.
+node "$SCRAPER/scripts/outreach-video-to-storage.mjs" "${OK[@]}" 2>&1 | tee -a "$LOG"
 NETLIFY_AUTH_TOKEN="$TOK" bash "/Users/chris/RGA/Rocket Growth Agency Website VS Code/scripts/deploy-site.sh" "rebuild broken videos: ${OK[*]}" 2>&1 | tee -a "$LOG"
 # 🔴 PIPESTATUS[0], NOT $?. After `| tee`, `$?` is TEE's exit code — 0 even when the deploy failed.
 # That is the very trap the comment above describes, reintroduced 2026-09-08 when this switched to
@@ -372,7 +374,7 @@ fi
 SERVED=(); SERVED_CSV=()
 for i in "${!OK[@]}"; do
   s="${OK[$i]}"
-  CT=$(curl -s -o /dev/null -w '%{content_type}' "https://www.rocketgrowthagency.com/v/$s/video.mp4")
+  CT=$(curl -sL -o /dev/null -w '%{content_type}' "https://www.rocketgrowthagency.com/v/$s/video.mp4")   # -L: the address forwards to storage
   # The PAGE must serve too: an absent index.html falls through to the SPA homepage (200 text/html), and
   # the homepage never references a video.mp4 — the landing page does. (10-07/10-08: video served, page did not.)
   PG=$(curl -s "https://www.rocketgrowthagency.com/v/$s/?v=$(date +%s)" | grep -c "video.mp4")
@@ -397,7 +399,5 @@ for i in "${!SERVED[@]}"; do
     say "  ⚠ step-8 failed for $s — video is live but the lead may not exist (orphan). See $LOG"
   fi
 done
-NEW=$(curl -s -H "Authorization: Bearer $TOK" "https://api.netlify.com/api/v1/sites/$SITE" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{console.log(JSON.parse(d).published_deploy?.id||'')})")
-curl -s -X POST -H "Authorization: Bearer $TOK" "https://api.netlify.com/api/v1/deploys/$NEW/lock" -o /dev/null
-say "relocked $NEW"
+# (no re-lock here: deploy-site.sh handles the lock. Locking production after the site builds from GitHub would stop every build — rga_videos_to_storage_v1.)
 say "DONE $(date +%H:%M:%S)"

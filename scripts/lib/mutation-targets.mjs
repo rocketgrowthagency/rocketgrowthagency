@@ -425,6 +425,9 @@ export const FILES = {
   publishown: "scripts/publish-own-site.mjs",   // schema_merge_v1 part 2 (11-7): the Mac publisher for a site RGA deploys itself
   publishblocked: "netlify/functions/_publish-blocked.js",   // admin_publish_blocked_warning (11-8): the five publish checks
   videomove: "netlify/functions/_video-move.js",   // rga_videos_to_storage_v1 (11-8): outreach videos to file storage
+  videotostorage: "scraper:scripts/outreach-video-to-storage.mjs",   // rga_videos_to_storage_v1 (11-8): a new or rebuilt video to storage, read back
+  onelead: "scraper:scripts/test-realtime-one-lead.sh",
+  nightpipeline: "scraper:scripts/overnight-pipeline.sh",
   ghaccess: "netlify/functions/_github-access.js",
   deliverables: "netlify/functions/_deliverables.js",
   sitepreview: "netlify/functions/site-preview.js",   // for_your_approval_v2 (10-28): the built page, privately

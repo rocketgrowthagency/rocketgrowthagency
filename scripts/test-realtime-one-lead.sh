@@ -74,10 +74,12 @@ step "step-8 publish to Airtable"
 STEP2_CSV="$CSV" node step-8-publish-to-airtable.mjs 2>&1 | tee -a "$LOG" | tail -2 || echo "  (step-8 non-fatal)" | tee -a "$LOG"
 
 # --- deploy (verify RGA Netlify identity first) ---
-step "netlify deploy --prod"
-cd "$WEBSITE_DIR"
-node -e "const s=require('child_process').execSync('netlify api getSite --data \\'{\\\"site_id\\\":\\\"hilarious-baklava-87fbab\\\"}\\'',{encoding:'utf8'});" 2>/dev/null || true
-netlify deploy --prod --dir=. 2>&1 | tee -a "$LOG" | grep -iE "deploy|draft|website url|unique deploy|complete" | tail -6 || die "deploy"
+step "video to storage, page live"
+# 🔒 rga_videos_to_storage_v1 (11-8): the video goes to file storage (read back) and the page goes live through deploy-site.sh, the one
+# way the site is published. A direct `netlify deploy` would lock production back to this Mac's copy.
+node "$SCRAPER_DIR/scripts/outreach-video-to-storage.mjs" "$BUILD_SLUG" 2>&1 | tee -a "$LOG"; [ "${PIPESTATUS[0]}" -eq 0 ] || die "video to storage"
+git -C "$WEBSITE_DIR" add "v/$BUILD_SLUG" && git -C "$WEBSITE_DIR" -c user.name=rocketgrowthagency -c user.email=hello@rocketgrowthagency.com commit -q -m "Test lead: $BUILD_SLUG" || true
+bash "$WEBSITE_DIR/scripts/deploy-site.sh" "test lead: $BUILD_SLUG" 2>&1 | tee -a "$LOG"; [ "${PIPESTATUS[0]}" -eq 0 ] || die "deploy"
 
 URL="https://www.rocketgrowthagency.com/v/$BUILD_SLUG/"
 echo "" | tee -a "$LOG"

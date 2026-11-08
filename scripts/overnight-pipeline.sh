@@ -1575,78 +1575,42 @@ if [ "${#PENDING_DEPLOY_SLUGS[@]+x}" ] && [ ${#PENDING_DEPLOY_SLUGS[@]} -gt 0 ];
   # authed via `netlify login` falls through to its stored session unchanged).
   export NETLIFY_AUTH_TOKEN="${NETLIFY_AUTH_TOKEN:-$(grep -E '^NETLIFY_AUTH_TOKEN=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
   export NETLIFY_SITE_ID="${NETLIFY_SITE_ID:-$(grep -E '^NETLIFY_SITE_ID=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
-  # 2026-07-30 SAFEGUARD: production is kept LOCKED so a git-push auto-build can't wipe the videos (git excludes
-  # the gitignored .mp4s). To publish tonight's videos we UNLOCK, deploy, then RE-LOCK the freshly published deploy.
-  _cur=$(netlify api getSite --data "{\"site_id\":\"$NETLIFY_SITE_ID\"}" 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).published_deploy.id)}catch(e){}})' 2>/dev/null)
-  [ -n "$_cur" ] && netlify api unlockDeploy --data "{\"deploy_id\":\"$_cur\"}" >/dev/null 2>&1 && echo ">>> unlocked $_cur for publish" | tee -a "$LOGFILE"
-  # 2026-07-30 FIX: do NOT truncate with `| head -3` — that closes the pipe early and can SIGPIPE-kill the
-  # deploy before the large video.mp4 blobs finish uploading (2026-07-29: 17 landing pages went live but the
-  # videos didn't → every /v/ page played the SPA homepage instead of the video). Let the deploy run to
-  # completion, then VERIFY the video files actually serve and re-deploy once if not.
-  # 🔴 2026-08-20 — THE EXIT CODE MUST BE THE DEPLOY'S, NOT grep'S.
-  # This line was `netlify deploy … | tee … | grep … || true`. In a pipeline $? belongs to the LAST
-  # command (grep), and `|| true` swallows whatever is left, so a deploy that failed outright was
-  # structurally invisible. On 2026-08-19 Netlify ran out of build credits and answered
-  # `JSONHTTPError: Forbidden` — twice — and the run went on to re-lock, write "Videos deployed | 17 |",
-  # and report a clean verdict. 53 of 71 landing pages were never published; every one served the SPA
-  # homepage, so the emails pointed prospects at nothing. Use PIPESTATUS[0] and treat failure as fatal.
-  netlify deploy --prod --dir=. 2>&1 | tee -a "$LOGFILE" | grep -E "Deploy is live|Production|rocketgrowth|Deployed"
+  # 🔒 rga_videos_to_storage_v1 (11-8): the site forwards /v/<slug>/video.mp4 to file storage (outreach-videos), so each new video
+  # goes there FIRST and is read back (size, type, fingerprint, skip-ahead). Then the pages go live through deploy-site.sh, the ONE way
+  # the site is published (through GitHub once the site builds from it; a direct `netlify deploy` here would lock production back to
+  # this Mac's copy). A video that isn't in storage or doesn't play through its address is never given to a lead: held below.
+  echo ">>> new videos to file storage" | tee -a "$LOGFILE"
+  node "$SCRAPER_DIR/scripts/outreach-video-to-storage.mjs" "${PENDING_DEPLOY_SLUGS[@]}" 2>&1 | tee -a "$LOGFILE"
+  _src=${PIPESTATUS[0]}
+  [ "${_src:-1}" -ne 0 ] && echo "🚨 some new videos didn't reach storage: their leads are held until they do" | tee -a "$LOGFILE"
+  # 🔴 2026-08-20 — THE EXIT CODE MUST BE THE DEPLOY'S (PIPESTATUS[0]), never tee's or grep's: a failed deploy once looked clean.
+  bash "$WEBSITE_DIR/scripts/deploy-site.sh" "$COMMIT_MSG" 2>&1 | tee -a "$LOGFILE"
   _drc=${PIPESTATUS[0]}
   if [ "${_drc:-1}" -ne 0 ]; then
     echo "🚨🚨 DEPLOY FAILED (exit ${_drc}) — the landing pages were NOT published." | tee -a "$LOGFILE"
-    echo "     Most likely: Netlify is out of build credits (JSONHTTPError: Forbidden) or the token expired." | tee -a "$LOGFILE"
-    echo "     Check https://app.netlify.com/teams/rocketgrowthagency/billing then re-run the deploy." | tee -a "$LOGFILE"
-    echo "     🔴 DO NOT send outreach for these leads — their pages serve the homepage." | tee -a "$LOGFILE"
+    echo "     🔴 DO NOT send outreach for these leads — their pages aren't live." | tee -a "$LOGFILE"
     DEPLOY_FAILED=1; export DEPLOY_FAILED
   fi
-  # Verify a sample of the just-deployed videos serve video/* (not the HTML catch-all); re-deploy once if broken.
+  # Every new video must play through its own address (following the forward to storage), and its page must be the landing page.
+  # A 200 proves nothing: check the CONTENT TYPE, and that the page references its video (the homepage never does).
   _vok=1
-  for _s in "${PENDING_DEPLOY_SLUGS[@]:0:3}"; do
-    _ct=$(curl -s -o /dev/null -w "%{content_type}" --max-time 45 "https://www.rocketgrowthagency.com/v/$_s/video.mp4" 2>/dev/null || echo "")
-    case "$_ct" in video/*) ;; *) echo ">>> ⚠ VIDEO NOT SERVING for $_s (content-type '$_ct') — re-deploying" | tee -a "$LOGFILE"; _vok=0 ;; esac
+  for _s in "${PENDING_DEPLOY_SLUGS[@]}"; do
+    _ct=$(curl -sL -o /dev/null -w "%{content_type}" --max-time 45 "https://www.rocketgrowthagency.com/v/$_s/video.mp4" 2>/dev/null || echo "")
+    _pg=$(curl -sL --max-time 45 "https://www.rocketgrowthagency.com/v/$_s/?v=$(date +%s)" 2>/dev/null | grep -c "video.mp4")
+    case "$_ct" in
+      video/*) [ "${_pg:-0}" -gt 0 ] || { echo ">>> ⚠ PAGE NOT LIVE for $_s" | tee -a "$LOGFILE"; _vok=0; } ;;
+      *) echo ">>> ⚠ VIDEO NOT SERVING for $_s (content-type '$_ct')" | tee -a "$LOGFILE"; _vok=0 ;;
+    esac
   done
   if [ "$_vok" -eq 0 ]; then
-    echo ">>> Re-running deploy because video files did not serve on the first pass" | tee -a "$LOGFILE"
-    netlify deploy --prod --dir=. 2>&1 | tee -a "$LOGFILE" | grep -E "Deploy is live|Production|rocketgrowth|Deployed"
-    _drc2=${PIPESTATUS[0]}
-    # Re-verify AFTER the retry. Previously the retry's result was never checked at all, so a second
-    # failure looked identical to a success and the run reported the videos as deployed either way.
-    _vok2=1
-    for _s in "${PENDING_DEPLOY_SLUGS[@]:0:3}"; do
-      _ct2=$(curl -s -o /dev/null -w "%{content_type}" --max-time 45 "https://www.rocketgrowthagency.com/v/$_s/video.mp4" 2>/dev/null || echo "")
-      case "$_ct2" in video/*) ;; *) _vok2=0 ;; esac
-    done
-    if [ "${_drc2:-1}" -ne 0 ] || [ "$_vok2" -eq 0 ]; then
-      echo "🚨🚨 DEPLOY STILL FAILING after retry — landing pages are NOT live. Outreach must NOT go out." | tee -a "$LOGFILE"
-      DEPLOY_FAILED=1; export DEPLOY_FAILED
-      bash "$SCRAPER_DIR/scripts/notify-openai-quota.sh" "$LOGFILE" 2>/dev/null || true
-    fi
+    echo "🚨🚨 some new videos or pages aren't live — those leads are held, outreach must NOT go to them." | tee -a "$LOGFILE"
+    DEPLOY_FAILED=1; export DEPLOY_FAILED
+    bash "$SCRAPER_DIR/scripts/notify-openai-quota.sh" "$LOGFILE" 2>/dev/null || true
   fi
-  # 🔴 2026-08-20 — CLOSE THE LOOP BETWEEN "DEPLOYED" AND "SENDABLE".
-  # step-8 writes each lead's Video URL without ever checking the URL serves, so when the 08-19 deploy
-  # failed on exhausted Netlify credits, 53 leads stayed fully sendable while their pages showed the
-  # homepage — and five outreach emails went out to real prospects the next morning. Nothing connected
-  # the failed deploy to the send list. This does: any lead whose video does not answer video/mp4 is put
-  # on hold so the sender skips it, and released automatically once it serves.
+  # 🔴 2026-08-20 — CLOSE THE LOOP BETWEEN "DEPLOYED" AND "SENDABLE": any lead whose video doesn't answer video/mp4 is held so the
+  # sender skips it, and released automatically once it serves.
   echo ">>> holding any lead whose video is not actually serving" | tee -a "$LOGFILE"
   node scripts/hold-leads-without-live-video.mjs --apply 2>&1 | tee -a "$LOGFILE" || true
-
-  # RE-LOCK the freshly published deploy so a git-push auto-build can't wipe the new videos (2026-07-30 safeguard).
-  _new=$(netlify api getSite --data "{\"site_id\":\"$NETLIFY_SITE_ID\"}" 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).published_deploy.id)}catch(e){}})' 2>/dev/null)
-  [ -n "$_new" ] && netlify api lockDeploy --data "{\"deploy_id\":\"$_new\"}" >/dev/null 2>&1 && echo ">>> re-locked published deploy $_new (git-push can't overwrite the videos)" | tee -a "$LOGFILE"
-
-  # 🔴 2026-09-08 — VERIFY THE RESULT, DO NOT ASSUME IT. The unlock window above is exactly when a
-  # queued git build can publish ITSELF, and this block would then re-lock that video-less build.
-  # Not theoretical: it happened, and all 1,139 outreach videos served text/html for hours.
-  # A 200 proves nothing here — the dead state IS a 200 — so check the CONTENT TYPE.
-  _slug=$(ls -d "$WEBSITE_DIR"/v/*/ 2>/dev/null | head -1 | xargs -n1 basename 2>/dev/null)
-  if [ -n "$_slug" ]; then
-    _ct=$(curl -sL -o /dev/null -w '%{content_type}' "https://www.rocketgrowthagency.com/v/$_slug/video.mp4" 2>/dev/null)
-    case "$_ct" in
-      video/mp4*) echo ">>> videos verified live ($_slug serves $_ct)" | tee -a "$LOGFILE" ;;
-      *) echo ">>> 🔴🔴 VIDEOS ARE NOT SERVING ($_ct) — production is likely on a GIT build. Fix: bash '$WEBSITE_DIR/scripts/deploy-site.sh' restore" | tee -a "$LOGFILE" ;;
-    esac
-  fi
   cd "$SCRAPER_DIR"
 else
   echo "" | tee -a "$LOGFILE"

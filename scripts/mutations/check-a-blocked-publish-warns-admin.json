@@ -16,8 +16,8 @@
  [
   "a file is called lost without opening it live",
   "publishblocked",
-  "if (h.status >= 200 && h.status < 300) opened.push(p);",
-  "opened.push(p);",
+  "if (h.status >= 200 && h.status < 300) (GA.siteDomain",
+  "if (true) (GA.siteDomain",
   1
  ],
  [
@@ -88,6 +88,13 @@
   "admin",
   "  if (steps.length && scope === \"month1\") paintPublishBlocked();\n",
   "",
+  1
+ ],
+ [
+  "a video forwarded to storage reads as lost",
+  "publishblocked",
+  "(GA.siteDomain(h.url) === GA.siteDomain(home) ? opened : stored).push(p);",
+  "opened.push(p);",
   1
  ]
 ]

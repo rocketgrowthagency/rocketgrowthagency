@@ -42,6 +42,7 @@ function fakeFetch(s) {
     if (s.liveDown) throw new Error("timeout");
     let p = decodeURIComponent(u.pathname).replace(/^\/+/, "");
     if (!p || p.endsWith("/")) p += "index.html";
+    if (s.forward && s.forward[p]) return { ...r(200, ""), url: s.forward[p] };
     return p in live ? r(200, init.method === "HEAD" ? "" : live[p]) : r(404);
   };
 }
@@ -63,6 +64,10 @@ try {
   const r2 = await run(vids);
   if (byId(r2, "nothing_lost").detail !== "A file the pages use opens on the live site but isn't in acme/site, like /v/joe/video.mp4. A deploy from the repository would remove it.") fail(`one lost file isn't said in plain words (${byId(r2, "nothing_lost").detail})`);
   if (byId(r2, "nothing_lost").ok !== false || !/videos the repository doesn't \(under \/v\/\)/.test(r2.problems.join(" "))) fail(`files on the live site the repository doesn't hold don't warn (${byId(r2, "nothing_lost").line})`);
+  // rga_videos_to_storage_v1: a video the site forwards to its own storage isn't lost by a deploy
+  const fwd = base(); fwd.repo["v/joe/index.html"] = page("A video for Joe", '<video src="video.mp4"></video>'); fwd.forward = { "v/joe/video.mp4": "https://supa.test/storage/v1/object/public/outreach-videos/joe/video.mp4" };
+  const rf = await run(fwd);
+  if (byId(rf, "nothing_lost").ok !== true || rf.ok !== true || !/served from its own storage \(like \/v\/joe\/video\.mp4\)/.test(byId(rf, "nothing_lost").detail)) fail(`a video forwarded to storage reads as lost (${byId(rf, "nothing_lost").line}: ${byId(rf, "nothing_lost").detail})`);
   const gone = base(); gone.repo["v/joe/index.html"] = page("A video for Joe", '<video src="video.mp4"></video>');
   if (byId(await run(gone), "nothing_lost").ok === false) fail("a file missing on BOTH sides reads as one a deploy would remove");
 
