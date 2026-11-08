@@ -65,8 +65,8 @@
  [
   "kept template words pass",
   "pagedesign",
-  "if (x === s.text && !/^[\\d\\s.,]+$/.test(x)",
-  "if (false && x === s.text && !/^[\\d\\s.,]+$/.test(x)",
+  "const keptBad = (s, x) => x === s.text &&",
+  "const keptBad = (s, x) => false && x === s.text &&",
   1
  ],
  [
@@ -86,8 +86,8 @@
  [
   "an added number passes",
   "pagedesign",
-  "if (x !== s.text && !have.includes(n))",
-  "if (false)",
+  "const newNums = (s, x) => (x === s.text ? [] : (x.match(NUM) || []).filter((n) => !have.includes(n)));",
+  "const newNums = (s, x) => [];",
   1
  ],
  [
@@ -212,8 +212,8 @@
  [
   "the top of the page carries words over",
   "pagedesign",
-  "(s.section === heroAt && !s.href && s.tag !== \"h1\") ||",
-  "",
+  "((s.section === heroAt && !s.href && s.tag !== \"h1\") || !wordsOf",
+  "((false) || !wordsOf",
   1
  ],
  [
@@ -298,6 +298,34 @@
   "flowexec",
   "slots: fitted, kept, fitted_at",
   "slots: fitted, fitted_at",
+  1
+ ],
+ [
+  "a kept list item isn't taken out",
+  "pagedesign",
+  "if (LIST.test(s.tag) || (s.section === heroAt && !s.href && s.tag !== \"h1\")) out[i] = \"\";",
+  "if (false) out[i] = \"\";",
+  1
+ ],
+ [
+  "a kept card heading doesn't take its card",
+  "pagedesign",
+  "for (const k of card) out[k] = \"\";",
+  "{}",
+  1
+ ],
+ [
+  "a sentence with a new number stays",
+  "pagedesign",
+  "if (keep.length && keep.length < sen.length) out[i] = keep.join(\" \");",
+  "if (false) out[i] = keep.join(\" \");",
+  1
+ ],
+ [
+  "a trailing period is part of the number",
+  "pagedesign",
+  "const NUM = /\\d(?:[\\d,.]*\\d)?/g;",
+  "const NUM = /\\d[\\d,.]*/g;",
   1
  ]
 ]
