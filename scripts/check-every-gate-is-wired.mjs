@@ -447,6 +447,7 @@ const NOT_PREFLIGHT = {
   'check-every-outreach-video-plays.mjs': 'a LIVE read of every outreach video address (HEAD only, rga_videos_to_storage_v1, 11-8); it does not run the pipeline.',
   'check-the-host-builds-rgas-changes.mjs': 'the WEBSITE repo\'s host check (website_access_host_builds_v1, 11-8), fakes + Chrome; it reads no video pipeline output.',
   'check-rga-acts-through-its-app.mjs': 'the WEBSITE repo\'s GitHub identity helper (rga_github_app_v1, 11-8), fakes; it reads no video pipeline output.',
+  'check-a-client-installs-rgas-app.mjs': 'the WEBSITE repo\'s client GitHub app install (client_github_app_install_v1, 11-8), fakes + Chrome; it reads no video pipeline output.',
   'check-the-title-recipe-holds.mjs': 'the WEBSITE repo\'s step 43 recipe (title_meta_recipe_v1, 11-7) on fakes: evidence, pinned model, rule checks, rule pick, measured after; no bearing on tonight\'s video pipeline. Runs in daily-health-check.sh.',
   'check-a-live-page-stays-true.mjs': 'the WEBSITE repo\'s read-back, nightly watch, per-page Search Console and website auto-run (website_system_v2 builds 10-12, 14, 16) on fakes, no bearing on tonight\'s scrape or video run. Runs in daily-health-check.sh.',
   'check-the-page-builder.mjs': 'the WEBSITE repo\'s page builder, brief and quality rules (website_system_v2 builds 3 to 6, 15) on fixtures, files only, no bearing on tonight\'s scrape or video run. Runs in daily-health-check.sh.',

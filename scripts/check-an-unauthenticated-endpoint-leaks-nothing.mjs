@@ -30,6 +30,7 @@ const FN = join(SITE, "netlify", "functions");
 const PUBLIC_BY_DESIGN = {
   "portal-hint.js": "runs on the login page, before anyone can be authenticated",
   "admin-config.js": "serves the publishable/anon keys the login page needs before auth exists",
+  "portal-github-app.js": "finish with only the signed install link (client_github_app_install_v1, 11-8): whoever manages the client's GitHub has no portal sign-in; it returns no client record to them",
 };
 
 // Field names that must never appear as a returned KEY on a public endpoint. `_hint`/`_masked`

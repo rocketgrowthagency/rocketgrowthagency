@@ -1,0 +1,163 @@
+[
+ [
+  "a forged state is accepted",
+  "ghappfn",
+  "  if (want.length !== got.length || !crypto.timingSafeEqual(want, got)) return null;",
+  "  if (want.length !== got.length) return null;",
+  1
+ ],
+ [
+  "an expired state is accepted",
+  "ghappfn",
+  "  if (age < -300 || age > STATE_DAYS * 86400) return null;",
+  "  if (age < -300) return null;",
+  1
+ ],
+ [
+  "another client's state is accepted",
+  "ghappfn",
+  "if (fromState && asked && asked !== fromState) return json(403,",
+  "if (false) return json(403,",
+  1
+ ],
+ [
+  "no state and no sign-in still finishes",
+  "ghappfn",
+  "  if (!fromState) {   // no signed link",
+  "  if (false) {   // no signed link",
+  1
+ ],
+ [
+  "the first repository is taken, site or not",
+  "ghappfn",
+  "pick: yes.length === 1 ? yes[0].repo : null",
+  "pick: results.length ? results[0].repo : null",
+  1
+ ],
+ [
+  "two repositories that name the site pick one",
+  "ghappfn",
+  "pick: yes.length === 1 ? yes[0].repo : null",
+  "pick: yes.length >= 1 ? yes[0].repo : null",
+  1
+ ],
+ [
+  "the record isn't read again before the write",
+  "ghappfn",
+  "  const rec = await readStepRecord(db, clientId, STEP);",
+  "  const rec = rec0;",
+  1
+ ],
+ [
+  "a write that didn't save says it did",
+  "ghappfn",
+  "  const back = after && after.tasks && after.tasks[STEP];",
+  "  const back = task;",
+  1
+ ],
+ [
+  "the grant isn't marked as RGA's app",
+  "ghappfn",
+  "via: \"github_app\", github: ID.APP_LOGIN",
+  "via: \"github_one_click\", github: ID.APP_LOGIN",
+  1
+ ],
+ [
+  "the install isn't recorded",
+  "ghappfn",
+  "  await recordSubmission({ supa: db,",
+  "  await (async () => {})({ supa: db,",
+  1
+ ],
+ [
+  "a switch keeps the old host check",
+  "ghappfn",
+  "const hc = p.host_check && (!a0 || a0.repo !== access.repo || a0.via !== \"github_app\") ?",
+  "const hc = false ?",
+  1
+ ],
+ [
+  "an installation GitHub doesn't know is not refused as such",
+  "ghidentity",
+  "  if (!ins || ins.status === 404) return { ok: false, state: \"not_installed\" };",
+  "",
+  1
+ ],
+ [
+  "any file counts as naming their website",
+  "pubsafety",
+  "if (txt && txt.toLowerCase().includes(site)) { repoIsSite = true;",
+  "if (txt) { repoIsSite = true;",
+  1
+ ],
+ [
+  "step 9 asks RGA's app for a saved login",
+  "rgalogins",
+  "  if (acc.via === \"github_app\") return null;",
+  "",
+  1
+ ],
+ [
+  "the GitHub card isn't shown",
+  "portal",
+  "  if (ghAppWanted(t) && !_rcEditing.has(step.id)) return ghAppCardHtml(t, clientId);",
+  "  if (false) return ghAppCardHtml(t, clientId);",
+  1
+ ],
+ [
+  "an app grant is drawn as an invite",
+  "portal",
+  "  if (acc && acc.confirmed_at && acc.via === \"github_app\" && !acc.removed_at && !_rcEditing.has(step.id)) return ghAppDoneHtml(step, t, clientId, tasks);",
+  "  if (false) return ghAppDoneHtml(step, t, clientId, tasks);",
+  1
+ ],
+ [
+  "the finish never runs on the return trip",
+  "portal",
+  "      _ghaRes = await ghAppFinish(_gha, session.access_token, _ghaClient);",
+  "      _ghaRes = null;",
+  1
+ ],
+ [
+  "the developer's link doesn't name the business",
+  "portal",
+  "the GitHub repository the ${biz} website is built from?",
+  "the GitHub repository your website is built from?",
+  1
+ ],
+ [
+  "no switch line for invited clients",
+  "portal",
+  ">Switch to RGA's app</a>",
+  "></a>",
+  1
+ ],
+ [
+  "picking GitHub still shows the collaborator steps",
+  "portal",
+  "    else if (files === \"github\") body = seg + ghAppInstallHtml(",
+  "    else if (false) body = seg + ghAppInstallHtml(",
+  1
+ ],
+ [
+  "the after-install card skips 'is your website'",
+  "portal",
+  "      body: installed + csEv(`<b>${repo} is your website</b>",
+  "      body: installed + (() => \"\")(`<b>${repo} is your website</b>",
+  1
+ ],
+ [
+  "admin shows the app as an invite",
+  "admin",
+  "const rows = acc.via === \"github_app\"",
+  "const rows = false",
+  1
+ ],
+ [
+  "the signed link alone gets the client record",
+  "ghappfn",
+  "found_in: found.file || null, ...(owned ? { tasks: after.tasks, ...recordMeta(rec) } : {}) });",
+  "found_in: found.file || null, tasks: after.tasks, ...recordMeta(rec) });",
+  1
+ ]
+]

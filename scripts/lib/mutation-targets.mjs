@@ -431,6 +431,7 @@ export const FILES = {
   pagesfromstorage: "scraper:scripts/outreach-pages-play-from-storage.mjs",   // rga_video_address_v1 A (11-8)
   hostcheck: "netlify/functions/_host-check.js",
   ghidentity: "netlify/functions/_github-identity.js",   // rga_github_app_v1 (11-8)
+  ghappfn: "netlify/functions/portal-github-app.js",   // client_github_app_install_v1 (11-8): the client installs RGA's app
   pubsafety: "netlify/functions/_publish-safety.js",   // website_access_host_builds_v1 (11-8)
   pubwatch: "netlify/functions/site-publish-watch.js",
   mergechoice: "netlify/functions/portal-merge-choice.js",

@@ -107,8 +107,8 @@
  [
   "step 3 done leaves the card system",
   "portal",
-  "return `<div class=\"pm-k5\">${csCard({ tone: \"ok\", head: \"Rocket Growth Agency has access\", side: `confirmed ",
-  "return `<div class=\"pm-k5\">${pcCard({ tone: \"ok\", head: \"Rocket Growth Agency has access\", side: `confirmed ",
+  "    return `<div class=\"pm-k5\">${csCard({ tone: \"ok\", head: \"Rocket Growth Agency has access\", side: `confirmed ",
+  "    return `<div class=\"pm-k5\">${pcCard({ tone: \"ok\", head: \"Rocket Growth Agency has access\", side: `confirmed ",
   1
  ],
  [
