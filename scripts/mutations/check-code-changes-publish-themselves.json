@@ -103,5 +103,12 @@
   "if (r.error) return acc0.publish === \"rga_deploy\" ? { error: r.error } : null;",
   "if (r.error) return null;",
   1
+ ],
+ [
+  "publishing stages stop chaining",
+  "webautorun",
+  "        const chained = r && r.acted && [\"snap\", \"open\"].includes(p.act) && r.ok !== false && r.snapshot !== false;",
+  "        const chained = false;",
+  1
  ]
 ]

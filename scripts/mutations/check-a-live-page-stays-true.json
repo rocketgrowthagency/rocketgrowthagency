@@ -198,7 +198,7 @@
  [
   "the cap is gone",
   "webautorun",
-  "if (model && (modelUsed || started >= NIGHT_CAP)) continue;",
+  "if (model && (modelUsed || started >= NIGHT_CAP)) break;",
   "",
   1
  ],
