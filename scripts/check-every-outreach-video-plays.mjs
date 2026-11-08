@@ -54,6 +54,20 @@ for (const s of takenDown) {
   const r = await fetch(`${SITE}/v/${s}/video.mp4`, { method: "HEAD", redirect: "manual", signal: AbortSignal.timeout(30000) }).catch(() => null);
   if (!r) unread.push(s); else if (r.status !== 404) bad.push(`${s}: taken down but answers ${r.status}`);
 }
+// rga_video_expiry_plan_v1 (approved 11-8): videos never expire, nothing deletes outreach pages on a schedule, and a taken-down video shows the
+// walkthrough-expired page (still a 404) instead of "Page Not Found"
+if (fs.existsSync(`${WEB}/.github/workflows/prune-expired-videos.yml`)) bad.push("the monthly job that deletes expired outreach pages is back");
+const tdRules = [...TOML.matchAll(/from = "\/v\/[a-z0-9-]+(?:\/\*)?"\s*\n\s*to = "([^"]+)"/g)].map((m) => m[1]);
+if (!tdRules.length || tdRules.some((to) => to !== "/walkthrough-expired/index.html")) bad.push("a takedown rule doesn't show the walkthrough-expired page");
+const tpl = fs.existsSync(`${WEB}/../Rocket Growth Agency Scraper VS Code/build-video-landing.mjs`) ? fs.readFileSync(`${WEB}/../Rocket Growth Agency Scraper VS Code/build-video-landing.mjs`, "utf8") : "";
+if (tpl && !/const expiryDate = '';/.test(tpl)) bad.push("the page builder sets an expiry date again");
+for (const x of LIST) { const h = fs.existsSync(`${WEB}/v/${x.slug}/index.html`) ? fs.readFileSync(`${WEB}/v/${x.slug}/index.html`, "utf8") : ""; if (/var exp = "\d/.test(h)) bad.push(`${x.slug}: the page has an expiry date`); }
+if (takenDown.length) {
+  const exp = await fetch(`${SITE}/v/${takenDown[0]}/`, { signal: AbortSignal.timeout(30000) }).catch(() => null);
+  const body = exp ? await exp.text() : "";
+  if (!exp) unread.push(`${takenDown[0]} (expired page)`);
+  else if (exp.status !== 404 || !body.includes("This walkthrough has expired.") || !body.includes('href="/free-growth-audit/">Get my free audit')) bad.push(`${takenDown[0]}: a taken-down video doesn't show the walkthrough-expired page (${exp.status})`);
+}
 if (unread.length > LIST.length / 10) { console.error(`⚠️  INDETERMINATE — ${unread.length} addresses didn't answer`); process.exit(2); }
 if (bad.length || unread.length) { console.error(`❌ ${bad.length + unread.length} outreach video(s) don't play from storage:`); for (const b of [...bad, ...unread.map((s) => `${s}: didn't answer`)].slice(0, 20)) console.error(`  · ${b}`); process.exit(1); }
-console.log(`✅ all ${ok} outreach videos play from file storage at their own address, each at its full size under our own address; every page's player streams from storage (no download, no right-click); ${pagesOk} live pages sampled agree; all ${takenDown.length} taken-down videos stay blocked`);
+console.log(`✅ all ${ok} outreach videos play from file storage at their own address, each at its full size under our own address; every page's player streams from storage (no download, no right-click); ${pagesOk} live pages sampled agree; all ${takenDown.length} taken-down videos stay blocked and show the walkthrough-expired page; no page expires and nothing deletes pages on a schedule`);
