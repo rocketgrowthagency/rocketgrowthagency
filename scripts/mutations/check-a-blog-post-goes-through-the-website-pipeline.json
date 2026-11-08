@@ -156,8 +156,8 @@
  [
   "a post is built as a service page",
   "admindeliv",
-  "const main = isPost ? BP.postMainHtml(c) :",
-  "const main = false ? BP.postMainHtml(c) :",
+  "let main = isPost ? BP.postMainHtml(c) :",
+  "let main = false ? BP.postMainHtml(c) :",
   1
  ],
  [

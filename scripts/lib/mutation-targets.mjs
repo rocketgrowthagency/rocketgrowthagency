@@ -419,6 +419,7 @@ export const FILES = {
   pagefile: "netlify/functions/_page-file.js",
   pagedesign: "netlify/functions/_page-design.js",   // page_builder_site_design_v1 (11-7)   // website_system_v2 build 8 (10-28): a page file in the site's own template
   schemamerge: "netlify/functions/_schema-merge.js",   // schema_merge_v1 (11-7)
+  pageplace: "netlify/functions/_page-placement.js",   // page_placement_and_links_v1 part 2 (11-7)
   publishown: "scripts/publish-own-site.mjs",   // schema_merge_v1 part 2 (11-7): the Mac publisher for a site RGA deploys itself
   ghaccess: "netlify/functions/_github-access.js",
   deliverables: "netlify/functions/_deliverables.js",

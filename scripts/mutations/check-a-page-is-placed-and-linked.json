@@ -159,5 +159,103 @@
   "newPage: true, page: true, mayEdit: true, items: PAGE_ITEMS },   // page_placement_and_links_v1",
   "newPage: true, page: true, items: PAGE_ITEMS },   // page_placement_and_links_v1",
   1
+ ],
+ [
+  "a group needs only one item",
+  "pageplace",
+  "if (like.length >= 2) { if (!best",
+  "if (like.length >= 1) { if (!best",
+  1
+ ],
+ [
+  "the copy keeps another page's words",
+  "pageplace",
+  "    return \"\";\n  });",
+  "    return s.text;\n  });",
+  1
+ ],
+ [
+  "the shared label is dropped",
+  "pageplace",
+  "if (shared.has(s.text) && slots.length > 1) return s.text;",
+  "",
+  1
+ ],
+ [
+  "the name pattern isn't kept",
+  "pageplace",
+  "if (pt) { named = named || !!s.href; return `${pt.pre}${label}${pt.suf}`; }",
+  "",
+  1
+ ],
+ [
+  "lines are matched by position",
+  "pageplace",
+  "return (same[same.length - 1 - nth] || {}).text;",
+  "return (l[i] || {}).text;",
+  1
+ ],
+ [
+  "only href names the page",
+  "pageplace",
+  "/(\\s[\\w:-]+=[\"'])([^\"']*)([\"'])/gi",
+  "/(\\shref=[\"'])([^\"']*)([\"'])/gi",
+  1
+ ],
+ [
+  "an already linked page is added again",
+  "pageplace",
+  "if ([...regionHtml.matchAll(",
+  "if (false && [...regionHtml.matchAll(",
+  1
+ ],
+ [
+  "the menu rule allows any count",
+  "pageplace",
+  "if (n && n <= MENU_MAX_PAGES) return",
+  "if (n) return",
+  1
+ ],
+ [
+  "the hub only gets a link",
+  "admindeliv",
+  "const asCard = PP.addToGroup(cur.text, \"main\", sibsHere, card, site);",
+  "const asCard = null;",
+  1
+ ],
+ [
+  "related pages aren't touched",
+  "admindeliv",
+  "for (const u of sibsHere.slice(0, 4)) {",
+  "for (const u of []) {",
+  1
+ ],
+ [
+  "the build ignores the menu rule",
+  "admindeliv",
+  "if (rule.menu && htmlPaths) for (const pth of htmlPaths) {",
+  "if (htmlPaths) for (const pth of htmlPaths) {",
+  1
+ ],
+ [
+  "the cleaner drops placement",
+  "sitechange",
+  "...(o.placement && typeof o.placement === \"object\" ? {",
+  "...(false ? {",
+  1
+ ],
+ [
+  "the card hides why the menu stays",
+  "portal",
+  "${p.menu && !p.menu.menu ? ` ${p.menu.why.charAt(0).toUpperCase()}${p.menu.why.slice(1)}.` : \"\"}",
+  "",
+  1
+ ],
+ [
+  "the publisher can't place",
+  "publishown",
+  "    } else if (f.action === \"edit\" && f.place) {",
+  "    } else if (false) {",
+  1
  ]
 ]

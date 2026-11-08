@@ -10,6 +10,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const req = createRequire(import.meta.url);
 let PB, AD, FE;
@@ -79,6 +80,42 @@ if (!/const all = await readSitePages\(require\("\.\/_city-page"\)\.sitemapUrls\
   if (n !== 2) fail(`"Links to N of your pages" isn't counted on the built page's own words (got ${n}; the menu, footer, the page itself and other sites don't count)`);
   if (!/const n = builtLinksOf\(t\);\s*if \(n\) out\.push\(\{ ok: true, what: `Links to \$\{n\} of your pages` \}\);/.test(fs.readFileSync(path.join(SITE, "netlify/functions/admin-deliverables.js"), "utf8"))) fail("the client's card counts the draft's list of links, not the built page");
   if (AD.builtLinksOf({ site_change: { page_url: `${B}/x/` } }) !== 0) fail("a link count is claimed with no built page"); }
+
+// ── part 2: a new page is PLACED on the site (the hub's own card, related cards, the menu by the approved rule) ──
+{ const PP = req(path.join(SITE, "netlify/functions/_page-placement.js")), SCx = req(path.join(SITE, "shared/site-change.js"));
+  const NAV = `<header><nav><a href="/">Home</a><div class="dd"><a class="nl" data-path="/services/drain-cleaning/" href="/services/drain-cleaning/">Drain Cleaning</a> <a class="nl" data-path="/services/water-heaters/" href="/services/water-heaters/">Water Heaters</a></div><a href="/contact/">Contact</a></nav></header>`;
+  const FOOT = `<footer><nav class="col"><h4>Services</h4><a href="/services/drain-cleaning/">Drain Cleaning</a><a href="/services/water-heaters/">Water Heaters</a><a href="/services/">All Services</a></nav></footer>`;
+  const HUB = `<html><body>${NAV}<main><h1>Our services</h1><div class="grid"><article class="card"><h3>Clear drains</h3><ul><li>Camera checks</li><li>Hydro jetting</li></ul><a class="go" href="/services/drain-cleaning/">Explore Drain Cleaning →</a></article><article class="card"><h3>Hot water again</h3><ul><li>Tank repair</li></ul><a class="go" href="/services/water-heaters/">Explore Water Heaters →</a></article></div></main>${FOOT}</body></html>`;
+  const SIB = `<html><body>${NAV}<main><h1>Drain cleaning</h1><section><h2>Works best alongside</h2><a href="/services/water-heaters/"><strong>Water Heaters</strong><p>Hot water, fixed.</p><span>Explore →</span></a><a href="/services/drain-cleaning/"><strong>Drain Cleaning</strong><p>Clear drains.</p><span>Explore →</span></a></section></main>${FOOT}</body></html>`;
+  const sibs = ["https://acme.test/services/drain-cleaning/", "https://acme.test/services/water-heaters/"], card = { href: "/services/leak-detection/", label: "Leak Detection", line: "We find hidden leaks without opening your walls." };
+  const hub = PP.addToGroup(HUB, "main", sibs, card, "https://acme.test");
+  if (!hub || !/<h3>Leak Detection<\/h3>/.test(hub) || !/href="\/services\/leak-detection\/">Explore Leak Detection →<\/a>/.test(hub)) fail("the hub doesn't get a card like its own for the new page (its heading, and its link words in the cards' own pattern)");
+  else if (/Tank repair<\/li><\/ul><a class="go" href="\/services\/leak-detection/.test(hub) || (hub.match(/Tank repair/g) || []).length !== 1) fail("the copied card brings the other page's words along (its feature list)");
+  if (hub && (hub.match(/<main[\s\S]*<\/main>/)[0].match(/leak-detection/g) || []).length !== 1) fail("the new page is added to the hub more than once, or outside its cards");
+  const rel = PP.addToGroup(SIB, "main", sibs, card, "https://acme.test");
+  if (!rel || !/<strong>Leak Detection<\/strong><p>We find hidden leaks without opening your walls\.<\/p><span>Explore →<\/span>/.test(rel)) fail("a related service page's related group doesn't get the new page as a card (name, line, its shared label kept)");
+  const menu = PP.addToGroup(HUB, "header", sibs, card, "https://acme.test");
+  if (!menu || !/data-path="\/services\/leak-detection\/" href="\/services\/leak-detection\/">Leak Detection<\/a>/.test(menu)) fail("the menu item isn't a copy of the menu's own items pointed at the new page (every attribute that named the other page)");
+  const foot = PP.addToGroup(HUB, "footer", sibs, card, "https://acme.test");
+  if (!foot || !/Water Heaters<\/a>\s*<a href="\/services\/leak-detection\/">Leak Detection<\/a><a href="\/services\/">All Services/.test(foot)) fail("the footer item isn't placed after the last service, before the rest");
+  if (PP.addToGroup(hub, "main", sibs, card, "https://acme.test") !== null) fail("a page already on the hub is added again");
+  if (PP.addToGroup(`<html><body><main><p>No cards here, only <a href="/services/drain-cleaning/">one link</a>.</p></main></body></html>`, "main", sibs, card, "https://acme.test") !== null) fail("a card is invented where the page has no group of its own");
+  if (!PP.menuRule(1).menu || !PP.menuRule(50).menu || PP.menuRule(51).menu || PP.menuRule(2959).menu || PP.menuRule(0).menu || !/2,959/.test(PP.menuRule(2959).why)) fail("the menu rule isn't the approved one (a header on 50 pages or fewer gets the item; more, or uncounted, stays as it is, and says why)");
+  const AD2 = fs.readFileSync(path.join(SITE, "netlify/functions/admin-deliverables.js"), "utf8");
+  if (!/const asCard = PP\.addToGroup\(cur\.text, "main", sibsHere, card, site\);/.test(AD2) || !/asCard \|\| PB\.hubWithLink\(/.test(AD2)) fail("the build doesn't give the hub a card (a bare link only when it has no cards)");
+  if (!/for \(const u of sibsHere\.slice\(0, 4\)\) \{\s*\/\/ each related service page's related group\s*const pth = pagePathOf\(u\), cur = await readFile\(pth, u\);/.test(AD2) || !/PP\.addToGroup\(cur\.text, "main", sibsHere\.filter\(\(x\) => x !== u\)\.concat\(\[u\]\), card, site\)/.test(AD2)) fail("the build doesn't add the new page to the related service pages");
+  if (!/const rule = PP\.menuRule\(count\);/.test(AD2) || !/if \(rule\.menu && htmlPaths\) for \(const pth of htmlPaths\)/.test(AD2)) fail("the build doesn't follow the menu rule (or edits menus it didn't count)");
+  if (!/c\.placement = placed;/.test(AD2) || !/if \(d\.page_for\) c\.page_for = /.test(AD2)) fail("where the page shows isn't recorded on the change (the client's card can't say it)");
+  const cl = SCx.cleanChange("m1.web.priority_pages", { kind: "visible", new_page: true, page_url: "https://acme.test/services/leak-detection/", files: [{ path: "services/leak-detection/index.html", action: "add" }], items: [{ label: "Main headline", after: "x" }], page_for: "Leak Detection", placement: { hub: "card", related: 2, menu: { menu: false, why: "w", pages: 300 }, extra: 1 } });
+  if (!cl.change || cl.change.page_for !== "Leak Detection" || !cl.change.placement || cl.change.placement.related !== 2 || cl.change.placement.menu.pages !== 300 || "extra" in cl.change.placement) fail("the cleaner drops the page's name or where it shows (or keeps what it shouldn't)");
+  const PJ = fs.readFileSync(path.join(SITE, "portal/portal.js"), "utf8"), at = PJ.indexOf("function apvPlacedLine(p)"), end = PJ.indexOf("\n}\n", at) + 2;
+  let line = null; try { line = new Function(`${PJ.slice(at, end)}; return apvPlacedLine;`)(); } catch { line = null; }
+  const said = line ? line({ hub: "card", related: 2, menu: { menu: false, why: "your menu is written into each of your 2,959 pages, so it stays as it is; your Services page lists the new page" } }) : "";
+  if (said !== "It also shows in a card on your Services page and a card on 2 related service pages. Your menu is written into each of your 2,959 pages, so it stays as it is; your Services page lists the new page.") fail(`the client's card doesn't say where the page shows, and why the menu stays (${said})`);
+  const PUB = await import(pathToFileURL(path.join(SITE, "scripts/publish-own-site.mjs")).href);
+  const t = { site_change: { v: "1", kind: "visible", new_page: true, page_url: "https://acme.test/services/leak-detection/" }, site_build: { v: "1", files: [{ path: "services/index.html", action: "edit", sha: "h", place: { kind: "hub_card", region: "main", siblings: sibs, card } }] }, approval: { approved_build: [{ path: "services/index.html", action: "edit", sha: "h" }] } };
+  const lf = PUB.localFiles("m1.web.priority_pages", t, () => HUB);
+  if (lf.error || !lf.files.length || !/<h3>Leak Detection<\/h3>/.test(lf.files[0].text)) fail(`the Mac publisher doesn't re-apply the placement to the local file (${lf.error || ""})`); }
 
 if (bad.length) { console.error(`❌ a page placed and linked — ${bad.length} regression(s):`); for (const b of bad) console.error(`  · ${b}`); process.exit(1); }
 console.log("✅ a page is chosen from every page read (a service another page covers isn't built twice; blog, area and standard pages don't count; a partial read claims nothing), ranked by the plan, written for its own searches only (plan, else Search Console, else it asks), and its link count is the built page's");
