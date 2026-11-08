@@ -9,6 +9,9 @@
  * work saved meanwhile (the record is read again right before the write), asks the host check again on a switch, settles step 9.
  * Part 2 renders the portal card states in Chrome: Install on GitHub (word for word), the link for whoever manages their GitHub (names the
  * business), checking / done after install, "Switch to RGA's app" for an invited RGA Admin, the wrong-repository note, non-GitHub untouched.
+ * "find" (no Setup URL, the owner 11-8: "can you automate this step?"): RGA's list of installations changed in the last week names the one
+ * that reaches their site; no sign-in/secret, a week-old install, two that name it, an answer changed meanwhile → nothing written; the portal
+ * opens GitHub in a new tab and asks until found, then redraws; the 5-minute watcher asks for every GitHub site still waiting.
  * Part 3 pins the wiring (finish before the records load, the signed-out landing, admin's rows). Exit 0 = holds · 1 = doesn't · 2 = couldn't tell.
  */
 import fs from "node:fs";
@@ -35,7 +38,8 @@ try {
 // ── part 1 · the function against a fake GitHub + database ───────────────────────────────────────────────────
 const CID = "11111111-2222-4333-8444-555555555555", OTHER = "99999999-2222-4333-8444-555555555555";
 const res = (status, body) => ({ ok: status >= 200 && status < 300, status, json: async () => (typeof body === "string" ? JSON.parse(body) : body), text: async () => (typeof body === "string" ? body : JSON.stringify(body)) });
-const INST = { 77: ["acme/site", "acme/blog"], 78: ["acme/blog"], 79: ["acme/site", "acme/site-copy"], 80: ["acme/empty"] };
+const INST = { 77: ["acme/site", "acme/blog"], 78: ["acme/blog"], 79: ["acme/site", "acme/site-copy"], 80: ["acme/empty"], 81: ["acme/site"] };
+let LIST = [];   // GitHub's list of RGA's installations for "find": [id, ms since it changed]
 const FILES = { "acme/site:CNAME": "www.acmeplumbing.com\n", "acme/blog:index.html": "<html><title>Acme Blog</title></html>", "acme/site-copy:netlify.toml": "[[redirects]]\nfrom = \"https://acmeplumbing.com/*\"" };
 const jwtOk = (auth) => {
   const j = String(auth || "").replace(/^Bearer /, "").split(".");
@@ -48,6 +52,7 @@ const ghFetch = async (url, init = {}) => {
   if (u.host === "acmeplumbing.com") return res(200, "<html><title>Acme Plumbing | Denver</title></html>");
   if (u.host !== "api.github.com") return res(404, {});
   let x;
+  if (p === "/app/installations" && m === "GET") return !jwtOk(auth) ? res(401, {}) : res(200, LIST.map(([id, ago]) => ({ id, account: { login: "acme" }, updated_at: new Date(Date.now() - ago).toISOString() })));
   if ((x = /^\/app\/installations\/(\d+)$/.exec(p)) && m === "GET") return !jwtOk(auth) ? res(401, {}) : INST[x[1]] ? res(200, { id: Number(x[1]), account: { login: "acme" }, repository_selection: "selected" }) : res(404, {});
   if ((x = /^\/app\/installations\/(\d+)\/access_tokens$/.exec(p)) && m === "POST") return jwtOk(auth) && INST[x[1]] ? res(201, { token: `ghs_ins${x[1]}` }) : res(401, {});
   const tok = /^Bearer ghs_ins(\d+)$/.exec(auth);
@@ -131,6 +136,36 @@ try {
   const xx = await call(dbX, { action: "finish", installation_id: "77", state: STATE });
   const ax = acc(dbX), hx = dbX.data.tasks["m1.access.website"].host_check;
   if (xx.status !== 200 || ax.via !== "github_app" || !ax.previous || ax.previous.via !== "github_one_click" || !hx || hx.state !== "recheck" || dbX.data.tasks["m1.access.website"].completed_at !== "2026-11-01T00:00:00Z") fail(`switching from RGA Admin to the app doesn't keep the earlier grant and ask the host check again (${JSON.stringify({ ax, hx })})`);
+
+  // "find": no Setup URL, no installation id from the browser. GitHub's list of RGA's installations names the one that reaches their site.
+  const SECRET = { "x-internal-secret": process.env.INTERNAL_FN_SECRET };
+  const wanted = () => ({ status: "pending", client_input: { via: "invite", platform: "custom", files: "github", at: "2026-11-08T10:00:00Z" } });
+  LIST = [[78, 60e3], [77, 3600e3], [81, 8 * 86400e3]];   // the blog-only install is newest; 81 reaches the site but changed 8 days ago
+  for (const [why, headers, want] of [["no sign-in and no secret", {}, 403], ["a wrong secret", { "x-internal-secret": "nope" }, 403]]) {
+    const db = makeDb(wanted()); const r = await call(db, { action: "find", client_id: CID }, headers);
+    if (r.status !== want || r.j.ok || db.patches || db.activity.length) fail(`"find" with ${why} isn't refused with nothing written (HTTP ${r.status}, ${db.patches} write(s))`);
+  }
+  const dbF = makeDb(wanted(), { meanwhile: { "m1.kickoff.call": { status: "done", saved: "meanwhile" } } }); const ff = await call(dbF, { action: "find", client_id: CID }, SECRET);
+  const af = acc(dbF);
+  if (ff.status !== 200 || !ff.j.ok || !af || af.via !== "github_app" || af.repo !== "acme/site" || af.installation_id !== 77 || af.confirmed_by !== "github app install (found by RGA)" || dbF.data.tasks["m1.access.website"].status !== "done")
+    fail(`RGA's watcher doesn't find the install that reaches their website and record it (${ff.status} · ${JSON.stringify(ff.j).slice(0, 200)} · ${JSON.stringify(af)})`);
+  if (ff.j.tasks) fail("RGA's watcher (no sign-in) is handed the client's record");
+  if (!(dbF.data.tasks["m1.kickoff.call"] || {}).saved) fail("\"find\" loses work saved while GitHub was asked (the record isn't read again before the write)");
+  if (!dbF.activity.some((r) => r.kind === "website_access_confirmed")) fail("an install found by RGA's watcher isn't recorded in client_activity");
+  const dbFo = makeDb(wanted()); const fo = await call(dbFo, { action: "find", client_id: CID }, { authorization: "Bearer owner" });
+  if (fo.status !== 200 || !fo.j.ok || (acc(dbFo) || {}).installed_by !== "owner@acme.test" || !fo.j.tasks || fo.j.tasks["m1.access.website"].access.repo !== "acme/site") fail(`the client's own portal can't find their install and get the record back (${fo.status} · ${fo.j.error})`);
+  const dbC = makeDb(wanted(), { meanwhile: { "m1.access.website": { status: "pending", client_input: { via: "invite", platform: "wix", at: "2026-11-08T10:05:00Z" } } } });
+  const cc = await call(dbC, { action: "find", client_id: CID }, SECRET);
+  if (cc.status !== 409 || cc.j.state !== "changed" || dbC.patches || acc(dbC)) fail(`a website answer changed while GitHub was asked still gets the grant (${cc.status} · ${cc.j.state} · ${dbC.patches} write(s))`);
+  LIST = [[78, 60e3], [80, 60e3], [81, 8 * 86400e3]];
+  const dbN = makeDb(wanted()); const nn = await call(dbN, { action: "find", client_id: CID }, SECRET);
+  if (nn.status !== 200 || nn.j.ok !== false || nn.j.state !== "waiting" || nn.j.error || dbN.patches || dbN.activity.length) fail(`with no install reaching their website (or only a week-old one), "find" doesn't wait quietly with nothing written (${nn.status} · ${JSON.stringify(nn.j)})`);
+  LIST = [[79, 60e3]];
+  const dbMf = makeDb(wanted()); const mf = await call(dbMf, { action: "find", client_id: CID }, SECRET);
+  if (mf.j.ok || mf.j.state !== "many" || !/more than one repository/.test(mf.j.error || "") || dbMf.patches) fail(`an install reaching two repositories that name their site isn't refused by "find" (${JSON.stringify(mf.j)})`);
+  LIST = [[77, 60e3]];
+  const dbAl = makeDb({ status: "done", access: { repo: "acme/site", via: "github_app", installation_id: 77, confirmed_at: "2026-11-08T11:00:00Z" } }); const al = await call(dbAl, { action: "find", client_id: CID }, SECRET);
+  if (!al.j.ok || !al.j.already || dbAl.patches) fail(`"find" writes again for a client already on RGA's app (${JSON.stringify(al.j)} · ${dbAl.patches} write(s))`);
 } catch (e) { console.error(`⚠️  INDETERMINATE — the function threw: ${String(e.stack || e.message).split("\n").slice(0, 3).join(" ")}`); process.exit(2); }
 
 // the return trip's params are read once and taken off the address bar
@@ -156,19 +191,21 @@ const handler = (needle) => { const i = P.indexOf(needle); if (i < 0) moved(`the
 const base = [fn("escapeHtml"), fn("escapeAttribute")].join("\n");
 const kit = planCardKit(P, base);
 const SRC = [base, kit, csBlock(P, `${base}\n${kit}`), line("stepLockOf"), line("RGA_ADMIN_EMAIL"), line("RGA_ADMIN_GITHUB"), multi("ACC_FILES"), line("GH_APP_INSTALL_URL"),
-  ...["accStep1Name", "accSiteName", "accMergeChoiceHtml", "accessTestRow", "hostCheckParts", "hostFixHtml", "ghAppWanted", "ghAppInstallHtml", "ghAppCardHtml", "ghAppDoneHtml", "accessCardHtml", "accWhoOf", "accDevNote", "accDevNoteText", "accCustomSetupHtml"].map(fn),
-  `var _ghAppNote = new Map(), _lockData = { tasks: {} }, _rcEditing = new Set(), _accPickSelf = new Set(), _accNames = { wix: "Wix" }, _accHosts = { netlify: "Netlify" };
+  ...["accStep1Name", "accSiteName", "accMergeChoiceHtml", "accessTestRow", "hostCheckParts", "hostFixHtml", "ghAppWanted", "ghAppInstallHtml", "ghAppCardHtml", "ghAppDoneHtml", "accessCardHtml", "accWhoOf", "accDevNote", "accDevNoteText", "accCustomSetupHtml", "ghAppWatch"].map(fn),
+  `var _ghAppNote = new Map(), _ghAppWatch = new Map(), _lockData = { tasks: {} }, _rcEditing = new Set(), _accPickSelf = new Set(), _accNames = { wix: "Wix" }, _accHosts = { netlify: "Netlify" };
    var portalToken = async () => "tok", showPortalToast = (m) => { window.__toast = m; }, portalAlert = (m) => { window.__alert = m; }, clientError = (e, w) => "Couldn't " + w;
+   var ghAppFind = async (id) => { window.__finds = (window.__finds || 0) + 1; return (window.__findSeq || []).shift() || { ok: false, state: "waiting" }; };
+   var settleStepResult = async (listEl, j) => { window.__settled = { list: listEl && listEl.id, j }; return true; };
    async function ghAppStartUrl(id) { window.__started = id; return { url: "https://github.com/apps/rocket-growth-agency/installations/new?state=" + id + ".1762600000.0123456789abcdef0123456789abcdef", business: "Acme Plumbing" }; }`,
   handler('e.target.closest("[data-gh-app-share],[data-gh-app-copy]")'),
-  handler('e.target.closest("[data-gh-app-install]")').replace("window.location.href = (await ghAppStartUrl(clientId)).url;", "window.__go = (await ghAppStartUrl(clientId)).url;"),
+  handler('e.target.closest("[data-gh-app-install]")'),
 ].join("\n");
 const b = await puppeteer.launch({ headless: "new", executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", args: ["--no-sandbox"] });
 let out;
 try {
   const pg = await b.newPage();
   await pg.setViewport({ width: 900, height: 900 });
-  await pg.setContent(`<!doctype html><style>${PCSS}</style><div class="pm-step-row pm-cs" id="step-row-m1.access.website" style="width:680px"><div id="root"></div></div>`);
+  await pg.setContent(`<!doctype html><style>${PCSS}</style><div id="action-items-list-x"><div class="pm-step-row pm-cs" id="step-row-m1.access.website" style="width:680px"><div id="root"></div></div></div>`);
   await pg.addScriptTag({ content: SRC });
   out = await pg.evaluate(async (CID) => {
     const root = document.getElementById("root"), now = new Date().toISOString();
@@ -185,9 +222,26 @@ try {
     await new Promise((res) => setTimeout(res, 50));
     const ta = el.querySelector("[data-gh-app-box] textarea");
     r.share = { shown: !!box && box.getBoundingClientRect().height > 0, text: ta ? ta.value : "", say: box ? txt(box) : "", copy: !!(box && box.querySelector("[data-gh-app-copy]")) };
+    // Install on GitHub: a new tab (opened inside the click), the signed link, a waiting line, and this tab starts asking
+    window.open = () => { const w = { location: {}, opener: window }; window.__w = w; return w; };
     if (btn) btn.click();
     await new Promise((res) => setTimeout(res, 50));
-    r.go = window.__go || "";
+    r.go = (window.__w && window.__w.location.href) || ""; r.opener = window.__w ? window.__w.opener : "no tab";
+    r.wait = txt(el.querySelector("[data-gh-app-wait]") || document.createElement("i"));
+    r.watchMin = _ghAppWatch.has(CID) ? (_ghAppWatch.get(CID) - Date.now()) / 60e3 : 0;
+    _ghAppWatch.clear();
+    // 8 · the tab finds the install by itself (no Setup URL): waiting, then two repositories, then found → the step redraws
+    const ost = window.setTimeout; window.setTimeout = (f) => ost(f, 5);
+    window.__finds = 0; window.__settled = null; window.__toast = "";
+    window.__findSeq = [{ ok: false, state: "waiting" }, { ok: false, state: "many", error: "RGA's app can reach more than one repository that names acmeplumbing.com: acme/site and acme/site-copy. On GitHub, pick only the one your website is built from." }, { ok: true, state: "confirmed", repo: "acme/site", tasks: { "m1.access.website": { status: "done" } } }];
+    el = draw(t1); ghAppWatch(CID, 1);
+    await new Promise((res) => ost(res, 400));
+    r.watch = { finds: window.__finds, note: txt(el.querySelector("[data-gh-app-note]") || document.createElement("i")), settled: window.__settled, toast: window.__toast, left: _ghAppWatch.has(CID) };
+    // the card isn't on screen: it stops asking
+    window.__finds = 0; root.innerHTML = ""; ghAppWatch(CID, 1);
+    await new Promise((res) => ost(res, 100));
+    r.gone = { finds: window.__finds, left: _ghAppWatch.has(CID) };
+    window.setTimeout = ost;
     // 2 · the wrong repository came back: the card says so
     _ghAppNote.set(CID, "acme/blog isn't your website. On GitHub, pick the repository your website is built from.");
     r.wrong = txt(draw(t1)); _ghAppNote.delete(CID);
@@ -223,7 +277,12 @@ if (I.href !== "https://github.com/apps/rocket-growth-agency/installations/new" 
 if (!(I.btnW > 60 && I.btnW < 320 && I.btnH > 20 && I.btnH < 60)) fail(`the Install button is stretched or missing (${Math.round(I.btnW)}×${Math.round(I.btnH)})`);
 if (I.boxShown !== false || I.change !== 1) fail("the link for someone else shows before it's asked for, or the card has no Change something");
 if (!out.share.shown || !out.share.copy || !/Acme Plumbing/.test(out.share.text) || !/https:\/\/github\.com\/apps\/rocket-growth-agency\/installations\/new\?state=11111111-/.test(out.share.text) || !/names Acme Plumbing/.test(out.share.say)) fail(`"Send them the link" doesn't reveal the install link naming the business, to copy (${out.share.say} · ${out.share.text})`);
-if (!/\?state=11111111-/.test(out.go)) fail(`Install on GitHub doesn't go to the signed link (${out.go})`);
+if (!/\?state=11111111-/.test(out.go) || out.opener !== null) fail(`Install on GitHub doesn't open the signed link in a new tab cut off from the portal (${out.go} · opener ${out.opener === null ? "null" : "kept"})`);
+if (out.wait !== "Finish on GitHub. This page updates by itself once it's installed." || !(out.watchMin > 19 && out.watchMin <= 20)) fail(`after Install on GitHub, the portal doesn't say it updates by itself and start looking (${out.wait} · ${out.watchMin})`);
+const W = out.watch;
+if (W.finds !== 3 || !/more than one repository that names acmeplumbing\.com/.test(W.note) || !W.settled || W.settled.list !== "action-items-list-x" || !W.settled.j || W.settled.j.repo !== "acme/site" || W.toast !== "RGA's app is installed on acme/site." || W.left)
+  fail(`the portal doesn't find the install by itself (asks until found, says two repositories, redraws the step, says it's installed, stops) (${JSON.stringify(W)})`);
+if (out.gone.finds !== 0 || out.gone.left) fail(`the portal keeps asking GitHub with the install card off the screen (${JSON.stringify(out.gone)})`);
 if (!/acme\/blog isn't your website\./.test(out.wrong) || !out.wrong.includes(LINE)) fail(`a wrong repository isn't said on the card with Install again (${out.wrong})`);
 const C3 = out.checking;
 if (!/^Give RGA access to your website ?Checking…$/.test(C3.head) || C3.rows.length !== 3 || !/^RGA's app is installed on acme\/site ?just now$/.test(C3.rows[0]) || !/^acme\/site is your website ?Its files name acmeplumbing\.com\. ?just now$/.test(C3.rows[1]) || !/^Checking your host builds RGA's changes/.test(C3.rows[2])) fail(`after the install, the card isn't installed · is your website · checking the host (${C3.head} | ${C3.rows.join(" | ")})`);
@@ -244,5 +303,28 @@ if (!/s3state === "gh" \? "" : accPart\(3,/.test(P)) fail("picking GitHub still 
 if (!/acc\.via === "github_app"\s*\? \[\[`RGA's app is installed on \$\{escapeHtml\(acc\.repo/.test(A) || !/is their website`, acc\.found_in && acc\.domain/.test(A)) fail("admin's step 3 doesn't show the app's install and the repository check");
 if (!/let \{ ok: repoIsSite, how \} = await repoIsSiteCheck\(\{ repo: acc\.repo, site, token: d\.token, fetch: d\.fetch \}\);/.test(PSRC)) fail("the upload's repository check and the install's aren't the same check");
 
+// RGA's 5-minute watcher asks "find" for every GitHub site still waiting for the app (an install by whoever manages their GitHub needs no
+// link back), with the internal secret, and for nobody else. Run against a fake database.
+try {
+  const W = req(`${SITE}/netlify/functions/site-publish-watch.js`);
+  const lift = (src, name) => { const m = new RegExp(`^function ${name}\\(`, "m").exec(src); return m ? src.slice(m.index, src.indexOf("\n}\n", m.index) + 2).replace(/^function \w+/, "function f").replace(/\s+/g, " ") : null; };
+  if (!lift(P, "ghAppWanted") || lift(P, "ghAppWanted") !== lift(fs.readFileSync(`${SITE}/netlify/functions/site-publish-watch.js`, "utf8"), "appWanted")) fail("the watcher's test for 'waiting for RGA's app' isn't the portal's (ghAppWanted ≠ appWanted)");
+  const rows = [
+    { client_id: "a", data: { tasks: { "m1.access.website": { status: "pending", client_input: { via: "invite", platform: "custom", files: "github" } } } } },
+    { client_id: "b", data: { tasks: { "m1.access.website": { status: "pending", client_input: { via: "invite", platform: "wix" } } } } },
+    { client_id: "c", data: { tasks: { "m1.access.website": { status: "done", client_input: { platform: "custom", files: "github" }, access: { repo: "acme/site", via: "github_app", confirmed_at: "x" } } } } },
+    { client_id: "d", data: { tasks: {} } },
+  ];
+  const asked = [], realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init = {}) => {
+    const u = String(url);
+    if (u.includes("/client_onboarding_records?select=client_id,data")) return res(200, rows);
+    if (u.endsWith("/.netlify/functions/portal-github-app")) { asked.push({ body: JSON.parse(init.body), secret: (init.headers || {})["x-internal-secret"] }); return res(200, { ok: false, state: "waiting" }); }
+    return res(200, []);
+  };
+  try { await W.handler({ httpMethod: "POST", headers: {}, body: JSON.stringify({ next_run: new Date().toISOString() }) }); } finally { globalThis.fetch = realFetch; }
+  if (asked.length !== 1 || asked[0].body.action !== "find" || asked[0].body.client_id !== "a" || asked[0].secret !== process.env.INTERNAL_FN_SECRET) fail(`RGA's watcher doesn't ask "find" (with the internal secret) for exactly the GitHub site waiting for the app (${JSON.stringify(asked)})`);
+} catch (e) { console.error(`⚠️  INDETERMINATE — the watcher wouldn't run: ${String(e.message).split("\n")[0]}`); process.exit(2); }
+
 if (bad.length) { console.error(`❌ the client installs RGA's app — ${bad.length} regression(s):`); for (const x of bad) console.error(`  · ${x}`); process.exit(1); }
-console.log("✅ a client installs RGA's GitHub app from their portal: the link carries a signed state (forged, expired or other-client refused), GitHub confirms the installation, only the repository that IS their website is recorded (not their site / two that name it / couldn't check → nothing written), the grant is via github_app, read back, recorded, re-read before the write, step 9 settles; the portal shows Install on GitHub word for word, the link for whoever manages their GitHub, checking then done, Switch to RGA's app for invited clients, and nothing for non-GitHub sites; admin shows the install");
+console.log("✅ a client installs RGA's GitHub app from their portal: the link carries a signed state (forged, expired or other-client refused), GitHub confirms the installation, only the repository that IS their website is recorded (not their site / two that name it / couldn't check → nothing written), the grant is via github_app, read back, recorded, re-read before the write, step 9 settles; the portal shows Install on GitHub word for word, the link for whoever manages their GitHub, checking then done, Switch to RGA's app for invited clients, and nothing for non-GitHub sites; admin shows the install; with no Setup URL the portal and RGA's 5-minute watcher find the install by themselves (\"find\": the one install that reaches their site, nothing written otherwise)");

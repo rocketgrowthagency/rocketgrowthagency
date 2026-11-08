@@ -159,5 +159,68 @@
   "found_in: found.file || null, ...(owned ? { tasks: after.tasks, ...recordMeta(rec) } : {}) });",
   "found_in: found.file || null, tasks: after.tasks, ...recordMeta(rec) });",
   1
+ ],
+ [
+  "find needs no sign-in or secret",
+  "ghappfn",
+  "    if (!(deps.internal || requireInternalSecret)(event).ok) {",
+  "    if (false) {",
+  1
+ ],
+ [
+  "find takes a week-old install",
+  "ghappfn",
+  "!x.suspended_at && now - (Date.parse(x.updated_at || x.created_at || 0) || 0) < RECENT_DAYS * 86400e3",
+  "!x.suspended_at",
+  1
+ ],
+ [
+  "find takes the newest install, site or not",
+  "ghappfn",
+  "    if (found.pick) return { ins, found };",
+  "    return { ins, found };",
+  1
+ ],
+ [
+  "the watcher is handed the client record",
+  "ghappfn",
+  "    let who = \"github app install\", owned = false;\n    if (!(deps.internal",
+  "    let who = \"github app install\", owned = true;\n    if (!(deps.internal",
+  1
+ ],
+ [
+  "the portal never redraws after finding it",
+  "portal",
+  "      if (!(await settleStepResult(listEl, j))) { window.location.reload(); return; }",
+  "      if (false) { return; }",
+  1
+ ],
+ [
+  "the portal asks with the card off the screen",
+  "portal",
+  "    if (!host) { _ghAppWatch.delete(clientId); return; }   // the card",
+  "    if (false) { _ghAppWatch.delete(clientId); return; }   // the card",
+  1
+ ],
+ [
+  "the new tab keeps a handle on the portal",
+  "portal",
+  "  try { w.opener = null; w.location.href = url; }",
+  "  try { w.location.href = url; }",
+  1
+ ],
+ [
+  "the watcher never asks find",
+  "pubwatch",
+  "    if (!appWanted(((row.data || {}).tasks || {})[\"m1.access.website\"])) continue;",
+  "    continue;",
+  1
+ ],
+ [
+  "a changed website answer still gets the grant",
+  "ghappfn",
+  "  if (JSON.stringify((rec.tasks[STEP] || {}).client_input || null) !== JSON.stringify((rec0.tasks[STEP] || {}).client_input || null)) return json(409,",
+  "  if (false) return json(409,",
+  1
  ]
 ]
