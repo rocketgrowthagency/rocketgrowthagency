@@ -215,5 +215,19 @@
   "(s.section === heroAt && !s.href && s.tag !== \"h1\") ||",
   "",
   1
+ ],
+ [
+  "the hub page is copied first",
+  "pagedesign",
+  ".sort((a, b) => a.r - b.r || a.i - b.i)",
+  "",
+  1
+ ],
+ [
+  "the hub isn't last",
+  "pagedesign",
+  "s.join(\"/\") === parent ? 2 : 1",
+  "s.join(\"/\") === parent ? 1 : 1",
+  1
  ]
 ]

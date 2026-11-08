@@ -38,6 +38,14 @@ const OTHER_MAIN = `<section><p class="eyebrow">Water Heaters</p><h1>Water heate
 const TPL = page("Drain Cleaning | Acme Plumbing", TPL_MAIN), OTHER = page("Water Heaters | Acme Plumbing", OTHER_MAIN);
 const TPL_URL = "https://acme.test/services/drain-cleaning/", NEW_URL = "https://acme.test/services/leak-detection/";
 
+// the template: a sibling of the same kind, never the folder's hub page while a sibling exists (RGA's first runs copied /services/)
+{ const HUB = page("Services | Acme Plumbing", `<section><h1>All our services</h1>${"<p>One of our services.</p>".repeat(8)}</section>`), ABOUT = page("About | Acme Plumbing", `<section><h1>About us</h1>${"<p>Our story.</p>".repeat(8)}</section>`);
+  const got = PD.pickTemplate([{ url: "https://acme.test/services/", html: HUB }, { url: "https://acme.test/about/", html: ABOUT }, { url: TPL_URL, html: TPL }], { minSlots: 5, url: NEW_URL });
+  if (!got || got.url !== TPL_URL) fail(`a new service page copies ${got ? got.url : "nothing"}, not its sibling service page`);
+  const alone = PD.pickTemplate([{ url: "https://acme.test/services/", html: HUB }, { url: "https://acme.test/about/", html: ABOUT }], { minSlots: 5, url: NEW_URL });
+  if (!alone || alone.url !== "https://acme.test/about/") fail("with no sibling, the hub page is used before any other page (it lists the services, it isn't one)"); }
+if (!/PD\.pickTemplate\(sibs, \{ url: plan\.url \}\)/.test(FE)) fail("the draft picks its template without knowing the new page's address (it can't tell a sibling from the hub)");
+
 // the slots
 const tpl = PD.pickTemplate([{ url: TPL_URL, html: TPL }], { minSlots: 5 });
 if (!tpl) fail("a service page with a main area and a headline isn't picked as the template");
