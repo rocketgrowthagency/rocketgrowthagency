@@ -74,6 +74,10 @@ if (!PUB.localFiles("m1.web.schema", appr(F, [{ path: "index.html", action: "edi
 if (!PUB.localFiles("m1.web.schema", appr(F), () => null).error) fail("the Mac publisher writes a code change into a page that isn't in the repo");
 const np = { site_change: { v: "1", kind: "visible", new_page: true, page_url: "https://acme.test/x/" }, site_build: { v: "1", files: [{ path: "x/index.html", action: "add", sha: "s", html: "<html>new</html>" }] }, approval: { approved_build: [{ path: "x/index.html", action: "add", sha: "s" }] } };
 if (!PUB.localFiles("m1.web.priority_pages", np, () => "<html>someone else's</html>").error) fail("the Mac publisher overwrites a page that's already there and isn't the approved one");
+{ const ed = { site_change: { v: "1", kind: "visible", edits_page: true, items: [{ label: "Line", before: "We guarantee results.", after: "We report every change." }] }, site_build: { v: "1", files: [{ path: "x/index.html", action: "edit", sha: "e" }] }, approval: { approved_build: [{ path: "x/index.html", action: "edit", sha: "e" }] } };
+  const r1 = PUB.localFiles("m1.web.priority_pages", ed, () => "<p>We guarantee results.</p>");
+  if (r1.error || !r1.files.length || r1.files[0].text !== "<p>We report every change.</p>") fail(`the Mac publisher doesn't put up an approved line edit (${r1.error || ""})`);
+  if (!PUB.localFiles("m1.web.priority_pages", ed, () => "<p>Someone rewrote this.</p>").error) fail("the Mac publisher puts up a line edit on a page whose line changed since it was read"); }
 if (!/const dirty = git\("status", "--porcelain", "--", \.\.\.paths\)\.stdout\.trim\(\);\s*if \(dirty\)/.test(PUBSRC)) fail("the Mac publisher writes over a file another session is editing");
 if (!/"user\.name=rocketgrowthagency", "-c", "user\.email=hello@rocketgrowthagency\.com", "commit"/.test(PUBSRC) || /Co-Authored-By/i.test(PUBSRC)) fail("the Mac publisher commits under another identity (or with attribution)");
 if (!/site_action: "publish"/.test(PUBSRC) || !/deployed, locked, and verified by content/.test(PUBSRC)) fail("the Mac publisher marks live without the deploy verifying and the live page reading back");

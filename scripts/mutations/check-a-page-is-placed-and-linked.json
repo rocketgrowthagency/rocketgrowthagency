@@ -131,5 +131,33 @@
   " || (isPrimary ? `${base}/` : null);",
   ";",
   1
+ ],
+ [
+  "a headline that doesn't name the service passes",
+  "pagebuilder",
+  "if (h1 && want.length && !want.some((w) => wordsIn(h1).includes(w))",
+  "if (false && h1",
+  1
+ ],
+ [
+  "step 45 doesn't update",
+  "flowexec",
+  "if (weak.length) return improveOnePage({ client, ctx, url: x.u, html, weak });",
+  "",
+  1
+ ],
+ [
+  "unread pages are called checked",
+  "flowexec",
+  "if (own.length && read < own.length) return {",
+  "if (false) return {",
+  1
+ ],
+ [
+  "step 45 can't carry an edit",
+  "sitechange",
+  "newPage: true, page: true, mayEdit: true, items: PAGE_ITEMS },   // page_placement_and_links_v1",
+  "newPage: true, page: true, items: PAGE_ITEMS },   // page_placement_and_links_v1",
+  1
  ]
 ]

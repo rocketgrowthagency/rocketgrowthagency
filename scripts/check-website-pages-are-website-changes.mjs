@@ -68,7 +68,9 @@ const e1 = SC.cleanChange("m1.web.service_location_matrix", ed);
 if (!e1.change || !e1.change.edits_page || e1.change.new_page || e1.change.label !== "edit_page") fail(`an edit to a page they have isn't labelled as editing a page (${e1.error || e1.change.label})`);
 if (!SC.cleanChange("m1.web.service_location_matrix", { ...ed, items: [{ label: "A line", after: "new words" }] }).error) fail("an edit saves a line with no current words: nothing says what it replaces");
 if (!SC.cleanChange("m1.web.service_location_matrix", { ...ed, files: [] }).error) fail("an edit saves without the file it changes");
-if (SC.cleanChange("m1.web.priority_pages", ed).change?.edits_page) fail("a step that only adds pages can be saved as an edit");
+// page_placement_and_links_v1 (11-7): step 45 builds OR updates a service page; the city page step only adds
+if (SC.cleanChange("m1.web.location_pages", ed).change?.edits_page) fail("a step that only adds pages can be saved as an edit");
+if (!SC.cleanChange("m1.web.priority_pages", ed).change?.edits_page) fail("step 45 can't save an update to a service page they have");
 
 if (F.length) { console.error(`❌ website pages: ${F.length} regression(s):\n  · ${F.join("\n  · ")}`); process.exit(1); }
 console.log("✅ website pages wait on what makes them true (both SOP copies), are website changes, stay open until the last page is live, and an edit names its lines");

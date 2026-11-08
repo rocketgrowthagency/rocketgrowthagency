@@ -65,8 +65,8 @@
  [
   "a site with every page still gets one",
   "pagebuilder",
-  "if (!left.length) return { none: true, pages: rows.map((r) => r.has), covered:",
-  "if (!left.length) left.push(rows[0]); if (false) return { none: true, pages: rows.map((r) => r.has), covered:",
+  "if (!left.length) return { none: true, pages: rows.map((r) => r.has), services:",
+  "if (!left.length) left.push(rows[0]); if (false) return { none: true, pages: rows.map((r) => r.has), services:",
   1
  ],
  [

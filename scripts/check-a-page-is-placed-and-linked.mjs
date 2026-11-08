@@ -60,6 +60,19 @@ void cov;
 // step 45 reads every page before deciding, and won't claim "no page covers it" on a partial read
 if (!/const all = await readSitePages\(require\("\.\/_city-page"\)\.sitemapUrls\(ctx\.smXml\)\);/.test(FE) || !/all\.unread\.length > Math\.max\(1, all\.urls \* 0\.05\)/.test(FE) || !/PB\.planServicePage\(\{ pages: all\.pages,/.test(FE)) fail("step 45 decides without reading every page, or claims no page covers a service with pages unread");
 
+// every top service has a page: step 45 UPDATES them, the lines a rule finds (page_placement_and_links_v1)
+{ const pg = `<html><body><main><h1>Welcome to Acme</h1><p>Studies show we are the best plumbers in town.</p><p>We guarantee same-day results.</p></main></body></html>`;
+  const sl = PB.serviceLines(pg, "Drain Cleaning");
+  if (!sl.some((x) => /headline doesn't say what the page is for/.test(x.why) && x.text === "Welcome to Acme")) fail("an existing service page whose headline doesn't name its service isn't flagged for an update");
+  if (!sl.some((x) => /unsourced study|can't back/.test(x.why))) fail("an existing service page's claim we can't back isn't flagged");
+  if (PB.serviceLines(`<main><h1>Drain cleaning in Springfield</h1><p>We clear drains.</p></main>`, "Drain Cleaning").length) fail("a clean service page is flagged (nothing to change)"); }
+{ const SCx = req(path.join(SITE, "shared/site-change.js"));
+  if (!SCx.STEPS["m1.web.priority_pages"].mayEdit) fail("step 45 can't carry an update to a page they have (only new pages)");
+  const at = FE.indexOf('"m1.web.priority_pages": async'), body = FE.slice(at, at + 4500);
+  if (!/if \(r\.none\) \{[\s\S]{0,900}PB\.serviceLines\(html, x\.service \|\| ""\);\s*if \(weak\.length\) return improveOnePage\(/.test(body)) fail("with every service page there, step 45 stops instead of updating them");
+  if (!/outcome: "verified", outcome_data: \{ exists: r\.pages/.test(body)) fail("service pages checked clean don't finish the step as checked (it reads as 'couldn't conclude')");
+  if (!/if \(own\.length && read < own\.length\) return \{[\s\S]{0,200}outcome: "indeterminate"/.test(body)) fail("service pages that couldn't be read are called checked"); }
+
 // the client's link count is the BUILT page's
 { const html = `<html><body><header><a href="/a/">A</a><a href="/b/">B</a></header><main><a href="/services/drain-cleaning/">Drain</a><a href="/services/drain-cleaning/#faq">Drain again</a><a href="/contact/">Book</a><a href="/services/leak-detection/">self</a><a href="https://other.test/x/">out</a></main><footer><a href="/c/">C</a></footer></body></html>`;
   const n = AD.builtLinksOf({ site_change: { page_url: `${B}/services/leak-detection/`, items: [{ label: "Links on the page", after: "A → /a/\nB → /b/\nC → /c/\nD → /d/\nE → /e/" }] }, site_build: { files: [{ action: "add", html }] } });

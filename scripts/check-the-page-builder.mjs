@@ -82,7 +82,7 @@ if (PB.checkPageWords(good, P1).problems) fail(`good words are refused (${PB.che
 for (const [what, patch] of [["a made-up count", { intro: "We have 200+ customers. Ask us." }], ["a guarantee", { how: "Guaranteed results." }], ["no city in the title", { title: "Electrician | Sparks" }]]) if (!PB.checkPageWords({ ...good, ...patch }, P1).problems) fail(`the words are kept with ${what}`);
 const prompt = PB.wordsPrompt({ kind: "service", service: "Panel upgrades", page_for: "Panel upgrades", searches: ["x"] }, "Sparks", null, null);
 if (!/Never state a number, a result, a ranking, a review count, a price or a guarantee, and never quote a customer/.test(prompt)) fail("the prompt no longer forbids invented numbers, prices and quotes");
-if (!/"m1\.web\.priority_pages": async[\s\S]{0,2400}draftOnePage\(\{ client, _plan, plan: r\.plan, ctx, page_of: r\.page_of \}\)/.test(FE)) fail("service pages don't go through the one pipeline");
+if (!/"m1\.web\.priority_pages": async[\s\S]{0,4500}draftOnePage\(\{ client, _plan, plan: r\.plan, ctx, page_of: r\.page_of \}\)/.test(FE)) fail("service pages don't go through the one pipeline");
 if (!/"m1\.web\.location_pages": async[\s\S]{0,900}draftOnePage\(\{ client, _plan, plan:/.test(FE)) fail("the city page doesn't go through the one pipeline");
 if (!/"m1\.web\.service_location_matrix": async[\s\S]{0,1900}draftOnePage\(\{ client, _plan, plan: r\.plan, ctx \}\)/.test(FE)) fail("service × area pages don't go through the one pipeline");
 if (/"m1\.web\.blog_seed": async[\s\S]{0,400}draftOnePage/.test(FE)) fail("the blog was pulled into the page builder (it keeps its own system)");

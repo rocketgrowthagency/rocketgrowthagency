@@ -124,5 +124,12 @@
   "if (dirty) { held++;",
   "if (false) { held++;",
   1
+ ],
+ [
+  "the publisher can't do line edits",
+  "publishown",
+  "    } else if (f.action === \"edit\" && c.edits_page) {",
+  "    } else if (false) {",
+  1
  ]
 ]
