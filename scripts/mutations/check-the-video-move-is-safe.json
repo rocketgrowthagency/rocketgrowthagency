@@ -1,0 +1,79 @@
+[
+ [
+  "a page or other file is copied as a video",
+  "videomove",
+  "  if (!/^video\\/mp4/i.test(ct)) return { ok: false, why: `the live site answered ${ct || \"no type\"}, not a video` };\n",
+  "",
+  1
+ ],
+ [
+  "a short or different-size file is copied",
+  "videomove",
+  "  if (buf.length !== item.size) return",
+  "  if (false) return",
+  1
+ ],
+ [
+  "a forward is followed and copied",
+  "videomove",
+  "  if (live.status !== 200) return { ok: false, why: `the live site answered ${live.status}` };\n",
+  "",
+  1
+ ],
+ [
+  "a copy counts without reading it back",
+  "videomove",
+  "    if (!fb || md5Of(fb) !== md5) return { ok: false, why: \"the stored file isn't the live file\" };\n",
+  "",
+  1
+ ],
+ [
+  "two runs overlap",
+  "videomove",
+  "  if (L.lock && now - Date.parse(L.lock) < LOCK_MS) return",
+  "  if (false) return",
+  1
+ ],
+ [
+  "a dead run's lock blocks forever",
+  "videomove",
+  "  if (L.lock && now - Date.parse(L.lock) < LOCK_MS) return",
+  "  if (L.lock) return",
+  1
+ ],
+ [
+  "it never gives up",
+  "videomove",
+  "const todo = d.list.filter((x) => !L.done[x.slug] && !((L.failed[x.slug] || {}).tries >= MAX_TRIES));",
+  "const todo = d.list.filter((x) => !L.done[x.slug]);",
+  1
+ ],
+ [
+  "finished videos are copied again",
+  "videomove",
+  "const todo = d.list.filter((x) => !L.done[x.slug] && ",
+  "const todo = d.list.filter((x) => ",
+  1
+ ],
+ [
+  "the lock is left on",
+  "videomove",
+  "  finally { L.lock = null; await writeLedger(d, L); }",
+  "  finally { await writeLedger(d, L); }",
+  1
+ ],
+ [
+  "System health has no bar",
+  "admin",
+  "  if (pr) return `",
+  "  if (false) return `",
+  1
+ ],
+ [
+  "the move row is folded into the group",
+  "admin",
+  " && j.job !== \"video-move\" &&",
+  " &&",
+  1
+ ]
+]

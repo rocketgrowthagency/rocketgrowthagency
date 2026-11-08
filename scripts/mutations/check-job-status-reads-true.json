@@ -218,7 +218,7 @@
  [
   "the card: problems hide in a group",
   "admin",
-  "const groupable = (j) => j.where === \"netlify\" && [\"ok\", \"not_recorded\", \"not_set_up\"].includes(j.state);",
+  "const groupable = (j) => j.where === \"netlify\" && j.job !== \"video-move\" && [\"ok\", \"not_recorded\", \"not_set_up\"].includes(j.state);",
   "const groupable = (j) => j.where === \"netlify\";"
  ],
  [
@@ -242,8 +242,8 @@
  [
   "the card: a job's error isn't escaped",
   "admin",
-  "${escapeHtml(r.line + alert)}",
-  "${r.line + alert}"
+  "<small>${escapeHtml(r.line + alert)}${r.more || \"\"}</small>",
+  "<small>${r.line + alert}${r.more || \"\"}</small>"
  ],
  [
   "the card: the alert line goes",

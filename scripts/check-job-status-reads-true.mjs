@@ -139,7 +139,7 @@ const lift = (name) => { const at = js.indexOf(`function ${name}(`); if (at < 0)
 function skipTpl(i) { for (i++; i < js.length; i++) { const c = js[i]; if (c === "\\") { i++; continue; } if (c === "`") return i; if (c === "$" && js[i + 1] === "{") { let d = 1; i += 2; for (; i < js.length && d; i++) { const k = js[i]; if (k === "`") i = skipTpl(i); else if (k === "{") d++; else if (k === "}") d--; } i--; } } return i; }
 const box = { escapeHtml: (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])), escapeAttribute: (s) => String(s ?? "") };
 vm.createContext(box);
-vm.runInContext(`${lift("systemHealthRow")}\n${lift("systemHealthHtml")}\nthis.card = systemHealthHtml;`, box);
+vm.runInContext(`${lift("shProgress")}\n${lift("publishBlockedRowsHtml")}\n${lift("systemHealthRow")}\n${lift("systemHealthHtml")}\nthis.card = systemHealthHtml;`, box);
 const row = (job, st_, where = "netlify") => ({ job, label: job, where, ...S.evaluateJob({ ...J, job, label: job, where }, st_ === "ok" ? good : st_ === "bad" ? { ...good, ok: false, error: "boom" } : null, null, { ...ctx, systemStart: null, tableReady: st_ !== "unset" }) });
 const data = (jobs, extra = {}) => ({ ok: true, table_ready: true, read_label: "Oct 31, 8:00 PM", jobs, summary: S.summarize(jobs), alerts: { tone: "unk", tag: "Messages only", line: "No webhook is set" }, ...extra });
 const card = (d, o = { full: true }) => box.card(d, o);
