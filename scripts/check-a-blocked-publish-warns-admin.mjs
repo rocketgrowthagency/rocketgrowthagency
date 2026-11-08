@@ -68,6 +68,10 @@ try {
   const fwd = base(); fwd.repo["v/joe/index.html"] = page("A video for Joe", '<video src="video.mp4"></video>'); fwd.forward = { "v/joe/video.mp4": "https://supa.test/storage/v1/object/public/outreach-videos/joe/video.mp4" };
   const rf = await run(fwd);
   if (byId(rf, "nothing_lost").ok !== true || rf.ok !== true || !/served from its own storage \(like \/v\/joe\/video\.mp4\)/.test(byId(rf, "nothing_lost").detail)) fail(`a video forwarded to storage reads as lost (${byId(rf, "nothing_lost").line}: ${byId(rf, "nothing_lost").detail})`);
+  // rga_video_address_v1 A: served from storage UNDER OUR ADDRESS (a 200 rule in the repo's netlify.toml) isn't lost either
+  const prox = base(); prox.repo["v/joe/index.html"] = page("A video for Joe", '<video src="video.mp4"></video>'); prox.repo["netlify.toml"] = '[build]\n  publish = "."\n[[redirects]]\n  from = "/v/:slug/video.mp4"\n  to = "https://supa.test/storage/v1/object/public/outreach-videos/:slug/video.mp4"\n  status = 200\n  force = true\n'; prox.live = { ...prox.repo, "v/joe/video.mp4": "mp4" };
+  const rp = await run(prox);
+  if (byId(rp, "nothing_lost").ok !== true) fail(`a video served from storage under our own address reads as lost (${byId(rp, "nothing_lost").line})`);
   const gone = base(); gone.repo["v/joe/index.html"] = page("A video for Joe", '<video src="video.mp4"></video>');
   if (byId(await run(gone), "nothing_lost").ok === false) fail("a file missing on BOTH sides reads as one a deploy would remove");
 

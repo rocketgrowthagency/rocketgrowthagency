@@ -93,7 +93,7 @@
  [
   "a video forwarded to storage reads as lost",
   "publishblocked",
-  "(GA.siteDomain(h.url) === GA.siteDomain(home) ? opened : stored).push(p);",
+  "(GA.siteDomain(h.url) === GA.siteDomain(home) && !servedFromElsewhere(toml, `/${p}`) ? opened : stored).push(p);",
   "opened.push(p);",
   1
  ],
@@ -102,6 +102,13 @@
   "admin",
   "if (!full && (!needsLook || SH.view !== \"dashboard\")) {",
   "if (!full && !needsLook) {",
+  1
+ ],
+ [
+  "a video served from storage under our address reads as lost",
+  "publishblocked",
+  "(GA.siteDomain(h.url) === GA.siteDomain(home) && !servedFromElsewhere(toml, `/${p}`) ? opened : stored)",
+  "(GA.siteDomain(h.url) === GA.siteDomain(home) ? opened : stored)",
   1
  ]
 ]
