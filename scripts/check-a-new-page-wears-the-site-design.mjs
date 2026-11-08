@@ -60,6 +60,12 @@ else {
   if (PD.renderMain(tpl.main, texts).html !== tpl.main.replace(/<figure[\s\S]*?<\/figure>/g, "").replace(/<img[^>]*>/g, "").replace(/ aria-label="Sample drain report"/, "")) fail("placing the template's own words doesn't give the template back exactly, less its pictures and its parts' labels (the layout is changed by the build)");
   const shared = PD.sharedLines(tpl, [OTHER]);
   if (!PD.sharedLines(tpl, [page("Pipes | Acme", "<div><b>Licensed and insured plumbers</b></div>")]).includes("span|licensed and insured plumbers")) fail("a call-to-action line the site's other pages show in another place isn't the site's (4+ words)");
+  { const T = page("Drains | Acme", `<section><h1>Drains in Springfield</h1>${"<p>Words.</p>".repeat(6)}<p>Licensed plumbers say: there's no way to promise a pipe will never clog again. We stand behind the work, never a forever promise.</p></section>`);
+    const tt = PD.pickTemplate([{ url: TPL_URL, html: T }], { minSlots: 5 });
+    const near = PD.sharedLines(tt, [page("Pipes | Acme", "<p>Licensed plumbers say: there's no way to promise a pipe will never clog again. We stand behind the work.</p>")]);
+    if (!near.some((k) => /licensed plumbers say/.test(k))) fail("a long standard answer another page has with a different ending isn't the site's");
+    const short = PD.sharedLines(tt, [page("Pipes | Acme", "<p>Licensed plumbers say: no.</p>")]);
+    if (short.some((k) => /licensed plumbers say/.test(k))) fail("a line sharing only a few words with another page counts as the site's"); }
   if (PD.sharedLines(tpl, [page("Pipes | Acme", "<div><b>Drain Cleaning</b></div>")]).includes("p|drain cleaning")) fail("a short label shown elsewhere in another place counts as the site's (it's how 'GBP Optimization' got through)");
   if (!shared.includes("span|licensed and insured plumbers") || !shared.includes("p|what you get") || shared.includes("p|drain cleaning")) fail("the site's shared lines aren't told apart by place (a trust band shared; another page's LINK 'Drain Cleaning' isn't this page's label)");
 

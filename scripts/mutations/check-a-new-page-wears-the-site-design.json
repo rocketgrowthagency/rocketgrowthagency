@@ -243,5 +243,12 @@
   "(w && w.problems ? `\\n\\nThe last answer broke these rules, fix them: ${w.problems.join(\"; \")}` : \"\")",
   "\"\"",
   1
+ ],
+ [
+  "a near-identical answer isn't shared",
+  "pagedesign",
+  " || (s.text.length >= 60 && heads.has(head(s.text)))",
+  "",
+  1
  ]
 ]
