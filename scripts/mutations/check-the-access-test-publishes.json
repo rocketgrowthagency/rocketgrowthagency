@@ -30,7 +30,7 @@
  [
   "publishing without write permission",
   "ghaccess",
-  "  if (!(info.permissions && (info.permissions.push || info.permissions.maintain || info.permissions.admin))) return { ok: false, state: \"no_write\"",
+  "  if (!canWrite(token, info.permissions)) return { ok: false, state: \"no_write\"",
   "  if (false) return { ok: false, state: \"no_write\"",
   1
  ],

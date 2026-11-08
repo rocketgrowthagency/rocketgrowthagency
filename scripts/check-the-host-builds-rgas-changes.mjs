@@ -115,7 +115,7 @@ if (!/Checking their host builds RGA's changes/.test(out.aChecking) || !/test pu
 if (!/Netlify builds RGA's changes.*Proven/.test(out.aBuilt) || !/Netlify didn't build RGA's test change.*Can't go live/.test(out.aRefused) || !/The client merges RGA's changes themselves/.test(out.aMerges) || !/didn't report/.test(out.aNone)) fail(`admin's row doesn't read each state (${out.aRefused})`);
 
 // ── part 3 · the wiring ───────────────────────────────────────────────────────────────────────────────────
-if (!/HC\.due\(task\)/.test(SPW) || !/HC\.step\(\{ token: process\.env\.GITHUB_ADMIN_TOKEN/.test(SPW) || !/readStepRecord\(supa, row\.client_id, "m1\.access\.website"\)/.test(SPW) || !/host_check: next/.test(SPW)) fail("the publish watcher doesn't run the check, or writes without reading the record again");
+if (!/HC\.due\(task\)/.test(SPW) || !/HC\.step\(\{ token: \(await require\("\.\/_github-identity"\)\.forRepo\(task\.access\.repo\)\)\.token/.test(SPW) || !/readStepRecord\(supa, row\.client_id, "m1\.access\.website"\)/.test(SPW) || !/host_check: next/.test(SPW)) fail("the publish watcher doesn't run the check, or writes without reading the record again");
 if (!/\+ hostCheckParts\(t, clientId\)\.row/.test(P) || !/hostCheckParts\(t, clientId\)\.fix \|\| accMergeChoiceHtml\(t, clientId\)/.test(P)) fail("the portal's access card doesn't show the host check");
 if (!/const recheck = pick === "rga_recheck"/.test(P) || !/const recheck = body\.recheck === true && by === "rga"/.test(PMC) || !/state: "recheck"/.test(PMC)) fail("'Add RGA on the host' doesn't ask for the check again");
 if (!/\$\{accessDoneMiniHtml\(s\.task, ask\)\}\$\{hostCheckAdminHtml\(s\.task\)\}/.test(A)) fail("admin's access step doesn't show the host check");

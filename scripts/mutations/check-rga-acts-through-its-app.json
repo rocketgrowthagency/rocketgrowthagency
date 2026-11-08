@@ -1,0 +1,58 @@
+[
+ [
+  "the app is never used",
+  "ghidentity",
+  "  if (app) v = { token: app.token,",
+  "  if (false) v = { token: app.token,",
+  1
+ ],
+ [
+  "the app key from public storage",
+  "ghidentity",
+  "/storage/v1/object/raw-store/${KEY_PATH}`, { headers: { apikey: K, Authorization: `Bearer ${K}` } })",
+  "/storage/v1/object/public/raw-store/${KEY_PATH}`)",
+  1
+ ],
+ [
+  "the app token signed for the wrong app",
+  "ghidentity",
+  "iss: APP_ID",
+  "iss: \"1\"",
+  1
+ ],
+ [
+  "no fallback for clients without the app",
+  "ghidentity",
+  "    const token = process.env.GITHUB_ADMIN_TOKEN || \"\";",
+  "    const token = \"\";",
+  1
+ ],
+ [
+  "any token counts as write",
+  "ghaccess",
+  "const canWrite = (token, p) => isAppToken(token) || !!(p && (p.push || p.maintain || p.admin));",
+  "const canWrite = (token, p) => true;",
+  1
+ ],
+ [
+  "the app merging is flagged",
+  "pubsafety",
+  " || by.toLowerCase() === \"rocket-growth-agency[bot]\"",
+  " ",
+  1
+ ],
+ [
+  "the safety check asks for an invited account with the app",
+  "pubsafety",
+  "  if (me.ok && me.app) add(\"account\", true,",
+  "  if (false) add(\"account\", true,",
+  1
+ ],
+ [
+  "opening a PR skips the helper",
+  "admindeliv",
+  "      const { token, me } = await require(\"./_github-identity\").forRepo(acc.repo);",
+  "      const token = process.env.GITHUB_ADMIN_TOKEN || \"\", me = { ok: true };",
+  1
+ ]
+]
