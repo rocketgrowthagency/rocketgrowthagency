@@ -121,14 +121,14 @@
  [
   "a page that's gone isn't drift",
   "sitechangewatch",
-  ": gone ? [\"The page no longer opens\"] : RB.driftOf(c, html).missing;",
-  ": RB.driftOf(c, html).missing;",
+  ": gone ? [\"The page no longer opens\"] : RB.driftOf(c, html, key).missing;",
+  ": RB.driftOf(c, html, key).missing;",
   1
  ],
  [
   "a removed gone page reads as drift",
   "sitechangewatch",
-  "const missing = c.removes_page ? RB.driftOf(c, html).missing : gone ?",
+  "const missing = c.removes_page ? RB.driftOf(c, html, key).missing : gone ?",
   "const missing = gone ?",
   1
  ],

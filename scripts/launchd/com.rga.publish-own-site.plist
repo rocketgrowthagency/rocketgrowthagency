@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+	</dict>
+	<key>Label</key>
+	<string>com.rga.publish-own-site</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/local/bin/node</string>
+		<string>--env-file=/Users/chris/RGA/Rocket Growth Agency Scraper VS Code/.env</string>
+		<string>/Users/chris/RGA/Rocket Growth Agency Website VS Code/scripts/publish-own-site.mjs</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/chris/RGA/Rocket Growth Agency Website VS Code</string>
+	<key>StandardErrorPath</key>
+	<string>/tmp/rga-publish-own-site.err.log</string>
+	<key>StandardOutPath</key>
+	<string>/tmp/rga-publish-own-site.out.log</string>
+	<key>StartInterval</key>
+	<integer>600</integer>
+</dict>
+</plist>

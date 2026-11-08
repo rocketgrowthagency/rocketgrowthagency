@@ -67,6 +67,8 @@ for (const j of net) {
 const plistCron = (file) => {
   const d = JSON.parse(execFileSync("plutil", ["-convert", "json", "-o", "-", file], { encoding: "utf8" }));
   const c = d.StartCalendarInterval;
+  // every N minutes (StartInterval in seconds, a whole number of minutes that divides the hour): */N
+  if (!c && Number.isInteger(d.StartInterval) && d.StartInterval % 60 === 0 && 60 % (d.StartInterval / 60) === 0) return `*/${d.StartInterval / 60} * * * *`;
   if (!c) return null;
   // 🔒 Chris 11-1: a job on several days has a list of times. They must share a time, and the days become a range: Monday to Friday is 1-5.
   if (Array.isArray(c)) {
@@ -78,7 +80,7 @@ const plistCron = (file) => {
   return `${c.Minute ?? 0} ${c.Hour ?? "*"} ${c.Day ?? "*"} ${c.Month ?? "*"} ${c.Weekday ?? "*"}`;
 };
 const AGENTS = path.join(os.homedir(), "Library/LaunchAgents");
-const SCRIPT = { "client-data-backup": "scripts/backup-client-data.mjs", "lacie-backup": "scripts/backup-lacie.sh", "daily-health-check": "scripts/daily-health-check.sh", "nightly-full-check": "scripts/nightly-full-check.sh", "weekly-audit": "scripts/weekly-audit.sh" };
+const SCRIPT = { "publish-own-site": "site:scripts/publish-own-site.mjs", "client-data-backup": "scripts/backup-client-data.mjs", "lacie-backup": "scripts/backup-lacie.sh", "daily-health-check": "scripts/daily-health-check.sh", "nightly-full-check": "scripts/nightly-full-check.sh", "weekly-audit": "scripts/weekly-audit.sh" };
 for (const j of mac) {
   const live = `${AGENTS}/${j.plist}.plist`, src = `${path.dirname(HERE)}/scripts/launchd/${j.plist}.plist`;
   const installed = fs.existsSync(live);
@@ -91,7 +93,7 @@ for (const j of mac) {
   if (cron !== j.cron) F.push(`${j.job}: the list says ${j.cron}, ${j.plist} says ${cron}`);
   const name = SCRIPT[j.job];
   if (!name) { F.push(`${j.job}: this gate doesn't know its script`); continue; }
-  const t = scr(name);
+  const t = name.startsWith("site:") ? site(name.slice(5)) : scr(name);   // a job whose script lives in the website repo
   if (t == null) idk(`${name} moved`);
   const posts = (phase) => new RegExp(`${phase}"?,? +"?${j.job}\\b`).test(t) && /job-checkin\.mjs/.test(t);
   // checkin_pending = the check-in couldn't be added yet (the job was running during the build). It reads "Not recorded", so the list and the script must agree.

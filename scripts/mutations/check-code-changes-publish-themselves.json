@@ -1,0 +1,128 @@
+[
+ [
+  "a tracking tag is page code",
+  "schemamerge",
+  "return !rest && /application\\/ld\\+json/i.test(t);",
+  "return /application\\/ld\\+json|<script/i.test(t);",
+  1
+ ],
+ [
+  "step 41 adds a second business block",
+  "schemamerge",
+  "if (key === \"m1.web.schema\") return replaceBusiness(h, tagOf);",
+  "",
+  1
+ ],
+ [
+  "a block already there is added again",
+  "schemamerge",
+  "if (h.includes(tagOf)) return h;",
+  "",
+  1
+ ],
+ [
+  "a changed live field reads back",
+  "schemamerge",
+  "Object.keys(w).filter((k) => k !== \"@context\" && norm(l[k]) !== norm(w[k]))",
+  "[]",
+  1
+ ],
+ [
+  "two business blocks read back",
+  "schemamerge",
+  "if (n !== 1) missing.push(",
+  "if (false) missing.push(",
+  1
+ ],
+ [
+  "a missing block reads back",
+  "schemamerge",
+  "if (!same.length) { missing.push(`no ${typesOf(w).join(\"/\")} block`); continue; }",
+  "if (!same.length) continue;",
+  1
+ ],
+ [
+  "code doesn't publish itself",
+  "webautorun",
+  "|| (def.kind === \"code\" && c.kind === \"code\" && require(\"./_schema-merge\").isPageCode(c.code)));",
+  ");",
+  1
+ ],
+ [
+  "RGA's own site by pull request",
+  "webautorun",
+  "  if (acc.publish === \"rga_deploy\") return false;\n",
+  "",
+  1
+ ],
+ [
+  "code isn't built",
+  "admindeliv",
+  "  if (c.kind === \"code\" && require(\"./_schema-merge\").isPageCode(c.code)) return buildCodeChange(key, c, client, tasks, clientId);\n",
+  "",
+  1
+ ],
+ [
+  "the pull request refuses code",
+  "admindeliv",
+  "if (!isCode && (!(ac.new_page",
+  "if ((!(ac.new_page",
+  1
+ ],
+ [
+  "Mark live doesn't read code back",
+  "admindeliv",
+  "const missing = c.kind === \"code\" && SMr.isPageCode(c.code) ?",
+  "const missing = false ?",
+  1
+ ],
+ [
+  "live code isn't watched",
+  "pagereadback",
+  " || (c.kind === \"code\" && require(\"./_schema-merge\").isPageCode(c.code)))",
+  ")",
+  1
+ ],
+ [
+  "the watch doesn't read code",
+  "pagereadback",
+  "if (c.kind === \"code\" && SM.isPageCode(c.code)) return { missing:",
+  "if (false) return { missing:",
+  1
+ ],
+ [
+  "the publisher takes a client's site",
+  "publishown",
+  "if (acc.publish !== \"rga_deploy\") return [];",
+  "",
+  1
+ ],
+ [
+  "the publisher ignores the approval",
+  "publishown",
+  "if (!same) return { error: \"what's built isn't what the client approved\" };",
+  "",
+  1
+ ],
+ [
+  "the publisher skips the read back",
+  "publishown",
+  "if (!rb.ok) return { error:",
+  "if (false) return { error:",
+  1
+ ],
+ [
+  "the publisher overwrites a page",
+  "publishown",
+  "if (now !== null && now !== f.html) return { error:",
+  "if (false) return { error:",
+  1
+ ],
+ [
+  "the publisher writes over another session",
+  "publishown",
+  "if (dirty) { held++;",
+  "if (false) { held++;",
+  1
+ ]
+]

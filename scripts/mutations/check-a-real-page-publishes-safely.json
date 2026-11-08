@@ -79,14 +79,14 @@
  [
   "pages can't open a pull request",
   "admindeliv",
-  "|| !((SC.STEPS[key] || {}).test || (SC.STEPS[key] || {}).page)) return json(409, { error: \"Only page changes",
-  "|| !(SC.STEPS[key] || {}).test) return json(409, { error: \"Only page changes",
+  "|| !((SC.STEPS[key] || {}).test || (SC.STEPS[key] || {}).page))) return json(409, { error: \"Only page changes",
+  "|| !(SC.STEPS[key] || {}).test)) return json(409, { error: \"Only page changes",
   1
  ],
  [
   "any change can open a pull request",
   "admindeliv",
-  "if (!(ac.new_page || ac.removes_page || ac.edits_page) || !((SC.STEPS[key] || {}).test || (SC.STEPS[key] || {}).page)) return json(409,",
+  "if (!isCode && (!(ac.new_page || ac.removes_page || ac.edits_page) || !((SC.STEPS[key] || {}).test || (SC.STEPS[key] || {}).page))) return json(409,",
   "if (false) return json(409,",
   1
  ],
