@@ -93,6 +93,8 @@ try {
 
   if (!PB.sameReading(r1, { ...r1, at: "later" }) || PB.sameReading(r1, ok)) fail("the same reading would be written again, or a changed one wouldn't");
   if (ok.steps.length) fail("a clear reading names blocked steps");
+  const steps = PB.blockedSteps({ "m1.web.schema": { status: "done", site_change: { v: "1" }, published: { v: "1" } }, "m1.web.image_seo": { status: "done", no_change_needed: { at: "x" } }, "m1.web.tracking": { status: "skipped" } });
+  if (!steps.includes("m1.web.internal_linking") || steps.some((k) => ["m1.web.schema", "m1.web.image_seo", "m1.web.tracking", "m1.web.blog_post"].includes(k))) fail(`the blocked steps are wrong: a step not started yet must be named; a live, already-right, skipped or Month-2 one must not (${steps.join(", ")})`);
 } catch (e) { console.error(`⚠️  INDETERMINATE — the checks threw: ${String(e.stack || e.message).split("\n").slice(0, 3).join(" ")}`); process.exit(2); }
 
 // ── part 2 · rendered in Chrome ────────────────────────────────────────────────────────────────────────────────────────────

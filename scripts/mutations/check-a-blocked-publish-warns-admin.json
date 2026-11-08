@@ -1,12 +1,86 @@
 [
- ["a stale repository never warns", "publishblocked", "else if (differ.length >= 2 || differ.length === both.length) add(\"matches\", false,", "else if (false) add(\"matches\", false,", 1],
- ["a couldn't-check counts as a problem", "publishblocked", "const problems = checks.filter((c) => c.ok === false);", "const problems = checks.filter((c) => c.ok !== true);", 1],
- ["a file is called lost without opening it live", "publishblocked", "if (h.status >= 200 && h.status < 300) opened.push(p);", "opened.push(p);", 1],
- ["a merge warns at once", "publishblocked", "SC.changeState(t) !== \"live\" && now - m > HOUR;", "SC.changeState(t) !== \"live\" && now - m > 0;", 1],
- ["a site generator's source is compared as pages", "publishblocked", "const built = tree && (!tree.some((p) => /^index\\.html?$/i.test(p)) || pubDir !== \".\");", "const built = false;", 1],
- ["a refused key passes", "publishblocked", "else if (!me.ok) add(\"connection\", false,", "else if (!me.ok) add(\"connection\", true,", 1],
- ["the warning shows on a reading that passed", "admin", "if (!r || r.ok !== false) return \"\";\n  const nos", "if (!r) return \"\";\n  const nos", 1],
- ["the step tag carries to another client", "admin", "state.selectedClient && PB.clientId === state.selectedClient.id && (r.steps || []).includes(flowId)", "(r.steps || []).includes(flowId)", 1],
- ["Details is open before it's pressed", "admin", "<div class=\"pbw-details\"${o.open ? \"\" : \" hidden\"}>", "<div class=\"pbw-details\">", 1],
- ["a found problem doesn't stop the pull request", "admindeliv", "if (pub.ok === false) return json(409,", "if (false) return json(409,", 1]
+ [
+  "a stale repository never warns",
+  "publishblocked",
+  "else if (differ.length >= 2 || differ.length === both.length) add(\"matches\", false,",
+  "else if (false) add(\"matches\", false,",
+  1
+ ],
+ [
+  "a couldn't-check counts as a problem",
+  "publishblocked",
+  "const problems = checks.filter((c) => c.ok === false);",
+  "const problems = checks.filter((c) => c.ok !== true);",
+  1
+ ],
+ [
+  "a file is called lost without opening it live",
+  "publishblocked",
+  "if (h.status >= 200 && h.status < 300) opened.push(p);",
+  "opened.push(p);",
+  1
+ ],
+ [
+  "a merge warns at once",
+  "publishblocked",
+  "SC.changeState(t) !== \"live\" && now - m > HOUR;",
+  "SC.changeState(t) !== \"live\" && now - m > 0;",
+  1
+ ],
+ [
+  "a site generator's source is compared as pages",
+  "publishblocked",
+  "const built = tree && (!tree.some((p) => /^index\\.html?$/i.test(p)) || pubDir !== \".\");",
+  "const built = false;",
+  1
+ ],
+ [
+  "a refused key passes",
+  "publishblocked",
+  "else if (!me.ok) add(\"connection\", false,",
+  "else if (!me.ok) add(\"connection\", true,",
+  1
+ ],
+ [
+  "the warning shows on a reading that passed",
+  "admin",
+  "if (!r || r.ok !== false) return \"\";\n  const nos",
+  "if (!r) return \"\";\n  const nos",
+  1
+ ],
+ [
+  "the step tag carries to another client",
+  "admin",
+  "state.selectedClient && PB.clientId === state.selectedClient.id && (r.steps || []).includes(flowId)",
+  "(r.steps || []).includes(flowId)",
+  1
+ ],
+ [
+  "Details is open before it's pressed",
+  "admin",
+  "<div class=\"pbw-details\"${o.open ? \"\" : \" hidden\"}>",
+  "<div class=\"pbw-details\">",
+  1
+ ],
+ [
+  "a found problem doesn't stop the pull request",
+  "admindeliv",
+  "if (pub.ok === false) return json(409,",
+  "if (false) return json(409,",
+  1
+ ],
+ [
+  "a step not started yet is never named as blocked",
+  "publishblocked",
+  "    if (!t) return true;",
+  "    if (!t) return false;",
+  1
+ ],
+ [
+  "a Month-2 step is named on the Month-1 warning",
+  "publishblocked",
+  "    if (!month1.has(k)) return false;\n",
+  "",
+  1
+ ]
 ]
