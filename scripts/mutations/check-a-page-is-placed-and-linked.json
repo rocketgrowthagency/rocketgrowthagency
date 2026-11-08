@@ -250,12 +250,5 @@
   "${p.menu && !p.menu.menu ? ` ${p.menu.why.charAt(0).toUpperCase()}${p.menu.why.slice(1)}.` : \"\"}",
   "",
   1
- ],
- [
-  "the publisher can't place",
-  "publishown",
-  "    } else if (f.action === \"edit\" && f.place) {",
-  "    } else if (false) {",
-  1
  ]
 ]

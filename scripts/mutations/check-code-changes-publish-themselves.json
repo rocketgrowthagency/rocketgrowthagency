@@ -91,48 +91,6 @@
   1
  ],
  [
-  "the publisher takes a client's site",
-  "publishown",
-  "if (acc.publish !== \"rga_deploy\") return [];",
-  "",
-  1
- ],
- [
-  "the publisher ignores the approval",
-  "publishown",
-  "if (!same) return { error: \"what's built isn't what the client approved\" };",
-  "",
-  1
- ],
- [
-  "the publisher skips the read back",
-  "publishown",
-  "if (!rb.ok) return { error:",
-  "if (false) return { error:",
-  1
- ],
- [
-  "the publisher overwrites a page",
-  "publishown",
-  "if (now !== null && now !== f.html) return { error:",
-  "if (false) return { error:",
-  1
- ],
- [
-  "the publisher writes over another session",
-  "publishown",
-  "if (dirty) { held++;",
-  "if (false) { held++;",
-  1
- ],
- [
-  "the publisher can't do line edits",
-  "publishown",
-  "    } else if (f.action === \"edit\" && c.edits_page) {",
-  "    } else if (false) {",
-  1
- ],
- [
   "a page build reads the stale repo",
   "admindeliv",
   "repo = acc0.publish === \"rga_deploy\" ? \"\" : acc0.repo || \"\"",

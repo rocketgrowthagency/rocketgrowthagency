@@ -13,9 +13,9 @@ import { pathToFileURL } from "node:url";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const req = createRequire(import.meta.url);
 const read = (p) => fs.readFileSync(path.join(SITE, p), "utf8");
-let IL, SC, AR, RB, FE, AD, WATCH, PUB;
+let IL, SC, AR, RB, FE, AD, WATCH;
 try { IL = req(path.join(SITE, "netlify/functions/_internal-links.js")); SC = req(path.join(SITE, "shared/site-change.js")); AR = req(path.join(SITE, "netlify/functions/_website-autorun.js")); RB = req(path.join(SITE, "netlify/functions/_page-readback.js"));
-  FE = read("netlify/functions/flow-execute.js"); AD = read("netlify/functions/admin-deliverables.js"); WATCH = read("netlify/functions/site-change-watch.js"); PUB = await import(pathToFileURL(path.join(SITE, "scripts/publish-own-site.mjs")).href); }
+  FE = read("netlify/functions/flow-execute.js"); AD = read("netlify/functions/admin-deliverables.js"); WATCH = read("netlify/functions/site-change-watch.js"); }
 catch (e) { console.error(`⚠️  INDETERMINATE — couldn't load step 50: ${e.message}`); process.exit(2); }
 const bad = [], fail = (m) => bad.push(m);
 
@@ -127,9 +127,6 @@ const t50 = { site_change: { kind: "batch", items: [item] } };
 if (!AR.ghPublishes("m1.web.internal_linking", t50, { "m1.access.website": { access: { repo: "acme/site" } } })) fail("an approved link batch doesn't publish itself");
 if (!RB.liveKeys({ "m1.web.internal_linking": { site_change: { v: "1", kind: "batch", items: [item] }, published: { v: "1" } } }).includes("m1.web.internal_linking")) fail("a live link batch isn't watched nightly");
 if (!/const linkItems = [^\n]*: \(c\.items \|\| \[\]\)\.filter\(\(i\) => i\.link && i\.page\);/.test(WATCH) || !/IL\.linksMissing\(/.test(WATCH)) fail("the nightly watch doesn't read each link back on its own page");
-const pub = { site_change: { v: "1", kind: "batch", items: [item] }, site_build: { v: "1", files: [{ path: "blog/finding-hidden-leaks/index.html", action: "edit", sha: "l", place: { kind: "links", items: [item] } }] }, approval: { approved_build: [{ path: "blog/finding-hidden-leaks/index.html", action: "edit", sha: "l" }] } };
-const lf = PUB.localFiles("m1.web.internal_linking", pub, () => html);
-if (lf.error || !lf.files.length || !lf.files[0].text.includes(`<a href="/services/leak-detection/">leak detection</a>`)) fail(`the Mac publisher doesn't put up an approved link batch (${lf.error || ""})`);
 
 if (bad.length) { console.error(`❌ step 50 links the whole site — ${bad.length} regression(s):`); for (const b of bad) console.error(`  · ${b}`); process.exit(1); }
 console.log("✅ step 50 reads every page (menu and footer apart from the words), groups them, finds what nothing links to, thin service pages and 'click here', drafts one checked sentence per link on the page most about the target (never the homepage or a hub, never a call to action, at most 3 a page), builds it exactly, publishes it, reads each link back and watches it nightly");

@@ -422,7 +422,6 @@ export const FILES = {
   pageplace: "netlify/functions/_page-placement.js",   // page_placement_and_links_v1 part 2 (11-7)
   placepages: "netlify/functions/_place-pages.js",   // website_steps_46_50_research_v1 (11-7): steps 46 and 47
   internallinks: "netlify/functions/_internal-links.js",   // page_placement_and_links_v1 part 3 (11-7): step 50
-  publishown: "scripts/publish-own-site.mjs",   // schema_merge_v1 part 2 (11-7): the Mac publisher for a site RGA deploys itself
   publishblocked: "netlify/functions/_publish-blocked.js",   // admin_publish_blocked_warning (11-8): the five publish checks
   videomove: "netlify/functions/_video-move.js",   // rga_videos_to_storage_v1 (11-8): outreach videos to file storage
   videotostorage: "scraper:scripts/outreach-video-to-storage.mjs",   // rga_videos_to_storage_v1 (11-8): a new or rebuilt video to storage, read back

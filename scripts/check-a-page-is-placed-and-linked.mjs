@@ -112,10 +112,7 @@ if (!/const all = await readSitePages\(require\("\.\/_city-page"\)\.sitemapUrls\
   let line = null; try { line = new Function(`${PJ.slice(at, end)}; return apvPlacedLine;`)(); } catch { line = null; }
   const said = line ? line({ hub: "card", related: 2, menu: { menu: false, why: "your menu is written into each of your 2,959 pages, so it stays as it is; your Services page lists the new page" } }) : "";
   if (said !== "It also shows in a card on your Services page and a card on 2 related service pages. Your menu is written into each of your 2,959 pages, so it stays as it is; your Services page lists the new page.") fail(`the client's card doesn't say where the page shows, and why the menu stays (${said})`);
-  const PUB = await import(pathToFileURL(path.join(SITE, "scripts/publish-own-site.mjs")).href);
-  const t = { site_change: { v: "1", kind: "visible", new_page: true, page_url: "https://acme.test/services/leak-detection/" }, site_build: { v: "1", files: [{ path: "services/index.html", action: "edit", sha: "h", place: { kind: "hub_card", region: "main", siblings: sibs, card } }] }, approval: { approved_build: [{ path: "services/index.html", action: "edit", sha: "h" }] } };
-  const lf = PUB.localFiles("m1.web.priority_pages", t, () => HUB);
-  if (lf.error || !lf.files.length || !/<h3>Leak Detection<\/h3>/.test(lf.files[0].text)) fail(`the Mac publisher doesn't re-apply the placement to the local file (${lf.error || ""})`); }
+}
 
 if (bad.length) { console.error(`❌ a page placed and linked — ${bad.length} regression(s):`); for (const b of bad) console.error(`  · ${b}`); process.exit(1); }
 console.log("✅ a page is chosen from every page read (a service another page covers isn't built twice; blog, area and standard pages don't count; a partial read claims nothing), ranked by the plan, written for its own searches only (plan, else Search Console, else it asks), and its link count is the built page's");

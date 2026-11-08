@@ -5,7 +5,7 @@
  * person to paste it ("Only page changes publish by pull request so far"), and "live" meant only that a tag was on the page.
  * Now: structured data is built into the page file it goes in (from their repository, with its blob sha), published by the same pull
  * request as a page, read back field by field (step 41: one business block), and watched nightly. A site RGA deploys itself (its own:
- * its GitHub copy is behind, its videos aren't in git) is put up by the Mac publisher instead. Fixtures: a made-up plumber's page.
+ * its GitHub copy is behind, its videos aren't in git) builds from GitHub too (deploy-mode github). Fixtures: a made-up plumber's page.
  * Exit 0 = holds. 1 = doesn't. 2 = couldn't tell.
  */
 import fs from "node:fs";
@@ -15,9 +15,9 @@ import { pathToFileURL } from "node:url";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const req = createRequire(import.meta.url);
 const read = (p) => fs.readFileSync(path.join(SITE, p), "utf8");
-let SM, AR, RB, AD, PUB, PUBSRC, WATCH;
+let SM, AR, RB, AD, WATCH;
 try { SM = req(path.join(SITE, "netlify/functions/_schema-merge.js")); AR = req(path.join(SITE, "netlify/functions/_website-autorun.js")); RB = req(path.join(SITE, "netlify/functions/_page-readback.js"));
-  AD = read("netlify/functions/admin-deliverables.js"); WATCH = read("netlify/functions/site-change-watch.js"); PUBSRC = read("scripts/publish-own-site.mjs"); PUB = await import(pathToFileURL(path.join(SITE, "scripts/publish-own-site.mjs")).href); }
+  AD = read("netlify/functions/admin-deliverables.js"); WATCH = read("netlify/functions/site-change-watch.js"); }
 catch (e) { console.error(`⚠️  INDETERMINATE — couldn't load the publishing code: ${e.message}`); process.exit(2); }
 const bad = [], fail = (m) => bad.push(m);
 const tag = (o) => `<script type="application/ld+json">${JSON.stringify(o)}</script>`;
@@ -45,7 +45,7 @@ if (SM.codeReadBack(tag(BIZ), built.replace("</head>", `${tag(OLD)}</head>`), { 
 if (SM.codeReadBack(tag(BIZ), PAGE).ok) fail("a page without the approved code reads back as approved");
 if (SM.codeReadBack(tag(BIZ), "<html><head></head></html>").ok) fail("a page with no block of the approved type reads back as approved");
 
-// published by itself: by pull request, like a page; a site RGA deploys itself by the Mac publisher
+// published by itself: by pull request, like a page
 const tk = (acc) => ({ "m1.access.website": { access: acc } }), t41 = { site_change: { kind: "code", code: tag(BIZ) } };
 if (!AR.ghPublishes("m1.web.schema", t41, tk({ repo: "acme/site" }))) fail("an approved code change on a site we reach by GitHub doesn't publish itself");
 if (AR.ghPublishes("m1.web.schema", t41, tk({ repo: "acme/site", publish: "rga_deploy" }))) fail("a site RGA deploys itself is published by pull request (its GitHub copy is behind the live site)");
@@ -63,25 +63,5 @@ if (!RB.liveKeys(live).includes("m1.web.schema")) fail("a live code change isn't
 if (!RB.driftOf(live["m1.web.schema"].site_change, PAGE, "m1.web.schema").missing.length || RB.driftOf(live["m1.web.schema"].site_change, built, "m1.web.schema").missing.length) fail("the nightly watch doesn't see a code change stripped from the page (or sees one that's there)");
 if (!/RB\.driftOf\(c, html, key\)/.test(WATCH)) fail("the nightly watch doesn't tell the reader which step it is (step 41's one-block rule)");
 
-// the Mac publisher for a site RGA deploys itself
-const appr = (files, build = files) => ({ site_change: { v: "1", kind: "code", code: tag(BIZ) }, site_build: { v: "1", files: build }, approval: { approved_build: files, change_v: "1", decision: "approved" } });
-const F = [{ path: "index.html", action: "edit", sha: "a" }];
-if (PUB.waitingKeys({ "m1.access.website": { access: { repo: "x/y" } }, "m1.web.schema": { ...appr(F), site_change: { v: "1", kind: "code", code: tag(BIZ) } } }).length) fail("the Mac publisher picks up a client's site (only a site RGA deploys itself is its)");
-const lf = PUB.localFiles("m1.web.schema", appr(F), (p) => (p === "index.html" ? PAGE : null));
-if (lf.error || lf.files.length !== 1 || (lf.files[0].text.match(/"@type":"Plumber"/g) || []).length !== 1) fail(`the Mac publisher doesn't apply the approved block to the local page (${lf.error || ""})`);
-if (!PUB.localFiles("m1.web.schema", appr(F, [{ path: "index.html", action: "edit", sha: "other" }]), () => PAGE).error) fail("the Mac publisher puts up a build the client didn't approve");
-{ const broken = { ...appr(F), site_change: { v: "1", kind: "code", code: `<script type="application/ld+json">{ broken</script>` } };
-  if (!PUB.localFiles("m1.web.expanded_schema", broken, () => PAGE).error) fail("the Mac publisher commits code that doesn't read back as approved"); }
-if (!PUB.localFiles("m1.web.schema", appr(F), () => null).error) fail("the Mac publisher writes a code change into a page that isn't in the repo");
-const np = { site_change: { v: "1", kind: "visible", new_page: true, page_url: "https://acme.test/x/" }, site_build: { v: "1", files: [{ path: "x/index.html", action: "add", sha: "s", html: "<html>new</html>" }] }, approval: { approved_build: [{ path: "x/index.html", action: "add", sha: "s" }] } };
-if (!PUB.localFiles("m1.web.priority_pages", np, () => "<html>someone else's</html>").error) fail("the Mac publisher overwrites a page that's already there and isn't the approved one");
-{ const ed = { site_change: { v: "1", kind: "visible", edits_page: true, items: [{ label: "Line", before: "We guarantee results.", after: "We report every change." }] }, site_build: { v: "1", files: [{ path: "x/index.html", action: "edit", sha: "e" }] }, approval: { approved_build: [{ path: "x/index.html", action: "edit", sha: "e" }] } };
-  const r1 = PUB.localFiles("m1.web.priority_pages", ed, () => "<p>We guarantee results.</p>");
-  if (r1.error || !r1.files.length || r1.files[0].text !== "<p>We report every change.</p>") fail(`the Mac publisher doesn't put up an approved line edit (${r1.error || ""})`);
-  if (!PUB.localFiles("m1.web.priority_pages", ed, () => "<p>Someone rewrote this.</p>").error) fail("the Mac publisher puts up a line edit on a page whose line changed since it was read"); }
-if (!/const dirty = git\("status", "--porcelain", "--", \.\.\.paths\)\.stdout\.trim\(\);\s*if \(dirty\)/.test(PUBSRC)) fail("the Mac publisher writes over a file another session is editing");
-if (!/"user\.name=rocketgrowthagency", "-c", "user\.email=hello@rocketgrowthagency\.com", "commit"/.test(PUBSRC) || /Co-Authored-By/i.test(PUBSRC)) fail("the Mac publisher commits under another identity (or with attribution)");
-if (!/site_action: "publish"/.test(PUBSRC) || !/deployed, locked, and verified by content/.test(PUBSRC)) fail("the Mac publisher marks live without the deploy verifying and the live page reading back");
-
 if (bad.length) { console.error(`❌ code changes publish themselves — ${bad.length} regression(s):`); for (const b of bad) console.error(`  · ${b}`); process.exit(1); }
-console.log("✅ an approved code change goes up by itself: structured data only (never a tracking tag or a fix), built into its page file from their repository, published by pull request like a page (a site RGA deploys itself: the Mac publisher, approved build only, never over another session's file), read back field by field (step 41: one business block), watched nightly");
+console.log("✅ an approved code change goes up by itself: structured data only (never a tracking tag or a fix), built into its page file from their repository, published by pull request like a page, read back field by field (step 41: one business block), watched nightly");

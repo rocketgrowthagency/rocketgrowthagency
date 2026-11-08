@@ -80,7 +80,7 @@ const plistCron = (file) => {
   return `${c.Minute ?? 0} ${c.Hour ?? "*"} ${c.Day ?? "*"} ${c.Month ?? "*"} ${c.Weekday ?? "*"}`;
 };
 const AGENTS = path.join(os.homedir(), "Library/LaunchAgents");
-const SCRIPT = { "publish-own-site": "site:scripts/publish-own-site.mjs", "client-data-backup": "scripts/backup-client-data.mjs", "lacie-backup": "scripts/backup-lacie.sh", "daily-health-check": "scripts/daily-health-check.sh", "nightly-full-check": "scripts/nightly-full-check.sh", "weekly-audit": "scripts/weekly-audit.sh" };
+const SCRIPT = { "client-data-backup": "scripts/backup-client-data.mjs", "lacie-backup": "scripts/backup-lacie.sh", "daily-health-check": "scripts/daily-health-check.sh", "nightly-full-check": "scripts/nightly-full-check.sh", "weekly-audit": "scripts/weekly-audit.sh" };
 for (const j of mac) {
   const live = `${AGENTS}/${j.plist}.plist`, src = `${path.dirname(HERE)}/scripts/launchd/${j.plist}.plist`;
   const installed = fs.existsSync(live);
