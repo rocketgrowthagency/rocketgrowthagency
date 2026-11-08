@@ -197,8 +197,8 @@
  [
   "the rewrite shows word marks",
   "portal",
-  "const diff = (i) => (i.before && i.after && ibChangedPlaces(i.before, i.after) >= 3",
-  "const diff = (i) => (false",
+  "const diff = (i) => ibSame(i) ? \"\" : (i.before && i.after && ibChangedPlaces(i.before, i.after) >= 3",
+  "const diff = (i) => ibSame(i) ? \"\" : (false",
   1
  ]
 ]

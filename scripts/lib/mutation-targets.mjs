@@ -407,7 +407,8 @@ export const FILES = {
   pagemeasure: "netlify/functions/_page-measure.js",
   webautorun: "netlify/functions/_website-autorun.js",
   titlemeta: "netlify/functions/_title-meta.js",
-  headlinecta: "netlify/functions/_headline-cta.js",   // headline_cta_recipe_v1 (11-7)   // title_meta_recipe_v1 (11-7)
+  headlinecta: "netlify/functions/_headline-cta.js",
+  pagespeed: "netlify/functions/_page-speed.js",   // step17_speed_and_send_now_v1 (11-7)   // headline_cta_recipe_v1 (11-7)   // title_meta_recipe_v1 (11-7)
   sitechangewatch: "netlify/functions/site-change-watch.js",
   metricsdaily: "netlify/functions/metrics-daily-refresh.js",
   pagebrief: "netlify/functions/_page-brief.js",   // website_system_v2 builds 3 to 6, 15 (11-01)

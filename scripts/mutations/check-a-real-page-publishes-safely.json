@@ -23,15 +23,15 @@
  [
   "words every page shares are refused",
   "pagefile",
-  "return shell.filter((x) => !other.has(x.toLowerCase()));",
+  "return shell.filter((x) => sets.filter((s) => s.has(x.toLowerCase())).length < need);",
   "return shell;",
   1
  ],
  [
   "with no second page a long line ships",
   "pagefile",
-  "if (!referenceHtml) return shell.filter((x) => x.length > 24);",
-  "if (!referenceHtml) return [];",
+  "if (!pages.length) return shell.filter((x) => x.length > 24);",
+  "if (!pages.length) return [];",
   1
  ],
  [

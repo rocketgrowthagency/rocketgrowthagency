@@ -1,0 +1,30 @@
+[
+ [
+  "no watched band",
+  "pagespeed",
+  "v <= GOOD[k] * BAND ? \"close\"",
+  "false ? \"close\"",
+  1
+ ],
+ [
+  "the cause isn't named",
+  "pagespeed",
+  "const cause = [causes.shifts.length",
+  "const cause = [false && causes.shifts.length",
+  1
+ ],
+ [
+  "old readings never re-measured",
+  "webautorun",
+  "if (!sp && (t.ran_at || t.auto_result) && !done[\"redo:speed_v1\"]) return { act: \"redo\", sig: \"redo:speed_v1\" };",
+  "",
+  1
+ ],
+ [
+  "a banner counts as page words",
+  "pagefile",
+  "return shell.filter((x) => sets.filter((s) => s.has(x.toLowerCase())).length < need);",
+  "return shell.filter((x) => !sets[0].has(x.toLowerCase()));",
+  1
+ ]
+]
