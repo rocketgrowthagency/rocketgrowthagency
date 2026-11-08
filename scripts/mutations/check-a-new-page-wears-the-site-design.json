@@ -229,5 +229,19 @@
   "s.join(\"/\") === parent ? 2 : 1",
   "s.join(\"/\") === parent ? 1 : 1",
   1
+ ],
+ [
+  "the words get one try",
+  "flowexec",
+  "for (let n = 0; n < 3; n++) {\n    raw = await aiDraft(PB.wordsPrompt",
+  "for (let n = 0; n < 1; n++) {\n    raw = await aiDraft(PB.wordsPrompt",
+  1
+ ],
+ [
+  "the next try isn't told",
+  "flowexec",
+  "(w && w.problems ? `\\n\\nThe last answer broke these rules, fix them: ${w.problems.join(\"; \")}` : \"\")",
+  "\"\"",
+  1
  ]
 ]

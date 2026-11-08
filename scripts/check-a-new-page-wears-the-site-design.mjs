@@ -44,6 +44,9 @@ const TPL_URL = "https://acme.test/services/drain-cleaning/", NEW_URL = "https:/
   if (!got || got.url !== TPL_URL) fail(`a new service page copies ${got ? got.url : "nothing"}, not its sibling service page`);
   const alone = PD.pickTemplate([{ url: "https://acme.test/services/", html: HUB }, { url: "https://acme.test/about/", html: ABOUT }], { minSlots: 5, url: NEW_URL });
   if (!alone || alone.url !== "https://acme.test/about/") fail("with no sibling, the hub page is used before any other page (it lists the services, it isn't one)"); }
+// the page's words get three tries too, each told what the last broke (half of RGA's runs stopped on a description 2 characters over)
+{ const at = FE.indexOf("async function draftOnePage"), body = FE.slice(at, at + 4000);
+  if (!/for \(let n = 0; n < 3; n\+\+\) \{\s*raw = await aiDraft\(PB\.wordsPrompt\(plan, client\.business_name, brief, proof\) \+ \(w && w\.problems \? `\\n\\nThe last answer broke these rules, fix them: \$\{w\.problems\.join\("; "\)\}` : ""\)/.test(body) || !/if \(!w\.problems\) break;/.test(body)) fail("the page's words get one try (a rule broken by a hair stops the step), or the next try isn't told what broke"); }
 if (!/PD\.pickTemplate\(sibs, \{ url: plan\.url \}\)/.test(FE)) fail("the draft picks its template without knowing the new page's address (it can't tell a sibling from the hub)");
 
 // the slots
