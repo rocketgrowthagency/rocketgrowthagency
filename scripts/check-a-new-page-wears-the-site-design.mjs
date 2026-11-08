@@ -67,6 +67,12 @@ else {
   if (ok.problems) fail(`a good fit is refused: ${ok.problems.join("; ")}`);
   const chk = (f, o = {}) => PD.checkFit({ slots: f }, tpl, { pageFor: "Leak detection", content, shared, ...o }).problems || [];
   if (!chk(fit.slice(1)).some((p) => /answered/.test(p))) fail("a fit with the wrong number of slots passes");
+  // keyed by slot number (RGA's first real run answered 68 for 66 slots as a list)
+  { const keyed = Object.fromEntries(fit.map((x, i) => [String(i), x]));
+    const kp = (o) => PD.checkFit({ slots: o }, tpl, { pageFor: "Leak detection", content, shared: [...shared, "p|related", "summary|do you work weekends?", "p|yes, on saturdays by appointment.", "a|water heaters →"] });
+    if (kp(keyed).problems) fail(`a good fit keyed by slot number is refused: ${kp(keyed).problems.join("; ")}`);
+    const miss = { ...keyed }; delete miss["3"]; if (!(kp(miss).problems || []).some((p) => /no answer for slot 3/.test(p))) fail("a keyed fit missing a slot passes");
+    if (!(kp({ ...keyed, [String(fit.length)]: "x" }).problems || []).some((p) => /don't exist/.test(p))) fail("a keyed fit with a slot that doesn't exist passes"); }
   { const f = [...fit]; tpl.slots.forEach((s, i) => { if (s.tag === "h1") f[i] = ""; }); if (!chk(f).some((p) => /headline was dropped/.test(p))) fail("a fit that drops the headline passes"); }
   { const f = [...fit]; f[ix("Drain cleaning in")] = "Plumbing help in"; if (!chk(f).some((p) => /doesn't name/.test(p))) fail("a headline that doesn't name the page passes"); }
   { const f = [...fit]; f[ix("We look inside the pipe first.")] = "We look inside the pipe first."; if (!chk(f).some((p) => /kept the other page's words/.test(p))) fail("a line kept from the template page passes"); }

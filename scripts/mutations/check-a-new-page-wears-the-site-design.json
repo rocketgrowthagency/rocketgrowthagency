@@ -44,8 +44,8 @@
  [
   "the wrong slot count passes",
   "pagedesign",
-  "if (got.length !== tpl.slots.length)",
-  "if (false)",
+  "if (Array.isArray(raw) && got.length !== n) return",
+  "if (false) return",
   1
  ],
  [
@@ -179,6 +179,20 @@
   "pagedesign",
   "const again = fixSlots(SC, slots, failed.map((f) => f.text));",
   "const again = null;",
+  1
+ ],
+ [
+  "a missing keyed slot passes",
+  "pagedesign",
+  "if (missing.length) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "an extra keyed slot passes",
+  "pagedesign",
+  "if (extra.length) return",
+  "if (false) return",
   1
  ]
 ]
