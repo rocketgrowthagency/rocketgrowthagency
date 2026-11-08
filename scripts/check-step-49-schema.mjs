@@ -26,8 +26,8 @@ const WEB = { [`${B}/`]: page("Acme Plumbing", "Plumbers in Austin.", `<script t
 const SMX = `<urlset>${Object.keys(WEB).map((u) => `<url><loc>${u}</loc></url>`).join("")}</urlset>`;
 const siteReq = createRequire(`${SITE}/netlify/functions/x.js`);
 let modelCalls = 0;
-const run = (client, web = WEB) => vm.runInContext(`(${flow.slice(fnStart, end)})`, vm.createContext({ JSON, String, Array, Set, URL, Object, Number, Math, require: (m) => siteReq(m),
-  pageContext: async () => ({ site: B, smXml: SMX, smUrl: `${B}/sitemap.xml`, tk: {}, gbpAreas: [] }), pageText: async (u) => web[u] || null, clientCtx: () => "ctx", aiDraft: async () => { modelCalls++; return "{}"; } }))({ client });
+const run = (client, web = WEB, smx = SMX) => vm.runInContext(`(${flow.slice(fnStart, end)})`, vm.createContext({ JSON, String, Array, Set, URL, Object, Number, Math, require: (m) => siteReq(m),
+  pageContext: async () => ({ site: B, smXml: smx, smUrl: `${B}/sitemap.xml`, tk: {}, gbpAreas: [] }), pageText: async (u) => web[u] || null, clientCtx: () => "ctx", aiDraft: async () => { modelCalls++; return "{}"; } }))({ client });
 const client = { business_name: "Acme Plumbing", secondary_services: ["Drain Cleaning", "Water Heaters"], primary_market: "Austin, TX", geography_model: "service_area" };
 let r;
 try { r = await run(client); } catch (e) { console.error(`⚠️  INDETERMINATE — step 49's runner wouldn't run on the fixture: ${e.message}`); process.exit(2); }
@@ -45,8 +45,11 @@ if (/FAQPage|AggregateRating|\{\{PAGE_URL\}\}/.test(JSON.stringify(r))) F("step 
 if (modelCalls) F("step 49 asks the model for words (it should only describe what each page already says)");
 const nat = await run({ ...client, geography_model: "national_one_office" });
 if (!((nat.outcome_data || {}).pages || []).length || !nat.outcome_data.pages.every((p) => /"areaServed": "United States"/.test(p.code))) F("a business serving the whole country is said to serve one city");
-const none = await run({ ...client, secondary_services: ["Pipe Relining"] });
-if (none.outcome !== "blocked" || (none.outcome_data || {}).pages) F("a service with no page gets code (it needs its page first)");
+// the service pages are the pages in the services folder (RGA's "Google Business Profile Optimization" is /gbp-optimization/)
+const named = await run({ ...client, secondary_services: ["Google Business Profile Optimization"] });
+if (((named.outcome_data || {}).pages || []).length !== 2) F("a service page whose address doesn't spell the service's name is left out (it's in the services folder)");
+const none = await run({ ...client, secondary_services: ["Pipe Relining"] }, WEB, `<urlset><url><loc>${B}/</loc></url><url><loc>${B}/about/</loc></url></urlset>`);
+if (none.outcome !== "blocked" || (none.outcome_data || {}).pages) F("a site with no service page gets service code (it needs its pages first)");
 const blind = await run(client, { ...WEB, [`${B}/`]: undefined });
 if (blind.outcome !== "indeterminate") F("step 49 drafts without reading the homepage's business record");
 // the rest of the pipeline

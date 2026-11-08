@@ -61,5 +61,12 @@
   "c.pages = pages.map((x) => ({ url: x.url, name: x.name, path: x.path, code: x.code }));",
   "c.pages = [];",
   1
+ ],
+ [
+  "only pages named after a service",
+  "flowexec",
+  "const pageUrls = [...new Set(inFolder.length ? inFolder : services",
+  "const pageUrls = [...new Set(false ? inFolder : services",
+  1
  ]
 ]
