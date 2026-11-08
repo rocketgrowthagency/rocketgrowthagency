@@ -430,6 +430,9 @@ export const FILES = {
   nightpipeline: "scraper:scripts/overnight-pipeline.sh",
   videotemplate: "scraper:templates/video-landing.html",   // rga_video_address_v1 A (11-8): the outreach page template
   pagesfromstorage: "scraper:scripts/outreach-pages-play-from-storage.mjs",   // rga_video_address_v1 A (11-8)
+  hostcheck: "netlify/functions/_host-check.js",   // website_access_host_builds_v1 (11-8)
+  pubwatch: "netlify/functions/site-publish-watch.js",
+  mergechoice: "netlify/functions/portal-merge-choice.js",
   ghaccess: "netlify/functions/_github-access.js",
   deliverables: "netlify/functions/_deliverables.js",
   sitepreview: "netlify/functions/site-preview.js",   // for_your_approval_v2 (10-28): the built page, privately

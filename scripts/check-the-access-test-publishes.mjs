@@ -64,7 +64,7 @@ if (!/key === "m1\.access\.publish_test"/.test(AD) || !/\/rga-access-test\//.tes
 if (!/if \(act === "open_pr"\) \{\s*if \(st !== "approved"\) return json\(409/.test(AD)) fail("a pull request can open before the client approved this version");
 if (!/if \(!acc\.repo\) return json\(409/.test(AD) || !/const me = await GA\.whoAmI\(token, fetch\);\s*if \(!me\.ok\) return json\(409, \{ error: me\.state === "no_key"/.test(AD) || !/const me = await GA\.whoAmI\(token, fetch\);\s*if \(!me\.ok\) return json\(409, \{ error: "Not signed in as RGA Admin on the server\. Nothing was merged\." \}\);/.test(AD)) fail("open_pr (or RGA's merge) runs without GitHub access, or not as RGA Admin");
 if (!/noindex: true \}\);/.test(AD)) fail("the test page isn't hidden from Google");
-if (!/\$\{accessDoneMiniHtml\(s\.task, ask\)\}\$\{accessTestHtml\(s\.task\)\}/.test(A) || !/Prove we can publish/.test(A)) fail("admin row 8 doesn't show \"Prove we can publish\"");
+if (!/\$\{accessDoneMiniHtml\(s\.task, ask\)\}(?:\$\{hostCheckAdminHtml\(s\.task\)\})?\$\{accessTestHtml\(s\.task\)\}/.test(A) || !/Prove we can publish/.test(A)) fail("admin row 8 doesn't show \"Prove we can publish\"");
 // 🔄 publish_safety_checks_v1 (10-28): the button is OFF until the six safety checks pass
 if (!/data-ob-wc-pr\$\{sf && sf\.ready \? "" : " disabled"\}>Open the pull request</.test(A) || !/data-ob-wc-prstate>Check the merge</.test(A)) fail("the approved test card has no Open the pull request / Check the merge");
 if (F.length) { console.error(`❌ the access test can't prove publishing — ${F.length}:\n  · ${F.join("\n  · ")}`); process.exit(1); }

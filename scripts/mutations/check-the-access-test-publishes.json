@@ -58,7 +58,7 @@
  [
   "row 8 hides the test",
   "admin",
-  "${accessDoneMiniHtml(s.task, ask)}${accessTestHtml(s.task)}",
+  "${accessDoneMiniHtml(s.task, ask)}${hostCheckAdminHtml(s.task)}${accessTestHtml(s.task)}",
   "${accessDoneMiniHtml(s.task, ask)}",
   1
  ],

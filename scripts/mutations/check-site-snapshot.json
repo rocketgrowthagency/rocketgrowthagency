@@ -1,101 +1,101 @@
 [
-  [
-    "deep pages first",
-    "snapshot",
-    "depth(a[0]) - depth(b[0]) || a[1] - b[1]",
-    "a[1] - b[1]"
-  ],
-  [
-    "no cap",
-    "snapshot",
-    "const pick = urls.slice(start, start + maxPages);",
-    "const pick = urls;"
-  ],
-  [
-    "follows other sites in the sitemap",
-    "snapshot",
-    "return isIndex ? { pages: [], children: locs.filter(same).slice(0, 5) } : { pages: locs.filter(same), children: [] };",
-    "return isIndex ? { pages: [], children: locs.filter(same).slice(0, 5) } : { pages: locs, children: [] };"
-  ],
-  [
-    "a blocked site is read as fine",
-    "snapshot",
-    "if (isChallenge(r.status, text)) return { why: \"blocked\" };",
-    ""
-  ],
-  [
-    "a failed page is dropped silently",
-    "snapshot",
-    "return g.text ? { url: x, read: true, ...readPage(g.text, g.url || x) } : { url: x, read: false, why: g.why };",
-    "return g.text ? { url: x, read: true, ...readPage(g.text, g.url || x) } : null;"
-  ],
-  [
-    "image descriptions not counted",
-    "snapshot",
-    "const noAlt = imgs.filter((t) => !/\\balt=[\"'][^\"']+[\"']/i.test(t)).length;",
-    "const noAlt = 0;"
-  ],
-  [
-    "it writes to the client site",
-    "snapshot",
-    "const r = await fetchFn(url, { method: \"GET\", redirect: \"follow\", headers: UA, signal: ctl.signal });",
-    "const r = await fetchFn(url, { method: \"POST\", redirect: \"follow\", headers: UA, signal: ctl.signal });"
-  ],
-  [
-    "no re-read before the write",
-    "snapshotfn",
-    "const cur = (fresh && fresh.data) || data;",
-    "const cur = data;"
-  ],
-  [
-    "the write isn't verified",
-    "snapshotfn",
-    "back[0].data.site_snapshot.at !== at",
-    "false"
-  ],
-  [
-    "removal without a confirmed access",
-    "accessconfirmfn",
-    "if (!p1.access || !p1.access.confirmed_at) return json(409, { error: \"There's no confirmed access to remove.\" });",
-    ""
-  ],
-  [
-    "confirm doesn't take the snapshot",
-    "admin",
-    "if (isAcc) snapshotTake(cid, null)",
-    "if (false) snapshotTake(cid, null)"
-  ],
-  [
-    "the login is hardcoded again",
-    "admin",
-    "account: RGA_ACCESS_ACCOUNT }",
-    "account: \"hello@rocketgrowthagency.com\" }"
-  ],
-  [
-    "a done row 8 hides the ledger",
-    "admin",
-    "<summary>Where RGA can sign in <small>· 2</small></summary>${accessLedgerCardHtml(t, true)}",
-    "<summary>Where RGA can sign in <small>· 2</small></summary>"
-  ],
-  [
-    "the done row 8 card is gone",
-    "admin",
-    "+ (o.flowId === \"m1.access.website\" ? `<div class=\"ob-done-card\">${accessDoneMiniHtml(s.task, ask)}${accessTestHtml(s.task)}</div>`",
-    "+ (false ? \"\"",
-    1
-  ],
-  [
-    "the done card drops the snapshot fact",
-    "admin",
-    "rows.push(sn ? [\"Before-snapshot saved\", snap.fact",
-    "rows.push(sn ? [\"Before-snapshot saved\", \"\"",
-    1
-  ],
-  [
-    "the mini line hides the card with nothing asked",
-    "admin",
-    "if (!ask && !recent || !acc.confirmed_at) return full;",
-    "if (!acc.confirmed_at) return full;",
-    1
-  ]
+ [
+  "deep pages first",
+  "snapshot",
+  "depth(a[0]) - depth(b[0]) || a[1] - b[1]",
+  "a[1] - b[1]"
+ ],
+ [
+  "no cap",
+  "snapshot",
+  "const pick = urls.slice(start, start + maxPages);",
+  "const pick = urls;"
+ ],
+ [
+  "follows other sites in the sitemap",
+  "snapshot",
+  "return isIndex ? { pages: [], children: locs.filter(same).slice(0, 5) } : { pages: locs.filter(same), children: [] };",
+  "return isIndex ? { pages: [], children: locs.filter(same).slice(0, 5) } : { pages: locs, children: [] };"
+ ],
+ [
+  "a blocked site is read as fine",
+  "snapshot",
+  "if (isChallenge(r.status, text)) return { why: \"blocked\" };",
+  ""
+ ],
+ [
+  "a failed page is dropped silently",
+  "snapshot",
+  "return g.text ? { url: x, read: true, ...readPage(g.text, g.url || x) } : { url: x, read: false, why: g.why };",
+  "return g.text ? { url: x, read: true, ...readPage(g.text, g.url || x) } : null;"
+ ],
+ [
+  "image descriptions not counted",
+  "snapshot",
+  "const noAlt = imgs.filter((t) => !/\\balt=[\"'][^\"']+[\"']/i.test(t)).length;",
+  "const noAlt = 0;"
+ ],
+ [
+  "it writes to the client site",
+  "snapshot",
+  "const r = await fetchFn(url, { method: \"GET\", redirect: \"follow\", headers: UA, signal: ctl.signal });",
+  "const r = await fetchFn(url, { method: \"POST\", redirect: \"follow\", headers: UA, signal: ctl.signal });"
+ ],
+ [
+  "no re-read before the write",
+  "snapshotfn",
+  "const cur = (fresh && fresh.data) || data;",
+  "const cur = data;"
+ ],
+ [
+  "the write isn't verified",
+  "snapshotfn",
+  "back[0].data.site_snapshot.at !== at",
+  "false"
+ ],
+ [
+  "removal without a confirmed access",
+  "accessconfirmfn",
+  "if (!p1.access || !p1.access.confirmed_at) return json(409, { error: \"There's no confirmed access to remove.\" });",
+  ""
+ ],
+ [
+  "confirm doesn't take the snapshot",
+  "admin",
+  "if (isAcc) snapshotTake(cid, null)",
+  "if (false) snapshotTake(cid, null)"
+ ],
+ [
+  "the login is hardcoded again",
+  "admin",
+  "account: RGA_ACCESS_ACCOUNT }",
+  "account: \"hello@rocketgrowthagency.com\" }"
+ ],
+ [
+  "a done row 8 hides the ledger",
+  "admin",
+  "<summary>Where RGA can sign in <small>· 2</small></summary>${accessLedgerCardHtml(t, true)}",
+  "<summary>Where RGA can sign in <small>· 2</small></summary>"
+ ],
+ [
+  "the done row 8 card is gone",
+  "admin",
+  "+ (o.flowId === \"m1.access.website\" ? `<div class=\"ob-done-card\">${accessDoneMiniHtml(s.task, ask)}${hostCheckAdminHtml(s.task)}${accessTestHtml(s.task)}</div>`",
+  "+ (false ? \"\"",
+  1
+ ],
+ [
+  "the done card drops the snapshot fact",
+  "admin",
+  "rows.push(sn ? [\"Before-snapshot saved\", snap.fact",
+  "rows.push(sn ? [\"Before-snapshot saved\", \"\"",
+  1
+ ],
+ [
+  "the mini line hides the card with nothing asked",
+  "admin",
+  "if (!ask && !recent || !acc.confirmed_at) return full;",
+  "if (!acc.confirmed_at) return full;",
+  1
+ ]
 ]

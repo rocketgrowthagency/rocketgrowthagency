@@ -1,0 +1,16 @@
+[
+ ["the check runs while access is being changed", "hostcheck", "if (!acc.repo || !acc.confirmed_at || t.change_request || t.client_flagged) return false;", "if (!acc.repo || !acc.confirmed_at) return false;", 1],
+ ["the test page can be indexed", "hostcheck", "<meta name=\"robots\" content=\"noindex,nofollow\">", "", 1],
+ ["a refusal reads as built", "hostcheck", "  if (bad) return { verdict: \"refused\", host, detail: bad.text || `${host} didn't build it` };\n", "", 1],
+ ["their own CI counts as the host", "hostcheck", "  ].filter((x) => x.host);", "  ].map((x) => ({ ...x, host: x.host || \"CI\" }));", 1],
+ ["a running build is decided early", "hostcheck", "  if (mine.some((x) => x.state === \"pending\")) return { verdict: \"building\", host, detail: \"\" };\n", "", 1],
+ ["a finished test is left open", "hostcheck", "  if (v.verdict === \"refused\") { await tidy(); return", "  if (v.verdict === \"refused\") { return", 1],
+ ["no report waits forever", "hostcheck", "  if (Date.parse(hc.opened_at) + WAIT_MS < now) { await tidy(); return { ...hc, state: \"no_report\", host: v.host, at, read_at: at }; }\n", "", 1],
+ ["a refusal blocks even when the client merges", "hostcheck", "&& ((t.merge_by || {}).by || \"rga\") !== \"client\");", ");", 1],
+ ["a decided check runs again by itself", "hostcheck", "  return !hc || hc.state === \"checking\" || hc.state === \"recheck\";", "  return true;", 1],
+ ["the watcher writes without reading the record again", "pubwatch", "      const rec = await readStepRecord(supa, row.client_id, \"m1.access.website\");", "      const rec = { tasks: (row.data || {}).tasks, data: row.data, id: null };", 1],
+ ["add-RGA never checks again", "mergechoice", "  const recheck = body.recheck === true && by === \"rga\";", "  const recheck = false;", 1],
+ ["the portal never shows the fix", "portal", "        + (acc.repo ? (hostCheckParts(t, clientId).fix || accMergeChoiceHtml(t, clientId)) : \"\")", "        + (acc.repo ? accMergeChoiceHtml(t, clientId) : \"\")", 1],
+ ["admin never shows the check", "admin", "${accessDoneMiniHtml(s.task, ask)}${hostCheckAdminHtml(s.task)}${accessTestHtml(s.task)}", "${accessDoneMiniHtml(s.task, ask)}${accessTestHtml(s.task)}", 1],
+ ["the warning ignores a refused host", "publishblocked", "  else if (HC.blocks(accStep)) add(\"goes_live\", false,", "  else if (false) add(\"goes_live\", false,", 1]
+]
