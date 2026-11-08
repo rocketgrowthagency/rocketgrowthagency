@@ -67,7 +67,7 @@ if (await open("linkedin", 999) !== "couldnt" || await open("yelp", 403) !== "co
 if (await open("youtube", 0, true) !== "couldnt") fail("no answer reads as dead");
 
 // ── the endpoint ─────────────────────────────────────────────────────────────────────────────
-const reset = (task = {}, site = SITEURL) => { DB.rec = { id: 7, data: { tasks: { "m1.gbp.photos": { keep: 1 }, [K]: task } } }; DB.client = { ...DB.client, website_url: site }; DB.writes = 0; DB.dropWrite = false; };
+const reset = (task = {}, site = SITEURL) => { DB.rec = { id: 7, data: { tasks: { "m1.gbp.photos": { keep: 1 }, "m1.access.website": { status: "done", access: { confirmed_at: "2026-10-01T00:00:00Z" } }, "m1.access.publish_test": { site_change: { v: "t1" }, published: { v: "t1", at: "2026-10-01T00:00:00Z" } }, [K]: task } } }; DB.client = { ...DB.client, website_url: site }; DB.writes = 0; DB.dropWrite = false; };
 const OWNER = { authorization: "Bearer client" }, RGA = { authorization: "Bearer rga" };
 const call = async (b, headers = OWNER) => { const r = await H.handler({ httpMethod: "POST", headers, body: JSON.stringify({ client_id: CID, ...b }) }); return { s: r.statusCode, j: JSON.parse(r.body || "{}") }; };
 const T = () => DB.rec.data.tasks[K];

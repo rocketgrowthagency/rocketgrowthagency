@@ -447,7 +447,8 @@ for (const r of ["portal-step-recheck", "portal-book-kickoff", "cancel-kickoff-i
   if (!/const supabase = _preview \? _preview\.client\(createClient, config\.supabaseUrl, config\.supabaseAnonKey\) : createClient\(config\.supabaseUrl, config\.supabaseAnonKey\);/.test(init)) fail("the database client is not the normal one for a client");
   const uses = noComments(portal).match(/\b_preview\b/g) || [];
   // 11-6 night fixer: 10th use = managed step 3's day-1 stamp skips an admin look (mcStampDay1), read from the guard's flag instead of the URL
-  if (uses.length !== 10) fail(`portal.js has ${uses.length} preview uses (expected 10): a branch was added or removed. Read it, then change this number.`);
+  // 11-8: 11th use = an admin look never finishes a GitHub app install from the address bar (const _gha = _preview ? null : ghAppReturnParams())
+  if (uses.length !== 11) fail(`portal.js has ${uses.length} preview uses (expected 11): a branch was added or removed. Read it, then change this number.`);
   if (!/^const _preview = window\.__rgaClientPreview \|\| null;$/m.test(portal)) fail("the preview flag in portal.js comes from somewhere other than the guard");
   if (/rga_preview|URLSearchParams[^;]*preview/.test(noComments(portal))) fail("portal.js reads the preview flag from the URL: only the guard, with its frame check, may");
   for (const f of ["portal/portal.js", "admin/admin.js", "shared/client-preview.js"]) if (/__rgaClientPreview\s*=[^=]/.test(read(f))) fail(`${f} sets the preview flag: only the guard may`);

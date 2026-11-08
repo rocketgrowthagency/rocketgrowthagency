@@ -20,7 +20,7 @@ const P = read("portal/portal.js"), A = read("admin/admin.js"), FX = read("netli
 // ── the env + a fake network, BEFORE any function module loads (they read env at require time) ──
 Object.assign(process.env, { SUPABASE_URL: "https://db.test", SUPABASE_ANON_KEY: "anon", SUPABASE_SERVICE_ROLE_KEY: "svc", INTERNAL_FN_SECRET: "gate-secret", URL: "https://site.test" });
 const CID = "00000000-0000-4000-8000-000000000001";
-const DB = { rec: { id: 7, data: { tasks: {} } }, ledger: [], activity: [], notified: [] };
+const DB = { rec: { id: 7, data: { tasks: { "m1.access.website": { status: "done", access: { confirmed_at: "2026-10-01T00:00:00Z" } }, "m1.access.publish_test": { site_change: { v: "t1" }, published: { v: "t1", at: "2026-10-01T00:00:00Z" } } } } }, ledger: [], activity: [], notified: [] };   // website_access_gaps_v1: access proven (the access test went live), so website work may be sent and published
 let LIVE_HTML = "";
 globalThis.fetch = async (url, init = {}) => {
   const u = String(url), m = (init.method || "GET").toUpperCase();

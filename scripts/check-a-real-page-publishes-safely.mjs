@@ -60,7 +60,7 @@ const url = `${SITEURL}/panel-upgrades/`;
 const draft = { kind: "visible", page_url: url, new_page: true, searches: ["panel upgrades springfield"], files: [{ path: "panel-upgrades/index.html", action: "add", note: "the new page" }, { path: "sitemap.xml", action: "edit", note: "adds" }, { path: "not-there/index.html", action: "edit", note: "adds one link" }],
   items: [{ label: "Page title", role: "title", after: "Panel upgrades | Sparks" }, { label: "Description under the title", role: "description", after: "Panel work." }, { label: "Main headline", after: "Panel upgrades in Springfield" }, { label: "Opening", after: "We replace panels.\n\nWe pull permits when a job needs them." },
     { label: "Areas named", check: false, after: "Springfield, Chatham" }, { label: "Questions answered", check: false, after: "Do you pull permits?\nWhen a job needs one." }, { label: "A real result", after: "Replaced a failed panel in one day." }, { label: "Main button", after: "Call Sparks" }] };
-const reset = (acc = { repo: "o/r", confirmed_at: "2026-10-01T00:00:00Z", github: "rocketgrowthagency-admin" }) => { W = initial(); DB.rec.data = { tasks: { "m1.access.website": { access: acc } }, site_snapshot: { at: new Date().toISOString(), read: 2, found: 2, pages: [{ url: `${SITEURL}/`, read: true, title: "Sparks Electric" }] } }; };
+const reset = (acc = { repo: "o/r", confirmed_at: "2026-10-01T00:00:00Z", github: "rocketgrowthagency-admin" }) => { W = initial(); DB.rec.data = { tasks: { "m1.access.website": { access: acc }, "m1.access.publish_test": { site_change: { v: "t1" }, published: { v: "t1", at: "2026-10-01T00:00:00Z" } } }, site_snapshot: { at: new Date().toISOString(), read: 2, found: 2, pages: [{ url: `${SITEURL}/`, read: true, title: "Sparks Electric" }] } }; };
 const approve = () => { const t = DB.rec.data.tasks[K]; t.approval = { decision: "approved", change_v: t.site_change.v, at: new Date().toISOString(), by: "owner@sparks.test", approved_change: t.site_change, approved_build: (t.site_build.files || []).map((f) => ({ path: f.path, action: f.action, sha: f.sha })) }; };
 
 // ── 8 · the build ────────────────────────────────────────────────────────────────────────────
@@ -162,10 +162,10 @@ if (r.s !== 409) fail("an edit to a line that's gone is sent anyway");
 
 // ── a builder site: no files, a preview at most, and it never stops the send ─────────────────
 const builder = { ...draft, files: [{ path: "panel-upgrades/", action: "add", note: "the new page" }] };
-reset({}); await adm({ key: K, site_action: "save", change: builder }); r = await adm({ key: K, internal_decision: "approved" });
+reset({ confirmed_at: "2026-10-01T00:00:00Z" }); await adm({ key: K, site_action: "save", change: builder }); r = await adm({ key: K, internal_decision: "approved" });
 if (r.s !== 200 || !T().site_build || !T().site_build.preview_only) fail(`a builder site's page isn't sent with a preview (${r.s} ${r.j.error || ""})`);
 if (W.gh.length) fail("a builder site touches GitHub");
-reset({}); W.web[`${SITEURL}/`] = "<html><head><title>No main</title></head><body><div>Everything in a div</div></body></html>"; W.web[`${SITEURL}/lighting/`] = W.web[`${SITEURL}/`];
+reset({ confirmed_at: "2026-10-01T00:00:00Z" }); W.web[`${SITEURL}/`] = "<html><head><title>No main</title></head><body><div>Everything in a div</div></body></html>"; W.web[`${SITEURL}/lighting/`] = W.web[`${SITEURL}/`];
 await adm({ key: K, site_action: "save", change: builder }); r = await adm({ key: K, internal_decision: "approved" });
 if (r.s !== 200 || T().site_build) fail(`a builder page that can't be previewed stops the send (${r.s} ${r.j.error || ""})`);
 r = await adm({ key: K, site_action: "open_pr" });

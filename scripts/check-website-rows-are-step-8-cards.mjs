@@ -25,7 +25,7 @@ const code = [line(/^const WC_TILE = [^\n]*;$/m, "WC_TILE"), line(/^const WC_KIN
   line(/^const acDay = [^\n]*;$/m, "acDay"), line(/^const acCk = [^\n]*;$/m, "acCk"),
   line(/^const WC_LB_ICON = [^\n]*;$/m, "WC_LB_ICON"), fn("wcLabelHtml"), line(/^const wcSame = [^\n]*$/m, "wcSame"), line(/^const wcFileVerb = [^\n]*;$/m, "wcFileVerb"), fn("acCardHtml"), fn("acDueChip"), fn("wcLinesOf"), line(/^const wcAfter = [^\n]*;$/m, "wcAfter"), line(/^const WC_PG_ICON = [^\n]*;$/m, "WC_PG_ICON"), fn("wcChgHtml"), line(/^const wcMeasureCache = [^\n]*;$/m, "wcMeasureCache"), fn("wcMeasureHtml"), fn("wcProofRowHtml"), fn("wcBriefHtml"), fn("wcReviewChecksHtml"), fn("wcGooglePreviewHtml"), fn("wcPageReadsHtml"), fn("wcReviewHtml"), fn("wcDiffHtml"), fn("wcRiskHtml"), fn("wcFormHtml"), fn("wcNewPageHtml"), fn("wcRowPill"), line(/^const wcRowPillHtml = [^\n]*;$/m, "wcRowPillHtml"),
   // approval_tab_and_sent_card_v1 (10-28): the whole trip + what they're approving
-  line(/^const wcMergeBy = [^\n]*;$/m, "wcMergeBy"), line(/^const wcTime = [^\n]*;$/m, "wcTime"), fn("wcLoopHtml"),
+  line(/^const wcMergeBy = [^\n]*;$/m, "wcMergeBy"), line(/^const wcTime = [^\n]*;$/m, "wcTime"), fn("wcActor"), fn("wcLoopHtml"),
   // publish_safety_checks_v1 (10-28): the safety panel, who merged, the after-check
   line(/^const wcSafetyCache = [^\n]*$/m, "wcSafetyCache"), line(/^const wcRestAsked = [^\n]*$/m, "wcRestAsked"), line(/^const WC_DAY = [^\n]*;$/m, "WC_DAY"), fn("ghIdHtml"), fn("ghPillText"), fn("ghClientName"), fn("ghBandHtml"), fn("ghPanelHtml"), fn("wcSafetyPanel"), fn("wcMergedHtml"), fn("wcRestHtml"), fn("wcProofHtml"), line(/^const WC_EYE = [^\n]*;$/m, "WC_EYE"), line(/^const wcPathOf = [^\n]*;$/m, "wcPathOf"), fn("wcWhatHtml"),
   // admin_website_steps_autopilot_v1 (11-6): the card while the system has the step, the raw output inside the card
@@ -130,7 +130,7 @@ try {
       // the GitHub connection panel (names_not_addresses_v1) from a fixed read-only check — never a fetch
       const ghConnOf = () => ({ ok: true, match: true, checked_at: "2026-10-28T20:00:00Z", login: "rocketgrowthagency-admin", repo: "acme/site", owner: "acme", site: "acme.test",
         rows: [{ id: "account", ok: true, title: "The account they invited is the one we post as", detail: "The client invited rocketgrowthagency-admin on Oct 26. Our key is the same account today.", ev: "Oct 26 → today" }] });
-      const state = { onboardingData: sc.gh ? { tasks: { "m1.access.website": { access: { repo: "acme/site" }, ...(sc.mergeBy ? { merge_by: { by: sc.mergeBy } } : {}) } } } : undefined, selectedClient: { id: "c1", business_name: "Acme", ...(sc.auto ? { website_url: "https://acme.test", client_portal_stage: "stage_4_onboarding" } : {}) }, flowM1Playbook: [{ id: H, title: "Fix H1 + primary CTA", clientLabel: "Homepage headline + main button", hasRunner: true }] };
+      const state = { onboardingData: sc.gh ? { tasks: { "m1.access.website": { access: { repo: "acme/site", confirmed_at: "2026-10-01T00:00:00Z" }, ...(sc.mergeBy ? { merge_by: { by: sc.mergeBy } } : {}) }, "m1.access.publish_test": { site_change: { v: "t1" }, published: { v: "t1", at: "2026-10-01T00:00:00Z" } } } } : { tasks: { "m1.access.website": { status: "done", access: { confirmed_at: "2026-10-01T00:00:00Z" } }, "m1.access.publish_test": { site_change: { v: "t1" }, published: { v: "t1", at: "2026-10-01T00:00:00Z" } } } }, selectedClient: { id: "c1", business_name: "Acme", ...(sc.auto ? { website_url: "https://acme.test", client_portal_stage: "stage_4_onboarding" } : {}) }, flowM1Playbook: [{ id: H, title: "Fix H1 + primary CTA", clientLabel: "Homepage headline + main button", hasRunner: true }] };
       eval(SCJS);   // globalThis.rgaSiteChange
       // eslint-disable-next-line no-eval
       const api = eval(`(() => { ${code}; return { wcDraftCache, wcEditing, siteChangeAdminHtml, wcRowPill, ghPillText, ghPanelHtml, ghBandHtml }; })()`);
@@ -142,7 +142,7 @@ try {
       const nested = [...el.querySelectorAll(".ob-ac form, .ob-ac .ob-wc-line")].some((x) => { const s = getComputedStyle(x); return parseFloat(s.borderTopWidth) > 0 && s.borderTopStyle !== "none" && s.backgroundColor !== "rgba(0, 0, 0, 0)"; });
       // the pill helper on a hostile sentence: the text around it is escaped, a name inside another name never splits it
       const pillT = api.ghPillText("<img src=x> by acme into acme/site", [["acme", "login"], ["acme/site", "repo"]]);
-      if (state.onboardingData && sc.task.publish_pr) state.onboardingData.tasks["m1.access.publish_test"] = sc.task;   // the footer's "Last merged here"
+      if (sc.gh && sc.task.publish_pr) state.onboardingData.tasks["m1.access.publish_test"] = sc.task;   // the footer's "Last merged here"
       const ghp = document.createElement("div"); ghp.innerHTML = api.ghPanelHtml({ github: "rocketgrowthagency-admin", repo: "acme/site" }, true);
       document.body.appendChild(ghp);   // measured with admin.css (Chris 10-28 3:16 PM: "too close together")
       const box = ghp.querySelector(".ob-ghp-g > div"), rowSmall = ghp.querySelector(".ob-safe-l small");
@@ -152,11 +152,11 @@ try {
         band: ghp.querySelector(".ob-ghcv") ? { cls: ghp.querySelector(".ob-ghcv").className, text: ghp.querySelector(".ob-ghcv").textContent.replace(/\s+/g, " "), bg: getComputedStyle(ghp.querySelector(".ob-ghcv")).backgroundColor } : null,
         bad: (() => { const d = document.createElement("div"); d.innerHTML = api.ghBandHtml({ match: false, checked_at: "2026-10-28T20:00:00Z", rows: [{ ok: true, title: "a" }, { ok: false, title: "Our key isn't the account the client invited" }] }); return d.textContent.replace(/\s+/g, " "); })(),
         err: (() => { const d = document.createElement("div"); d.innerHTML = api.ghBandHtml({ error: true }); return d.textContent.replace(/\s+/g, " "); })(),
-        foot: (() => { if (!state.onboardingData) return ""; const keep = state.onboardingData.tasks["m1.access.publish_test"];
+        foot: (() => { if (!sc.gh) return ""; const keep = state.onboardingData.tasks["m1.access.publish_test"];
           state.onboardingData.tasks["m1.access.publish_test"] = { publish_pr: { v: "v2", number: 3 }, site_change_log: [{ pr: { number: 2, merged: { at: "2026-10-28T19:58:00Z", by: "rocketgrowthagency-admin" } } }] };
           const d = document.createElement("div"); d.innerHTML = api.ghPanelHtml({ github: "rocketgrowthagency-admin", repo: "acme/site" }, true);
           state.onboardingData.tasks["m1.access.publish_test"] = keep; const f = d.querySelector(".ob-ghp-f"); return f ? f.textContent.replace(/\s+/g, " ") : ""; })(),
-        chg: (() => { if (!state.onboardingData) return ""; const w = state.onboardingData.tasks["m1.access.website"]; w.change_request = { note: "We moved our website to a different place", at: "2026-10-28T23:00:00Z" };
+        chg: (() => { if (!sc.gh) return ""; const w = state.onboardingData.tasks["m1.access.website"]; w.change_request = { note: "We moved our website to a different place", at: "2026-10-28T23:00:00Z" };
           const d = document.createElement("div"); d.innerHTML = api.ghBandHtml({ match: true, checked_at: "2026-10-28T20:00:00Z", rows: [] }); delete w.change_request; return d.textContent.replace(/\s+/g, " "); })(), lh: rowSmall ? parseFloat(getComputedStyle(rowSmall).lineHeight) / parseFloat(getComputedStyle(rowSmall).fontSize) : 0 };
       return { panel, pillT, text: el.textContent.replace(/\s+/g, " "), html: el.innerHTML, buttons: vis("button, a.admin-button").map((b) => b.textContent.trim()), inputs: vis("input:not([type=hidden]), select").length,
         textareas: vis("textarea").length, label: (el.querySelector(".ob-ac-st") || {}).textContent || "", pill: (api.wcRowPill(H, sc.task) || {}).text || "", nested, cards: el.querySelectorAll(".ob-ac").length, checks: el.querySelectorAll(".ob-ac-ck li").length,

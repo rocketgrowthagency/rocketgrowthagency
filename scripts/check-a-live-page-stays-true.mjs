@@ -131,7 +131,7 @@ if (AR.clientWhyNot({ ...cl, client_portal_stage: "stage_1" }, {}) === null) fai
 if (AR.clientWhyNot({ ...cl, website_url: "" }, {}) === null) fail("a client with no website starts");
 // what the system does next, per state (pure)
 {
-  const T0 = Date.parse("2026-11-06T12:00:00Z"), iso = (ms) => new Date(ms).toISOString(), H = steps[1], base = { "m1.strategy.keywords_locations": done, "m1.web.homepage_meta": done };
+  const T0 = Date.parse("2026-11-06T12:00:00Z"), iso = (ms) => new Date(ms).toISOString(), H = steps[1], base = { "m1.strategy.keywords_locations": done, "m1.web.homepage_meta": done, "m1.access.website": { status: "done", access: { confirmed_at: "2026-10-01T00:00:00Z" } }, "m1.access.publish_test": { site_change: { v: "t1" }, published: { v: "t1", at: "2026-10-01T00:00:00Z" } } };   // website_access_gaps_v1: access proven (the access test went live), so website work may be sent and published
   // step 44 drafts by a locked recipe now: a fixture marks its one "redraft by the recipe" as used, so these cases test the rest (that rule has its own case below)
   const plan = (t, extra = {}, now = T0, data = {}) => AR.planStep(H, { ...base, ...extra, "m1.web.h1_cta": { ...t, auto_done: { "redo:recipe": "x", ...(t.auto_done || {}) } } }, now, data);
   const act = (...a) => { const p = plan(...a); return p ? `${p.act}${p.sig ? `:${p.sig}` : ""}` : null; };
@@ -171,13 +171,13 @@ if (AR.clientWhyNot({ ...cl, website_url: "" }, {}) === null) fail("a client wit
     if (!q || q.act !== "finish" || (qp && qp.act === "finish")) fail("a redraft's new run doesn't replace the system's waiting draft (or replaces a person's edit)"); }
   // approved: a page change on GitHub access publishes itself (snapshot → pull request → merge), each once; anything else is RGA's by hand
   const P = steps[2], pageC = { v: cv, new_page: true, items: [{ label: "x", after: "y" }] }, appr = { site_change: pageC, approval: { decision: "approved", change_v: cv } };
-  const gh = { "m1.access.website": { status: "done", access: { repo: "o/r" } } }, pb = { ...base, "m1.gbp.services_products": done, ...gh };
+  const gh = { "m1.access.website": { status: "done", access: { repo: "o/r", confirmed_at: "2026-10-01T00:00:00Z" } } }, pb = { ...base, "m1.gbp.services_products": done, ...gh };
   const pp = (t, extra = {}, data = {}) => { const p = AR.planStep(P, { ...pb, ...extra, "m1.web.priority_pages": t }, T0, data); return p ? p.act : null; };
   if (pp(appr) !== "snap") fail("an approved page doesn't take its before-snapshot");
   if (pp(appr, {}, { site_snapshot: { at: iso(T0 - 3600e3) } }) !== "open") fail("an approved page doesn't open its pull request");
   if (pp({ ...appr, auto_done: { [`pub:open:${cv}`]: "x" } }, {}, { site_snapshot: { at: iso(T0) } }) !== null) fail("a pull request is opened twice");
   if (pp({ ...appr, publish_pr: { v: cv, number: 4 } }) !== "merge") fail("an open pull request isn't merged");
-  if (pp({ ...appr, publish_pr: { v: cv, number: 4 } }, { "m1.access.website": { status: "done", access: { repo: "o/r" }, merge_by: { by: "client" } } }) !== null) fail("RGA merges when the client chose to");
+  if (pp({ ...appr, publish_pr: { v: cv, number: 4 } }, { "m1.access.website": { status: "done", access: { repo: "o/r", confirmed_at: "2026-10-01T00:00:00Z" }, merge_by: { by: "client" } } }) !== null) fail("RGA merges when the client chose to");
   if (AR.planStep(P, { ...base, "m1.gbp.services_products": done, "m1.web.priority_pages": appr }, T0)) fail("a change with no GitHub access publishes itself");
   if (AR.planStep({ id: "m1.web.image_seo" }, { "m1.web.image_seo": { ran_at: ran, auto_result: {} } }, T0)) fail("step 37 does more than start by itself");
 }
@@ -257,7 +257,7 @@ const ADx = read("netlify/functions/admin-deliverables.js");
   const g = { items: [{ label: "Opening", after: "Guaranteed first place on Google." }] };
   if (SC.autoFix(g, SC.autoChecks(g)).fixed.length) fail("a fix that would empty a line is made (that one stays RGA's)");
   const T0 = Date.parse("2026-11-07T12:00:00Z"), cv = "2026-11-07T10:00:00.000Z", sc0 = { v: cv, drafted_by: AR.AUTO_WHO, items: [{ label: "x", after: "y" }] };
-  const base0 = { "m1.strategy.keywords_locations": done, "m1.web.homepage_meta": done };
+  const base0 = { "m1.strategy.keywords_locations": done, "m1.web.homepage_meta": done, "m1.access.website": { status: "done", access: { confirmed_at: "2026-10-01T00:00:00Z" } }, "m1.access.publish_test": { site_change: { v: "t1" }, published: { v: "t1", at: "2026-10-01T00:00:00Z" } } };   // website_access_gaps_v1: access proven
   const pl = (a) => AR.planStep(steps[1], { ...base0, "m1.web.h1_cta": { ran_at: cv, site_change: sc0, auto_send: { v: cv, due_at: "2026-11-07T11:00:00Z", failed: [], ...a } } }, T0);
   if ((pl({}) || {}).act !== "recheck" || (pl({ rev: SC.AUTO_CHECKS_REV }) || {}).act !== "send") fail("a waiting draft checked before a check was added isn't checked again before it goes");
   const calls2 = [];

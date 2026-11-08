@@ -124,6 +124,7 @@ if (r.status !== 400) fail("admin can unlock without saying why (the client sees
 // ── every portal-side writer goes through the lock, or is excused for a reason
 const THROUGH = ["portal-step-choice.js", "portal-step-input.js", "portal-video-clip.js", "cancel-kickoff-invite.js"];
 const EXCUSED = {
+  "portal-github-app.js": "step 3's grant through RGA's GitHub app: GitHub itself confirms the install reaches their website (never a client edit of a confirmed answer); a switch from an invite keeps the earlier grant in access.previous, and the record is re-read before the write (client_github_app_install_v1)",
   "portal-step-fewer.js": "steps 4 and 5 (photos and customers asked: both detected, so step-lock never locks them); it refuses a done, skipped or declined step itself (client_setup_fewer_v1)",
   "portal-social-profiles.js": "social profiles: an optional step with no confirmed-and-locked state in step-lock; they can change it any time, and the website change has its own approval",
   "portal-step-later.js": "photos only (a detected step — never locks) and refuses a done step itself",

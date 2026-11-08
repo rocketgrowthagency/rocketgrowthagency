@@ -191,7 +191,7 @@ const handler = (needle) => { const i = P.indexOf(needle); if (i < 0) moved(`the
 const base = [fn("escapeHtml"), fn("escapeAttribute")].join("\n");
 const kit = planCardKit(P, base);
 const SRC = [base, kit, csBlock(P, `${base}\n${kit}`), line("stepLockOf"), line("RGA_ADMIN_EMAIL"), line("RGA_ADMIN_GITHUB"), multi("ACC_FILES"), line("GH_APP_INSTALL_URL"),
-  ...["accStep1Name", "accSiteName", "accMergeChoiceHtml", "accessTestRow", "hostCheckParts", "hostFixHtml", "ghAppWanted", "ghAppInstallHtml", "ghAppCardHtml", "ghAppDoneHtml", "accessCardHtml", "accWhoOf", "accDevNote", "accDevNoteText", "accCustomSetupHtml", "ghAppWatch"].map(fn),
+  ...["accStep1Name", "accSiteName", "accMergeChoiceHtml", "accessTestRow", "hostCheckParts", "hostFixHtml", "ghAppWanted", "ghAppGoneHtml", "ghAppInstallHtml", "ghAppCardHtml", "ghAppDoneHtml", "accessCardHtml", "accWhoOf", "accDevNote", "accDevNoteText", "accCustomSetupHtml", "ghAppWatch"].map(fn),
   `var _ghAppNote = new Map(), _ghAppWatch = new Map(), _lockData = { tasks: {} }, _rcEditing = new Set(), _accPickSelf = new Set(), _accNames = { wix: "Wix" }, _accHosts = { netlify: "Netlify" };
    var portalToken = async () => "tok", showPortalToast = (m) => { window.__toast = m; }, portalAlert = (m) => { window.__alert = m; }, clientError = (e, w) => "Couldn't " + w;
    var ghAppFind = async (id) => { window.__finds = (window.__finds || 0) + 1; return (window.__findSeq || []).shift() || { ok: false, state: "waiting" }; };
@@ -257,6 +257,9 @@ try {
     el = draw({ status: "done", client_input: { via: "invite", platform: "custom", files: "github", at: "2026-11-01T10:00:00Z" }, access: { repo: "acme/site", via: "github_one_click", github: "rocketgrowthagency-admin", role: "Write on GitHub", confirmed_at: "2026-11-01T11:00:00Z" } });
     const sw = [...el.querySelectorAll("[data-gh-app-install]")];
     r.switch = { n: sw.length, text: sw[0] ? txt(sw[0]) : "", href: sw[0] ? sw[0].getAttribute("href") : "", card: txt(el) };
+    // 5b · website_access_gaps_v1 fix 1: GitHub said RGA's app was removed → Install again, never "has access"
+    el = draw({ status: "done", client_input: { via: "invite", platform: "custom", files: "github", at: "2026-11-01T10:00:00Z" }, access: { ...appAcc, confirmed_at: "2026-11-08T11:00:00Z", removed_at: "2026-11-09T17:40:00Z", removed_how: "app_uninstalled", removed_by: "github" } });
+    r.appGone = { text: txt(el), head: txt(el.querySelector(".pm-k5-h")), tone: (el.querySelector(".pm-cs-card") || {}).className || "", btn: !!el.querySelector("[data-gh-app-install]"), rows: [...el.querySelectorAll(".pm-cs-ev")].map(txt) };
     // 6 · not on GitHub: nothing changes
     r.wix = txt(draw({ status: "in_progress", client_input: { via: "invite", platform: "wix", at: "2026-11-08T10:00:00Z" } }));
     r.wixDone = txt(draw({ status: "done", client_input: { via: "invite", platform: "wix" }, access: { role: "Admin", account: "access@rocketgrowthagency.com", confirmed_at: "2026-11-01T11:00:00Z" } }));
@@ -290,6 +293,9 @@ const D = out.done;
 if (!/^Rocket Growth Agency has access ?confirmed Nov 8$/.test(D.head) || D.rows.length !== 3 || !/^RGA's app is installed on acme\/site ?Nov 8$/.test(D.rows[0]) || !/^Netlify built RGA's test change/.test(D.rows[1]) || !/^We confirmed we can edit your website/.test(D.rows[2]) || /is your website/.test(D.text) || !D.merge || D.change !== 1) fail(`done by itself isn't installed · host built · the access test (${D.head} | ${D.rows.join(" | ")})`);
 if (/Switch to RGA's app/.test(D.text) || /Switch to RGA's app/.test(C3.text)) fail("a client already on RGA's app is asked to switch to it");
 if (out.switch.n !== 1 || out.switch.text !== "Switch to RGA's app" || out.switch.href !== "https://github.com/apps/rocket-growth-agency/installations/new" || !/We signed in/.test(out.switch.card)) fail(`a client who invited RGA Admin doesn't keep their card with one "Switch to RGA's app" line (${out.switch.n} · ${out.switch.text})`);
+const GN = out.appGone;
+if (!/^Give RGA access to your website/.test(GN.head) || !/\byou\b/.test(GN.tone) || !GN.btn || GN.rows.length !== 1 || !/^RGA's app was removed from acme\/site ?Your website changes are paused until it's back\. ?Nov 9$/.test(GN.rows[0]) || !GN.text.includes("Removed it on purpose? Tell RGA and we'll pause your website work.") || /has access/.test(GN.text))
+  fail(`a removed app isn't drawn as "RGA's app was removed from acme/site" with Install on GitHub again (${GN.head} | ${GN.rows.join(" | ")} | ${GN.text.slice(0, 160)})`);
 if (/Install on GitHub|Switch to RGA's app|RGA's app/.test(out.wix + out.wixDone)) fail("a website that isn't on GitHub shows RGA's GitHub app");
 if (!out.ask.includes(LINE) || /Collaborators/.test(out.ask) || !/data-gh-app-install/.test(out.ask)) fail("picking GitHub in the ask still shows the collaborator steps, not Install on GitHub");
 

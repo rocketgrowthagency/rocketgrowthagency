@@ -1,0 +1,170 @@
+[
+ [
+  "an unknown GitHub answer reads as removed",
+  "ghidentity",
+  "  if (!r.ok) return \"unknown\";\n  const j = await r.json().catch(() => null);\n  return j && j.suspended_at",
+  "  if (!r.ok) return \"no\";\n  const j = await r.json().catch(() => null);\n  return j && j.suspended_at",
+  1
+ ],
+ [
+  "a suspended install still reaches it",
+  "ghidentity",
+  "  return j && j.suspended_at ? \"no\" : j && j.id ? \"yes\" : \"unknown\";",
+  "  return j && j.id ? \"yes\" : \"unknown\";",
+  1
+ ],
+ [
+  "one not-installed read removes access",
+  "pubwatch",
+  "  if (!a.app_missing_at) return { ...a, app_missing_at: at };",
+  "  if (false) return { ...a, app_missing_at: at };",
+  1
+ ],
+ [
+  "the 4-minute gap is dropped",
+  "pubwatch",
+  "  if (Date.parse(at) - Date.parse(a.app_missing_at) < 4 * 60e3) return null;",
+  "",
+  1
+ ],
+ [
+  "the app answering again keeps the note",
+  "pubwatch",
+  "  if (seen === \"yes\") return a.app_missing_at ? (({ app_missing_at, ...rest }) => rest)(a) : null;",
+  "  if (seen === \"yes\") return null;",
+  1
+ ],
+ [
+  "the removal write skips the re-read",
+  "pubwatch",
+  "      const p = rec && rec.tasks[\"m1.access.website\"], a = p && p.access;\n      if (!appWatched(a) || a.repo !== a0.repo) continue;",
+  "      const p = (((row.data || {}).tasks || {})[\"m1.access.website\"]), a = p && p.access;\n      if (!appWatched(a) || a.repo !== a0.repo) continue;",
+  1
+ ],
+ [
+  "the removal isn't recorded",
+  "pubwatch",
+  "      if (ok && next.removed_at) await require(\"./_record\").recordSubmission(",
+  "      if (false) await require(\"./_record\").recordSubmission(",
+  1
+ ],
+ [
+  "a removed access is still watched",
+  "pubwatch",
+  "const appWatched = (a) => !!(a && a.via === \"github_app\" && a.confirmed_at && !a.removed_at && a.repo);",
+  "const appWatched = (a) => !!(a && a.via === \"github_app\" && a.confirmed_at && a.repo);",
+  1
+ ],
+ [
+  "a removed app isn't looked for again",
+  "pubwatch",
+  "ci.files === \"github\" && !(t.access && t.access.confirmed_at && !t.access.removed_at));",
+  "ci.files === \"github\" && !(t.access && t.access.confirmed_at));",
+  1
+ ],
+ [
+  "removed access counts as proven",
+  "sitechange",
+  "    if (a.removed_at) return { ok: false, why:",
+  "    if (false) return { ok: false, why:",
+  1
+ ],
+ [
+  "a refusing host counts as proven",
+  "sitechange",
+  "    if (a.repo && hc && hc.state === \"refused\" && ((w.merge_by || {}).by || \"rga\") !== \"client\") return",
+  "    if (false) return",
+  1
+ ],
+ [
+  "an untested access counts as proven",
+  "sitechange",
+  "    return tested ? { ok: true, why: \"\" } : { ok: false, why: \"the access test page hasn't gone live yet\" };",
+  "    return { ok: true, why: \"\" };",
+  1
+ ],
+ [
+  "the card's move never waits for access",
+  "sitechange",
+  "    if (opts.access && !opts.access.ok && id !== ACCESS_TEST_STEP && [\"scheduled\", \"publishing\"].includes(m)) return \"waiting\";",
+  "",
+  1
+ ],
+ [
+  "the autopilot publishes before access is proven",
+  "webautorun",
+  "    if (!ghPublishes(key, t, tasks) || !proven) return null;",
+  "    if (!ghPublishes(key, t, tasks)) return null;",
+  1
+ ],
+ [
+  "the autopilot sends before access is proven",
+  "webautorun",
+  "!done[`send:${c.v}`] && proven ? { act: \"send\"",
+  "!done[`send:${c.v}`] ? { act: \"send\"",
+  1
+ ],
+ [
+  "the access test waits for itself",
+  "webautorun",
+  "  const proven = key === SC.ACCESS_TEST_STEP || SC.accessProven(tasks).ok;",
+  "  const proven = SC.accessProven(tasks).ok;",
+  1
+ ],
+ [
+  "admin opens a pull request before access is proven",
+  "admindeliv",
+  "    if ((act === \"open_pr\" || act === \"merge_pr\") && key !== SC.ACCESS_TEST_STEP) { const pv = SC.accessProven(tasks); if (!pv.ok) return json(409,",
+  "    if (false) { const pv = SC.accessProven(tasks); if (!pv.ok) return json(409,",
+  1
+ ],
+ [
+  "admin sends before access is proven",
+  "admindeliv",
+  "      if (key !== SC.ACCESS_TEST_STEP) { const pv = SC.accessProven(tasks); if (!pv.ok) return json(409, { error: `Website work waits until RGA's access is proven: ${pv.why}. It wasn't sent.` }); }",
+  "",
+  1
+ ],
+ [
+  "the pull request forgets who opened it",
+  "admindeliv",
+  "by: who, opened_as: me.login || null, v: t.site_change.v,",
+  "by: who, v: t.site_change.v,",
+  1
+ ],
+ [
+  "admin names RGA Admin for the app",
+  "admin",
+  "  if (as) return /\\[bot\\]$/.test(as) ? \"RGA's app\" : as === \"rocketgrowthagency-admin\" ? \"RGA Admin\" : as;",
+  "  if (as) return \"RGA Admin\";",
+  1
+ ],
+ [
+  "the client is told RGA's reason",
+  "blogposts",
+  "  const accessOk = require(\"../../shared/site-change.js\").accessProven(tk).ok;",
+  "  const accessOk = require(\"../../shared/site-change.js\").accessProven(tk).ok, pv = require(\"../../shared/site-change.js\").accessProven(tk).why;",
+  1
+ ],
+ [
+  "the managed line never says it waits",
+  "portal",
+  "  if (k.access_ok === false) return { state: \"open\", text: \"Starts once RGA can publish to your website\", act: true };",
+  "",
+  1
+ ],
+ [
+  "the app removes a shared install",
+  "ghidentity",
+  "  if (others.length || ins.selection === \"all\" && ins.repos.length >= 100) return { ok: false, state: \"shared\", others };",
+  "",
+  1
+ ],
+ [
+  "an unconfirmed removal is called done",
+  "ghidentity",
+  "  return (await appReaches(repo, f)) === \"no\" ? { ok: true, how: \"uninstalled\" } : { ok: false, state: \"still_there\" };",
+  "  return { ok: true, how: \"uninstalled\" };",
+  1
+ ]
+]

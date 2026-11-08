@@ -375,6 +375,8 @@ if (!/data-jump-approvals/.test(rowSrc)) bad("an approval step does not point at
       near: /const mailHref = \(to, body\) =>/ },
     { why: "the client sends THEIR OWN web designer / developer our access note from their own mail app (step3_simple_access_v2 / step3_all_builders_v1) — it isn't a message to RGA, so the composer can't carry it",
       near: /data-acc-note-copy>/ },
+    { why: "the client sends whoever manages THEIR GitHub the install link for RGA's app from their own mail app (client_github_app_install_v1) — it isn't a message to RGA",
+      near: /data-gh-app-copy>/ },
   ];
   for (const m of code.matchAll(/mailto:[^"'`)]+/g)) {
     const ctx = code.slice(Math.max(0, m.index - 320), m.index + 60);
