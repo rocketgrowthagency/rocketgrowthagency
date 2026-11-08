@@ -151,6 +151,8 @@ const listFor = async () => ((await cli({})).j.deliverables || []).find((d) => d
 }
 
 // ── 4. no back door to done ──
+// 11-8: an already-right check finishes the step (noChangeNeeded), a draft never does
+if (!/const isDone = result\?\.completed === false \? false : \(!!noChangeNeeded \|\| runnerCompleted/.test(FX)) fail("a website step whose check found it already right stays in progress (RGA's 45-47 had to be finished by hand)");
 if (!/if \(result && SiteChange\.isSiteChangeStep\(step_id\) && !is_monthly\) \{[\s\S]{0,400}else result\.completed = false;\n    \}\n    const isDone = result\?\.completed === false \? false :/.test(FX)) fail("a run can mark a website step done (flow-execute's website lock is gone)");
 const g = A.indexOf("async function guardUnsubstantiatedDone(stepId, patch) {");
 if (g < 0 || !/SCg\.isSiteChangeStep\(stepId\) \? !SCg\.stepMayBeDone\(t\) : !SCg\.copyMayBeDone\(t\)/.test(A.slice(g, g + 2000))) fail("admin's Mark done can finish a website step with no approved, live change");

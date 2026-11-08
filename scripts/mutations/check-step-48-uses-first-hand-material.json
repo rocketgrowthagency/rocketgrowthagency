@@ -26,5 +26,19 @@
   "&& (Number(r.impressions) || 0) >= 5)",
   ")",
   1
+ ],
+ [
+  "0 posts never finishes",
+  "flowexec",
+  "? { ...r, outcome: \"verified\", completed: true } : r;",
+  "? r : r;",
+  1
+ ],
+ [
+  "a post on its way finishes",
+  "flowexec",
+  "&& od.posts === 0 && !od.on_its_way ?",
+  "&& od.posts === 0 ?",
+  1
  ]
 ]

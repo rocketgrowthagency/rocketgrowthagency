@@ -200,5 +200,12 @@
   "const diff = (i) => ibSame(i) ? \"\" : (i.before && i.after && ibChangedPlaces(i.before, i.after) >= 3",
   "const diff = (i) => ibSame(i) ? \"\" : (false",
   1
+ ],
+ [
+  "an already-right step stays in progress",
+  "flowexec",
+  "(!!noChangeNeeded || runnerCompleted ||",
+  "(runnerCompleted ||",
+  1
  ]
 ]

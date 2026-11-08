@@ -20,5 +20,6 @@ let QUESTION = null; try { QUESTION = q ? new Function(`return ${q};`)() : null;
 if (!QUESTION || !QUESTION.test("how much does drain cleaning cost") || !QUESTION.test("why is my water heater leaking") || QUESTION.test("plumber springfield") || QUESTION.test("drain cleaning near me")) fail("a searched question isn't told apart from a plain search");
 if (!/&& \(Number\(r\.impressions\) \|\| 0\) >= 5\)/.test(body)) fail("a question almost nobody searched counts as material");
 if (!/Their material \(the only facts you may use\)/.test(body)) fail("the post may use facts beyond the client's own material");
+if (!/return r && r\.outcome === "noop" && od\.posts === 0 && !od\.on_its_way \? \{ \.\.\.r, outcome: "verified", completed: true \} : r;/.test(FE)) fail("step 48's '0 posts' (no first-hand material) never finishes the step, so step 50 waits on it forever (or a post on its way finishes it)");
 if (bad.length) { console.error(`❌ step 48's material — ${bad.length} regression(s):`); for (const b of bad) console.error(`  · ${b}`); process.exit(1); }
 console.log("✅ step 48 stays first-hand: its material is the client's result and customer words, their published photos with what's in them, and questions people really search for (5+ times); nothing beyond it is used");
