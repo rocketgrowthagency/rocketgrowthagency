@@ -1,0 +1,65 @@
+[
+ [
+  "the step card ignores the table",
+  "admin",
+  "  const crHtml = codeResultHtml(task, o, opts);\n  if (crHtml) return crHtml;\n",
+  "",
+  1
+ ],
+ [
+  "a version with the client reads live",
+  "admin",
+  "st === \"live\" ? \"✓ Live\" : st === \"approved\" ? \"Going up\" : st === \"sent\" ? \"With the client\" : \"Drafted\"",
+  "\"✓ Live\"",
+  1
+ ],
+ [
+  "drift isn't said",
+  "admin",
+  "drift ? \"Changed on the site\" : st === \"live\"",
+  "false ? \"Changed on the site\" : st === \"live\"",
+  1
+ ],
+ [
+  "no links on the page names",
+  "admin",
+  "<td class=\"ob-cr-pg\"><a href=\"${escapeAttribute(pg.url)}\" target=\"_blank\" rel=\"noopener\">",
+  "<td class=\"ob-cr-pg\"><a>",
+  1
+ ],
+ [
+  "the path isn't chips",
+  "admin",
+  "chips.map((x) => `<span>${escapeHtml(x)}</span>`).join(`<i>›</i>`)",
+  "escapeHtml(pg.path || \"\")",
+  1
+ ],
+ [
+  "the footer drops what's left out",
+  "admin",
+  "`<span><b>Left out on purpose:</b> questions code.",
+  "`<span>",
+  1
+ ],
+ [
+  "runs aren't tagged",
+  "admin",
+  "(tags && tags.live ?",
+  "(false ?",
+  1
+ ],
+ [
+  "replaced runs aren't said",
+  "admin",
+  "`<span class=\"ob-cr-tag old\">Replaced</span>`",
+  "\"\"",
+  1
+ ],
+ [
+  "a run without pages gets a table",
+  "admin",
+  "if (!pages.length) return \"\";",
+  "",
+  1
+ ]
+]
