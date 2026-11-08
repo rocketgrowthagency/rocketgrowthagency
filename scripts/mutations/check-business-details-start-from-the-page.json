@@ -1,0 +1,135 @@
+[
+ [
+  "a FAQ counts as a business",
+  "schemamerge",
+  "nodes = all.filter((n) => typesOf(n).some((t) => LOCAL_TYPES.has(t) || /Business$/.test(t)));",
+  "nodes = all;",
+  1
+ ],
+ [
+  "@graph isn't read",
+  "schemamerge",
+  ".flatMap((x) => (x && Array.isArray(x[\"@graph\"]) ? x[\"@graph\"] : [x]))",
+  "",
+  1
+ ],
+ [
+  "the page's type is replaced by LocalBusiness",
+  "schemamerge",
+  "else if (want && want !== \"LocalBusiness\" && want !== had)",
+  "else if (want && want !== had)",
+  1
+ ],
+ [
+  "the same phone is a change",
+  "schemamerge",
+  "telephone: (a, b) => digits(a) === digits(b),",
+  "telephone: (a, b) => a === b,",
+  1
+ ],
+ [
+  "the same website is a change",
+  "schemamerge",
+  "url: (a, b) => host(a) === host(b),",
+  "url: (a, b) => a === b,",
+  1
+ ],
+ [
+  "a detail only the page has is dropped",
+  "schemamerge",
+  "    merged[k] = v; fields[k] = { status: \"kept\" };\n  }",
+  "  }",
+  1
+ ],
+ [
+  "a missing detail isn't added",
+  "schemamerge",
+  "if (base[k] === undefined || base[k] === null || base[k] === \"\") { merged[k] = v; fields[k] = { status: \"added\" }; continue; }",
+  "if (base[k] === undefined || base[k] === null || base[k] === \"\") continue;",
+  1
+ ],
+ [
+  "the page's description is replaced",
+  "schemamerge",
+  "if (k === \"description\") { merged[k] = base[k]; fields[k] = { status: \"kept\" }; continue; }",
+  "",
+  1
+ ],
+ [
+  "a wrong value isn't changed",
+  "schemamerge",
+  "merged[k] = same ? base[k] : v;",
+  "merged[k] = base[k];",
+  1
+ ],
+ [
+  "a street stays for a business customers don't visit",
+  "schemamerge",
+  "if (street) { delete addr.streetAddress; delete addr.postalCode; }",
+  "",
+  1
+ ],
+ [
+  "two business blocks stay",
+  "schemamerge",
+  "if (b.only) next = placed ? \"\" : mergedTag;",
+  "if (b.only) next = mergedTag;",
+  1
+ ],
+ [
+  "the graph's website goes too",
+  "schemamerge",
+  "\"@graph\": x[\"@graph\"].filter((n) => !b.nodes.includes(n))",
+  "\"@graph\": []",
+  1
+ ],
+ [
+  "no block, nothing placed",
+  "schemamerge",
+  "if (!placed) h = h.replace(/<\\/head>/i, `  ${mergedTag}\\n</head>`);",
+  "",
+  1
+ ],
+ [
+  "step 41 drafts blind",
+  "flowexec",
+  "if (site && !live) return { summary: `Couldn't read ${site}, so the business code already on it isn't known.",
+  "if (false) return { summary: `Couldn't read ${site}, so the business code already on it isn't known.",
+  1
+ ],
+ [
+  "a national business serves only its city",
+  "flowexec",
+  "if (national) schema.areaServed = \"United States\";",
+  "if (false) schema.areaServed = \"United States\";",
+  1
+ ],
+ [
+  "the reader drops the merge",
+  "admindeliv",
+  "if (od.merge && od.merge.fields) c.merge = od.merge;",
+  "",
+  1
+ ],
+ [
+  "the cleaner drops the merge",
+  "sitechange",
+  "...(kind === \"code\" && o.merge && o.merge.fields && typeof o.merge.fields === \"object\" ? {",
+  "...(false ? {",
+  1
+ ],
+ [
+  "any status passes the cleaner",
+  "sitechange",
+  "status: [\"kept\", \"added\", \"changed\", \"removed\"].includes(f && f.status) ? f.status : \"kept\"",
+  "status: f && f.status",
+  1
+ ],
+ [
+  "nothing-removed isn't checked",
+  "admindeliv",
+  "out.push({ ok: !(c.merge.lost || []).length, what: \"Nothing true was removed\" });",
+  "",
+  1
+ ]
+]

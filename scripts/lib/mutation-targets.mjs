@@ -418,6 +418,7 @@ export const FILES = {
   citypage: "netlify/functions/_city-page.js",
   pagefile: "netlify/functions/_page-file.js",
   pagedesign: "netlify/functions/_page-design.js",   // page_builder_site_design_v1 (11-7)   // website_system_v2 build 8 (10-28): a page file in the site's own template
+  schemamerge: "netlify/functions/_schema-merge.js",   // schema_merge_v1 (11-7)
   ghaccess: "netlify/functions/_github-access.js",
   deliverables: "netlify/functions/_deliverables.js",
   sitepreview: "netlify/functions/site-preview.js",   // for_your_approval_v2 (10-28): the built page, privately

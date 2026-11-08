@@ -142,7 +142,7 @@ for (const [raw, want, why] of URLS) {
 // street address entirely — a non-public dispatch address confuses Google and fails verification —
 // and `addressRegion` is expected as a two-letter state.
 {
-  const start = flow.indexOf('  "m1.web.schema": async ({ client }) => {');
+  const start = flow.indexOf('  "m1.web.schema": async ({ client, tasks }) => {');
   if (start < 0) { console.error("⚠️  INDETERMINATE — the schema step is not in flow-execute.js"); process.exit(2); }
   const lp = flow.indexOf("(", start);
   let pd = 0, after = -1;
@@ -159,7 +159,9 @@ for (const [raw, want, why] of URLS) {
   };
   let runSchema;
   try {
-    const ctx = vm.createContext({ URL, String, Object, JSON, Set, Math, console, svcCtx: (c) => c.primary_service || "Services",
+    // schema_merge_v1 (11-7): the step reads the live homepage first; these fixtures' homepages have no business code yet
+    const siteReq = createRequire(`${SITE}/netlify/functions/x.js`);
+    const ctx = vm.createContext({ URL, String, Object, JSON, Set, Math, console, svcCtx: (c) => c.primary_service || "Services", require: (m) => siteReq(m), pageText: async () => "<html><head></head><body></body></html>",
       ...(({ publishesStreetAddress, schemaTypeFor }) => ({ publishesStreetAddress, schemaTypeFor }))(createRequire(import.meta.url)(`${SITE}/netlify/functions/_site-facts.js`)) });
     const padSrc = flow.slice(flow.indexOf("const citPad = (labels)"), flow.indexOf("};", flow.indexOf("const citPad = (labels)")) + 1);
     vm.runInContext(`${stSet}\n${stNames}\n${padSrc}\n${grab("clientSiteUrl")}\n${grab("clientLocality")}`, ctx);
