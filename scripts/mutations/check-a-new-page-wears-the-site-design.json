@@ -250,5 +250,12 @@
   " || (s.text.length >= 60 && heads.has(head(s.text)))",
   "",
   1
+ ],
+ [
+  "a long slot isn't trimmed",
+  "pagedesign",
+  "const toFit = (x, max) => { if (x.length <= max) return x;",
+  "const toFit = (x, max) => { if (true) return x;",
+  1
  ]
 ]

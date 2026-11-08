@@ -104,7 +104,10 @@ else {
   { const f = [...fit]; f[ix("Drain Cleaning")] = "Drain Cleaning"; if (!chk(f).some((p) => /kept the other page's words|still says what the other page is about/.test(p))) fail("the template's own label kept word for word passes (it's another page's LINK, not a shared label)"); }
   { const f = [...fit]; f[ix("Clear drains that stay clear")] = "Drain cleaning and leaks, found fast"; if (!chk(f).some((p) => /still says what the other page is about/.test(p))) fail("a heading that still names what the template page is about passes"); }
   { const f = [...fit]; f[ix("We find the blockage.")] = "We find 9 out of 10 leaks."; if (!chk(f).some((p) => /adds a number \(9\)/.test(p))) fail("a fit that adds a number passes"); }
-  { const f = [...fit]; f[ix("We find the blockage.")] = "We trace the sound. ".repeat(12); if (!chk(f).some((p) => /far longer/.test(p))) fail("a slot far longer than its place passes"); }
+  { const f = [...fit]; f[ix("We find the blockage.")] = `We trace the sound ${"and the drip ".repeat(12)}.`; if (!chk(f).some((p) => /far longer/.test(p))) fail("a slot far longer than its place passes (one sentence can't be trimmed)"); }
+  { const f = [...fit]; f[ix("We find the blockage.")] = "We trace the sound. ".repeat(12).trim(); const r = PD.checkFit({ slots: f }, tpl, { pageFor: "Leak detection", content, shared: sharedAll });
+    const got = r.slots && r.slots[ix("We find the blockage.")];
+    if (!got || got.length > 121 || !/^We trace the sound\.( We trace the sound\.)*$/.test(got)) fail(`a long slot isn't trimmed to whole sentences within its place (${got ? got.length : r.problems})`); }
   { const f = fit.map((x, i) => (tpl.slots[i].tag === "h1" ? x : "")); if (!chk(f).some((p) => /were dropped/.test(p))) fail("a fit that drops most of the page passes"); }
 
   // the page as built
