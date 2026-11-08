@@ -2,7 +2,7 @@
 /**
  * check-every-outreach-video-plays.mjs — EVERY OUTREACH PAGE'S VIDEO PLAYS FROM FILE STORAGE, LIVE (rga_videos_to_storage_v1, the owner 11-8:
  * "how can we test all current live videos get switched over to new supabase video links?"). Reads the real site, not the code: for each of
- * the videos in data/outreach-videos.json, its address (www.rocketgrowthagency.com/v/<slug>/video.mp4) must end in storage and answer
+ * the videos in data/outreach-videos.json, its address (www.rocketgrowthagency.com/v/<slug>/video.mp4) must stay ours, be served from storage, and answer
  * video/mp4 at the size the live site served on 11-8; a handful of pages must still be the landing page; every taken-down video stays 404.
  * HEAD requests only. Exit 0 = every one plays · 1 = one or more don't (named) · 2 = couldn't tell (the site or storage didn't answer).
  */
@@ -21,7 +21,7 @@ await Promise.all(Array.from({ length: 16 }, async () => {
     try {
       const r = await fetch(`${SITE}/v/${x.slug}/video.mp4`, { method: "HEAD", signal: AbortSignal.timeout(30000) });
       const ct = r.headers.get("content-type") || "", len = Number(r.headers.get("content-length"));
-      if (r.status === 200 && /^video\/mp4/i.test(ct) && len === x.size && /\.supabase\.co\/storage\//.test(r.url)) ok++;
+      if (r.status === 200 && /^video\/mp4/i.test(ct) && len === x.size && r.headers.get("sb-project-ref") && new URL(r.url).host === "www.rocketgrowthagency.com") ok++;
       else bad.push(`${x.slug}: ${r.status} ${ct || "no type"} ${len} bytes from ${new URL(r.url).host}`);
     } catch { unread.push(x.slug); }
   }
@@ -33,15 +33,22 @@ for (const s of unread.splice(0)) {
     const r = await fetch(`${SITE}/v/${s}/video.mp4`, { method: "HEAD", signal: AbortSignal.timeout(30000) }).catch(() => null);
     if (!r) continue;
     done = true;
-    if (r.status === 200 && /^video\/mp4/i.test(r.headers.get("content-type") || "") && Number(r.headers.get("content-length")) === x.size && /\.supabase\.co\/storage\//.test(r.url)) ok++;
+    if (r.status === 200 && /^video\/mp4/i.test(r.headers.get("content-type") || "") && Number(r.headers.get("content-length")) === x.size && r.headers.get("sb-project-ref") && new URL(r.url).host === "www.rocketgrowthagency.com") ok++;
     else bad.push(`${s}: ${r.status} ${r.headers.get("content-type") || "no type"}`);
   }
   if (!done) unread.push(s);
 }
+// rga_video_address_v1 A (11-8): every page's player streams straight from storage, with no download button or right-click menu
+const STORAGE = "https://jetgayimvfeslqnkbfdq.supabase.co/storage/v1/object/public/outreach-videos";
+for (const x of LIST) {
+  const h = fs.existsSync(`${WEB}/v/${x.slug}/index.html`) ? fs.readFileSync(`${WEB}/v/${x.slug}/index.html`, "utf8") : "";
+  const tag = (h.match(/<video\b[^>]*>/) || [""])[0];
+  if (!tag.includes(`src="${STORAGE}/${x.slug}/video.mp4`) || !/controlsList="nodownload"/.test(tag) || !/oncontextmenu="return false;"/.test(tag)) bad.push(`${x.slug}: the page's player doesn't stream from storage with the guard`);
+}
 let pagesOk = 0;
 for (const x of LIST.filter((_, k) => k % Math.ceil(LIST.length / 5) === 0)) {
   const h = await fetch(`${SITE}/v/${x.slug}/`, { signal: AbortSignal.timeout(30000) }).then((r) => (r.ok ? r.text() : "")).catch(() => "");
-  if (/<video[^>]+video\.mp4/.test(h)) pagesOk++; else bad.push(`${x.slug}: the page isn't the landing page`);
+  if (h.includes(`${STORAGE}/${x.slug}/video.mp4`)) pagesOk++; else bad.push(`${x.slug}: the page isn't the landing page`);
 }
 for (const s of takenDown) {
   const r = await fetch(`${SITE}/v/${s}/video.mp4`, { method: "HEAD", redirect: "manual", signal: AbortSignal.timeout(30000) }).catch(() => null);
@@ -49,4 +56,4 @@ for (const s of takenDown) {
 }
 if (unread.length > LIST.length / 10) { console.error(`⚠️  INDETERMINATE — ${unread.length} addresses didn't answer`); process.exit(2); }
 if (bad.length || unread.length) { console.error(`❌ ${bad.length + unread.length} outreach video(s) don't play from storage:`); for (const b of [...bad, ...unread.map((s) => `${s}: didn't answer`)].slice(0, 20)) console.error(`  · ${b}`); process.exit(1); }
-console.log(`✅ all ${ok} outreach videos play from file storage at their own address, each at its full size; ${pagesOk} pages sampled are the landing page; all ${takenDown.length} taken-down videos stay blocked`);
+console.log(`✅ all ${ok} outreach videos play from file storage at their own address, each at its full size under our own address; every page's player streams from storage (no download, no right-click); ${pagesOk} live pages sampled agree; all ${takenDown.length} taken-down videos stay blocked`);

@@ -63,5 +63,12 @@ if (!/outreach-video-to-storage\.mjs" "\$BUILD_SLUG"[^\n]*\|\| die "video to sto
 // 4 · the storage step reads each one back
 if (!/"x-upsert": "true"/.test(UP) || !/len !== buf\.length/.test(UP) || !/\^video\\\/mp4/.test(UP) || !/etag !== sum/.test(UP) || !/rg\.status !== 206 \|\| !rb\.equals/.test(UP) || !/process\.exit\(bad \? 1 : 0\)/.test(UP)) fail("the storage step doesn't read each video back (replace, size, type, fingerprint, skip-ahead) or exit 1 when one fails");
 
+// 5 · rga_video_address_v1 A (11-8): a new page's player streams from storage with no download button or right-click menu
+const TPL = read(`${SCR}/templates/video-landing.html`) || "", PS = read(`${SCR}/scripts/outreach-pages-play-from-storage.mjs`) || "";
+const tag = (TPL.match(/<video\b[^>]*>/) || [""])[0];
+if (!tag.includes('src="https://jetgayimvfeslqnkbfdq.supabase.co/storage/v1/object/public/outreach-videos/{{SLUG}}/video.mp4?v={{CACHE_VERSION}}"') || !/controlsList="nodownload"/.test(tag) || !/oncontextmenu="return false;"/.test(tag)) fail("the page template's player doesn't stream from storage with the guard");
+if (!/<a href="video\.mp4\?v=\{\{CACHE_VERSION\}\}">Download the video<\/a>/.test(TPL)) fail("the template's fallback link doesn't use our own address");
+if (!/attrs \+= ' controlsList="nodownload"'/.test(PS) || !/attrs \+= ' oncontextmenu="return false;"'/.test(PS) || !/\/\^video\\\.mp4\(\\\?\|\$\)\/\.test\(src\)/.test(PS)) fail("the page script doesn't add the guard, or would point a page at another video");
+
 if (bad.length) { console.error(`❌ the site isn't published one way — ${bad.length} regression(s):`); for (const x of bad) console.error(`  · ${x}`); process.exit(1); }
 console.log(`✅ the site is published one way: no script deploys around deploy-site.sh (${files.length} scanned); its GitHub mode pushes only main, brings in merged changes (a clash publishes nothing), waits for that commit's build to be live and verifies a video by content; new and rebuilt videos go to storage (read back) before their pages, each checked through its address`);

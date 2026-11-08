@@ -1,15 +1,114 @@
 [
- ["GitHub mode pushes from any branch", "deploysite", "  [ \"$BR\" = \"main\" ] || { echo \"  ✗ REFUSING — on branch $BR, not main. Nothing was published.\"; exit 1; }\n", "", 1],
- ["a GitHub clash isn't backed out", "deploysite", "      git merge --abort 2>/dev/null\n", "", 1],
- ["a refused push counts as published", "deploysite", "  git push -q origin HEAD:main || { echo \"  ✗ the push to GitHub was refused. Nothing was published.\"; exit 1; }", "  git push -q origin HEAD:main", 1],
- ["another build being live counts as ours", "deploysite", "  if [ \"$PUB\" != \"$DID\" ]; then", "  if false; then", 1],
- ["GitHub mode never checks a video", "deploysite", "      *)          echo \"  4. 🔴 VIDEOS ARE NOT SERVING ($CT). The site is live but outreach links are dead.\"; exit 1 ;;", "      *)          echo \"  4. videos not checked\" ;;", 1],
- ["new videos skip storage", "nightpipeline", "  node \"$SCRAPER_DIR/scripts/outreach-video-to-storage.mjs\" \"${PENDING_DEPLOY_SLUGS[@]}\" 2>&1 | tee -a \"$LOGFILE\"\n", "", 1],
- ["the pipeline checks videos without following the forward", "nightpipeline", "    _ct=$(curl -sL -o /dev/null -w \"%{content_type}\" --max-time 45", "    _ct=$(curl -s -o /dev/null -w \"%{content_type}\" --max-time 45", 1],
- ["the pipeline deploys around deploy-site.sh", "nightpipeline", "  bash \"$WEBSITE_DIR/scripts/deploy-site.sh\" \"$COMMIT_MSG\" 2>&1 | tee -a \"$LOGFILE\"", "  netlify deploy --prod --dir=. 2>&1 | tee -a \"$LOGFILE\"", 1],
- ["rebuilds skip storage", "rebuild", "node \"$SCRAPER/scripts/outreach-video-to-storage.mjs\" \"${OK[@]}\" 2>&1 | tee -a \"$LOG\"\n", "", 1],
- ["rebuilds re-lock production", "rebuild", "say \"DONE $(date +%H:%M:%S)\"", "curl -s -X POST -H \"Authorization: Bearer $TOK\" \"https://api.netlify.com/api/v1/deploys/$NEW/lock\" -o /dev/null\nsay \"DONE $(date +%H:%M:%S)\"", 1],
- ["the one-lead test deploys directly", "onelead", "bash \"$WEBSITE_DIR/scripts/deploy-site.sh\" \"test lead: $BUILD_SLUG\"", "netlify deploy --prod --dir=. \"test lead: $BUILD_SLUG\"", 1],
- ["storage isn't asked to skip ahead", "videotostorage", "  if (rg.status !== 206 || !rb.equals(buf.subarray(at, at + 100))) return", "  if (false) return", 1],
- ["a failed video exits clean", "videotostorage", "process.exit(bad ? 1 : 0);", "process.exit(0);", 1]
+ [
+  "GitHub mode pushes from any branch",
+  "deploysite",
+  "  [ \"$BR\" = \"main\" ] || { echo \"  ✗ REFUSING — on branch $BR, not main. Nothing was published.\"; exit 1; }\n",
+  "",
+  1
+ ],
+ [
+  "a GitHub clash isn't backed out",
+  "deploysite",
+  "      git merge --abort 2>/dev/null\n",
+  "",
+  1
+ ],
+ [
+  "a refused push counts as published",
+  "deploysite",
+  "  git push -q origin HEAD:main || { echo \"  ✗ the push to GitHub was refused. Nothing was published.\"; exit 1; }",
+  "  git push -q origin HEAD:main",
+  1
+ ],
+ [
+  "another build being live counts as ours",
+  "deploysite",
+  "  if [ \"$PUB\" != \"$DID\" ]; then",
+  "  if false; then",
+  1
+ ],
+ [
+  "GitHub mode never checks a video",
+  "deploysite",
+  "      *)          echo \"  4. 🔴 VIDEOS ARE NOT SERVING ($CT). The site is live but outreach links are dead.\"; exit 1 ;;",
+  "      *)          echo \"  4. videos not checked\" ;;",
+  1
+ ],
+ [
+  "new videos skip storage",
+  "nightpipeline",
+  "  node \"$SCRAPER_DIR/scripts/outreach-video-to-storage.mjs\" \"${PENDING_DEPLOY_SLUGS[@]}\" 2>&1 | tee -a \"$LOGFILE\"\n",
+  "",
+  1
+ ],
+ [
+  "the pipeline checks videos without following the forward",
+  "nightpipeline",
+  "    _ct=$(curl -sL -o /dev/null -w \"%{content_type}\" --max-time 45",
+  "    _ct=$(curl -s -o /dev/null -w \"%{content_type}\" --max-time 45",
+  1
+ ],
+ [
+  "the pipeline deploys around deploy-site.sh",
+  "nightpipeline",
+  "  bash \"$WEBSITE_DIR/scripts/deploy-site.sh\" \"$COMMIT_MSG\" 2>&1 | tee -a \"$LOGFILE\"",
+  "  netlify deploy --prod --dir=. 2>&1 | tee -a \"$LOGFILE\"",
+  1
+ ],
+ [
+  "rebuilds skip storage",
+  "rebuild",
+  "node \"$SCRAPER/scripts/outreach-video-to-storage.mjs\" \"${OK[@]}\" 2>&1 | tee -a \"$LOG\"\n",
+  "",
+  1
+ ],
+ [
+  "rebuilds re-lock production",
+  "rebuild",
+  "say \"DONE $(date +%H:%M:%S)\"",
+  "curl -s -X POST -H \"Authorization: Bearer $TOK\" \"https://api.netlify.com/api/v1/deploys/$NEW/lock\" -o /dev/null\nsay \"DONE $(date +%H:%M:%S)\"",
+  1
+ ],
+ [
+  "the one-lead test deploys directly",
+  "onelead",
+  "bash \"$WEBSITE_DIR/scripts/deploy-site.sh\" \"test lead: $BUILD_SLUG\"",
+  "netlify deploy --prod --dir=. \"test lead: $BUILD_SLUG\"",
+  1
+ ],
+ [
+  "storage isn't asked to skip ahead",
+  "videotostorage",
+  "  if (rg.status !== 206 || !rb.equals(buf.subarray(at, at + 100))) return",
+  "  if (false) return",
+  1
+ ],
+ [
+  "a failed video exits clean",
+  "videotostorage",
+  "process.exit(bad ? 1 : 0);",
+  "process.exit(0);",
+  1
+ ],
+ [
+  "new pages play through the website again",
+  "videotemplate",
+  "src=\"https://jetgayimvfeslqnkbfdq.supabase.co/storage/v1/object/public/outreach-videos/{{SLUG}}/video.mp4?v={{CACHE_VERSION}}\"",
+  "src=\"video.mp4?v={{CACHE_VERSION}}\"",
+  1
+ ],
+ [
+  "new pages offer the download button",
+  "videotemplate",
+  " controlsList=\"nodownload\" oncontextmenu=\"return false;\">",
+  " oncontextmenu=\"return false;\">",
+  1
+ ],
+ [
+  "the page script leaves out the right-click guard",
+  "pagesfromstorage",
+  "  if (!/\\boncontextmenu=/.test(attrs)) attrs += ' oncontextmenu=\"return false;\"';\n",
+  "",
+  1
+ ]
 ]
