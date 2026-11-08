@@ -96,5 +96,12 @@
   "(GA.siteDomain(h.url) === GA.siteDomain(home) ? opened : stored).push(p);",
   "opened.push(p);",
   1
+ ],
+ [
+  "the jobs card shows on every page",
+  "admin",
+  "if (!full && (!needsLook || SH.view !== \"dashboard\")) {",
+  "if (!full && !needsLook) {",
+  1
  ]
 ]
