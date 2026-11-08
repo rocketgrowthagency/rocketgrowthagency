@@ -145,5 +145,26 @@
   "if (e.group === \"going\" && ibIsPage(c)) return `${c.removes_page ? \"Coming down\" : \"New page\"} · you approved it",
   "if (e.group === \"going\" && ibIsPage(c)) return `You asked for a change · you approved it",
   1
+ ],
+ [
+  "the pages never reach the card",
+  "portaldeliv",
+  "...(Array.isArray(c.pages) && c.pages.length ? { pages:",
+  "...(false ? { pages:",
+  1
+ ],
+ [
+  "step 49 gets the old card",
+  "portal",
+  "} else if (c.kind === \"code\" && Array.isArray(c.pages) && c.pages.length) {",
+  "} else if (false) {",
+  1
+ ],
+ [
+  "the marks never reach the card",
+  "portaldeliv",
+  "...(c.merge && c.merge.fields ? { merge:",
+  "...(false ? { merge:",
+  1
  ]
 ]
