@@ -1,0 +1,128 @@
+[
+ [
+  "a covering page isn't looked for",
+  "pagebuilder",
+  "covers = byName ? null : coveredBy(service, pages,",
+  "covers = byName ? null : null && coveredBy(service, pages,",
+  1
+ ],
+ [
+  "blog posts cover a service",
+  "pagebuilder",
+  " || (blogDir && path.startsWith(blogDir)) || POSTS.test(path)) continue;",
+  ") continue;",
+  1
+ ],
+ [
+  "standard pages cover a service",
+  "pagebuilder",
+  "if (path === \"/\" || STANDARD.test(path) ||",
+  "if (path === \"/\" ||",
+  1
+ ],
+ [
+  "area pages cover a service",
+  "pagebuilder",
+  "&& !mine.some((w) => placeWords.has(w))) continue;",
+  "&& false) continue;",
+  1
+ ],
+ [
+  "too few pages read still decides",
+  "pagebuilder",
+  "if (read.length < 5) return null;",
+  "",
+  1
+ ],
+ [
+  "common words count as distinctive",
+  "pagebuilder",
+  "(df.get(w) || 0) / read.length < 0.3",
+  "true",
+  1
+ ],
+ [
+  "any one word covers",
+  "pagebuilder",
+  "if (distinct.every((w) => have.has(w))) return p.url;",
+  "if (distinct.some((w) => have.has(w))) return p.url;",
+  1
+ ],
+ [
+  "Google's order, not the plan",
+  "pagebuilder",
+  "sort((a, b) => b.n - a.n || a.i - b.i)",
+  "sort((a, b) => a.i - b.i)",
+  1
+ ],
+ [
+  "a page borrows the plan's first searches",
+  "pagebuilder",
+  "const searches = named.slice(0, 4);",
+  "const searches = (named.length ? named : (keywords || []).map(String).slice(0, 2)).slice(0, 4);",
+  1
+ ],
+ [
+  "Search Console searches aren't the page's own",
+  "pagebuilder",
+  "if (q && want.every((w) => q.includes(w)))",
+  "if (q)",
+  1
+ ],
+ [
+  "most seen isn't first",
+  "pagebuilder",
+  "sort((a, b) => b[1] - a[1]).slice(0, 4)",
+  "slice(0, 4)",
+  1
+ ],
+ [
+  "no own search still drafts",
+  "flowexec",
+  "if (!own.length) return { summary: `No search on the keyword plan",
+  "if (false) return { summary: `No search on the keyword plan",
+  1
+ ],
+ [
+  "step 45 decides on a partial read",
+  "flowexec",
+  "if (all.urls && all.unread.length > Math.max(1, all.urls * 0.05)) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "the card doesn't name the covering page",
+  "pagebuilder",
+  "covered: rows.filter((r) => r.covered).map((r) => ({ service: r.service, page: r.has })) };",
+  "covered: [] };",
+  1
+ ],
+ [
+  "the menu counts as page links",
+  "admindeliv",
+  "const main = (String(f.html).match(/<main[^>]*>([\\s\\S]*?)<\\/main>/i) || [])[1] || \"\";",
+  "const main = String(f.html);",
+  1
+ ],
+ [
+  "the page counts itself",
+  "admindeliv",
+  "&& p !== self) pages.add(p || \"/\");",
+  ") pages.add(p || \"/\");",
+  1
+ ],
+ [
+  "the draft's list is counted",
+  "admindeliv",
+  "const n = builtLinksOf(t);",
+  "const n = (String(((c.items || []).find((i) => i.label === \"Links on the page\") || {}).after || \"\").match(/→\\s*\\//g) || []).length;",
+  1
+ ],
+ [
+  "a post named after a service is its page",
+  "pagebuilder",
+  "if (/\\/(blog|news|articles|posts|insights|stories)\\//i.test(pathOf(u))) return false; ",
+  "",
+  1
+ ]
+]
