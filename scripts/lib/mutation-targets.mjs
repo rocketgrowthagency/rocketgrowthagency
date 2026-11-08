@@ -423,6 +423,7 @@ export const FILES = {
   placepages: "netlify/functions/_place-pages.js",   // website_steps_46_50_research_v1 (11-7): steps 46 and 47
   internallinks: "netlify/functions/_internal-links.js",   // page_placement_and_links_v1 part 3 (11-7): step 50
   publishown: "scripts/publish-own-site.mjs",   // schema_merge_v1 part 2 (11-7): the Mac publisher for a site RGA deploys itself
+  publishblocked: "netlify/functions/_publish-blocked.js",   // admin_publish_blocked_warning (11-8): the five publish checks
   ghaccess: "netlify/functions/_github-access.js",
   deliverables: "netlify/functions/_deliverables.js",
   sitepreview: "netlify/functions/site-preview.js",   // for_your_approval_v2 (10-28): the built page, privately

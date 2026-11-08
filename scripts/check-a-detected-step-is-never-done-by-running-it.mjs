@@ -66,7 +66,9 @@ if (!vetoM) { console.error("⚠️  INDETERMINATE — the measured-nothing veto
 // 🔒 10-19: and the DRAFT line — a run that only drafted (aiDraft called, nothing finished or measured) stays open.
 const draftM = /^\s*(if \(result && DRAFT_CALLS[^\n]*)$/m.exec(exec);
 if (!draftM) { console.error("⚠️  INDETERMINATE — the draft-never-completes line (`if (result && DRAFT_CALLS > 0 …`) is not in flow-execute.js; re-read the decision."); process.exit(2); }
-const body = vetoM[1] + "\n" + draftM[1] + "\n" + parts.map(([n, e]) => `const ${n} = ${e};`).join("\n") + "\nreturn isDone;";
+// 🔒 11-8: "already right" finishes a step, but only a WEBSITE step (its own gates cover it); for the steps here it stays null. Pinned, not assumed.
+if (!/let noChangeNeeded = null;\s*\n\s*if \(result && SiteChange\.isSiteChangeStep\(step_id\) && !is_monthly\) \{/.test(exec)) { console.error("⚠️  INDETERMINATE — noChangeNeeded is no longer set only for a website step; re-read the decision."); process.exit(2); }
+const body = "const noChangeNeeded = null;\n" + vetoM[1] + "\n" + draftM[1] + "\n" + parts.map(([n, e]) => `const ${n} = ${e};`).join("\n") + "\nreturn isDone;";
 
 let decide;
 try { const _d = new Function("stepDef", "result", "DRAFT_CALLS", body); decide = (sd, r, n = 0) => _d(sd, r, n); }

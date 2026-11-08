@@ -441,6 +441,7 @@ const NOT_PREFLIGHT = {
   'check-place-pages-follow-the-research.mjs': 'the WEBSITE repo\'s steps 46-47 place rules (website_steps_46_50_research_v1, 11-7) on fakes; no bearing on tonight\'s video pipeline.',
   'check-step-48-uses-first-hand-material.mjs': 'the WEBSITE repo\'s step 48 material sources (website_steps_46_50_research_v1, 11-7); no bearing on tonight\'s video pipeline.',
   'check-admin-code-result.mjs': 'the WEBSITE repo\'s admin code-result table (admin_code_result_v1, 11-8), rendered in Chrome; no bearing on tonight\'s video pipeline.',
+  'check-a-blocked-publish-warns-admin.mjs': 'the WEBSITE repo\'s publish checks and the admin warning they draw (admin_publish_blocked_warning, 11-8), fakes + Chrome; no bearing on tonight\'s video pipeline.',
   'check-the-title-recipe-holds.mjs': 'the WEBSITE repo\'s step 43 recipe (title_meta_recipe_v1, 11-7) on fakes: evidence, pinned model, rule checks, rule pick, measured after; no bearing on tonight\'s video pipeline. Runs in daily-health-check.sh.',
   'check-a-live-page-stays-true.mjs': 'the WEBSITE repo\'s read-back, nightly watch, per-page Search Console and website auto-run (website_system_v2 builds 10-12, 14, 16) on fakes, no bearing on tonight\'s scrape or video run. Runs in daily-health-check.sh.',
   'check-the-page-builder.mjs': 'the WEBSITE repo\'s page builder, brief and quality rules (website_system_v2 builds 3 to 6, 15) on fixtures, files only, no bearing on tonight\'s scrape or video run. Runs in daily-health-check.sh.',

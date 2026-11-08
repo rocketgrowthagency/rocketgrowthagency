@@ -65,8 +65,8 @@
  [
   "flow-execute ignores completed:false",
   "exec",
-  "    const isDone = result?.completed === false ? false : (runnerCompleted || (!isHybrid && !isDetected));",
-  "    const isDone = runnerCompleted || (!isHybrid && !isDetected);",
+  "    const isDone = result?.completed === false ? false : (!!noChangeNeeded || runnerCompleted || (!isHybrid && !isDetected));",
+  "    const isDone = !!noChangeNeeded || runnerCompleted || (!isHybrid && !isDetected);",
   1
  ],
  [
