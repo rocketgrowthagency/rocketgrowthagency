@@ -53,6 +53,7 @@ if (AR.ghPublishes("m1.web.tracking", { site_change: { kind: "code", code: `<scr
 if (!/if \(c\.kind === "code" && require\("\.\/_schema-merge"\)\.isPageCode\(c\.code\)\) return buildCodeChange\(key, c, client, tasks, clientId\);/.test(AD)) fail("an approved code change isn't built into the page file it goes in");
 if (!/let meta = await GA\.repoFileMeta\(token, fetch, repo, path\);[\s\S]{0,200}html = meta\.text; base_sha = meta\.sha;/.test(AD)) fail("a code change is built from somewhere other than their repository's own file (and its blob sha)");
 if (!/const isCode = ac\.kind === "code" && require\("\.\/_schema-merge"\)\.isPageCode\(ac\.code\)/.test(AD) || !/if \(!isCode && !isLinks && \(!\(ac\.new_page/.test(AD)) fail("the pull request still refuses an approved code change");
+if (!/const acc0 = \(tasks\["m1\.access\.website"\] \|\| \{\}\)\.access \|\| \{\}, repo = acc0\.publish === "rga_deploy" \? "" : acc0\.repo/.test(AD) || !/if \(r\.error\) return acc0\.publish === "rga_deploy" \? \{ error: r\.error \} : null;/.test(AD)) fail("a page change on a site RGA deploys itself is built from its stale GitHub copy, or sent without a build (RGA's step 47 edit, 11-8)");
 if (!/if \(acc\.publish === "rga_deploy"\) return json\(409/.test(AD)) fail("a pull request can be opened against a site RGA deploys itself");
 if (!/const missing = c\.kind === "code" && SMr\.isPageCode\(c\.code\) \? SMr\.codeReadBack\(c\.code, servedHtml, \{ oneBusiness: key === "m1\.web\.schema" \}\)\.missing/.test(AD)) fail("Mark live doesn't read a code change back field by field");
 

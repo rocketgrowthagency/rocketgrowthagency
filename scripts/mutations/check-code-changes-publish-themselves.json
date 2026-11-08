@@ -131,5 +131,19 @@
   "    } else if (f.action === \"edit\" && c.edits_page) {",
   "    } else if (false) {",
   1
+ ],
+ [
+  "a page build reads the stale repo",
+  "admindeliv",
+  "repo = acc0.publish === \"rga_deploy\" ? \"\" : acc0.repo || \"\"",
+  "repo = acc0.repo || \"\"",
+  1
+ ],
+ [
+  "an own-site page is sent without its build",
+  "admindeliv",
+  "if (r.error) return acc0.publish === \"rga_deploy\" ? { error: r.error } : null;",
+  "if (r.error) return null;",
+  1
  ]
 ]
