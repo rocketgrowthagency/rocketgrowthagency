@@ -1,0 +1,52 @@
+#!/usr/bin/env node
+/**
+ * check-every-outreach-video-plays.mjs — EVERY OUTREACH PAGE'S VIDEO PLAYS FROM FILE STORAGE, LIVE (rga_videos_to_storage_v1, the owner 11-8:
+ * "how can we test all current live videos get switched over to new supabase video links?"). Reads the real site, not the code: for each of
+ * the videos in data/outreach-videos.json, its address (www.rocketgrowthagency.com/v/<slug>/video.mp4) must end in storage and answer
+ * video/mp4 at the size the live site served on 11-8; a handful of pages must still be the landing page; every taken-down video stays 404.
+ * HEAD requests only. Exit 0 = every one plays · 1 = one or more don't (named) · 2 = couldn't tell (the site or storage didn't answer).
+ */
+import fs from "node:fs";
+const WEB = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+const SITE = "https://www.rocketgrowthagency.com";
+let LIST, TOML;
+try { LIST = JSON.parse(fs.readFileSync(`${WEB}/data/outreach-videos.json`, "utf8")).videos; TOML = fs.readFileSync(`${WEB}/netlify.toml`, "utf8"); }
+catch (e) { console.error(`⚠️  INDETERMINATE — couldn't read the list: ${e.message}`); process.exit(2); }
+const takenDown = [...new Set((TOML.match(/from = "\/v\/[a-z0-9-]+/g) || []).map((x) => x.slice(11)))];
+const bad = [], unread = [];
+let i = 0, ok = 0;
+await Promise.all(Array.from({ length: 16 }, async () => {
+  while (i < LIST.length) {
+    const x = LIST[i++];
+    try {
+      const r = await fetch(`${SITE}/v/${x.slug}/video.mp4`, { method: "HEAD", signal: AbortSignal.timeout(30000) });
+      const ct = r.headers.get("content-type") || "", len = Number(r.headers.get("content-length"));
+      if (r.status === 200 && /^video\/mp4/i.test(ct) && len === x.size && /\.supabase\.co\/storage\//.test(r.url)) ok++;
+      else bad.push(`${x.slug}: ${r.status} ${ct || "no type"} ${len} bytes from ${new URL(r.url).host}`);
+    } catch { unread.push(x.slug); }
+  }
+}));
+// a blip isn't a broken video: anything that didn't answer is asked twice more, one at a time
+for (const s of unread.splice(0)) {
+  const x = LIST.find((v) => v.slug === s); let done = false;
+  for (let k = 0; k < 2 && !done; k++) {
+    const r = await fetch(`${SITE}/v/${s}/video.mp4`, { method: "HEAD", signal: AbortSignal.timeout(30000) }).catch(() => null);
+    if (!r) continue;
+    done = true;
+    if (r.status === 200 && /^video\/mp4/i.test(r.headers.get("content-type") || "") && Number(r.headers.get("content-length")) === x.size && /\.supabase\.co\/storage\//.test(r.url)) ok++;
+    else bad.push(`${s}: ${r.status} ${r.headers.get("content-type") || "no type"}`);
+  }
+  if (!done) unread.push(s);
+}
+let pagesOk = 0;
+for (const x of LIST.filter((_, k) => k % Math.ceil(LIST.length / 5) === 0)) {
+  const h = await fetch(`${SITE}/v/${x.slug}/`, { signal: AbortSignal.timeout(30000) }).then((r) => (r.ok ? r.text() : "")).catch(() => "");
+  if (/<video[^>]+video\.mp4/.test(h)) pagesOk++; else bad.push(`${x.slug}: the page isn't the landing page`);
+}
+for (const s of takenDown) {
+  const r = await fetch(`${SITE}/v/${s}/video.mp4`, { method: "HEAD", redirect: "manual", signal: AbortSignal.timeout(30000) }).catch(() => null);
+  if (!r) unread.push(s); else if (r.status !== 404) bad.push(`${s}: taken down but answers ${r.status}`);
+}
+if (unread.length > LIST.length / 10) { console.error(`⚠️  INDETERMINATE — ${unread.length} addresses didn't answer`); process.exit(2); }
+if (bad.length || unread.length) { console.error(`❌ ${bad.length + unread.length} outreach video(s) don't play from storage:`); for (const b of [...bad, ...unread.map((s) => `${s}: didn't answer`)].slice(0, 20)) console.error(`  · ${b}`); process.exit(1); }
+console.log(`✅ all ${ok} outreach videos play from file storage at their own address, each at its full size; ${pagesOk} pages sampled are the landing page; all ${takenDown.length} taken-down videos stay blocked`);
