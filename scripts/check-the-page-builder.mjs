@@ -128,5 +128,9 @@ if (!PB.applyLineEdits(page, [{ before: "not on the page", after: "x" }]).error)
 if (!PB.serviceAreaPages(["https://x.test/local-seo/hvac-in-culver-city-ca/", "https://x.test/about/", "https://x.test/culver-city/"], ["Culver City"]).every((u) => /hvac/.test(u))) fail("a plain city page or another page counts as a service × area page");
 if (!/if \(weak\.length\) return improveOnePage\(/.test(FE) || !/const r = j \? PB\.checkLineEdits\(j, weak, html\)/.test(FE)) fail("improving a page isn't wired through the rules");
 
+// 11-8: a lowercase trade or acronym is fixed exactly, the line keeping its own casing (the model title-cased RGA's CPA page's lines)
+{ const fx = PB.fixAcronyms;
+  if (fx("Why cpas in Culver City lose the calls") !== "Why CPAs in Culver City lose the calls" || fx("How we work on your cpas business") !== "How we work on your CPA business" || fx("hvac and seo help") !== "HVAC and SEO help" || fx("Our HVAC team") !== "Our HVAC team" || fx("A cpasomething word") !== "A cpasomething word") fail("a lowercase acronym isn't fixed exactly word for word (or the rest of the line, or a word that only starts with it, changes)");
+  if (!/const exact = weak\.filter\(\(l\) => \/trade or acronym\/\.test\(l\.why\)\)\.map\(\(l\) => \(\{ before: l\.text, after: PB\.fixAcronyms\(l\.text\)/.test(FE) || !/if \(!weak\.length && exact\.length\) \{/.test(FE)) fail("an acronym-only line still goes to the model (it title-cased the whole line)"); }
 if (F.length) { console.error(`❌ the page builder: ${F.length} regression(s):\n  · ${F.join("\n  · ")}`); process.exit(1); }
 console.log("✅ the page builder: brief from Search Console + competitors (unknown is never a finding), proof only from the client, one pipeline for any client, stuffing blocks the send, copies flagged, an edit changes only named lines");

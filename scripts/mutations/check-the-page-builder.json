@@ -187,5 +187,26 @@
   "return draftOnePage({ client, _plan, plan: r.plan, ctx, page_of: r.page_of });",
   "return { summary: \"x\" };",
   1
+ ],
+ [
+  "acronyms aren't fixed exactly",
+  "pagebuilder",
+  ".replace(/\\b(hvac|seo|cpa|cpas|dui|ppc|llc)\\b/gi, (m) => (m === m.toLowerCase() ? ACRONYM_FIX[m] : m));",
+  ".replace(/x^/, \"\");",
+  1
+ ],
+ [
+  "a plural before a noun stays plural",
+  "pagebuilder",
+  ".replace(/\\bcpas(\\s+(?:business|firm|practice|office|company)\\b)/g, \"CPA$1\")",
+  "",
+  1
+ ],
+ [
+  "acronym lines go to the model",
+  "flowexec",
+  "  if (!weak.length && exact.length) {",
+  "  if (false) {",
+  1
  ]
 ]
