@@ -203,10 +203,17 @@
   1
  ],
  [
-  "the content's own words can't be kept",
+  "a generic label can't be kept",
   "pagedesign",
-  "&& !have.toLowerCase().includes(x.toLowerCase())) problems.push",
-  "&& true) problems.push",
+  "!wordsOf(x).every((w) => haveLow.includes(w))",
+  "true",
+  1
+ ],
+ [
+  "the top of the page carries words over",
+  "pagedesign",
+  "(s.section === heroAt && !s.href && s.tag !== \"h1\") ||",
+  "",
   1
  ]
 ]

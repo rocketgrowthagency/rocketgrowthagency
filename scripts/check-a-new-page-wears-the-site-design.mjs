@@ -79,6 +79,10 @@ else {
     if (!(kp({ ...keyed, [String(fit.length)]: "x" }).problems || []).some((p) => /don't exist/.test(p))) fail("a keyed fit with a slot that doesn't exist passes"); }
   { const f = [...fit]; tpl.slots.forEach((s, i) => { if (s.tag === "h1") f[i] = ""; }); if (!chk(f).some((p) => /headline was dropped/.test(p))) fail("a fit that drops the headline passes"); }
   { const f = [...fit]; f[ix("Drain cleaning in")] = "Plumbing help in"; if (!chk(f).some((p) => /doesn't name/.test(p))) fail("a headline that doesn't name the page passes"); }
+  { const f = [...fit]; f[ix("We clear slow and blocked drains for homes in Springfield.")] = "Springfield"; f[ix("Clear drains that stay clear")] = "What you get"; const g = [...fit]; g[ix("Clear drains that stay clear")] = "What you get";
+    if (chk(g).length) fail(`a generic label kept word for word is refused: ${chk(g).join("; ")}`); }
+  { const f = [...fit]; f[ix("Drain Cleaning")] = "Springfield"; const t2 = { ...tpl, slots: tpl.slots.map((x, i) => (i === ix("Drain Cleaning") ? { ...x, text: "Springfield" } : x)) };
+    if (!(PD.checkFit({ slots: f }, t2, { pageFor: "Leak detection", content, shared: sharedAll }).problems || []).some((p) => /kept the other page's words/.test(p))) fail("a line at the top of the page kept word for word passes (only a button may carry over there)"); }
   { const f = [...fit]; f[ix("We look inside the pipe first.")] = "We look inside the pipe first."; if (!chk(f).some((p) => /kept the other page's words/.test(p))) fail("a line kept from the template page passes"); }
   { const f = [...fit]; f[ix("Drain Cleaning")] = "Drain Cleaning"; if (!chk(f).some((p) => /kept the other page's words|still says what the other page is about/.test(p))) fail("the template's own label kept word for word passes (it's another page's LINK, not a shared label)"); }
   { const f = [...fit]; f[ix("Clear drains that stay clear")] = "Drain cleaning and leaks, found fast"; if (!chk(f).some((p) => /still says what the other page is about/.test(p))) fail("a heading that still names what the template page is about passes"); }
