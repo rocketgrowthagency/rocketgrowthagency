@@ -53,6 +53,9 @@ const cov = plan(["leak detection springfield"]); // all three covered: drain + 
 { const all = PB.planServicePage({ site: B, client: { secondary_services: ["Drain Cleaning", "Emergency Plumbing"] }, tasks: {}, sitemapXml: `<urlset>${PAGES.map((p) => `<url><loc>${p.url}</loc></url>`).join("")}</urlset>`, sitemapUrl: "", gbpAreas: [], planLocations: [], keywords: [], filesOnGithub: true, pages: PAGES });
   if (!all.none || !(all.covered || []).some((x) => x.service === "Emergency Plumbing" && x.page === `${B}/after-hours/`)) fail("a site whose services are all covered still gets a page, or the card doesn't say which page covers which service"); }
 void cov;
+// the business's primary service is what it IS: the homepage is its page (RGA's step 45 then picked "seo company")
+{ const pr = PB.planServicePage({ site: B, client: { primary_service: "plumber", secondary_services: ["Drain Cleaning"] }, tasks: {}, sitemapXml: `<urlset>${PAGES.map((p) => `<url><loc>${p.url}</loc></url>`).join("")}</urlset>`, sitemapUrl: "", gbpAreas: [], planLocations: [], keywords: ["plumber springfield", "plumber near me"], filesOnGithub: true, pages: PAGES });
+  if (!pr.none || !(pr.covered || []).some((x) => x.service === "plumber" && x.page === `${B}/`)) fail(`the business's own type ("plumber") gets a page of its own instead of its homepage (${JSON.stringify(pr).slice(0, 100)})`); }
 
 // step 45 reads every page before deciding, and won't claim "no page covers it" on a partial read
 if (!/const all = await readSitePages\(require\("\.\/_city-page"\)\.sitemapUrls\(ctx\.smXml\)\);/.test(FE) || !/all\.unread\.length > Math\.max\(1, all\.urls \* 0\.05\)/.test(FE) || !/PB\.planServicePage\(\{ pages: all\.pages,/.test(FE)) fail("step 45 decides without reading every page, or claims no page covers a service with pages unread");

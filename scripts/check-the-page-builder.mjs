@@ -67,8 +67,11 @@ if (!a2.plan || a2.plan.page_for !== "Rewiring" || a2.page_of.at !== 2 || a2.pag
 if (!PB.planServicePage({ ...base, sitemapXml: xml(["https://sparks.test/panel-upgrades/", "https://sparks.test/lighting/", "https://sparks.test/rewiring/"]) }).none) fail("a site with every service page still gets one");
 if (!PB.planServicePage({ ...base, site: "" , sitemapXml: "" }).error) fail("no website gets a page anyway");
 if (!PB.planServicePage({ ...base, client: { primary_market: "x" }, sitemapXml: "" }).error) fail("no services gets a guessed page");
-const uk = PB.planServicePage({ ...base, site: "https://smiths.example.co.uk", client: { primary_market: "Bristol", primary_service: "Dentist" }, keywords: [], sitemapXml: "", filesOnGithub: false });
-if (!uk.plan || uk.plan.url !== "https://smiths.example.co.uk/dentist/" || uk.plan.files[0].path !== "dentist/" || uk.plan.areas[0] !== "Bristol") fail("a business with one service, no state, no sitemap and a builder doesn't plan");
+// page_placement_and_links_v1 (11-7): a business's own type ("Dentist") is its homepage's job, so the one service here is a real service
+const uk = PB.planServicePage({ ...base, site: "https://smiths.example.co.uk", client: { primary_market: "Bristol", primary_service: "Dentist", secondary_services: ["Teeth Whitening"] }, keywords: [], sitemapXml: "", filesOnGithub: false });
+if (!uk.plan || uk.plan.url !== "https://smiths.example.co.uk/teeth-whitening/" || uk.plan.files[0].path !== "teeth-whitening/" || uk.plan.areas[0] !== "Bristol") fail("a business with one service, no state, no sitemap and a builder doesn't plan");
+const ukOnly = PB.planServicePage({ ...base, site: "https://smiths.example.co.uk", client: { primary_market: "Bristol", primary_service: "Dentist" }, keywords: [], sitemapXml: "", filesOnGithub: false });
+if (!ukOnly.none) fail("a dentist whose only service is 'Dentist' gets a /dentist/ page that competes with its own homepage");
 const g = PB.servicesOf({ secondary_services: ["Listed"] }, { "m1.gbp.services_products": { approval: { decision: "approved", approved_content: 'displayName: "From Google"' } } });
 if (g[0] !== "From Google") fail("the services Google lists don't come first");
 const m1 = PB.planServiceAreaPage({ ...base, sitemapXml: xml(["https://sparks.test/panel-upgrades-rochester/"]) });

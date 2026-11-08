@@ -124,5 +124,12 @@
   "if (/\\/(blog|news|articles|posts|insights|stories)\\//i.test(pathOf(u))) return false; ",
   "",
   1
+ ],
+ [
+  "the primary service gets its own page",
+  "pagebuilder",
+  " || (isPrimary ? `${base}/` : null);",
+  ";",
+  1
  ]
 ]
