@@ -28,7 +28,7 @@ const page = (title, main) => `<html><head><title>${title}</title></head><body><
 const TPL_MAIN = `
 <section class="hero"><p class="eyebrow">Drain Cleaning</p><h1>Drain cleaning in <span class="hl">Springfield</span></h1><p class="lead">We clear slow and blocked drains for homes in Springfield.</p>
   <a class="btn" href="/contact/">Book a visit</a><div class="card" aria-label="Sample drain report"><img src="/img/drain.jpg" alt="A drain"><p class="cap">Sample report, made-up home.</p><ul><li>Kitchen sink</li><li>Main line</li></ul></div></section>
-<section><p class="eyebrow">What You Get</p><h2>Clear drains that stay clear</h2><figure class="team"><img src="/img/team.jpg" alt="Our team"><figcaption>Our drain crew at work</figcaption></figure><div class="cards"><div class="c"><svg><text>icon</text></svg><h3>Camera check</h3><p>We look inside the pipe first.</p></div><div class="c"><h3>Hydro jetting</h3><p>High pressure water clears the line.</p></div></div></section>
+<section><p class="eyebrow">What You Get</p><h2>Clear drains that stay clear</h2><figure class="team"><img src="/img/team.jpg" alt="Our team"><figcaption>Our drain crew at work</figcaption></figure><div class="cards"><div class="c"><svg><text>icon</text></svg><h3>Camera check</h3><p>We look inside the pipe first.</p></div><div class="c"><h3>Hydro jetting</h3><p>High pressure water clears the line.</p></div><div class="c"><h3>Root cutting</h3><p>A blade clears roots from the pipe.</p></div></div></section>
 <section><p class="eyebrow">How It Works</p><h2>Look, clear, test</h2><ol><li><span class="n">1</span><h3>Look</h3><p>We find the blockage.</p></li><li><span class="n">2</span><h3>Clear</h3><p>We clear it.</p></li></ol></section>
 <section class="sample"><h2>Your drain report</h2><p>Scores from 0 to 100 for each line.</p><span class="score">72</span><div class="row"><span>Pipes</span><span class="bar" style="width:64%"></span><span>64</span></div></section>
 <section><p class="eyebrow">Related</p><a href="/services/water-heaters/">Water heaters &rarr;</a><a href="/services/leak-detection/">Leak detection</a></section>
@@ -76,7 +76,7 @@ else {
   set("Drain Cleaning", "Leak Detection"); set("Drain cleaning in", "Leak detection in"); set("We clear slow and blocked drains for homes in Springfield.", "We find hidden leaks in Springfield homes before they do damage.");
   set("Book a visit", "Book a leak check"); set("Sample report, made-up home.", ""); set("Kitchen sink", ""); set("Main line", "");
   set("Clear drains that stay clear", "Leaks found without tearing walls open"); set("Camera check", "Acoustic listening"); set("We look inside the pipe first.", "We listen for water moving where it shouldn't.");
-  set("Hydro jetting", "Thermal imaging"); set("High pressure water clears the line.", "A heat camera shows wet spots behind walls.");
+  set("Hydro jetting", "Thermal imaging"); set("High pressure water clears the line.", "A heat camera shows wet spots behind walls."); set("Root cutting", "Pressure testing"); set("A blade clears roots from the pipe.", "We test each line to confirm it holds.");
   set("Look, clear, test", "Listen, find, fix"); set("Look", "Listen"); set("We find the blockage.", "We trace the sound."); set("Clear", "Find"); set("We clear it.", "We mark the spot.");
   set("Your drain report", ""); set("Scores from 0 to 100 for each line.", ""); set("72", ""); set("Pipes", ""); set("64", "");
   set("Related", "Related"); set("Water heaters →", "Water heaters →"); set("Leak detection", "Drain cleaning");
@@ -90,6 +90,15 @@ else {
   if (!chk(fit.slice(1)).some((p) => /answered/.test(p))) fail("a fit with the wrong number of slots passes");
   { const f = [...fit]; f[ix("Your drain report")] = "Your leak report"; f[ix("Pipes")] = "Walls"; if (!chk(f).some((p) => /a number was dropped from a row that stays/.test(p))) fail("a number dropped from a row that stays passes (a bar with nothing on it)"); }
   { const f = [...fit]; f[ix("Pipes")] = "Walls"; f[ix("64")] = "64"; f[ix("Your drain report")] = "Your leak report"; if (chk(f).some((p) => /row that stays/.test(p))) fail("a sample kept whole, its number as it was, is refused"); }
+  // a group of cards stays whole (RGA's first fitted page: 1 of 4 steps left under its heading; two cards lost their headings)
+  { const f = [...fit]; for (const t of ["2", "Clear", "We clear it."]) f[ix(t)] = ""; if (!chk(f).some((p) => /only 1 of 2 cards is left/.test(p))) fail("a group of steps left with one step passes"); }
+  { const f = [...fit]; for (const t of ["1", "Look", "We find the blockage.", "2", "Clear", "We clear it."]) f[ix(t)] = ""; if (!chk(f).some((p) => /every card of a group is gone but its section's heading stays/.test(p))) fail("a section whose cards are all gone keeps its heading"); }
+  { const f = [...fit]; for (const t of ["How It Works", "Look, clear, test", "1", "Look", "We find the blockage.", "2", "Clear", "We clear it."]) f[ix(t)] = ""; if (chk(f).some((p) => /group|cards/.test(p))) fail("a section dropped whole is refused"); }
+  { const f = [...fit]; f[ix("Camera check")] = ""; if (!chk(f).some((p) => /a card lost its heading but kept its words/.test(p))) fail("a card that lost its heading but kept its words passes"); }
+  { const N = page("Kits | Acme", `<section><h1>Kits in Springfield</h1>${"<p>Words.</p>".repeat(4)}<div class="k"><h3>Kit one</h3><ul><li>Pipe</li><li>Tape</li></ul></div><div class="k"><h3>Kit two</h3><ul><li>Wrench</li><li>Seal</li></ul></div></section>`);
+    const tn = PD.pickTemplate([{ url: TPL_URL, html: N }], { minSlots: 5 });
+    if (!tn || !tn.groups.some((g) => g.length === 2 && g.every((c) => c.length === 3))) fail("a card holding a heading and a list isn't read as both (its list's items are a group too)"); }
+  if (!tpl.groups.some((g) => g.length === 3 && g[0].length === 2 && g[1].length === 2) || !tpl.groups.some((g) => g.length === 2 && g.every((c) => c.length === 3))) fail("a card isn't read as everything inside it (a card's heading and words; a step's number, name and words)");
   // keyed by slot number (RGA's first real run answered 68 for 66 slots as a list)
   { const keyed = Object.fromEntries(fit.map((x, i) => [String(i), x]));
     const kp = (o) => PD.checkFit({ slots: o }, tpl, { pageFor: "Leak detection", content, shared: sharedAll });

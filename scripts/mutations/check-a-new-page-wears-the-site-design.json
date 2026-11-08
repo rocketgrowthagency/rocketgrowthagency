@@ -327,5 +327,40 @@
   "const NUM = /\\d(?:[\\d,.]*\\d)?/g;",
   "const NUM = /\\d[\\d,.]*/g;",
   1
+ ],
+ [
+  "one card left passes",
+  "pagedesign",
+  "if (live === 1) problems.push",
+  "if (false) problems.push",
+  1
+ ],
+ [
+  "an emptied group keeps its heading",
+  "pagedesign",
+  "if (live === 0) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "a card without its heading passes",
+  "pagedesign",
+  "if (h !== undefined && !out[h] &&",
+  "if (false && h !== undefined && !out[h] &&",
+  1
+ ],
+ [
+  "a card is only its first level",
+  "pagedesign",
+  "o.anc.includes(c) ? i : -1",
+  "o.card === c ? i : -1",
+  1
+ ],
+ [
+  "a plain list counts as cards",
+  "pagedesign",
+  "if (list.length < 2 || list.every((ix) => ix.length < 2)) continue;",
+  "if (list.length < 2) continue;",
+  1
  ]
 ]
