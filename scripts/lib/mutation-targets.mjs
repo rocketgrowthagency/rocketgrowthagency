@@ -416,7 +416,8 @@ export const FILES = {
   pageprooffn: "netlify/functions/portal-page-proof.js",
   sitechange: "shared/site-change.js",   // website_change_approvals_v1 (10-23)
   citypage: "netlify/functions/_city-page.js",
-  pagefile: "netlify/functions/_page-file.js",   // website_system_v2 build 8 (10-28): a page file in the site's own template
+  pagefile: "netlify/functions/_page-file.js",
+  pagedesign: "netlify/functions/_page-design.js",   // page_builder_site_design_v1 (11-7)   // website_system_v2 build 8 (10-28): a page file in the site's own template
   ghaccess: "netlify/functions/_github-access.js",
   deliverables: "netlify/functions/_deliverables.js",
   sitepreview: "netlify/functions/site-preview.js",   // for_your_approval_v2 (10-28): the built page, privately

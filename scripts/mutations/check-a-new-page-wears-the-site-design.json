@@ -1,0 +1,184 @@
+[
+ [
+  "pictures carry over",
+  "pagedesign",
+  "    if (PICTURE.has(k.name)) { goes.add(i); return; }\n",
+  "",
+  1
+ ],
+ [
+  "an emptied card stays",
+  "pagedesign",
+  "if (n && !kept) goes.add(i);",
+  "if (false) goes.add(i);",
+  1
+ ],
+ [
+  "a link to the new page itself isn't re-pointed",
+  "pagedesign",
+  "? `${a}${templatePath}${b}` : m",
+  "? m : m",
+  1
+ ],
+ [
+  "the template's part labels stay",
+  "pagedesign",
+  "(words(v.slice(1, -1)) > 1 ? \"\" : m)",
+  "m",
+  1
+ ],
+ [
+  "words inside an svg are slots",
+  "pagedesign",
+  "const OPAQUE = new Set([\"script\", \"style\", \"svg\",",
+  "const OPAQUE = new Set([\"script\", \"style\",",
+  1
+ ],
+ [
+  "an unchanged line is re-escaped",
+  "pagedesign",
+  "    if (k.t === \"text\" && put.has(i) && put.get(i) === dec(k.raw).replace(/\\s+/g, \" \").trim()) { out += k.raw; continue; }\n",
+  "",
+  1
+ ],
+ [
+  "the wrong slot count passes",
+  "pagedesign",
+  "if (got.length !== tpl.slots.length)",
+  "if (false)",
+  1
+ ],
+ [
+  "a dropped headline passes",
+  "pagedesign",
+  "if (!h1.trim()) problems.push",
+  "if (false) problems.push",
+  1
+ ],
+ [
+  "a headline not naming the page passes",
+  "pagedesign",
+  "else if (pageFor && !h1.toLowerCase()",
+  "else if (false && pageFor && !h1.toLowerCase()",
+  1
+ ],
+ [
+  "kept template words pass",
+  "pagedesign",
+  "if (x === s.text && !/^[\\d\\s.,]+$/.test(x)",
+  "if (false && x === s.text && !/^[\\d\\s.,]+$/.test(x)",
+  1
+ ],
+ [
+  "shared lines ignore place",
+  "pagedesign",
+  "const key = (s) => `${s.tag}|${s.text.toLowerCase()}`;",
+  "const key = (s) => s.text.toLowerCase();",
+  1
+ ],
+ [
+  "a heading naming the template passes",
+  "pagedesign",
+  "else if (tpl.subject && !s.href",
+  "else if (false && tpl.subject && !s.href",
+  1
+ ],
+ [
+  "an added number passes",
+  "pagedesign",
+  "if (x !== s.text && !have.includes(n))",
+  "if (false)",
+  1
+ ],
+ [
+  "an overlong slot passes",
+  "pagedesign",
+  "if (x.length > Math.max(",
+  "if (false && x.length > Math.max(",
+  1
+ ],
+ [
+  "a mostly dropped page passes",
+  "pagedesign",
+  "if (dropped > tpl.slots.length / 2)",
+  "if (false)",
+  1
+ ],
+ [
+  "a swapped button doesn't follow",
+  "pagedesign",
+  "if (btn(before) && btn(after) && btn(before) !== btn(after)) slots =",
+  "if (false) slots =",
+  1
+ ],
+ [
+  "a stale fit is kept",
+  "pagedesign",
+  "if (d.items_key !== itemsKey(before.items)) return drop(",
+  "if (false) return drop(",
+  1
+ ],
+ [
+  "the fit isn't re-keyed",
+  "pagedesign",
+  "items_key: itemsKey(after.items) } };",
+  "items_key: d.items_key } };",
+  1
+ ],
+ [
+  "the built page skips the checks",
+  "pagedesign",
+  "  if (failed.length) {\n    const again = fixSlots(",
+  "  if (false) {\n    const again = fixSlots(",
+  1
+ ],
+ [
+  "checkAndFix doesn't carry fixes to the page",
+  "webautorun",
+  "(to.design || before.design ? PD.designFollows(",
+  "(false ? PD.designFollows(",
+  1
+ ],
+ [
+  "the cleaner keeps em dashes in the design",
+  "sitechange",
+  "map((x) => clip(noDashes(x), 1200))",
+  "map((x) => clip(x, 1200))",
+  1
+ ],
+ [
+  "the build ignores a changed template",
+  "admindeliv",
+  "PD.templateKey(tplMain) !== c.design.template_key ? \"its template page changed",
+  "false ? \"its template page changed",
+  1
+ ],
+ [
+  "the build ignores edited words",
+  "admindeliv",
+  "PD.itemsKey(c.items) !== c.design.items_key ? \"the words were edited",
+  "false ? \"the words were edited",
+  1
+ ],
+ [
+  "the draft doesn't fit the design",
+  "flowexec",
+  "if (fit.design) page_draft.design = fit.design; else page_draft.design_skipped = fit.why;",
+  "",
+  1
+ ],
+ [
+  "the fit isn't checked like a draft",
+  "flowexec",
+  "const failed = SiteChange.autoChecks(line, { siteText });",
+  "const failed = [];",
+  1
+ ],
+ [
+  "the page's own fix isn't made",
+  "pagedesign",
+  "const again = fixSlots(SC, slots, failed.map((f) => f.text));",
+  "const again = null;",
+  1
+ ]
+]
