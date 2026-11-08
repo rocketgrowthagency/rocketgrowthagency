@@ -82,5 +82,12 @@
   "    if (!month1.has(k)) return false;\n",
   "",
   1
+ ],
+ [
+  "the warning is never repainted once the steps load",
+  "admin",
+  "  if (steps.length && scope === \"month1\") paintPublishBlocked();\n",
+  "",
+  1
  ]
 ]

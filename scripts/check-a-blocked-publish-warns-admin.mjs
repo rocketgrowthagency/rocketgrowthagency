@@ -61,6 +61,7 @@ try {
 
   const vids = base(); vids.repo["v/joe/index.html"] = page("A video for Joe", '<video src="video.mp4?v=3"></video>'); vids.live = { ...vids.repo, "v/joe/video.mp4": "mp4" };
   const r2 = await run(vids);
+  if (byId(r2, "nothing_lost").detail !== "A file the pages use opens on the live site but isn't in acme/site, like /v/joe/video.mp4. A deploy from the repository would remove it.") fail(`one lost file isn't said in plain words (${byId(r2, "nothing_lost").detail})`);
   if (byId(r2, "nothing_lost").ok !== false || !/videos the repository doesn't \(under \/v\/\)/.test(r2.problems.join(" "))) fail(`files on the live site the repository doesn't hold don't warn (${byId(r2, "nothing_lost").line})`);
   const gone = base(); gone.repo["v/joe/index.html"] = page("A video for Joe", '<video src="video.mp4"></video>');
   if (byId(await run(gone), "nothing_lost").ok === false) fail("a file missing on BOTH sides reads as one a deploy would remove");
@@ -139,6 +140,7 @@ if (!/Website work blocked · Acme Plumbing/.test(out.row.text) || !out.row.open
 
 // ── part 3 · the wiring ─────────────────────────────────────────────────────────────────────────────────────────────────────
 if ((A.match(/\$\{badge\}\$\{pbTagHtml\(o\.flowId\)\}/g) || []).length < 5) fail("the step rows don't carry the tag");
+if (!/const steps = sopSequencedSteps\(scope\);\s*\n\s*\/\/[^\n]*\n\s*if \(steps\.length && scope === "month1"\) paintPublishBlocked\(\);/.test(A)) fail("the warning isn't painted again once the steps load, so its step numbers can be missing");
 if (!/loadPublishBlocked\(state\.selectedClient\.id\)/.test(A) || !/<div id="publishBlockedBanner" hidden><\/div>/.test(IDX)) fail("the client page doesn't read the newest reading into its warning");
 if (!/publishBlockedRowsHtml\(blocked\)\}\$\{alerts\}/.test(A) || !/\$\{pbRows\}<\/div>`;/.test(A)) fail("System health (full or on the Dashboard) doesn't list blocked clients");
 const openPr = DEL.slice(DEL.indexOf('if (act === "open_pr")'), DEL.indexOf("// 🔒 ONLY THE APPROVED BUILD UPLOADS"));
