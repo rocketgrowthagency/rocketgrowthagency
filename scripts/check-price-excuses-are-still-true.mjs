@@ -36,6 +36,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 // 🔑 THE SITE PATH IS A DEFAULT, NOT A CONSTANT. A gate that can only ever read the real
 // working tree cannot be pointed at a scratch copy, so its mutations cannot be run — and a
@@ -44,7 +45,8 @@ import path from "node:path";
 // them. → feedback_a_gate_that_cannot_fail · feedback_the_harness_i_wrote_to_check_my_work_can_lie
 const __SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const SITE = `${__SITE}`;
-const GATE = "scripts/check-price-surfaces-are-known.mjs";
+// next to this file, wherever it is run from (it read "missing" when run from inside scripts/)
+const GATE = path.join(path.dirname(fileURLToPath(import.meta.url)), "check-price-surfaces-are-known.mjs");
 const SABOTAGE = process.env.SABOTAGE === "1";
 
 // 🔑 The tokens each EXCLUDED file contained when its excuse was written. NOT a hash — a reader can
