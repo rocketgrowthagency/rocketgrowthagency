@@ -449,6 +449,7 @@ const NOT_PREFLIGHT = {
   'check-rga-acts-through-its-app.mjs': 'the WEBSITE repo\'s GitHub identity helper (rga_github_app_v1, 11-8), fakes; it reads no video pipeline output.',
   'check-a-client-installs-rgas-app.mjs': 'the WEBSITE repo\'s client GitHub app install (client_github_app_install_v1, 11-8), fakes + Chrome; it reads no video pipeline output.',
   'check-website-access-gaps.mjs': 'the WEBSITE repo\'s access fixes (website_access_gaps_v1, 11-8), fakes only; run by daily-health-check.sh; it reads no video pipeline output.',
+  'check-a-stuck-change-says-so.mjs': 'the WEBSITE repo\'s stuck-change fix (publish_failure_shows_v1, 11-8), fakes + source; run by daily-health-check.sh; it reads no video pipeline output.',
   'check-three-small-fixes.mjs': 'the WEBSITE repo\'s three small fixes (three_small_fixes_v1, 11-8), source + vm only; run by daily-health-check.sh; it reads no video pipeline output.',
   'check-end-of-service-runs-itself.mjs': 'the WEBSITE repo\'s end-of-service runner (client_offboarding_v1, 11-8), fakes only; run by daily-health-check.sh; it reads no video pipeline output.',
   'check-the-access-test-runs-itself.mjs': 'the WEBSITE repo\'s automatic access test (auto_access_test_v1, 11-8), fakes only; run by daily-health-check.sh; it reads no video pipeline output.',

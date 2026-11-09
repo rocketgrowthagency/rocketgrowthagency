@@ -44,8 +44,8 @@
  [
   "the warning shows on a reading that passed",
   "admin",
-  "if (!r || r.ok !== false) return \"\";\n  const nos",
-  "if (!r) return \"\";\n  const nos",
+  "  if ((!r0 || r0.ok !== false) && !stuck.length) return \"\";",
+  "  if (!r0 && !stuck.length) return \"\";",
   1
  ],
  [

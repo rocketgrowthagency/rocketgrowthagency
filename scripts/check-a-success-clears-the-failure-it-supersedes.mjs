@@ -30,6 +30,9 @@ const F = []; const fail = (m) => F.push(m);
 const DECLARED = {
   // admin_website_steps_autopilot_v1 (11-6): a website step's automatic draft that failed (didn't finish, failed twice, couldn't be saved)
   "_website-autorun.js": {
+    // publish_failure_shows_v1 (11-8): a refused snapshot / pull request / merge, scoped to its version (every reader checks publish_failed.v ===
+    // site_change.v), DELETED by admin-deliverables when the pull request opens or merges; a merged change never reads as stuck (wcStuck)
+    publish_failed: { why: "scoped to the change's version; cleared in admin-deliverables open_pr / merge_pr (delete t.publish_failed), and wcStuck ignores it once merged" },
     auto_failed: { why: "scoped to the run it describes: every reader (SC.autoMove, planStep) uses it only while auto_failed.run === the step's ran_at, so a later run supersedes it without a delete" },
   },
   "refresh-review-metrics.js": {

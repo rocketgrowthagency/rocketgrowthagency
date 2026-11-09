@@ -1,0 +1,86 @@
+[
+ [
+  "a refusal retries within the hour",
+  "webautorun",
+  "    const again = pf && now - (Date.parse(pf.at) || 0) >= 3600e3 ?",
+  "    const again = pf ?",
+  1
+ ],
+ [
+  "a missing snapshot retries the pull request, not the snapshot",
+  "webautorun",
+  "(pf.act === \"open\" && /before-snapshot/i.test(pf.why || \"\") ? \"snap\" : pf.act)",
+  "pf.act",
+  1
+ ],
+ [
+  "the retry runs twice in an hour",
+  "webautorun",
+  "    if (again === \"open\" && !done[`pub:open:${c.v}:r${hour}`]) return",
+  "    if (again === \"open\") return",
+  1
+ ],
+ [
+  "an older version's refusal retries",
+  "webautorun",
+  "    const pf = t.publish_failed && t.publish_failed.v === c.v ? t.publish_failed : null,",
+  "    const pf = t.publish_failed || null,",
+  1
+ ],
+ [
+  "a refused merge never retries",
+  "webautorun",
+  "      return again === \"merge\" && !done[`pub:merge:${c.v}:r${hour}`] ?",
+  "      return false ?",
+  1
+ ],
+ [
+  "a refused pull request isn't written",
+  "webautorun",
+  "    if (!s.ok) await failed(d, rec, key, t, p.act, s.error);",
+  "",
+  1
+ ],
+ [
+  "a refused snapshot isn't written",
+  "webautorun",
+  "    if (!s.ok) await failed(d, rec, key, t, \"snap\", s.error);",
+  "",
+  1
+ ],
+ [
+  "opening doesn't clear the refusal",
+  "admindeliv",
+  "      delete t.publish_failed;   // publish_failure_shows_v1: it went up, so nothing is stuck",
+  "",
+  1
+ ],
+ [
+  "a change that went up still reads stuck",
+  "admin",
+  " || (pr && pr.v === c.v && pr.merged && pr.merged.at)) return null;\n  return pf;",
+  ") return null;\n  return pf;",
+  1
+ ],
+ [
+  "admin's row stays silent",
+  "admin",
+  "  if (wcStuck(task)) return { text: \"Can't go up\", cls: \"active\" };   // publish_failure_shows_v1",
+  "",
+  1
+ ],
+ [
+  "the warning leaves it out",
+  "admin",
+  "    <ul>${[...(r.problems || []), ...stuckLines].map(",
+  "    <ul>${[...(r.problems || [])].map(",
+  1
+ ],
+ [
+  "the client is told at once",
+  "portaldeliv",
+  " && Date.now() - Date.parse(ans.at) >= 864e5,",
+  ",",
+  1
+ ]
+]
