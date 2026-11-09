@@ -160,24 +160,27 @@ const tz = "America/New_York", told = Date.parse("2026-11-02T15:00:00Z");   // a
   const s = CL.closingState({ audit_log: [notice] }, { today: "2026-11-10" });
   if (s.due_by !== "2026-12-09") fail(`written confirmation is due ${s.due_by}, not 5 business days after the end date (2026-12-09)`);
   if (CL.plusBusinessDays("2026-12-04", 5) !== "2026-12-11") fail("5 business days from a Friday skips the weekend wrong");
-  if (s.items.map((i) => i.key).join() !== "refund,gbp,google,site,confirm") fail("the closing list isn't the five items");
+  // client_offboarding_v1 (approved 11-8): the approved end-of-service checklist's lines, in its order (was five person-only lines)
+  if (s.items.map((i) => i.key).join() !== "files,phone,stop,site,gbp,google,figures,accounts,refund,confirm") fail("the closing list isn't the approved end-of-service lines");
   if (s.items.some((i) => i.status !== "open") || s.overdue) fail("a fresh closing list isn't all open");
-  if (!/person does it/.test(s.items[0].detail) || /automatic/i.test(s.items[0].detail)) fail("the refund line doesn't say a person does it");
+  const rf = s.items.find((i) => i.key === "refund") || {};
+  if (!/person does it/.test(rf.detail || "") || /automatic/i.test(rf.detail || "") || rf.auto) fail("the refund line doesn't say a person does it");
   const mk = CL.markEvent({ key: "gbp", status: "done", at: "2026-12-03T00:00:00Z", by: "a@b.test" });
   const s2 = CL.closingState({ audit_log: [notice, mk] }, { today: "2026-12-20" });
-  if (s2.items[1].status !== "done" || s2.open !== 4 || !s2.overdue) fail("a mark isn't read, or an unfinished list past its date isn't overdue");
+  const gi = (st) => st.items.find((i) => i.key === "gbp");
+  if (gi(s2).status !== "done" || s2.open !== 9 || !s2.overdue) fail("a mark isn't read, or an unfinished list past its date isn't overdue");
   if (CL.closingState({ audit_log: [notice, mk] }, { today: "2026-12-05" }).overdue) fail("a list is overdue before its date");
   const s3 = CL.closingState({ audit_log: [mk, notice] });
-  if (s3.items[1].status !== "open") fail("a mark made before the notice counts toward the new one");
+  if (gi(s3).status !== "open") fail("a mark made before the notice counts toward the new one");
   const undo = CL.closingState({ audit_log: [notice, mk, CL.markEvent({ key: "gbp", status: "open" })] });
-  if (undo.items[1].status !== "open") fail("a mark can't be undone");
+  if (gi(undo).status !== "open") fail("a mark can't be undone");
   if (CL.markEvent({ key: "wipe", status: "done" }) !== null || CL.markEvent({ key: "gbp", status: "paid" }) !== null) fail("an unknown item or status is accepted");
   if (CL.markEvent({ key: "site", status: "na", note: "  we never had it  " }).note !== "we never had it") fail("a not-applicable reason isn't kept");
   const adm = read("netlify/functions/admin-closing-list.js"), ct = code("netlify/functions/admin-closing-list.js") + code("netlify/functions/_closing-list.js");
   if (!/const gate = await requireWorkspaceForClient\(event, clientId\);\s*if \(gate\.error\) return gate\.error;/.test(adm)) fail("the closing list endpoint isn't staff only");
   if (/api\.stripe|stripe\.(refunds|charges)|require\(["']stripe|sendAsRga|notify-rga|oauth|googleapis/i.test(ct)) fail("the closing list touches Stripe, an email, Google or a client account");
   if (!/Not applicable/.test(read("admin/admin.js")) || !/rgaPrompt\("Why does this not apply/.test(read("admin/admin.js"))) fail("admin's 'Not applicable' doesn't ask why");
-  if (!/Nothing here touches the client's own accounts/.test(read("admin/admin.js"))) fail("the closing list doesn't say it touches no client account");
+  if (!/RGA removes only its own access and confirms in writing; their accounts, website, photos and data are theirs, and nothing RGA built is taken off their site/.test(read("admin/admin.js"))) fail("the end-of-service card doesn't say RGA removes only its own access and nothing of theirs");
   if (!/data-closing-list/.test(read("admin/admin.js")) || !/data-contract-action="record_notice"/.test(read("admin/admin.js"))) fail("the closing list or 'Record cancellation notice' left the contract card");
 }
 
@@ -343,4 +346,4 @@ for (const f of ["netlify/functions/_step-reminders.js", "netlify/functions/_onb
   if (/sendAsRga|_gmail|nodemailer|sendgrid/i.test(code(f))) fail(`${f} sends an email`);
 
 if (F.length) { console.error(`❌ ${F.length} problem(s):\n  - ${F.join("\n  - ")}`); process.exit(1); }
-console.log("✅ Onboarding and leaving hold: wording fixed, reminders off until approved and capped at two, the outcome control stores three plain words, the closing list is a person's marks, roles are lowered, the notes read only what was read, and the Cancel card records the client's own notice from their plan");
+console.log("✅ Onboarding and leaving hold: wording fixed, reminders off until approved and capped at two, the outcome control stores three plain words, the closing list is the approved end-of-service lines, roles are lowered, the notes read only what was read, and the Cancel card records the client's own notice from their plan");

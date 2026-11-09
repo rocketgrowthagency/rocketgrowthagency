@@ -47,6 +47,7 @@ const INVENTORY = {
   "core-change.js": "none:the same push, from the admin button",
   "gbp-apply-change.js": "none:applies RGA's change and logs it in the change log (RGA's own work)",
   "_gbp-facts.js": "none:pure; no table is written",
+  "_offboarding.js": "none:end of service (client_offboarding_v1, 11-8) reads the profile's phone numbers and managers only to put the real number back and remove RGA; nothing of Google's is saved, and it DELETES the Google figures RGA kept",
   "_gbp-services.js": "none:builds the services RGA sends; no table is written",
   "_gbp-verify.js": "none:reads the verification state to decide; nothing saved",
   "_gbp-profile.js": "none:reads the connection (location id), no Google content saved",

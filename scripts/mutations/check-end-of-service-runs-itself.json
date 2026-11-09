@@ -1,0 +1,149 @@
+[
+ [
+  "the figures go before the files are ready",
+  "offboarding",
+  " && (k !== \"figures\" || (st.files && st.files.status === \"done\"))) due.push(k);",
+  ") due.push(k);",
+  1
+ ],
+ [
+  "the end-date lines run early",
+  "offboarding",
+  "  if (today >= closing.ends_on) for (const k of ON_END)",
+  "  for (const k of ON_END)",
+  1
+ ],
+ [
+  "a line retries all day",
+  "offboarding",
+  " && !st[k].tried_today && (k === \"files\"",
+  " && (k === \"files\"",
+  1
+ ],
+ [
+  "files that don't read back are ready",
+  "offboarding",
+  "    if (!back || back.length !== page.html.length || !back.includes(esc((d.client || {}).business_name || \"\"))) return open(",
+  "    if (false) return open(",
+  1
+ ],
+ [
+  "no tracking number still changes the phone",
+  "offboarding",
+  "    if (!tr.number) return open(\"No tracking number on record for them. If RGA never set one, mark it not applicable.\");",
+  "",
+  1
+ ],
+ [
+  "the phone isn't read back",
+  "offboarding",
+  "    if (!pn1 || digits(pn1.primaryPhone) !== digits(real)) return open(",
+  "    if (false) return open(",
+  1
+ ],
+ [
+  "the tracking number stays on the profile",
+  "offboarding",
+  "(pn.additionalPhones || []).filter((x) => digits(x) !== digits(real) && digits(x) !== digits(tr.number));",
+  "(pn.additionalPhones || []).filter((x) => digits(x) !== digits(real));",
+  1
+ ],
+ [
+  "an unsaved archive is called stopped",
+  "offboarding",
+  "    if (!row || row.status !== \"archived\" || !row.archived_at) return open(",
+  "    if (false) return open(",
+  1
+ ],
+ [
+  "a shared install is removed anyway",
+  "offboarding",
+  "      if (r.state === \"shared\") return open(",
+  "      if (false) return open(",
+  1
+ ],
+ [
+  "no access is called done",
+  "offboarding",
+  "    if (!a.confirmed_at) return open(\"No website access on record. If RGA never had any, mark it not applicable.\");",
+  "    if (!a.confirmed_at) return done(\"No access.\");",
+  1
+ ],
+ [
+  "the owner is removed as manager",
+  "offboarding",
+  "    const mine = (a) => String(a.admin || \"\").toLowerCase() === d.rgaEmail.toLowerCase();",
+  "    const mine = () => true;",
+  1
+ ],
+ [
+  "a manager Google still lists is removed",
+  "offboarding",
+  "    if (l1.some(mine)) return open(",
+  "    if (false) return open(",
+  1
+ ],
+ [
+  "the connection isn't read back",
+  "offboarding",
+  "    if (!Array.isArray(back) || back.length) return open(\"Their Google connection couldn't be deleted. It tries again tomorrow.\");",
+  "",
+  1
+ ],
+ [
+  "figures left behind are deleted",
+  "offboarding",
+  "      if (!Array.isArray(back) || back.length) left.push(tb);",
+  "",
+  1
+ ],
+ [
+  "the run skips the re-read",
+  "offboardrun",
+  "    const now = CL.closingState({ ...contract, audit_log: fresh.audit_log }, { today });",
+  "    const now = CL.closingState(contract, { today });",
+  1
+ ],
+ [
+  "the confirmation sends with lines open",
+  "offboardconfirm",
+  "    if (!draft.ready) return json(409,",
+  "    if (false) return json(409,",
+  1
+ ],
+ [
+  "the confirmation sends while email is off",
+  "offboardconfirm",
+  "    if (sent && sent.suppressed) return json(409,",
+  "    if (false) return json(409,",
+  1
+ ],
+ [
+  "the confirmation leaves out a line",
+  "offboardconfirm",
+  "    ...items.map(line), \"\",",
+  "    ...items.slice(1).map(line), \"\",",
+  1
+ ],
+ [
+  "the system marks not applicable",
+  "closinglist",
+  "  if (auto && status === \"na\") return null;   // \"not applicable\" is a person's word, never the system's",
+  "",
+  1
+ ],
+ [
+  "files offered before they're ready",
+  "portalcancel",
+  "      if (v.state !== \"notice\" || !v.notice.files_ready) return json(409,",
+  "      if (false) return json(409,",
+  1
+ ],
+ [
+  "the card hands over files never ready",
+  "portal",
+  "    const files = n.files_ready ? csEv(",
+  "    const files = true ? csEv(",
+  1
+ ]
+]
