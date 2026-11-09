@@ -42,8 +42,8 @@ if (!card || !handler) {
 // Render the card in node with the portal's own builder, for a client WITH a shot list (the case that broke).
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 // the block also registers page-level click handlers (step 7's team size, step 6's verify) — they need a document to
-// attach to, not to run; the card build is what this checks
-const ctx = { escapeHtml: esc, escapeAttribute: esc, document: { addEventListener() {} } };
+// attach to, not to run; the card build is what this checks. 11-8: the GitHub app's install card added a window focus listener
+const ctx = { escapeHtml: esc, escapeAttribute: esc, document: { addEventListener() {} }, window: { addEventListener() {} } };
 vm.createContext(ctx);
 let html;
 try {

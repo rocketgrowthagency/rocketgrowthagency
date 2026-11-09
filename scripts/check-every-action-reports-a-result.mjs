@@ -37,6 +37,7 @@ const TARGETS = [
 // exemption must be argued, never assumed (same discipline as the pre-flight gate list).
 const UI_ONLY = {
   "data-dk-refresh": "re-reads the admin Data card and redraws it; changes nothing",
+  "data-pb-details": "the 'Website changes can't go live' warning's Details (admin_publish_blocked_warning, 11-8): opens or folds the warning's list and flips aria-expanded (visible); changes nothing",
   "data-bl-refresh": "re-reads the admin Blog card and redraws it; changes nothing",
   "data-bl-all": "opens the full list on the admin Blog card; changes nothing",
   "data-mg-card": "RGA's managed hours / attributes / kickoff-answer cards (managed_admin_ui_v1, 11-4): a typed note or a picked choice inside the card is kept as a draft so a redraw never wipes it (visible: it is the field itself); nothing is saved. The saves (data-mg-put, data-mg-undo, data-mg-record) each show a message in the card.",

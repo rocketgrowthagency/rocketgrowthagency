@@ -67,7 +67,9 @@ if (/status:\s*isHybrid\s*\?\s*"in_progress"\s*:\s*"done"/.test(exec)) {
   console.log("     that finished the job cannot say so, and its own `done` gets overwritten");
 // 🔄 2026-10-13: the decision gained a leading VETO (`result?.completed === false ? false : (…)`, 10-12: a runner that
 // says it did NOT finish is believed). runnerCompleted still leads everything after it; the veto is allowed.
-} else if (/const isDone = (?:result\?\.completed === false \? false : \()?runnerCompleted \|\|/.test(exec)) {
+// 🔄 2026-11-08 (049cdbde): `!!noChangeNeeded ||` may sit before it (a check that found it already right is done). It only
+// ORs in one more way to be done, so a runner's own `completed: true` still marks the step done; nothing else may lead.
+} else if (/const isDone = (?:result\?\.completed === false \? false : \()?(?:!!noChangeNeeded \|\| )?runnerCompleted \|\|/.test(exec)) {
   // 🔑 PIN THE PROPERTY: `runnerCompleted` LEADS THE DECISION. What follows it is allowed to grow —
   // it now reads `runnerCompleted || (!isHybrid && !isDetected)`, because a step whose completion is
   // DETECTED must not be finished by merely pressing Run. This gate failed on that correct change

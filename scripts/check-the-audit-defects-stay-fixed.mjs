@@ -35,7 +35,8 @@ for (const id of ["m1.gbp.optimize_categories", "m1.gbp.services_products", "m1.
   if (!b) { F(`#3 runner ${id} not found`); continue; }
   // 11-01 (blog step, "up to 2 when material exists"): the runner is one line that hands off to blogFromMaterial. The plan lock and the
   // plan-fed prompt live in that function, so READ IT, and require the lock to come BEFORE the model is asked (nothing drafts without the plan).
-  const hand = id === "m1.web.blog_seed" && b.match(/=>\s*(blogFromMaterial)\(client\)/);
+  // 11-8 (049cdbde, '0 posts' finishes the step): the runner awaits it and finishes a no-material result, so either form hands off
+  const hand = id === "m1.web.blog_seed" && b.match(/(?:=>|await)\s*(blogFromMaterial)\(client\)/);
   if (hand) {
     const fa = FE.indexOf("async function blogFromMaterial("), fb = FE.indexOf("\n}\n", fa);
     b = fa < 0 ? "" : FE.slice(fa, fb < 0 ? fa + 6000 : fb);

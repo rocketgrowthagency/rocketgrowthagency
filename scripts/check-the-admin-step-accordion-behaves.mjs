@@ -138,7 +138,8 @@ if (!/function obHoldInPlace\(anchor, change, opened\) \{[\s\S]{0,400}overflowAn
 if (!/obHoldInPlace\(row, \(\) => \{/.test(AJS_HOLD)) fails.push("a step row opens without holding its place");
 if (!/obHoldInPlace\(b, \(\) => \{ body\.hidden = !nowOpen;/.test(AJS_HOLD)) fails.push("a card opens without holding its place");
 // 🔒 Chris 10-31, step 34: what the client answered is the step's body, below its top bar, or it can't fold
-if (/<p class="ob-title">\$\{escapeHtml\(o\.t\)\} \$\{badge\}<\/p>[^\n]*\$\{clientInputHtml\(o, s\.task\)\}/.test(AJS_HOLD)) fails.push("a done step puts the client's answer inside its top bar: it can't fold, and its number floats mid-card");
+// 🔄 11-8: the title grew a publish-blocked tag after the badge and this exact-title pattern went blind; any answer on the title's line fails
+if (/<p class="ob-title">\$\{escapeHtml\(o\.t\)\}[^\n]*\$\{clientInputHtml\(o, s\.task\)\}/.test(AJS_HOLD)) fails.push("a done step puts the client's answer inside its top bar: it can't fold, and its number floats mid-card");
 if (!/const said = `\$\{attestation\}\$\{clientInputHtml\(o, s\.task\)\}/.test(AJS_HOLD)) fails.push("a done step's answer isn't its own body");
 if (fails.length) { console.error("🔴 the admin step accordion does not behave:"); for (const f of fails) console.error("   · " + f); process.exit(1); }
 console.log("✅ the admin step accordion: one open per card, the live call never folds, jumps and the acted-on step open, ⌘F reaches folded text");

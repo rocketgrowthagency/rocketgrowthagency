@@ -82,6 +82,7 @@ const LEAVES = [
   { needle: "${label} ↗</a>", why: "a linkified URL in stored output, target=_blank" },
   { needle: 'class="admin-button ob-gcard-go" href="https://business.google.com/" target="_blank"', why: "the Google card's Open Google Business Profile (admin_google_card_v1), target=_blank" },
   { needle: 'class="ob-gcard-maps"', why: "the Google card's See it on Google Maps (one_google_card_v1), target=_blank" },
+  { needle: '<td class="ob-cr-pg"><a href="${escapeAttribute(pg.url)}" target="_blank" rel="noopener">', why: "a code step's result table (approved admin_code_result_v1, 11-8): each row's page name opens that page on their website, target=_blank" },
   { needle: "Open Google's owner page", why: "admin step 11: Google's own page for the second listing's owner, target=_blank" },
 ];
 const isComment = (l) => /^\s*(\/\/|\*|\/\*)/.test(l);
