@@ -1132,9 +1132,9 @@ DONE = both are live or marked not for this business. It finishes itself. A tick
     id: "m1.gbp.knowledge_panel", title: "Claim + optimize brand knowledge panel",
     type: "manual", dependsOn: ["m1.gbp.photos", "m1.audit.social"],
     actionLabel: "⚡ Draft this for me",
-    instructions: `Search the brand name in Google. Knowledge panel on right = brand authority.
-Claim via "Suggest an edit" → "Claim this business" if not already.
-Ensure: logo, founded date, website, social links, services all populated.`,
+    instructions: `Runs itself in the morning run (no Run button): one search of the brand name, no model. Google's knowledge panel is compared with their profile, the same details step 52 reads.
+Their profile shows and the name, phone and website agree: done by itself. A detail differs: your move, fix it on the profile (the business facts step). A brand panel that is not their profile: your move, claim it ("Claim this knowledge panel", signed in to an account on their official site or YouTube). No panel yet: done, normal for a business few people search by name.
+A search that could not be read is never "no panel": it tries again tomorrow. It looks again each quarter.`,
   },
   {
     id: "m1.brand.youtube_setup", title: "Create YouTube channel for video SEO",
@@ -1209,10 +1209,10 @@ NOTE: include {{review_link}} where the URL goes — don't hardcode the URL.`,
         outcome_data: { google_review_link: reviewLink, templates_drafted: true },
       };
     },
-    instructions: `Press ⚡ and it drafts the message with the client's Google review link. The client approves it, then sends each request themselves from their own phone or email, in one tap. RGA never sends one.
-One ask, plus one reminder after 3 days if they haven't reviewed. Never a second reminder. If a customer says stop, stop.
-Everyone gets asked the same way, picked by how recently the job finished. Never pick the people you expect to rate well: Google doesn't allow asking selectively.
-There's no review-rate goal. Count asks sent and reviews received, and report both as measured.`,
+    instructions: `1. The channel is the one the client confirmed on the social profiles step: use it, never make a second. With none confirmed, wait for the client.
+2. The card has the description and links ready to paste, read from their Google profile (the same words as Google). Open YouTube Studio → Customization → Profile, paste them, then press Pasted. Branding: upload the logo + a banner (1546 × 423 with phone + website + tagline).
+3. Done when the channel is confirmed and the details are pasted. Until YouTube's API is approved, that press is the only proof.
+4. The two short scripts are drafted from this card (Draft the scripts); the client films them on their video step. The clips are optional: when one arrives, download it, post it on the channel with the drafted title / description / tags, and paste the video link (it is checked that it opens). Clips never hold the step or reopen it.`,
   },
   {
     id: "m1.review.first_5", title: "Ask 5 recent customers for a review",
@@ -1236,9 +1236,9 @@ Done means 5 asks sent, by week 3. Reviews are a result, counted as they come, n
         return { summary: `OAuth not connected. Reply manually in GBP dashboard. Once OAuth is done, use \`node gbp.mjs ${client.id} reviews\` to list + draft replies.` };
       }
     },
-    instructions: `Reply to every existing review. Positive: refer to what the customer actually wrote, use their name sparingly, no keywords, and never repeat the same sentence across replies. Negative: empathize + offer offline resolution.
-SLA going forward: 24-hr response. ⚡ drafts a reply to each unanswered review.
-A reply counts as replied only once it is read back from Google and seen live. Until then the portal does not say "Replied".`,
+    instructions: `Runs itself in the morning run (no Run button): reads their reviews from Google. No reviews yet: done by itself. Otherwise a reply is drafted for each unanswered review and goes to the client's For your approval; each posts when they approve it.
+Positive: refer to what the customer actually wrote, use their name sparingly, no keywords, and never repeat the same sentence across replies. Negative: empathize + offer offline resolution.
+Done when every review that was there has a reply seen live on Google. Until then the portal does not say "Replied". A read that failed is never "no reviews".`,
   },
   // === Close the month (order approved 2026-10-08, onboarding_order_audit_v1) ===
 
@@ -1254,7 +1254,7 @@ A reply counts as replied only once it is read back from Google and seen live. U
         outcome_data: result.summary,
       };
     },
-    instructions: `Report is auto-generated and posted to the client portal. Send a short follow-up email with the portal link + a 3-bullet summary.`,
+    instructions: `Builds itself once the step before it is finished and kickoff + 27 days have passed (no Run button). Read the report on this card, then press Send: it asks once more, naming who it goes to. The sent email is the step's proof.`,
   },
   {
     id: "m1.call.close", title: "Close-out call",
@@ -1267,9 +1267,7 @@ Confirm next monthly call date. Month 2 starts on its own under the contract, so
     id: "m1.handoff.month2", title: "Transition to monthly cycle",
     type: "auto", dependsOn: ["m1.call.close"],
     actionLabel: "⚡ Run the hand-off",
-    instructions: `Creates the Month 2 record so recurring monthly work has somewhere to write, and lists what's done and what's still open.
-
-Run only after the month-1 close call has happened — it marks the transition out of onboarding.`,
+    instructions: `Runs itself once the Month 1 report is sent or skipped and the close-out call is settled (no Run button, and no Skip: it is the move into Month 2 itself). Creates next month's record and reads it back, then lists each Month 1 step still open by name and each skipped one with its reason. Nothing is dropped.`,
     async run({ clientId }) {
       const { ensureMonthlyState } = await import("../state.mjs");
       await ensureMonthlyState(clientId);

@@ -509,4 +509,10 @@ export const FILES = {
   citprogress: "shared/citation-progress.js",
   citbuildfn: "netlify/functions/admin-citation-build.js",
   citlivejob: "netlify/functions/citation-live-check.js",
+  // steps_57_64_v1 (11-9): every admin step skips and opens, steps 57/58/61/62/64, and the morning run that starts the steps that run themselves
+  stepskip: "netlify/functions/_step-skip.js",
+  stepskipfn: "netlify/functions/admin-step-skip.js",
+  steppressfn: "netlify/functions/admin-step-press.js",
+  steps5764: "shared/steps-57-64.js",
+  reviewstep: "netlify/functions/_review-step.js",
 };

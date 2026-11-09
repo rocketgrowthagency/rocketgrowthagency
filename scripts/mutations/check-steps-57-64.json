@@ -1,0 +1,436 @@
+[
+ [
+  "a skip needs no reason",
+  "stepskip",
+  "if (s.length < 3) return { error: \"Say why in a few words (the reason is kept with it).\" };",
+  "if (false) return { error: \"Say why in a few words (the reason is kept with it).\" };",
+  1
+ ],
+ [
+  "a 250-character reason is kept",
+  "stepskip",
+  "if (s.length > REASON_MAX) return",
+  "if (s.length > 100000) return",
+  1
+ ],
+ [
+  "an em dash reaches the Month 1 report",
+  "stepskip",
+  "return { reason: s.replace(/—/g, \", \") };",
+  "return { reason: s };",
+  1
+ ],
+ [
+  "who skipped it is lost",
+  "stepskip",
+  "skip_by: by || \"RGA\",",
+  "skip_by: \"RGA\",",
+  1
+ ],
+ [
+  "an RGA skip is recorded as the client's",
+  "stepskip",
+  "skipped_by: \"rga\", skip_by",
+  "skipped_by: \"client\", skip_by",
+  1
+ ],
+ [
+  "Undo forgets when the step was finished",
+  "stepskip",
+  "const p = t.skip_prev, next = { ...t, status: p.status || \"pending\", completed_at: p.completed_at || null, done_by: p.done_by || null };",
+  "const p = t.skip_prev, next = { ...t, status: p.status || \"pending\", completed_at: null, done_by: p.done_by || null };",
+  1
+ ],
+ [
+  "Undo leaves the reason behind",
+  "stepskip",
+  "[\"skipped_at\", \"skipped_by\", \"skip_by\", \"skip_reason\", \"skip_prev\"]",
+  "[\"skipped_at\", \"skipped_by\", \"skip_by\", \"skip_prev\"]",
+  1
+ ],
+ [
+  "a skipped step takes a second skip",
+  "stepskip",
+  "if (t.status === \"skipped\") return { status: 409, error: \"It's already skipped.\" };",
+  "",
+  1
+ ],
+ [
+  "the hand-off steps take a Skip",
+  "stepskip",
+  "const noSkipWhy = (stepId) => NO_SKIP[stepId] || null;",
+  "const noSkipWhy = (stepId) => null;",
+  1
+ ],
+ [
+  "Skip is offered on a finished step",
+  "stepskip",
+  "return { skip: st !== \"done\" && st !== \"declined\", undo: false, why: null };",
+  "return { skip: true, undo: false, why: null };",
+  1
+ ],
+ [
+  "the server writes without re-reading the record",
+  "stepskipfn",
+  "    const rec = await readStepRecord(d.supa, clientId, stepId);\n    const t = rec.tasks[stepId] || {}, now = d.now();",
+  "    const rec = rec0;\n    const t = rec.tasks[stepId] || {}, now = d.now();",
+  1
+ ],
+ [
+  "the server doesn't read the write back",
+  "stepskipfn",
+  "if (!back || back.status !== r.task.status || !sameSkip(back.skip_reason, r.task.skip_reason) || !sameSkip(back.completed_at, r.task.completed_at) || !sameSkip(back.done_by, r.task.done_by)) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "a skip isn't recorded under its name",
+  "stepskipfn",
+  "kind: action === \"skip\" ? \"step_skipped\" : \"step_unskipped\"",
+  "kind: action === \"skip\" ? \"step_skipd\" : \"step_unskipd\"",
+  1
+ ],
+ [
+  "anyone can skip a step",
+  "stepskipfn",
+  "  if (gate.error) return gate.error;\n",
+  "",
+  1
+ ],
+ [
+  "a finished step is skipped",
+  "stepskipfn",
+  "if (action === \"skip\" && (t.status === \"done\" || t.status === \"declined\")) return json(409,",
+  "if (false) return json(409,",
+  1
+ ],
+ [
+  "the hand-off step takes a Skip",
+  "stepskipfn",
+  "  if (why) return json(400, { error: why });\n",
+  "",
+  1
+ ],
+ [
+  "a name alone is read as their profile",
+  "steps5764",
+  "if (!phoneEq && !webEq) return { state: \"claim\", shown, diffs: [], why: null };",
+  "if (false) return { state: \"claim\", shown, diffs: [], why: null };",
+  1
+ ],
+ [
+  "a phone with the country code reads as different",
+  "steps5764",
+  ".replace(/\\D/g, \"\").replace(/^1(?=\\d{10}$)/, \"\");",
+  ".replace(/\\D/g, \"\");",
+  1
+ ],
+ [
+  "www makes a website look different",
+  "steps5764",
+  ".toLowerCase().replace(/^www\\./, \"\"); } catch { return \"\"; } };",
+  ".toLowerCase(); } catch { return \"\"; } };",
+  1
+ ],
+ [
+  "with nothing to compare it still decides",
+  "steps5764",
+  "if (!pPhone && !pHost) return { state: \"cant_tell\"",
+  "if (false) return { state: \"cant_tell\"",
+  1
+ ],
+ [
+  "a failed search isn't tried again tomorrow",
+  "steps5764",
+  "{ next_at: new Date(now + RETRY_HOURS * 3600e3).toISOString() }",
+  "{ next_at: new Date(now + QUARTER_DAYS * DAY).toISOString() }",
+  1
+ ],
+ [
+  "a clear answer never looks again",
+  "steps5764",
+  "{ next_check_at: new Date(now + QUARTER_DAYS * DAY).toISOString() }",
+  "{ next_check_at: new Date(now + 1 * DAY).toISOString() }",
+  1
+ ],
+ [
+  "a step starts with its dependencies open",
+  "steps5764",
+  "if ((step.dependsOn || []).some((d) => !settled(t0[d]))) continue;",
+  "",
+  1
+ ],
+ [
+  "a skipped step is started",
+  "steps5764",
+  "if ([\"skipped\", \"declined\"].includes(t.status)) continue;",
+  "",
+  1
+ ],
+ [
+  "the report builds before kickoff + 27 days",
+  "steps5764",
+  "const opens = reportOpensAt(t0); if (opens == null || now < opens) continue; }",
+  "const opens = reportOpensAt(t0); }",
+  1
+ ],
+ [
+  "the hand-off runs before 62 is settled",
+  "steps5764",
+  "if (id === ID.HANDOFF && !settled(t0[ID.REPORT])) continue;",
+  "",
+  1
+ ],
+ [
+  "57 never looks again each quarter",
+  "steps5764",
+  "if (kp && Date.parse(kp.next_check_at || \"\") <= now) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "the hand-off steps are skippable",
+  "steps5764",
+  "const NO_SKIP = [ID.HANDOFF, ID.HANDOFF2];",
+  "const NO_SKIP = [];",
+  1
+ ],
+ [
+  "a card says Press X where no X is shown",
+  "steps5764",
+  "line = \"It is open now. RGA works it from this card.\";",
+  "line = \"Press Run to start it.\";",
+  1
+ ],
+ [
+  "57 keeps a Run button",
+  "steps5764",
+  "const RUNS_ITSELF = [ID.TOP, ID.TRADE, ID.YELP, ID.MENTIONS, ID.PANEL, ID.REVIEWS, ID.REPORT, ID.HANDOFF];",
+  "const RUNS_ITSELF = [ID.TOP, ID.TRADE, ID.YELP, ID.MENTIONS, ID.REVIEWS, ID.REPORT, ID.HANDOFF];",
+  1
+ ],
+ [
+  "a failed review read says there are no reviews",
+  "steps5764",
+  "if (rv.status && rv.status !== \"ok\") {",
+  "if (false) {",
+  1
+ ],
+ [
+  "what carries over loses the skip's reason",
+  "steps5764",
+  "skipped.push({ id: s.id, title: s.title, reason: clip(t.skip_reason || \"\", 200) });",
+  "skipped.push({ id: s.id, title: s.title, reason: \"\" });",
+  1
+ ],
+ [
+  "58 is done without the details pasted",
+  "steps5764",
+  "const done = !!(yt && pasted);",
+  "const done = !!yt;",
+  1
+ ],
+ [
+  "Pasted is offered before the channel is confirmed",
+  "steps5764",
+  "pasteable: !!(yt && pack) });",
+  "pasteable: !!pack });",
+  1
+ ],
+ [
+  "a review that arrived later holds the step open",
+  "reviewstep",
+  "let first = known && Array.isArray(known.first_ids) ? known.first_ids : null;",
+  "let first = null;",
+  1
+ ],
+ [
+  "a list shorter than Google's total is counted",
+  "reviewstep",
+  "if (items.length !== total && total > 0) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "57 asks a model again",
+  "flowexec",
+  "    const pack = await citPack(client);\n    const d = S.decidePanel(",
+  "    const pack = await citPack(client); try { await aiDraft(\"c\", \"d\"); } catch (e) {}\n    const d = S.decidePanel(",
+  1
+ ],
+ [
+  "57 with no search key says no panel",
+  "flowexec",
+  "if (!key) return cant(\"no search key is set on the server\");",
+  "if (!key) return { summary: \"No knowledge panel yet\", outcome: \"verified\", completed: true, outcome_data: { kp: { state: \"none\" } } };",
+  1
+ ],
+ [
+  "57 isn't finished by its own checks",
+  "flowexec",
+  "...(done ? { done_by: \"checks\" } : {}), outcome_data: { kp } };",
+  "outcome_data: { kp } };",
+  1
+ ],
+ [
+  "61 with no reviews isn't done by itself",
+  "flowexec",
+  "outcome: \"verified\", completed: true, done_by: \"checks\", outcome_data: { ...(prevTask.outcome_data || {}), reviews: rv } };",
+  "outcome: \"verified\", completed: false, done_by: \"checks\", outcome_data: { ...(prevTask.outcome_data || {}), reviews: rv } };",
+  1
+ ],
+ [
+  "61 drafts again every morning",
+  "flowexec",
+  "if (!todo.length && prevTask.auto_result && prevTask.auto_result.summary) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "61 stores a review's words",
+  "flowexec",
+  "outcome_data: { unanswered: unanswered.length, reviews: stored } };",
+  "outcome_data: { unanswered: unanswered.length, reviews: stored, words: list } };",
+  1
+ ],
+ [
+  "64 drops the reason a step was skipped",
+  "flowexec",
+  "${st.title || st.id}${st.reason ? `: ${st.reason}` : \"\"}`).join(\"\\n\");",
+  "${st.title || st.id}`).join(\"\\n\");",
+  1
+ ],
+ [
+  "62 builds before kickoff + 27 days",
+  "flowexec",
+  "if (Date.now() < opensAt) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "Run buttons stay on the steps that run themselves",
+  "admin",
+  "!wcAutoMove(o.flowId, s.task) && !uniNoRowRun(o.flowId) : false;",
+  "!wcAutoMove(o.flowId, s.task) : false;",
+  1
+ ],
+ [
+  "the checklist doesn't pass its rows through the wrapper",
+  "admin",
+  "const rowHtmlList = rowHtmlList0.map((h, i) => uniWrapRow(h, steps[i].obj, steps[i], scope, steps));",
+  "const rowHtmlList = rowHtmlList0;",
+  1
+ ],
+ [
+  "no Skip link on an unfinished step",
+  "admin",
+  "const mayOffer = !own && !o.clientFacing && ![\"done\", \"skipped\", \"declined\"].includes(st) && U.canSkip(o.flowId);",
+  "const mayOffer = false;",
+  1
+ ],
+ [
+  "Skip is offered on a done step",
+  "admin",
+  "![\"done\", \"skipped\", \"declined\"].includes(st) && U.canSkip(o.flowId);",
+  "![\"skipped\", \"declined\"].includes(st) && U.canSkip(o.flowId);",
+  1
+ ],
+ [
+  "the hand-off step is offered a Skip",
+  "admin",
+  "![\"done\", \"skipped\", \"declined\"].includes(st) && U.canSkip(o.flowId);",
+  "![\"done\", \"skipped\", \"declined\"].includes(st);",
+  1
+ ],
+ [
+  "53's card says Press Build the list again",
+  "admin",
+  "label: \"Not built yet\", title: \"Builds itself in the morning run\",",
+  "label: \"Not built yet\", title: \"Press Build the list\",",
+  1
+ ],
+ [
+  "the Skip prompt loses its name",
+  "admin",
+  "const reason = await rgaDialog({ kind: \"prompt\", title: \"Skip this step\"",
+  "const reason = await rgaDialog({ kind: \"prompt\", title: \"Skip\"",
+  1
+ ],
+ [
+  "the Skip button doesn't spin",
+  "admin",
+  "  mgBusy(b, true);\n  try {\n    const r = await fetch(UNI_FN_SKIP",
+  "  try {\n    const r = await fetch(UNI_FN_SKIP",
+  1
+ ],
+ [
+  "a client row's Skip bypasses the one Skip",
+  "admin",
+  "if (b.getAttribute(\"data-task-status\") === \"skipped\" && uniS()) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "the Send confirm doesn't name who it goes to",
+  "admin",
+  "gets it by email at ${to || \"the address on file\"}, exactly as shown",
+  "gets it by email, exactly as shown",
+  1
+ ],
+ [
+  "the Send confirm isn't outward",
+  "admin",
+  "tone: \"outward\", title: \"Send the Month 1 report\"",
+  "tone: \"calm\", title: \"Send the Month 1 report\"",
+  1
+ ],
+ [
+  "the old write-up shows again",
+  "admin",
+  "  if (o && UNI_OWN_CARD.has(o.flowId)) return \"\";\n",
+  "",
+  1
+ ],
+ [
+  "a finished row loses its card",
+  "admin",
+  "(UNI_OWN_CARD.has(o.flowId) && s.task?.status !== \"skipped\" ? `<div class=\"ob-done-card\">${rowStepCardsHtml(o, s)}</div>` : \"\")",
+  "(false ? `<div class=\"ob-done-card\">${rowStepCardsHtml(o, s)}</div>` : \"\")",
+  1
+ ],
+ [
+  "a hand Mark step complete returns beside 57",
+  "admin",
+  "globalThis.rgaCitationProgress?.isStep(o.flowId) || uniS()?.noHandDone?.(o.flowId) ? \"\" : `<button class=\"admin-button",
+  "globalThis.rgaCitationProgress?.isStep(o.flowId) ? \"\" : `<button class=\"admin-button",
+  1
+ ],
+ [
+  "a skipped step's row stops saying Skipped",
+  "admin",
+  "if (!declined && s.task?.status === \"skipped\" && s.task?.skipped_by !== \"client\") return `<span class=\"ob-status done\" data-skip-pill>Skipped</span>`;",
+  "if (false) return `<span class=\"ob-status done\" data-skip-pill>Skipped</span>`;",
+  1
+ ],
+ [
+  "the client's clips lock once RGA pastes the details",
+  "steplock",
+  "if (done && !t.channel_pasted) why = \"RGA finished it\";",
+  "if (done) why = \"RGA finished it\";",
+  1
+ ],
+ [
+  "step 58's instructions point at Draft this for me again",
+  "playbooksjson",
+  "1. The channel is the one the client confirmed on the social profiles step",
+  "1. Use the Draft this for me button. The channel is the one the client confirmed on the social profiles step",
+  1
+ ],
+ [
+  "step 57's instructions stop saying it runs itself",
+  "playbooksjson",
+  "Runs itself in the morning run (no Run button): one search of the brand name, no model.",
+  "Press Draft to search the brand name.",
+  1
+ ]
+]
