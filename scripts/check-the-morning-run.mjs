@@ -201,5 +201,13 @@ const cl = (id, extra = {}) => ({ id, business_name: id, source: null, ...extra 
   if (/status:\s*["']done["']/.test(code)) fail("8: the morning run must never write done");
   if (!/flow-execute-heavy-background/.test(code)) fail("8: must go through the same runner as the Run button");
 }
+// 61 + 57 follow the shared rule's dates (shared/steps-57-64.js dueNow): 61 reads daily until done; 57 keeps its runner's next_at / next_check_at
+try {
+  const st = (id) => PB.find((x) => x.id === id), all = Object.fromEntries(PB.map((x) => [x.id, { status: "done" }])), at = Date.parse("2026-11-10T14:20:00Z");
+  if (M.whyNot(st("m1.review.response"), { ...all, "m1.review.response": { status: "in_progress", ran_at: "2026-11-09T14:20:00Z", outcome_data: { reviews: {} } } }, at) !== null) fail("61 doesn't read Google again the next morning while replies are still to come");
+  if (M.whyNot(st("m1.review.response"), { ...all, "m1.review.response": { status: "done", ran_at: "2026-11-09T14:20:00Z", outcome_data: { reviews: {} } } }, at) === null) fail("61 keeps running after it's done");
+  if (M.whyNot(st("m1.gbp.knowledge_panel"), { ...all, "m1.gbp.knowledge_panel": { status: "in_progress", ran_at: "2026-11-09T14:20:00Z", outcome_data: { kp: { state: "cant_tell", next_at: "2026-11-10T00:00:00Z" } } } }, at) !== null) fail("57's failed search isn't retried at its next_at");
+  if (M.whyNot(st("m1.gbp.knowledge_panel"), { ...all, "m1.gbp.knowledge_panel": { status: "done", ran_at: "2026-11-09T14:20:00Z", outcome_data: { kp: { state: "none", next_check_at: "2027-02-09T00:00:00Z" } } } }, at) === null) fail("57 searches again before its next check");
+} catch (e) { console.error(`⚠️  INDETERMINATE: ${e.message}`); process.exit(2); }
 if (F.length) { console.error(`❌ the morning run regressed (${F.length}):`); F.forEach((m) => console.error("  - " + m)); process.exit(1); }
 console.log("✓ the morning run: turn rules, quarterly 57, handoff waits on the report and the close call, test clients out, budget stops at the reserve, a throw is never done, read before write and read back");
