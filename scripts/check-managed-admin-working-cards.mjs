@@ -120,7 +120,8 @@ try {
     for (const id of ids) for (const task of STATES) {
       A.st.onboardingData.tasks[id] = task; B.st.onboardingData.tasks[id] = task;
       const a = A.w.__x.rowStepCardsHtml({ flowId: id, t: "T" }, { task }), b = B.w.__x.rowStepCardsHtml({ flowId: id, t: "T" }, { task });
-      compared++; if (a !== b) { diff++; if (diff <= 3) fail(`proof: mode ${JSON.stringify(mode)}, step ${id}, state ${JSON.stringify(task)} draws differently from before (if rowStepCardsHtml changed for another reason since ${OLD_REV}, re-pin OLD_REV after checking the change)`); }
+      // steps_59_63_v1 (11-9): step 59 now draws its own card on every row state (held by check-steps-59-63); every other step stays byte-identical
+      compared++; if (a !== b && id !== "m1.review.system") { diff++; if (diff <= 3) fail(`proof: mode ${JSON.stringify(mode)}, step ${id}, state ${JSON.stringify(task)} draws differently from before (if rowStepCardsHtml changed for another reason since ${OLD_REV}, re-pin OLD_REV after checking the change)`); }
     }
     await A.wait(); await B.wait(); requests += B.log.length;
   }

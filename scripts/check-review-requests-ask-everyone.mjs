@@ -34,7 +34,8 @@ const CLEAN = { sms_1: "Hi {{first_name}}, thanks for choosing Acme! Would you m
 { const r = await run(JSON.stringify(CLEAN));
   if (r.outcome === "indeterminate" || r.outcome_data?.messages?.sms_1 !== CLEAN.sms_1) fail("a clean draft isn't stored as validated messages");
   if (/characters|send immediately/i.test(r.summary)) fail("drafting notes reach the summary"); }
-{ const r = await run(JSON.stringify({ ...CLEAN, email_2_body: "If you had a good experience, a review helps: {{review_link}}" }));
+// steps_59_63_v1: the step writes the one message the product sends (sms_1), so the gated draft is the sms_1 one
+{ const r = await run(JSON.stringify({ ...CLEAN, sms_1: "Hi {{first_name}}, if you had a good experience, a review helps: {{review_link}}" }));
   if (r.outcome !== "indeterminate" || r.outcome_data?.messages) fail("a GATED draft is saved"); }
 { const r = await run("SMS_1: Hi {{first_name}} {{review_link}}"); if (r.outcome !== "indeterminate") fail("a prose draft is saved as the messages"); }
 // step 12 uses only a message that passes

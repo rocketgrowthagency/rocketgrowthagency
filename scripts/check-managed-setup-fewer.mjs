@@ -479,7 +479,9 @@ try {
       if (A.advanceFewerMove()) fail("the Advance dialog names a move for a client who isn't managed");
     }
     if (!/if \(fewerAdminLine\(o\.flowId, s\.task\)\) return `<span class="ob-status done" data-fewer-pill>Done with fewer<\/span>`;/.test(src)) fail("admin's done row doesn't say Done with fewer");
-    if (!/\$\{obStalledNoteHtml\(s\.task\)\}\$\{fewerAdminLine\(o\.flowId, s\.task\)\}/.test(src)) fail("admin's done row doesn't draw the fewer line under the title");
+    // steps_59_63_v1: step 60 says it on its own card ("The client finished with fewer", rvFirst5CardHtml) instead of under the title
+    if (!/\$\{obStalledNoteHtml\(s\.task\)\}\$\{(?:o\.flowId === "m1\.review\.first_5" \? "" : )?fewerAdminLine\(o\.flowId, s\.task\)\}/.test(src)) fail("admin's done row doesn't draw the fewer line under the title");
+    if (!/The client finished with fewer/.test(src) || !/function rvFirst5CardHtml/.test(src)) fail("admin's step 60 card doesn't say the client finished with fewer");
     if (!/action: "monthly" \}\)/.test(src) || !/fewerMove\.say/.test(src)) fail("admin's Advance to Monthly doesn't name and move the unfinished steps");
   }
 } catch (e) {
