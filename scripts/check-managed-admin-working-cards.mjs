@@ -29,6 +29,8 @@ import { createRequire } from "node:module";
 import { execFileSync } from "node:child_process";
 import { JSDOM } from "jsdom";
 
+// steps_59_63_v1 (59: its message card) + steps_57_64_v1 (61: reads Google and drafts by itself), approved by the owner 11-9, draw differently on purpose
+const CHANGED_ON_PURPOSE = new Set(["m1.review.system", "m1.review.response", "m1.brand.youtube_setup", "m1.gbp.knowledge_panel", "m1.handoff.month2"]);
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const OLD_REV = "d658cfce";
 const F = [], fail = (m) => F.push(m);
@@ -121,7 +123,7 @@ try {
       A.st.onboardingData.tasks[id] = task; B.st.onboardingData.tasks[id] = task;
       const a = A.w.__x.rowStepCardsHtml({ flowId: id, t: "T" }, { task }), b = B.w.__x.rowStepCardsHtml({ flowId: id, t: "T" }, { task });
       // steps_59_63_v1 (11-9): step 59 now draws its own card on every row state (held by check-steps-59-63); every other step stays byte-identical
-      compared++; if (a !== b && id !== "m1.review.system") { diff++; if (diff <= 3) fail(`proof: mode ${JSON.stringify(mode)}, step ${id}, state ${JSON.stringify(task)} draws differently from before (if rowStepCardsHtml changed for another reason since ${OLD_REV}, re-pin OLD_REV after checking the change)`); }
+      compared++; if (a !== b && !CHANGED_ON_PURPOSE.has(id)) { diff++; if (diff <= 3) fail(`proof: mode ${JSON.stringify(mode)}, step ${id}, state ${JSON.stringify(task)} draws differently from before (if rowStepCardsHtml changed for another reason since ${OLD_REV}, re-pin OLD_REV after checking the change)`); }
     }
     await A.wait(); await B.wait(); requests += B.log.length;
   }

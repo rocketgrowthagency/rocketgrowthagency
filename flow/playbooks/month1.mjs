@@ -1165,7 +1165,7 @@ VIDEO 2 — "Educational tip about a common problem"
       );
       return { summary: `AI YouTube channel kickoff:\n\n${draft}` };
     },
-    instructions: "1. ⚡ Draft this for me → channel name, description, keywords and two short video scripts (the client sees the scripts on their video step and films them).\n2. If the client's social profiles step names their channel, use that one: never make a second. Otherwise youtube.com → top-right avatar → \"Create a channel\" → use the channel name.\n3. Customization → Branding → upload the logo + a banner (1546 × 423 with phone + website + tagline); Basic info → description + keywords + links.\n4. The client uploads their 2 clips (or share links) on this row. Download each, upload to the channel with the drafted title / description / tags.\n5. Embed both videos on the website homepage + the main service page, then mark Done.",
+    instructions: "1. The channel is the one the client confirmed on the social profiles step: use it, never make a second. With none confirmed, wait for the client.\n2. The card has the description and links ready to paste, read from their Google profile (the same words as Google). Open YouTube Studio → Customization → Profile, paste them, then press Pasted. Branding: upload the logo + a banner (1546 × 423 with phone + website + tagline).\n3. Done when the channel is confirmed and the details are pasted. Until YouTube's API is approved, that press is the only proof.\n4. The two short scripts are drafted from this card (Draft the scripts); the client films them on their video step. The clips are optional: when one arrives, download it, post it on the channel with the drafted title / description / tags, and paste the video link (it is checked that it opens). Clips never hold the step or reopen it.",
   },
   // === Reviews (order approved 2026-10-08, onboarding_order_audit_v1) ===
   {
@@ -1209,10 +1209,10 @@ NOTE: include {{review_link}} where the URL goes — don't hardcode the URL.`,
         outcome_data: { google_review_link: reviewLink, templates_drafted: true },
       };
     },
-    instructions: `1. The channel is the one the client confirmed on the social profiles step: use it, never make a second. With none confirmed, wait for the client.
-2. The card has the description and links ready to paste, read from their Google profile (the same words as Google). Open YouTube Studio → Customization → Profile, paste them, then press Pasted. Branding: upload the logo + a banner (1546 × 423 with phone + website + tagline).
-3. Done when the channel is confirmed and the details are pasted. Until YouTube's API is approved, that press is the only proof.
-4. The two short scripts are drafted from this card (Draft the scripts); the client films them on their video step. The clips are optional: when one arrives, download it, post it on the channel with the drafted title / description / tags, and paste the video link (it is checked that it opens). Clips never hold the step or reopen it.`,
+    instructions: `Press ⚡ and it drafts the message with the client's Google review link. The client approves it, then sends each request themselves from their own phone or email, in one tap. RGA never sends one.
+One ask, plus one reminder after 3 days if they haven't reviewed. Never a second reminder. If a customer says stop, stop.
+Everyone gets asked the same way, picked by how recently the job finished. Never pick the people you expect to rate well: Google doesn't allow asking selectively.
+There's no review-rate goal. Count asks sent and reviews received, and report both as measured.`,
   },
   {
     id: "m1.review.first_5", title: "Ask 5 recent customers for a review",

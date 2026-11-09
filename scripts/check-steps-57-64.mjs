@@ -274,7 +274,7 @@ try {
     if (cardOf({ status: "pending" }) !== "") fail("57 card: a step that never ran draws a result card (the small card should be the only one)");
     if (!/const doneBtn = zcWaits \|\| siteStep \|\| o\.flowId === GL_STEP \|\| globalThis\.rgaCitationProgress\?\.isStep\(o\.flowId\) \|\| uniS\(\)\?\.noHandDone\?\.\(o\.flowId\) \? ""/.test(A)) fail("57: a hand 'Mark step complete' sits beside it");
     if (!/const inner = \(rowHasDone \|\| ZC_NO_HAND_DONE\.has\(o\.flowId\) \|\| uniS\(\)\?\.noHandDone\?\.\(o\.flowId\) \? "" : btn\("done", "Done"\)\)/.test(A)) fail("57/58: the client-row override offers a hand Done");
-    if (!/\(s\.task\?\.status === "skipped" && s\.task\?\.skip_prev\) \|\| uniS\(\)\?\.noHandDone\?\.\(o\.flowId\) \? ""/.test(A)) fail("57: a finished step offers the old Undo (which resets it instead of restoring it), or a skip's own Undo is doubled");
+    if (!/\(s\.task\?\.status === "skipped" && s\.task\?\.skip_prev\) \|\| uniS\(\)\?\.noHandDone\?\.\(o\.flowId\)(?: \|\| \(o\.flowId === "m1\.call\.close" && s\.task\?\.status === "skipped"\))? \? ""/.test(A)) fail("57: a finished step offers the old Undo (which resets it instead of restoring it), or a skip's own Undo is doubled");
     if (!/if \(!declined && s\.task\?\.status === "skipped" && s\.task\?\.skipped_by !== "client"\) return `<span class="ob-status done" data-skip-pill>Skipped<\/span>`;/.test(A)) fail("rows: a skipped step's row doesn't say Skipped");
     if (!S.noHandDone(ID.PANEL)) fail("57: noHandDone doesn't include the panel");
   }
