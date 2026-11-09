@@ -159,5 +159,12 @@
   "      \"hasRunner\": false,\n      \"actor\": \"rga\",\n      \"clientLabel\": null,\n      \"clientHint\": null,\n      \"clientForm\": null,\n      \"clientBucket\": \"admin\",\n      \"clientFeed\": \"Set up your business on Bing and Apple Maps\"",
   "      \"hasRunner\": true,\n      \"actor\": \"rga\",\n      \"clientLabel\": null,\n      \"clientHint\": null,\n      \"clientForm\": null,\n      \"clientBucket\": \"admin\",\n      \"clientFeed\": \"Set up your business on Bing and Apple Maps\"",
   1
+ ],
+ [
+  "56's retired checklist output shows again",
+  "admin",
+  "const resultBlock = o.flowId === \"m1.platform.bing_apple\" ? \"\" : stepOutputHtml(result, s.task, o);",
+  "const resultBlock = stepOutputHtml(result, s.task, o);",
+  1
  ]
 ]

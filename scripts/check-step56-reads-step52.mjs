@@ -143,6 +143,7 @@ try {
   const pb = (PB.month1 || []).find((x) => x.id === S56);
   if (!pb || pb.hasRunner !== false || pb.actionLabel) fail("56 offers a Run button again in playbooks.json");
   if (new RegExp(`\\n  "${S56.replace(/\./g, "\\.")}": async`).test(FXSRC)) fail("56 has a runner again in flow-execute (it printed manual sign-up steps)");
+  if (!/const resultBlock = o\.flowId === "m1\.platform\.bing_apple" \? "" : stepOutputHtml\(result, s\.task, o\);/.test(A)) fail("56's retired checklist output (Import from Google, Apple's old address) shows again under its card");
   if (!/same two rows/.test((pb && pb.instructions) || "") || /Import from Google →/.test((pb && pb.instructions) || "")) fail("56's instructions don't say it reads 52's rows, or tell RGA to import from Google again");
 } catch (e) { console.error(`⚠️  INDETERMINATE: ${String(e.stack || e.message).split("\n").slice(0, 2).join(" ")}`); process.exit(2); }
 if (F.length) { console.error(`❌ step 56: ${F.length} regression(s)`); for (const x of F) console.error(`  · ${x}`); process.exit(1); }
