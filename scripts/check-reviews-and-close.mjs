@@ -170,5 +170,10 @@ if (!/fillBlankDoneRows\(listEl, numbered\);/.test(P) || !/if \(\(c\.textContent
 // month1_email_v1 (11-9 review): the portal's report view never shows RGA's skip reasons or who skipped; it reads "Coming next"
 { const PJ = fs.readFileSync(path.join(SITE, "portal/portal.js"), "utf8");
   if (!/s\.key === "skipped" \? \{ \.\.\.s, title: "Coming next", lines: nextLines\(s\.lines\) \}/.test(PJ)) fail("portal report: 'Skipped by RGA' with our internal reasons is back in the client's view"); }
+// month1_email_v1 (11-9 review): the email matches the approved mockup's layout: three number tiles side by side, round check badges, blue "+ N more"
+{ const ME = fs.readFileSync(path.join(SITE, "netlify/functions/_month1-email.js"), "utf8");
+  if (!/<tr>\$\{numbers\.map\(numTile\)\.join\(""\)\}<\/tr>/.test(ME)) fail("email: the three numbers aren't tiles side by side (the approved layout)");
+  if (!/const badge = \(mark, later\) =>/.test(ME) || !/\$\{badge\(mark, mark !== "✓"\)\}/.test(ME)) fail("email: the items lost their round check badges");
+  if (!/color:\$\{BRAND\};">\+ \$\{g\.more\} more/.test(ME)) fail("email: '+ N more' isn't the brand blue"); }
 if (F.length) { console.error("🔴 reviews + the Month 1 close regressed:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ reviews + close hold: no staff-name asks, pace told past 10 · videos optional, skippable, never next · report waits on the baseline only, opens at kickoff + 27, lists what's still open (not optional, not done) · day-35 skip · blank done rows say who finished it + when, in plain words");
