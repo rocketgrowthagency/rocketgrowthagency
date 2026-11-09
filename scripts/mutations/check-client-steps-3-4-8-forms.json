@@ -2,15 +2,15 @@
  [
   "the consent says less than was agreed",
   "portal",
-  "for the work in our promise. No change goes live until I approve it.\";",
-  "for the work in our promise.\";",
+  "I approve it. I also approve one test: a page hidden from Google that Rocket Growth Agency puts up and takes down to prove the access works.\";",
+  "I approve it.\";",
   1
  ],
  [
   "the promise version moves without a new promise",
   "portal",
-  "const ACC_PROMISE_VERSION = \"2026-10-23b\";",
-  "const ACC_PROMISE_VERSION = \"2026-10-30\";",
+  "const ACC_PROMISE_VERSION = \"2026-11-08\";",
+  "const ACC_PROMISE_VERSION = \"2026-11-09\";",
   1
  ],
  [
@@ -23,7 +23,7 @@
  [
   "the promise fold loses the agreement's sections",
   "portal",
-  "Our Service Agreement covers website access (§5, §8)",
+  "Our Service Agreement covers website access (\u00a75, \u00a78)",
   "Our Service Agreement covers website access",
   1
  ],
@@ -93,8 +93,8 @@
  [
   "the time writes over the old link's side",
   "portal",
-  "side: oldLink ? `you sent a one-time login link ${escapeHtml(monthDay(t.client_input_at))}` : `<span data-acc-when>takes 2–5 min</span>`,",
-  "side: `<span data-acc-when>takes 2–5 min</span>`,",
+  "side: oldLink ? `you sent a one-time login link ${escapeHtml(monthDay(t.client_input_at))}` : `<span data-acc-when>takes 2\u20135 min</span>`,",
+  "side: `<span data-acc-when>takes 2\u20135 min</span>`,",
   1
  ],
  [
@@ -121,8 +121,8 @@
  [
   "the plan goes back to a line with no count",
   "portal",
-  "· ${targets.filter((t) => t.on).length} of ${targets.length} on Google</span>",
-  "· ${targets.length} on Google</span>",
+  "\u00b7 ${targets.filter((t) => t.on).length} of ${targets.length} on Google</span>",
+  "\u00b7 ${targets.length} on Google</span>",
   1
  ],
  [

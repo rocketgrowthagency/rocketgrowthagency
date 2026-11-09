@@ -133,7 +133,7 @@ try {
   const sa = planStep(step, { ...proven, [step.id]: due }, now), su = planStep(step, { ...unproven, [step.id]: due }, now);
   if (!sa || sa.act !== "send") fail(`with access proven, a due draft isn't sent (${JSON.stringify(sa)})`);
   if (su) fail(`with access not proven, a due draft is still sent to the client (${JSON.stringify(su)})`);
-  const tt = planStep(testStep, { ...T({ access: live }), [testStep.id]: { ...appr, site_change: { v: "c1", new_page: true } } }, now);
+  const tt = planStep(testStep, { ...T({ access: { ...live, test_ok: { at: "x", words: SC.ACCESS_TEST_CONSENT_INSTALL } } }), [testStep.id]: { ...appr, site_change: { v: "c1", new_page: true } } }, now);
   if (!tt || !["snap", "open"].includes(tt.act)) fail(`the access test itself waits for access to be proven (${JSON.stringify(tt)})`);
   const mvW = SC.autoMove(step.id, due, { gh: true, open: [], access: { ok: false, why: "x" }, now });
   const mvS = SC.autoMove(step.id, due, { gh: true, open: [], access: { ok: true }, now });

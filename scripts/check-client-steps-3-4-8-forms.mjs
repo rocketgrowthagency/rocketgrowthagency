@@ -50,9 +50,10 @@ if (factsTplEnd < 0) moved("step 4's form template");
 const factsTpl = P.slice(factsTplAt + 'if (s.kind === "facts") '.length, factsTplEnd + "</div>`;".length);
 
 // ── 1 · what's in the source: the words, the seats, the guards ──
-const CONSENT = "I allow Rocket Growth Agency to access my website and edit its pages and files for the work in our promise. No change goes live until I approve it.";
+// auto_access_test_v1 (approved 11-8): the tick also approves the one access test, a NEW promise version
+const CONSENT = "I allow Rocket Growth Agency to access my website and edit its pages and files for the work in our promise. No change goes live until I approve it. I also approve one test: a page hidden from Google that Rocket Growth Agency puts up and takes down to prove the access works.";
 if (!P.includes(`const ACC_CONSENT_TEXT = "${CONSENT}";`)) fail("the consent words changed: what the client agrees to is word for word (a new promise is a NEW version)");
-if (!/const ACC_PROMISE_VERSION = "2026-10-23b";/.test(P)) fail("the promise version changed without a new approved promise");
+if (!/const ACC_PROMISE_VERSION = "2026-11-08";/.test(P)) fail("the promise version changed without a new approved promise");
 if (!P.includes("value.consent = host._accConsent ? { promise: ACC_PROMISE_VERSION, text: ACC_CONSENT_TEXT } : null;")) fail("what's recorded on consent changed");
 if (!P.includes('<details class="pm-ax-promise"><summary><span class="pm-ax-pr-ok">✓ You approve every change</span><span class="pm-ax-pr-ok">✓ Every change is listed</span><span class="pm-ax-pr-ok">✓ Remove us anytime</span><span class="pm-ax-pr-more">What we\'ll do with access</span></summary>')) fail("the promise line changed (You approve every change · Every change is listed · Remove us anytime · What we'll do with access)");
 for (const w of ["Our promise about your website", "We need access so we can do the website work for you, instead of sending you instructions. Your website stays yours, and nothing changes until you approve it.", "Your consent below is our written record. Our Service Agreement covers website access (§5, §8)", "In your To do tab. Nothing changes before this", "Listed in What RGA did, with the old text kept"])
@@ -78,7 +79,7 @@ const lifted = [
   `async function portalToken() { return "t"; } function clientError(e) { return (e && e.message) || "x"; } function stepLockOf() { return null; } function portalStepNo() { return 5; } function settleStepResult() { return true; } function showPortalToast() {} function portalAlert() {} function isMonth2Step() { return false; } var _portalPlaybook = {};`,
   fn("escapeHtml"), fn("escapeAttribute"), line("monthDay"),
   line("_rcEditing"), line("_editingSteps"), line("GBP_STEPS"),
-  line("RGA_ADMIN_EMAIL"), line("RGA_ADMIN_GITHUB"), line("ACC_COMMON"), line("ACC_SEND"), line("ACC_CHECK_ICON"), line("ACC_PROMISE_VERSION"), line("ACC_CONSENT_TEXT"),
+  line("RGA_ADMIN_EMAIL"), line("RGA_ADMIN_GITHUB"), line("ACC_COMMON"), line("ACC_SEND"), line("ACC_CHECK_ICON"), line("ACC_PROMISE_VERSION"), line("ACCESS_TEST_CONSENT_INSTALL"), line("ACC_CONSENT_TEXT"),
   multi("ACC_FILES", "\n};"), multi("ACC_PROMISE_ICON", "\n};"), multi("ACC_PROMISE_DO", "];"), multi("ACC_PROMISE_NEVER", "];"),
   line("GH_APP_INSTALL_URL"), `var _ghAppNote = new Map();`,   // client_github_app_install_v1 (11-8): the access card's GitHub app pieces
   ...["accPart", "accSetWhen", "accSetSend", "accConsentHtml", "accPromiseHtml", "accessTestRow", "ghAppWanted", "ghAppInstallHtml", "ghAppCardHtml", "ghAppDoneHtml", "accessCardHtml", "accSiteName", "accStep1Name", "accHostOf", "accHostMono", "accMono", "accWhoOf", "accDevNote", "accDevNoteText", "accProgHtml", "accSetupHtml", "accCustomSetupHtml", "accBuilderWho", "accBuilderNote", "accBuilderSetupHtml", "accFoundPill", "accDrawFound", "accDrawDesigner", "accDrawPlatform", "accSave", "accRequestCheck", "accOpenDesigner"].map(fn),
@@ -260,7 +261,7 @@ const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const body = (post) => post && post[0] && post[0].value;
 const sorted = (o) => Object.keys(o || {}).sort().join(",");
 const DET = "answer,archived_at,checked_at,confidence,designer,designer_answer,evidence,host,platform,reason,shopify_store,signs,site,source,status";
-const CONSENTED = { promise: "2026-10-23b", text: CONSENT };
+const CONSENTED = { promise: "2026-11-08", text: CONSENT };
 const offUnder = (s) => s && s.off === true && s.inCard === false && s.underCard === true;
 const fact = (o) => ({ name: "Acme Roofing", come: "no", area: { ok: true }, phone: "(424) 242-2040", website: "https://acme.example/", ...o });
 const sameFacts = (post, want) => post.length === 1 && post[0].step_id === "m1.gbp.business_facts" && Object.keys(want).every((k) => eq(body(post)[k], want[k])) && sorted(body(post)) === sorted(want);
@@ -280,7 +281,7 @@ const np = body(R.none);
 if (R.none.length !== 1 || sorted(np) !== "detected,platform,platform_source,via" || np.via !== "none" || np.platform !== null || np.platform_source !== "chosen" || R.noSiteSend) fail(`"I don't have a website" changed: it posts no consent and no send button shows (${JSON.stringify(np)})`);
 if (!/Hosted on Netlify/.test(R.who.one) || !/we checked dev\.example/.test(R.who.one) || !/We need access here/.test(R.who.two) || !/No need to add us here/.test(R.who.two) || !/I know where my website's files are kept · about 3 minutes/.test(R.who.two) || !/Send them a short email · easiest if someone built it for you/.test(R.who.two) || R.who.send || !/Shows once you choose who will do this/.test(R.who.three)) fail(`a developer-built site's Step 2 isn't the approved rows (${R.who.two})`);
 // 🔄 client_github_app_install_v1 (approved 11-8): "I'll do it myself" + GitHub = Install on GitHub, word for word; no send button, no Step 3
-if (!/Install Rocket Growth Agency's app on the GitHub repository your website is built from\.Install on GitHubIt can only change the repository you pick, and nothing goes live until you approve it\. Remove it anytime in GitHub\.Someone else manages your GitHub\? Send them the link ›/.test(R.self.two.replace(/ (?=Install on GitHub|It can only|Someone else)/g, "")) || /rocketgrowthagency-admin|Collaborators/.test(R.self.two) || R.self.send || R.self.three) fail(`"I'll do it myself" + GitHub isn't Install on GitHub (no send button, no Step 3) (${R.self.two.slice(0, 260)})`);
+if (!/Install Rocket Growth Agency's app on the GitHub repository your website is built from\.Install on GitHubIt can only change the repository you pick, and nothing goes live until you approve it\. Installing it approves one test: a page hidden from Google that we put up and take down to prove it works\. Remove it anytime in GitHub\.Someone else manages your GitHub\? Send them the link ›/.test(R.self.two.replace(/ (?=Install on GitHub|It can only|Someone else)/g, "")) || /rocketgrowthagency-admin|Collaborators/.test(R.self.two) || R.self.send || R.self.three) fail(`"I'll do it myself" + GitHub isn't Install on GitHub (no send button, no Step 3) (${R.self.two.slice(0, 260)})`);
 if (/updates itself in a minute or two/.test(R.selfGl.two) || !/Free if you have fewer than 5 people on your free GitLab plan \(we take one seat\)\. You can remove us anytime from the same page\. No need to add us on Netlify: it only shows your site, and it can charge for each extra person\./.test(R.selfGl.two) || !/access@rocketgrowthagency\.com/.test(R.selfGl.two) || !offUnder(R.selfGl.send) || R.selfGl.send.words !== "I added RGA on GitLab") fail(`"I'll do it myself" + GitLab isn't the approved steps (${R.selfGl.two.slice(0, 200)})`);
 const sp = body(R.selfPost);
 if (sorted(sp) !== "consent,detected,files,platform,platform_source,via,who" || sp.via !== "invite" || sp.platform !== "custom" || sp.files !== "gitlab" || sp.who !== "self" || !eq(sp.consent, CONSENTED)) fail(`the developer-built self save changed (${JSON.stringify(sp)})`);

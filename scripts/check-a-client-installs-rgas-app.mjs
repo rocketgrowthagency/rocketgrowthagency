@@ -190,7 +190,7 @@ const multi = (n) => { const m = new RegExp(`^const ${n} = `, "m").exec(P); if (
 const handler = (needle) => { const i = P.indexOf(needle); if (i < 0) moved(`the handler for ${needle}`); const s = P.lastIndexOf("document.addEventListener(", i); let d = 0; for (let k = P.indexOf("{", P.indexOf("=>", s)); k < P.length; k++) { if (P[k] === "{") d++; else if (P[k] === "}") { d--; if (!d) return P.slice(s, P.indexOf(";", k) + 1); } } moved(`the end of the handler for ${needle}`); };
 const base = [fn("escapeHtml"), fn("escapeAttribute")].join("\n");
 const kit = planCardKit(P, base);
-const SRC = [base, kit, csBlock(P, `${base}\n${kit}`), line("stepLockOf"), line("RGA_ADMIN_EMAIL"), line("RGA_ADMIN_GITHUB"), multi("ACC_FILES"), line("GH_APP_INSTALL_URL"),
+const SRC = [base, kit, csBlock(P, `${base}\n${kit}`), line("stepLockOf"), line("RGA_ADMIN_EMAIL"), line("RGA_ADMIN_GITHUB"), multi("ACC_FILES"), line("GH_APP_INSTALL_URL"), line("ACCESS_TEST_CONSENT_INSTALL"),
   ...["accStep1Name", "accSiteName", "accMergeChoiceHtml", "accessTestRow", "hostCheckParts", "hostFixHtml", "ghAppWanted", "ghAppGoneHtml", "ghAppInstallHtml", "ghAppCardHtml", "ghAppDoneHtml", "accessCardHtml", "accWhoOf", "accDevNote", "accDevNoteText", "accCustomSetupHtml", "ghAppWatch"].map(fn),
   `var _ghAppNote = new Map(), _ghAppWatch = new Map(), _lockData = { tasks: {} }, _rcEditing = new Set(), _accPickSelf = new Set(), _accNames = { wix: "Wix" }, _accHosts = { netlify: "Netlify" };
    var portalToken = async () => "tok", showPortalToast = (m) => { window.__toast = m; }, portalAlert = (m) => { window.__alert = m; }, clientError = (e, w) => "Couldn't " + w;
@@ -272,7 +272,7 @@ try {
 
 const I = out.install;
 const LINE = "Install Rocket Growth Agency's app on the GitHub repository your website is built from.";
-const FINE = "It can only change the repository you pick, and nothing goes live until you approve it. Remove it anytime in GitHub.";
+const FINE = "It can only change the repository you pick, and nothing goes live until you approve it. Installing it approves one test: a page hidden from Google that we put up and take down to prove it works. Remove it anytime in GitHub.";   // auto_access_test_v1
 const SHARE = "Someone else manages your GitHub? Send them the link ›";
 if (!/^Give RGA access to your website ?Your site: GitHub · Netlify$/.test(I.head) || !/\byou\b/.test(I.tone || "")) fail(`the GitHub card's band isn't "Give RGA access to your website · Your site: GitHub · Netlify" on the client's move (${I.head} · ${I.tone})`);
 if (![LINE, FINE, SHARE].every((s) => I.text.includes(s)) || I.btn !== "Install on GitHub") fail(`the GitHub card's words aren't the approved ones (${I.text})`);

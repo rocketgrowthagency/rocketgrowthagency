@@ -1,0 +1,121 @@
+[
+ [
+  "old consent words count",
+  "sitechange",
+  "    if (c && c.at && String(c.text || \"\").includes(TEST_CONSENT_MARK)) return",
+  "    if (c && c.at) return",
+  1
+ ],
+ [
+  "an app grant without the words counts",
+  "sitechange",
+  "    if (a.via === \"github_app\" && a.test_ok && a.test_ok.at && String(a.test_ok.words || \"\").includes(TEST_CONSENT_MARK)) return",
+  "    if (a.via === \"github_app\") return",
+  1
+ ],
+ [
+  "the test runs without consent",
+  "sitechange",
+  "    if (!testConsentOf(tasks)) return null;\n    const w = (tasks || {})[ACCESS_STEP] || {}, a = w.access || {};\n    if (!a.confirmed_at || a.removed_at) return null;",
+  "    const w = (tasks || {})[ACCESS_STEP] || {}, a = w.access || {};\n    if (!a.confirmed_at || a.removed_at) return null;",
+  1
+ ],
+ [
+  "the test doesn't wait for the host",
+  "sitechange",
+  "    if (a.repo && (!hc || [\"checking\", \"recheck\"].includes(hc.state))) return null;   // the host's own verdict first",
+  "",
+  1
+ ],
+ [
+  "the test runs on a refusing host",
+  "sitechange",
+  "    if (a.repo && hc.state === \"refused\" && ((w.merge_by || {}).by || \"rga\") !== \"client\") return null;\n    const t = (tasks || {})[ACCESS_TEST_STEP]",
+  "    const t = (tasks || {})[ACCESS_TEST_STEP]",
+  1
+ ],
+ [
+  "the test page is never taken down",
+  "sitechange",
+  "    if (st === \"live\") return c.removes_page ? null : \"test_remove\";",
+  "    if (st === \"live\") return null;",
+  1
+ ],
+ [
+  "the take-down repeats forever",
+  "sitechange",
+  "    if (st === \"live\") return c.removes_page ? null : \"test_remove\";",
+  "    if (st === \"live\") return \"test_remove\";",
+  1
+ ],
+ [
+  "a test move runs twice",
+  "webautorun",
+  "    if (ta) { const sig = `${ta}:${(t.site_change || {}).v || \"new\"}`; return done[sig] ? null : { act: ta, sig }; }",
+  "    if (ta) { const sig = `${ta}:${(t.site_change || {}).v || \"new\"}`; return { act: ta, sig }; }",
+  1
+ ],
+ [
+  "an approved test without consent publishes",
+  "webautorun",
+  "    if (st !== \"approved\" || !SC.testConsentOf(tasks)) return null;",
+  "    if (st !== \"approved\") return null;",
+  1
+ ],
+ [
+  "the take-down drops the file",
+  "webautorun",
+  "    files: (c.files || []).filter((f) => f.action === \"add\").map((f) => ({ path: f.path, action: \"remove\", note: \"the page (a copy is kept)\" })) };\n}\n/** The checks",
+  "    files: [] };\n}\n/** The checks",
+  1
+ ],
+ [
+  "any step is approved by the access consent",
+  "admindeliv",
+  "      if (key !== SC.ACCESS_TEST_STEP) return json(400, { error: \"Only the access test can be approved this way.\" });",
+  "",
+  1
+ ],
+ [
+  "no consent still approves",
+  "admindeliv",
+  "      if (!cs) return json(403, { error: \"The client hasn't approved the access test. It goes to them for approval instead.\" });",
+  "",
+  1
+ ],
+ [
+  "an unsent draft is approved by consent",
+  "admindeliv",
+  "      if (st !== \"sent\") return json(409, { error: st === \"live\" ? \"It's already live.\" : st === \"approved\" ? \"It's already approved.\" : \"Build and send it first.\" });",
+  "",
+  1
+ ],
+ [
+  "the approval forgets the client's words",
+  "admindeliv",
+  "consent_at: cs.at, consent_how: cs.how, consent_words: cs.words,",
+  "consent_at: cs.at, consent_how: cs.how,",
+  1
+ ],
+ [
+  "the install grant records no consent",
+  "ghappfn",
+  "    test_ok: { at, by: who, words: require(\"../../shared/site-change.js\").ACCESS_TEST_CONSENT_INSTALL },",
+  "",
+  1
+ ],
+ [
+  "the Install card hides the test sentence",
+  "portal",
+  "nothing goes live until you approve it. ${escapeHtml(ACCESS_TEST_CONSENT_INSTALL)} Remove it anytime in GitHub.",
+  "nothing goes live until you approve it. Remove it anytime in GitHub.",
+  1
+ ],
+ [
+  "the done row says nothing of the consent",
+  "portal",
+  "  if (c.removes_page && x.approval && x.approval.via === \"access_consent\") return",
+  "  if (false) return",
+  1
+ ]
+]

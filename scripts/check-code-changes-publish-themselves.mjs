@@ -65,6 +65,6 @@ if (!/RB\.driftOf\(c, html, key\)/.test(WATCH)) fail("the nightly watch doesn't 
 
 // the owner 11-8 ("why cant be done now?"): a snapshot or pull request that worked chains into the next stage in the same run
 const ARsrc = fs.readFileSync(`${SITE}/netlify/functions/_website-autorun.js`, "utf8");
-if (!/for \(let hop = 0; hop < 3; hop\+\+\)/.test(ARsrc) || !/const chained = r && r\.acted && \["snap", "open"\]\.includes\(p\.act\)/.test(ARsrc)) fail("the publishing stages wait ten minutes apart instead of chaining in one run");
+if (!/for \(let hop = 0; hop < 3; hop\+\+\)/.test(ARsrc) || !/const chained = r && r\.acted && \["snap", "open", \.\.\.TEST_ACTS\]\.includes\(p\.act\)/.test(ARsrc)) fail("the publishing stages wait ten minutes apart instead of chaining in one run");
 if (bad.length) { console.error(`❌ code changes publish themselves — ${bad.length} regression(s):`); for (const b of bad) console.error(`  · ${b}`); process.exit(1); }
 console.log("✅ an approved code change goes up by itself: structured data only (never a tracking tag or a fix), built into its page file from their repository, published by pull request like a page, read back field by field (step 41: one business block), watched nightly");

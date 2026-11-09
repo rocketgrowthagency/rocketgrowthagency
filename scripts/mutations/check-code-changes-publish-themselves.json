@@ -107,7 +107,7 @@
  [
   "publishing stages stop chaining",
   "webautorun",
-  "        const chained = r && r.acted && [\"snap\", \"open\"].includes(p.act) && r.ok !== false && r.snapshot !== false;",
+  "        const chained = r && r.acted && [\"snap\", \"open\", ...TEST_ACTS].includes(p.act) && r.ok !== false && r.snapshot !== false;",
   "        const chained = false;",
   1
  ]
