@@ -1,0 +1,23 @@
+[
+ [
+  "the save writes over a changed record (no condition)",
+  "flowexec",
+  "const won = await supa(`/client_onboarding_records?id=eq.${record.id}${same}`,",
+  "const won = await supa(`/client_onboarding_records?id=eq.${record.id}`,",
+  1
+ ],
+ [
+  "a save that never lands reports success",
+  "flowexec",
+  "      if (attempt >= 7) throw new Error(",
+  "      if (attempt >= 7) return; throw new Error(",
+  1
+ ],
+ [
+  "the retry doesn't read again",
+  "flowexec",
+  "      [record] = await supa(`/client_onboarding_records?client_id=eq.${client.id}&select=*`);\n      if (!record) throw",
+  "      if (!record) throw",
+  1
+ ]
+]

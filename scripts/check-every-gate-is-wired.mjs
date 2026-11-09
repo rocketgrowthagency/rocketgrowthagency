@@ -456,6 +456,7 @@ const NOT_PREFLIGHT = {
   'check-steps-57-64.mjs': 'the WEBSITE repo\'s admin steps 57-64 (steps_57_64_v1, 11-9), fakes + vm only (database, search, Google, model, admin card lifts); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-the-morning-run.mjs': 'the WEBSITE repo\'s morning run (steps_57_64_v1, 11-9), fakes only (database, runners, search count); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-steps-59-63.mjs': 'the WEBSITE repo\'s admin steps 59, 60, 63 (steps_59_63_v1, 11-9), fakes + vm only (database, model, admin card lifts); run by daily-health-check.sh; it reads no video or pipeline file',
+  'check-a-step-result-is-never-lost.mjs': 'the WEBSITE repo\'s step-result save (11-9 lost-write fix), fakes only (database); run by daily-health-check.sh; it reads no video or pipeline file',
   'check-step56-reads-step52.mjs': 'the WEBSITE repo\'s admin step 56 (step56_reads_step52_v1, 11-9), fakes + vm only (database, admin card lift); run by daily-health-check.sh; it reads no video or pipeline file',
   'check-three-small-fixes.mjs': 'the WEBSITE repo\'s three small fixes (three_small_fixes_v1, 11-8), source + vm only; run by daily-health-check.sh; it reads no video pipeline output.',
   'check-end-of-service-runs-itself.mjs': 'the WEBSITE repo\'s end-of-service runner (client_offboarding_v1, 11-8), fakes only; run by daily-health-check.sh; it reads no video pipeline output.',
