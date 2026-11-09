@@ -140,7 +140,7 @@ if (has(FX, "imageSeoDraft", "the step 37 runner (it must read the real photos)"
   if (!pU || pU.why !== "some_pages" || !(pU.unread_pages || []).some((u) => /gone/.test(u.url) && u.why === "http_404")) fail("a page that wouldn't open isn't named with its reason (state C)");
   {
     const flow = read("netlify/functions/flow-execute.js");
-    if (!/const result = await executor\(\{ client, clientId: client_id, tasks \}\);/.test(flow) || !/pc && pc\.state === "more_pages" && pc\.next_from \? \{ from: pc\.next_from \} : \{\}/.test(flow)) fail("Read more starts from the first page again (the runner isn't given the last check)");
+    if (!/const result = await executor\(\{ client, clientId: client_id, tasks(?:, month: [^}]*)? \}\);/.test(flow) || !/pc && pc\.state === "more_pages" && pc\.next_from \? \{ from: pc\.next_from \} : \{\}/.test(flow)) fail("Read more starts from the first page again (the runner isn't given the last check)");
   }
   // blocked → couldn't check, nothing guessed
   const rx = await FX.imageSeoDraft(C, { snapshot: (s, f, o) => SS.takeSnapshot(s, fakeSite({ "https://joes.test": "BLOCK" }), { ...o, safeUrl: () => true }), describe: async () => ({ alt: "x" }) });

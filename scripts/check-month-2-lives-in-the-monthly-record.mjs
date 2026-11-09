@@ -178,10 +178,10 @@ for (const name of ["getFlowState", "updateFlowTask"]) {
   for (const m of acode.matchAll(new RegExp(`async ${name}\\(client, scope(?:, stepId, patch)?\\) \\{[\\s\\S]*?\\n    \\},?\\n`, "g"))) {
     const body = m[0];
     if (!/month2plus/.test(body)) continue;
-    if (/getMonth\(\)/.test(body) || !/const month = currentReportingMonthUtc\(\);/.test(body)) fail(`admin ${name} picks the monthly record by the browser's local month, not the UTC key the writers use`);
+    if (/getMonth\(\)/.test(body) || !/const month = (?:currentReportingMonthUtc|selectedMonthKey)\(\);/.test(body)) fail(`admin ${name} picks the monthly record by the browser's local month, not the UTC key the writers use`);
   }
 }
-if ((acode.match(/const month = currentReportingMonthUtc\(\);/g) || []).length < 4) fail("the admin's Month-2 checklist (getFlowState / updateFlowTask, both adapters) doesn't use the one UTC month key");
+if ((acode.match(/const month = (?:currentReportingMonthUtc|selectedMonthKey)\(\);/g) || []).length < 4 || !/function selectedMonthKey\(\)[\s\S]{0,900}currentReportingMonthUtc\(\)/.test(acode)) fail("the admin's Month-2 checklist (getFlowState / updateFlowTask, both adapters) doesn't use the one UTC month key");
 
 // ── 5 · the portal reads this month's record and re-renders a Month-2 answer into it ──
 const portal = read("portal/portal.js");

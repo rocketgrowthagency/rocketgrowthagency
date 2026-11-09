@@ -1,0 +1,191 @@
+[
+ [
+  "a month is created twice",
+  "openmonth",
+  "if (have) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "the new month is not read back",
+  "openmonth",
+  "if (!back || !back.id) return { ok: false, error: \"The month did not save (read back found nothing).\" };",
+  "",
+  1
+ ],
+ [
+  "a unique-violation race is an error",
+  "openmonth",
+  "if (!/\\b(409|23505)\\b|duplicate key|unique/i.test(String(e.message || e))) throw e;\n      made = null;",
+  "throw e;\n      made = null;",
+  1
+ ],
+ [
+  "December is not Month 2",
+  "openmonth",
+  "const n = 2 + monthIndex(reportingMonth) - monthIndex(first);",
+  "const n = 3 + monthIndex(reportingMonth) - monthIndex(first);",
+  1
+ ],
+ [
+  "a month before the cycle gets a number",
+  "openmonth",
+  "return n >= 2 ? n : null;",
+  "return n;",
+  1
+ ],
+ [
+  "the carry-over drops the skipped steps",
+  "openmonth",
+  "return { from: fromLabel || null, open: co.open, skipped: co.skipped };",
+  "return { from: fromLabel || null, open: co.open, skipped: [] };",
+  1
+ ],
+ [
+  "the new columns are written before the SQL",
+  "openmonth",
+  "if (cols) { row.month_status = \"open\";",
+  "if (true) { row.month_status = \"open\";",
+  1
+ ],
+ [
+  "closing does not read back",
+  "openmonth",
+  "if (!check || check.month_status !== \"closed\") return",
+  "if (false) return",
+  1
+ ],
+ [
+  "closing works without the column",
+  "openmonth",
+  "if (!(await hasMonthColumns(supa))) return { ok: true, closed: false, skipped: \"month_status column not added yet\" };",
+  "",
+  1
+ ],
+ [
+  "a report is kept before the table exists",
+  "openmonth",
+  "if (!(await hasReportsTable(supa))) return { ok: true, kept: false, skipped: \"client_monthly_reports not added yet\" };",
+  "",
+  1
+ ],
+ [
+  "a closed month takes writes",
+  "steprecord",
+  "if (await OM.isClosed(supa, rec.client_id, rec.reporting_month)) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "the step record ignores the month asked for",
+  "steprecord",
+  "? monthArg : currentReportingMonth(now);",
+  "? currentReportingMonth(now) : currentReportingMonth(now);",
+  1
+ ],
+ [
+  "skip ignores the month",
+  "stepskipfn",
+  "const rec = await readStepRecord(d.supa, clientId, stepId, new Date(), month);\n    const t",
+  "const rec = await readStepRecord(d.supa, clientId, stepId);\n    const t",
+  1
+ ],
+ [
+  "the monthly hand-off does not open next month",
+  "flowexec",
+  "const om = await OM.openMonth(supa, client.id, nextKey,",
+  "const om = { ok: true, id: \"x\", created: false }; void (async () => OM.openMonth)(supa, client.id, nextKey,",
+  1
+ ],
+ [
+  "the monthly hand-off does not close the month",
+  "flowexec",
+  "closed = await OM.closeMonth(supa, client.id, thisMonth, nowD)",
+  "closed = ({ ok: true, closed: true }) || await OM.closeMonth(supa, client.id, thisMonth, nowD)",
+  1
+ ],
+ [
+  "the Month 1 hand-off does not move the stage",
+  "flowexec",
+  "stage = await OM.advanceStageAfterHandoff(supa, client)",
+  "stage = ({ ok: true }) || await OM.advanceStageAfterHandoff(supa, client)",
+  1
+ ],
+ [
+  "the Month 1 report is kept on the test too",
+  "month1sendfn",
+  "if (isTest) return json(200, { ok: true, test: true, sent_to: to });",
+  "",
+  1
+ ],
+ [
+  "the monthly send does not keep the report",
+  "monthlyreport",
+  "const kept = await OM.keepReport(supa, {",
+  "const kept = await (async () => ({ ok: true }))(supa, {",
+  1
+ ],
+ [
+  "the portal list is oldest first",
+  "monthlyreportsfn",
+  "&order=sent_at.desc&limit=100",
+  "&order=sent_at.asc&limit=100",
+  1
+ ],
+ [
+  "the portal gets the address",
+  "monthlyreportsfn",
+  "if (!isAdmin) delete r.sent_to;",
+  "",
+  1
+ ],
+ [
+  "a quarter month is not 3, 6, 9",
+  "monthlysections",
+  "return Number.isFinite(monthNumber) && monthNumber >= 3 && monthNumber % 3 === 0;",
+  "return true;",
+  1
+ ],
+ [
+  "a step is in two sections",
+  "monthlysections",
+  "ids: [\"m2.report.generate\",",
+  "ids: [\"m2.plan.rotating_focus\", \"m2.report.generate\",",
+  1
+ ],
+ [
+  "the morning run does not open the month",
+  "morningrun",
+  "const om = await OM.openMonth(d.supa, c.id,",
+  "const om = await (async () => ({ ok: true }))(d.supa, c.id,",
+  1
+ ],
+ [
+  "metrics creates the row itself again",
+  "metricsjs",
+  "if (!existing) {\n    const shim",
+  "if (!existing && false) {\n    const shim",
+  1
+ ],
+ [
+  "a hand-typed baseline is back in the sources strip",
+  "admin",
+  "label: \"Month 1 baseline\",",
+  "label: \"GA4 Baseline\", x: v2.baselines?.ga4?.sessions_90d,",
+  1
+ ],
+ [
+  "the closed month keeps its buttons",
+  "admin",
+  "if (cycleMonthClosed(month)) throw new Error(",
+  "if (false) throw new Error(",
+  1
+ ],
+ [
+  "the banner asks for a manual advance again",
+  "admin",
+  "Month 1 is handed off\", desc:",
+  "Month 1 onboarding is complete\", desc: `Advance the client to the monthly cycle.`, x:",
+  1
+ ]
+]

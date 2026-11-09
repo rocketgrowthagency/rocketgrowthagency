@@ -462,7 +462,7 @@ try {
 
   // total_leads, through the real save path
   const save = async ({ existing = null, clientFlag, gbpCalls = 20, forms = 3 }) => {
-    const writes = [];
+    let made = null; const writes = [];
     handler = async (url, opts = {}) => {
       const u = String(url);
       if (u.includes("oauth2.googleapis.com")) return reply(200, { access_token: "t", expires_in: 3600 });
@@ -475,11 +475,11 @@ try {
       if (u.includes("/rest/v1/client_monthly_records") && (!opts.method || opts.method === "GET")) {
         // only the columns the code asked for, as PostgREST would answer
         const cols = (/select=([^&]*)/.exec(u) || [])[1]?.split(",") || [];
-        return reply(200, existing ? [Object.fromEntries(Object.entries(existing).filter(([k]) => cols.includes(k)))] : []);
+        return reply(200, (existing || made) ? [Object.fromEntries(Object.entries(existing || made).filter(([k]) => cols.includes(k)))] : []);
       }
       if (u.includes("/rest/v1/clients")) return clientFlag === "fail" ? reply(500, {}) : reply(200, [{ call_tracking_attributed: clientFlag ?? null }]);
       if (u.includes("/rest/v1/client_state_snapshots")) return reply(200, []);
-      if (u.includes("/rest/v1/client_monthly_records")) { writes.push(JSON.parse(opts.body)); return reply(200, []); }
+      if (u.includes("/rest/v1/client_monthly_records")) { const b = JSON.parse(opts.body); if (opts.method === "POST") { made = { id: "new", data: b.data, total_calls: null }; return reply(200, [made]); } writes.push(b); return reply(200, []); }   // monthly_v1: a missing month is made by openMonth (a POST), then this job PATCHes its numbers onto it
       throw new Error(`unexpected request: ${u}`);
     };
     const res = await metrics.refreshAndSaveMetrics("https://db.test", "k", "c1", { refresh_token: "r", ga4_property_id: "properties/1", gbp_location_id: "locations/1" });
@@ -504,7 +504,7 @@ try {
   // sess = rows the 28-day session query answers; wide = rows a 12-month session query would answer (it must never be asked
   // for the count); events = [name, count] per window.
   const ga4Save = async ({ sess28, wide = 0, ev28 = [], ev365 = [], existing = null }) => {
-    const writes = [], asked = [];
+    let made = null; const writes = [], asked = [];
     const rowsOf = (n) => (n ? [{ dimensionValues: [{ value: "Organic Search" }], metricValues: [String(n), "1", "0", String(n)].map((value) => ({ value })) }] : []);
     handler = async (url, opts = {}) => {
       const u = String(url);
@@ -521,11 +521,11 @@ try {
       if (u.includes("businessprofileperformance")) return reply(200, perfBody(ALL.map((m) => series(m, [1]))));
       if (u.includes("/rest/v1/client_monthly_records") && (!opts.method || opts.method === "GET")) {
         const cols = (/select=([^&]*)/.exec(u) || [])[1]?.split(",") || [];
-        return reply(200, existing ? [Object.fromEntries(Object.entries(existing).filter(([k]) => cols.includes(k)))] : []);
+        return reply(200, (existing || made) ? [Object.fromEntries(Object.entries(existing || made).filter(([k]) => cols.includes(k)))] : []);
       }
       if (u.includes("/rest/v1/clients")) return reply(200, [{ call_tracking_attributed: null }]);
       if (u.includes("/rest/v1/client_state_snapshots")) return reply(200, []);
-      if (u.includes("/rest/v1/client_monthly_records")) { writes.push(JSON.parse(opts.body)); return reply(200, []); }
+      if (u.includes("/rest/v1/client_monthly_records")) { const b = JSON.parse(opts.body); if (opts.method === "POST") { made = { id: "new", data: b.data, total_calls: null }; return reply(200, [made]); } writes.push(b); return reply(200, []); }   // monthly_v1: a missing month is made by openMonth (a POST), then this job PATCHes its numbers onto it
       throw new Error(`unexpected request: ${u}`);
     };
     const res = await metrics.refreshAndSaveMetrics("https://db.test", "k", "c1", { refresh_token: "r", ga4_property_id: "properties/1", gbp_location_id: "locations/1" });

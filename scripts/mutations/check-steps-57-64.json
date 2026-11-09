@@ -72,7 +72,7 @@
  [
   "the server writes without re-reading the record",
   "stepskipfn",
-  "    const rec = await readStepRecord(d.supa, clientId, stepId);\n    const t = rec.tasks[stepId] || {}, now = d.now();",
+  "    const rec = await readStepRecord(d.supa, clientId, stepId, new Date(), month);\n    const t = rec.tasks[stepId] || {}, now = d.now();",
   "    const rec = rec0;\n    const t = rec.tasks[stepId] || {}, now = d.now();",
   1
  ],

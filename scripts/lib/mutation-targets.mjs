@@ -523,4 +523,8 @@ export const FILES = {
   morningrun: "netlify/functions/_morning-run.js",
   morningrunjob: "netlify/functions/morning-run.js",
   ytread: "netlify/functions/_youtube-read.js",
+  openmonth: "netlify/functions/_open-month.js",   // monthly_v1: the one creator of a month
+  adminmonths: "netlify/functions/admin-months.js",
+  monthlyreportsfn: "netlify/functions/monthly-reports.js",
+  monthlysections: "shared/monthly-sections.js",
 };

@@ -152,8 +152,8 @@
  [
   "the read forgets the tracked-call column",
   "metricsjs",
-  "select=id,data,total_calls`",
-  "select=id,data`"
+  "&reporting_month=eq.${reportingMonth}&select=id,data,total_calls`",
+  "&reporting_month=eq.${reportingMonth}&select=id,data`"
  ],
  [
   "the headline says Google showed your business again",

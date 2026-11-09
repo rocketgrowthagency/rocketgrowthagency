@@ -65,8 +65,8 @@
  [
   "handoff stops creating month 2",
   "exec",
-  "        if (!row?.id) return { summary: \"Could not create the Month 2 record.",
-  "        if (false) return { summary: \"Could not create the Month 2 record.",
+  "    if (!om.ok) return { summary: `Could not open",
+  "    if (false) return { summary: `Could not open",
   1
  ],
  [
