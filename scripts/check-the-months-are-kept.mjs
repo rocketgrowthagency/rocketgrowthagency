@@ -235,5 +235,9 @@ const fresh = (o = {}) => { DB.cur = makeDb({ onboarding: [JSON.parse(JSON.strin
   if (/method: "POST",\s*\n\s*headers: \{ apikey: supaKey[^}]*\},\s*\n\s*body: JSON\.stringify\(\{ client_id: clientId, reporting_month/.test(met)) fail("7 _metrics must not create a month row itself (openMonth is the one creator)");
 }
 
+// 11-9 read-back on RGA: Month 1's chip runs from the kickoff (not the record's creation); a non-quarter month folds "Every quarter" to one line
+{ const AM = fs.readFileSync(path.join(SITE, "netlify/functions/admin-months.js"), "utf8"), AJ = fs.readFileSync(path.join(SITE, "admin/admin.js"), "utf8");
+  if (!/month1: \{ start: \(ob && ob\.data && ob\.data\.tasks && ob\.data\.tasks\["m1\.kickoff\.call"\]/.test(AM)) fail("Month 1's chip doesn't start at the kickoff");
+  if (!/quarterOn = num != null && M\.showsQuarter\(num\)/.test(AJ) || !/if \(sec\.quarterOnly && !quarterOn\) return foldedQ\(sec, idx\.length\);/.test(AJ) || !/Hidden this month · next in Month \$\{nextQ\}/.test(AJ)) fail("a non-quarter month shows 'Every quarter' as 0 / N instead of one folded line"); }
 if (F.length) { console.error(`❌ the months are not kept — ${F.length} problem(s):\n` + F.map((m) => `  - ${m}`).join("\n")); process.exit(1); }
 console.log("✅ the months are kept: numbers, openMonth (idempotent, read back, carry-over), the hand-offs open and close, a closed month refuses writes, works before and after the SQL, reports kept on a real send only, the removed blocks are gone");
