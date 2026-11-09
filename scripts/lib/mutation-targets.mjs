@@ -479,6 +479,7 @@ export const FILES = {
   // citations_additions_v1 (11-01): the NAP check reads the audit's rows, the list fits the client, the recheck
   citnapaudit: "netlify/functions/citation-audit.js",
   citrade: "netlify/functions/_citation-trade.js",
+  reviewmsg: "netlify/functions/admin-review-message.js",   // steps_59_63_v1 (11-9): Edit / Rewrite / check on the review request message
   citrecheck: "netlify/functions/_citation-recheck.js",
   citrecheckfn: "netlify/functions/citation-recheck.js",
   // data_keep_v1 / data_store_v1 (11-01): Analytics by day and page, page indexing status, the baseline at signing

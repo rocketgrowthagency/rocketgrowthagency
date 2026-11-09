@@ -54,7 +54,7 @@ if (!/: descriptionOnGoogle\(s\.task\) \? `<div class="ob-done-card">\$\{descrip
 // ── admin: step 37 — every website-change step ─────────────────────────────────────────────────
 if (!/const siteStep = !!\(globalThis\.rgaSiteChange && globalThis\.rgaSiteChange\.isSiteChangeStep\(o\.flowId\)\);\s*const runBtn = runnable && !siteStep/.test(AJS)) fail("step 37: a website step's row still has its own Draft button (the card has one)");
 // (citations_52_55_v1, 11-9: steps 52–55 joined the same no-hand-tick line)
-if (!/const doneBtn = zcWaits \|\| siteStep (\|\| o\.flowId === GL_STEP )?(\|\| globalThis\.rgaCitationProgress\?\.isStep\(o\.flowId\) )?\? "" :/.test(AJS)) fail("step 37: a website step's row still offers Mark step complete");
+if (!/const doneBtn = zcWaits \|\| siteStep (\|\| o\.flowId === GL_STEP )?(\|\| globalThis\.rgaCitationProgress\?\.isStep\(o\.flowId\) )?(\|\| uniS\(\)\?\.noHandDone\?\.\(o\.flowId\) )?\? "" :/.test(AJS))   // steps_57_64_v1: 57/58/61/62/64 finish by their own rule, so they add one more clause fail("step 37: a website step's row still offers Mark step complete");
 
 // ── admin: steps 29 · 30 · 31 — the result first ──────────────────────────────────────────────────
 { const p3 = ["ZC_FOLD_T", "ZC_LIST", "ZC_PLAIN", "zcPlainTitle", "zcFixAct", "zcCatPlan", "citationsCardHtml", "fixPlanCardHtml", "categoriesCardHtml"].map((n) => lift(AJS, n));
@@ -169,7 +169,7 @@ const ACSS5 = () => fs.readFileSync(`${process.env.APPROVAL_ARCHIVE_SITE_DIR || 
 
 // ── admin: steps 35 + 36 — the client's move ───────────────────────────────────────────────────
 if (!/\(ZC_CLIENT_ASK\[o\.flowId\] && task\?\.client_input == null && st !== "skipped" \? "" : btn\("skipped", "Skip"\)\)/.test(AJS)) fail("steps 35/36: Skip is still a header button (the mockup puts it in the card as a quiet link)");
-if (!/const ZC_NO_HAND_DONE = new Set\(\["m1\.gbp\.attributes", "m1\.gbp\.booking_link", "m1\.gbp\.photos"\]\)/.test(AJS) || !/const inner = \(rowHasDone \|\| ZC_NO_HAND_DONE\.has\(o\.flowId\) \? "" : btn\("done", "Done"\)\)/.test(AJS)) fail("steps 35/36/38: RGA can still tick a client's Google step Done");
+if (!/const ZC_NO_HAND_DONE = new Set\(\["m1\.gbp\.attributes", "m1\.gbp\.booking_link", "m1\.gbp\.photos"\]\)/.test(AJS) || !/const inner = \(rowHasDone \|\| ZC_NO_HAND_DONE\.has\(o\.flowId\) (\|\| uniS\(\)\?\.noHandDone\?\.\(o\.flowId\) )?\? "" : btn\("done", "Done"\)\)/.test(AJS)) fail("steps 35/36/38: RGA can still tick a client's Google step Done");
 { const p2 = ["ZC_CLIENT_ASK", "zcClientAskHtml", "bk36Card"].map((n) => lift(AJS, n));
   if (p2.some((x) => !x)) { console.error("⚠️  INDETERMINATE — the client's-move card moved"); process.exit(2); }
   const c2 = { escapeHtml: esc, escapeAttribute: esc, OL_G: "<svg></svg>", CLIENT_GBP_STEPS: { "m1.gbp.attributes": "What's true of the business (Google details)", "m1.gbp.booking_link": "Booking link" } };

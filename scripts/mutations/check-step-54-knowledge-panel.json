@@ -1,32 +1,7 @@
 [
- [
-  "no panel is recorded Done again (completed:false dropped)",
-  "exec",
-  "          + \"Consistent listings, the Google profile and linked social profiles are what earn one; RGA checks again next quarter.\",\n        outcome: \"not_applicable_yet\", completed: false,",
-  "          + \"Consistent listings, the Google profile and linked social profiles are what earn one; RGA checks again next quarter.\",\n        outcome: \"not_applicable_yet\","
- ],
- [
-  "any knowledge panel counts as this business's",
-  "exec",
-  "(norm(j.knowledge_graph.title).includes(norm(name)) || norm(name).includes(norm(j.knowledge_graph.title)))",
-  "true"
- ],
- [
-  "'&' and 'and' stop matching",
-  "exec",
-  "replace(/&/g, \" and \").replace(/[^a-z0-9]+/g, \" \").trim();\n    const kg",
-  "replace(/[^a-z0-9]+/g, \" \").trim();\n    const kg"
- ],
- [
-  "a failed search reads as no panel",
-  "exec",
-  "return { summary: `Couldn't check Google for a knowledge panel: ${String(e.message).slice(0, 140)}`, outcome: \"indeterminate\" };",
-  "j = {};"
- ],
- [
-  "the brand search drops the city",
-  "exec",
-  "[`\"${name}\"`, locality, region]",
-  "[`\"${name}\"`]"
- ]
+ ["no panel is recorded open again (steps_57_64_v1: it is done)", "exec", "const done = d.state === \"match\" || d.state === \"none\";", "const done = d.state === \"match\";"],
+ ["any knowledge panel counts as this business's", "steps5764", "if (!kg || !title || !nm || !(title.includes(nm) || nm.includes(title))) return", "if (!kg || !title || !nm) return"],
+ ["'&' and 'and' stop matching", "steps5764", "const norm = (x) => String(x || \"\").toLowerCase().replace(/&/g, \" and \")", "const norm = (x) => String(x || \"\").toLowerCase()"],
+ ["a failed search reads as no panel", "exec", "if (!r.ok || j.error) throw new Error(j.error || `HTTP ${r.status}`);\n    } catch (e) { return cant(", "if (false) throw new Error(j.error || `HTTP ${r.status}`);\n    } catch (e) { return cant("],
+ ["the brand search drops the city", "exec", "const q = [`\"${name}\"`, locality, region].filter(Boolean).join(\" \");", "const q = [`\"${name}\"`].join(\" \");"]
 ]

@@ -78,8 +78,9 @@ if (step && step.clientStepNo !== 15) fail(`step 55's client number moved (${ste
 const portal = src("portal/portal.js"), admin = src("admin/admin.js"), fe = src("netlify/functions/flow-execute.js");
 if (!/step\.clientForm === "video_upload" \? \(ownWait \|\| isDone \? "" : videoClipsHtml\(step, taskState, clientId\)\)/.test(portal)) fail("the portal step doesn't render the scripts + clips");
 if (!/file\.size > VC_MAX/.test(portal) || !/storage\/v1\/object\/client-videos\//.test(portal)) fail("the portal doesn't check the size before uploading to client-videos");
-if (!/"m1\.brand\.youtube_setup": \{\s*proof: \(d\) => [^\n]*\.length >= 2,/.test(admin)) fail("step 55's Done isn't guarded by both clips");
-if (!((admin.match(/\$\{rowLiveCardsHtml\(o, s\)\}/g) || []).length >= 2 && /id === "m1\.brand\.youtube_setup" \? youtubeClipsAdminHtml\(t\)/.test(admin))) fail("row 55 doesn't list the client's clips");
+// steps_57_64_v1 (the owner 11-9): Done = their channel confirmed + the details pasted; the clips are optional and never hold or reopen the step
+if (!/"m1\.brand\.youtube_setup": \{\s*proof: \(d\) => !!d\?\.tasks\?\.\["m1\.brand\.youtube_setup"\]\?\.channel_pasted,/.test(admin)) fail("step 58's Done isn't guarded by the pasted channel details");
+if (!((admin.match(/\$\{rowLiveCardsHtml\(o, s\)\}/g) || []).length >= 2 && /id === "m1\.brand\.youtube_setup" \? uniChannelCardHtml\(t\)/.test(admin) && /Clips · optional/.test(admin))) fail("row 58 doesn't list the client's clips");   // steps_57_64_v1: the clips are the second card
 if (!/"m1\.brand\.youtube_setup": async[\s\S]{0,1800}?parseYoutube\(raw\)[\s\S]{0,500}?outcome_data: \{ draft, channel: plan\.channel, videos: plan\.videos/.test(fe)) fail("the runner no longer stores the scripts as data");
 const sql = src("docs/supabase/RGA_CLIENT_VIDEOS_BUCKET_2026-10-19.sql");
 if (!/'client-videos', 'client-videos', false, 52428800/.test(sql) || !/current_user_portal_access/.test(sql)) fail("the bucket SQL isn't private / 50 MB / scoped to the client's folder");

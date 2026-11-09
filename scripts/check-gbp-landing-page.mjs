@@ -359,7 +359,7 @@ if (/Choose by hand/.test(admin)) F(`admin still says "Choose by hand"`);
 if (!/id === "m1\.web\.gbp_landing_page" \? gbpLandingAdminHtml\(t, s\)/.test(admin)) F("the card isn't drawn on its step (with the step's state)");
 if (!/o\.flowId === GL_STEP \? `<div class="ob-done-card">\$\{gbpLandingAdminHtml\(s\.task, s\)\}<\/div>`/.test(admin)) F("the card isn't drawn on the done row (A, B, D and E live there)");
 // (citations_52_55_v1, 11-9: steps 52–55 joined the same no-hand-tick rule on this line)
-if (!/const doneBtn = [^;]*o\.flowId === GL_STEP (?:\|\| globalThis\.rgaCitationProgress\?\.isStep\(o\.flowId\) )?\? ""/.test(admin)) F("the step still shows Mark step complete (decision 6: one control per decision)");
+if (!/const doneBtn = [^;]*o\.flowId === GL_STEP (?:\|\| globalThis\.rgaCitationProgress\?\.isStep\(o\.flowId\) )?(?:\|\| uniS\(\)\?\.noHandDone\?\.\(o\.flowId\) )?\? ""/.test(admin))   // steps_57_64_v1 F("the step still shows Mark step complete (decision 6: one control per decision)");
 if (!/if \(flowId === "m1\.web\.gbp_landing_page"\) \{[^\n]*"rga"/.test(admin)) F("the row doesn't say Your move when the card does (B and E)");
 const block = (admin.split("const GL_STEP = ")[1] || "").split("function rowStepCardsHtml")[0];
 if (!block) F("the card's code moved");

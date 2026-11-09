@@ -1,39 +1,37 @@
 #!/usr/bin/env node
-// check-step-54-knowledge-panel.mjs — step 54 MEASURES before it drafts (approved step mockup m1-54, "approved build all"
-// 2026-10-19): a brand search finds a knowledge panel → its facts + the checklist, Done; NO panel → "No panel yet", stays
-// open (normal for a business few people search for by name — never a failure, never Done); a failed search → indeterminate.
-// 🔴 WHY: it drafted a "claim your panel" checklist for every client, including the many with nothing to claim.
+// check-step-54-knowledge-panel.mjs — the brand knowledge panel step MEASURES (approved step mockup m1-54, 2026-10-19; steps_57_64_v1 11-9 changed what
+// it does with the measurement: ONE search, NO model; a panel that exists is compared with their profile and is done only on a positive match).
+// Kept here: a brand search finds a panel / none / someone else's / a failed search, and none is never a failure, never confused with a failed search.
+// The full decision table, the card and the morning run are in check-steps-57-64.mjs. steps_57_64_v1: this gate used to lift the old runner (a model
+// wrote a claim checklist after the search); it now drives the shipped runner on a fake network.
 // Exit 0 pass · 1 fail · 2 indeterminate.
-import fs from "node:fs";
-import vm from "node:vm";
+import path from "node:path";
+import { createRequire } from "node:module";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
-let flow; try { flow = fs.readFileSync(`${SITE}/netlify/functions/flow-execute.js`, "utf8"); } catch { console.error("⚠️  INDETERMINATE — cannot read flow-execute.js"); process.exit(2); }
-const at = flow.indexOf('"m1.gbp.knowledge_panel": async');
-if (at < 0) { console.error("⚠️  INDETERMINATE — step 54's runner moved"); process.exit(2); }
-const fnStart = flow.indexOf("async", at);
-let d = 0, end = -1;
-for (let i = flow.indexOf("{", flow.indexOf("=>", fnStart)); i < flow.length; i++) { if (flow[i] === "{") d++; else if (flow[i] === "}") { d--; if (!d) { end = i + 1; break; } } }
-const F = [];
-const mk = (reply) => {
-  const ctx = vm.createContext({ URL, JSON, String, Array, Date, process: { env: { SERPAPI_KEY: "x" } },
-    clientLocality: () => ({ locality: "Denver", region: "CO" }), clientCtx: () => "ctx", aiDraft: async () => "CHECKLIST",
-    fetch: async (u) => { ctx.lastQ = new URL(String(u)).searchParams.get("q"); return reply; } });
-  return { run: vm.runInContext(`(${flow.slice(fnStart, end)})`, ctx), ctx };
+Object.assign(process.env, { SUPABASE_URL: "https://sb.test", SUPABASE_SERVICE_ROLE_KEY: "k", SERPAPI_KEY: "serp-test", ANTHROPIC_API_KEY: "", OPENAI_API_KEY: "" });
+const req = createRequire(path.join(SITE, "netlify/functions/x.js"));
+const res = (status, body) => ({ ok: status >= 200 && status < 300, status, json: async () => body, text: async () => JSON.stringify(body), clone() { return this; } });
+const log = []; let serp = {}, serpStatus = 200;
+globalThis.fetch = async (u) => {
+  const url = String(u); log.push(url);
+  if (url.startsWith("https://serpapi.com/search.json")) return serpStatus === 200 ? res(200, serp) : res(serpStatus, { error: "quota" });
+  if (url.startsWith("https://sb.test/rest/v1/")) return res(200, []);
+  return res(404, "not faked");
 };
-const ok = (j) => ({ ok: true, status: 200, json: async () => j });
-const client = { business_name: "Smith & Sons Plumbing" };
-{ const { run, ctx } = mk(ok({ knowledge_graph: { title: "Smith and Sons Plumbing", type: "Plumber", website: "https://ss.com", profiles: [{}, {}] } }));
-  const r = await run({ client });
-  if (r.outcome !== "verified" || r.completed === false || !/Knowledge panel found: Smith and Sons Plumbing/.test(r.summary)) F(`a panel that exists isn't reported as found (${r.outcome}) — "&" vs "and" must still match`);
-  if (!/"Smith & Sons Plumbing" Denver CO/.test(ctx.lastQ || "")) F(`the brand search isn't "<name>" + city + state (${ctx.lastQ})`); }
-{ const { run } = mk(ok({ organic_results: [] }));
-  const r = await run({ client });
-  if (r.completed !== false || r.outcome !== "not_applicable_yet" || !/No knowledge panel yet/.test(r.summary) || /CHECKLIST/.test(r.summary)) F("no panel isn't 'No panel yet', open, without a claim checklist"); }
-{ const { run } = mk(ok({ knowledge_graph: { title: "Smithsonian Institution" } }));
-  const r = await run({ client });
-  if (r.outcome !== "not_applicable_yet") F("someone else's knowledge panel is read as this business's"); }
-{ const { run } = mk({ ok: false, status: 500, json: async () => ({ error: "quota" }) });
-  const r = await run({ client });
-  if (r.outcome !== "indeterminate") F("a failed search isn't indeterminate (it would read as 'no panel' or Done)"); }
-if (F.length) { console.error("🔴 step 54 doesn't measure before it drafts:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log("✅ step 54 measures first: panel → facts + checklist (Done) · none → 'No panel yet' (open) · someone else's panel ≠ ours · failed search → indeterminate");
+let run;
+try { run = req("./flow-execute.js").stepRunners.panel; } catch (e) { console.error(`⚠️  INDETERMINATE — the runner did not load: ${e.message}`); process.exit(2); }
+const F = [], fail = (m) => F.push(m);
+const client = { id: "c1", business_name: "Smith & Sons Plumbing", primary_market: "Denver, CO", identity_phone: "(303) 555-0100", website_url: "https://ss.com" };
+const go = async (s, st = 200) => { log.length = 0; serp = s; serpStatus = st; return run({ client, clientId: "c1", tasks: {} }); };
+{ const r = await go({ knowledge_graph: { title: "Smith and Sons Plumbing", type: "Plumber", phone: "(303) 555-0100", website: "https://ss.com" } });
+  if (r.outcome !== "verified" || r.completed !== true || (r.outcome_data.kp || {}).state !== "match") fail(`a panel that is theirs isn't done (${r.outcome}) — "&" vs "and" must still match`);
+  const q = new URL(log.find((u) => /serpapi/.test(u))).searchParams.get("q");
+  if (q !== '"Smith & Sons Plumbing" Denver CO') fail(`the brand search isn't "<name>" + city + state (${q})`); }
+{ const r = await go({ organic_results: [] });
+  if (r.completed !== true || r.outcome !== "not_applicable_yet" || !/No knowledge panel yet/.test(r.summary)) fail("no panel isn't 'No panel yet' (done, normal for a business few people search for by name)"); }
+{ const r = await go({ knowledge_graph: { title: "Smithsonian Institution" } });
+  if (r.outcome !== "not_applicable_yet") fail("someone else's knowledge panel is read as this business's"); }
+{ const r = await go({}, 500);
+  if (r.outcome !== "indeterminate" || r.completed === true) fail("a failed search isn't indeterminate (it would read as 'no panel' or Done)"); }
+if (F.length) { console.error("🔴 the brand panel step doesn't measure first:"); for (const f of F) console.error("   · " + f); process.exit(1); }
+console.log("✅ the brand panel step measures first: theirs → done · none → 'No panel yet' · someone else's panel ≠ ours · failed search → indeterminate (one search, no model)");
