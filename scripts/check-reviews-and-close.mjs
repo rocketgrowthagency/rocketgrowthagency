@@ -175,5 +175,12 @@ if (!/fillBlankDoneRows\(listEl, numbered\);/.test(P) || !/if \(\(c\.textContent
   if (!/<tr>\$\{numbers\.map\(numTile\)\.join\(""\)\}<\/tr>/.test(ME)) fail("email: the three numbers aren't tiles side by side (the approved layout)");
   if (!/const badge = \(mark, later\) =>/.test(ME) || !/\$\{badge\(mark, mark !== "✓"\)\}/.test(ME)) fail("email: the items lost their round check badges");
   if (!/color:\$\{BRAND\};">\+ \$\{g\.more\} more/.test(ME)) fail("email: '+ N more' isn't the brand blue"); }
+// send_me_a_test_v1 (11-9): the test goes to the signed-in admin only, "[Test]" in the subject, and returns before any record or activity write
+{ const FN = fs.readFileSync(path.join(SITE, "netlify/functions/admin-month1-report.js"), "utf8"), AJ = fs.readFileSync(path.join(SITE, "admin/admin.js"), "utf8");
+  if (!/const to = isTest \? String\(gate\.email \|\| ""\)\.trim\(\) :/.test(FN)) fail("test send: it isn't addressed to the signed-in admin");
+  const ret = FN.indexOf("if (isTest) return json(200, { ok: true, test: true"), write = FN.indexOf("tasks[STEP] = { ...cur, status: \"done\"");
+  if (ret < 0 || write < 0 || ret > write) fail("test send: it reaches the record write (it must return before marking anything sent)");
+  if (!/subject: `\$\{isTest \? "\[Test\] " : ""\}/.test(FN)) fail("test send: no [Test] in the subject");
+  if (!/data-m1-report-test=/.test(AJ) || !/acts: send \+ test \}/.test(AJ)) fail("test send: the 'Send me a test' link is missing from step 62"); }
 if (F.length) { console.error("🔴 reviews + the Month 1 close regressed:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ reviews + close hold: no staff-name asks, pace told past 10 · videos optional, skippable, never next · report waits on the baseline only, opens at kickoff + 27, lists what's still open (not optional, not done) · day-35 skip · blank done rows say who finished it + when, in plain words");
