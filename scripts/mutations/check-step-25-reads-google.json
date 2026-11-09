@@ -1,0 +1,58 @@
+[
+ [
+  "old data counts as working",
+  "flowexec",
+  "    const since = new Date(Date.now() - 14 * 864e5).toISOString().slice(0, 10), id",
+  "    const since = \"2000-01-01\", id",
+  1
+ ],
+ [
+  "GA4 alone is verified",
+  "flowexec",
+  "    const ok = !!ga4 && !!gsc;",
+  "    const ok = !!ga4;",
+  1
+ ],
+ [
+  "no connection is called missing",
+  "flowexec",
+  "outcome: ok ? \"verified\" : conn ? \"missing_tags\" : \"indeterminate\",",
+  "outcome: ok ? \"verified\" : \"missing_tags\",",
+  1
+ ],
+ [
+  "the summary forgets how GA4 loads",
+  "flowexec",
+  "data through ${ga4}${how ? `, loads through ${how}` : \"\"}.`",
+  "data through ${ga4}.`",
+  1
+ ],
+ [
+  "the daily re-check is gone",
+  "webautorun",
+  "  if (failed && key === \"m1.web.tracking\" && now - ran >= 20 * 3600e3) {",
+  "  if (false) {",
+  1
+ ],
+ [
+  "it re-checks every pass",
+  "webautorun",
+  "  if (failed && key === \"m1.web.tracking\" && now - ran >= 20 * 3600e3) {",
+  "  if (failed && key === \"m1.web.tracking\") {",
+  1
+ ],
+ [
+  "admin shows the raw text again",
+  "admin",
+  "  if (SC.autoFailedNow(task) && SC.changeState(task) === \"none\" && id === \"m1.web.tracking\" && wcTrackingRowsHtml(task)) return",
+  "  if (false) return",
+  1
+ ],
+ [
+  "a missing Search Console reads as working",
+  "admin",
+  "    od.gsc_through ? [\"Search Console is reading their site\"",
+  "    true ? [\"Search Console is reading their site\"",
+  1
+ ]
+]
