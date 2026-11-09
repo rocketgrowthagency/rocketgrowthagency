@@ -454,6 +454,7 @@ const NOT_PREFLIGHT = {
   'check-a-stuck-change-says-so.mjs': 'the WEBSITE repo\'s stuck-change fix (publish_failure_shows_v1, 11-8), fakes + source; run by daily-health-check.sh; it reads no video pipeline output.',
   'check-citations-52-55.mjs': 'the WEBSITE repo\'s admin steps 52-55 (citations_52_55_v1, 11-9), fakes only (database, Google profile, pages, SerpAPI, model); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-steps-57-64.mjs': 'the WEBSITE repo\'s admin steps 57-64 (steps_57_64_v1, 11-9), fakes + vm only (database, search, Google, model, admin card lifts); run by daily-health-check.sh; it reads no video pipeline output.',
+  'check-the-morning-run.mjs': 'the WEBSITE repo\'s morning run (steps_57_64_v1, 11-9), fakes only (database, runners, search count); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-step56-reads-step52.mjs': 'the WEBSITE repo\'s admin step 56 (step56_reads_step52_v1, 11-9), fakes + vm only (database, admin card lift); run by daily-health-check.sh; it reads no video or pipeline file',
   'check-three-small-fixes.mjs': 'the WEBSITE repo\'s three small fixes (three_small_fixes_v1, 11-8), source + vm only; run by daily-health-check.sh; it reads no video pipeline output.',
   'check-end-of-service-runs-itself.mjs': 'the WEBSITE repo\'s end-of-service runner (client_offboarding_v1, 11-8), fakes only; run by daily-health-check.sh; it reads no video pipeline output.',

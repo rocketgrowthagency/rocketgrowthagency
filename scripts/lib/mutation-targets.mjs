@@ -515,4 +515,6 @@ export const FILES = {
   steppressfn: "netlify/functions/admin-step-press.js",
   steps5764: "shared/steps-57-64.js",
   reviewstep: "netlify/functions/_review-step.js",
+  morningrun: "netlify/functions/_morning-run.js",
+  morningrunjob: "netlify/functions/morning-run.js",
 };
