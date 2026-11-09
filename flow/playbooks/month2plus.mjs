@@ -6,28 +6,12 @@ import "dotenv/config";
 export const month2plus = [
   // === Phase 1 — Snapshot & Measure ===
   {
-    id: "m2.snap.rank_tracker", title: "Run rank tracker",
-    type: "auto", dependsOn: [],
-    async run({ clientId }) {
-      // Defer to track-rankings.mjs as a child process so we don't double-import puppeteer.
-      const { execFile } = await import("node:child_process");
-      const { promisify } = await import("node:util");
-      const exec = promisify(execFile);
-      try {
-        const { stdout } = await exec("node", ["track-rankings.mjs", "--client", clientId], { cwd: process.cwd(), timeout: 600000 });
-        return { summary: `track-rankings.mjs completed.\n${stdout.slice(-500)}` };
-      } catch (err) {
-        return { summary: `track-rankings.mjs failed or not yet runnable for this client: ${err.message?.slice(0, 200)}` };
-      }
-    },
-  },
-  {
     // 🔴 SAME DEFECT AS THE MONTH-1 BASELINE, fixed the same day (2026-09-22). Fixing only the
     // baseline would have left the MONTHLY number — the one a client's month-2+ report is measured
     // against — still coming from a script anyone could interrupt.
     // → feedback_fix_the_class_not_the_instance
-    id: "m2.snap.grid_scan", title: "Re-run the geo-grid map-rank scan",
-    type: "hybrid", dependsOn: ["m2.snap.rank_tracker"],
+    id: "m2.snap.grid_scan", title: "Map-rank scans",
+    type: "auto", dependsOn: [],
     async run() {
       return {
         summary: `The monthly geo-grid re-scan runs in the product — there is no terminal step.
@@ -45,7 +29,7 @@ the same grid size.`,
 "Average grid rank improved from 28 to 14" tells a richer story than "ranked #15 in SF" — it is movement across the whole service area, not one point. Scans that stopped partway are ignored rather than averaged: a scan that stops early has measured one part of the map, so comparing it would report movement that never happened.`,
   },
   {
-    id: "m2.snap.gbp_metrics", title: "Capture GBP performance",
+    id: "m2.snap.gbp_metrics", title: "Profile, search and website numbers",
     type: "auto", dependsOn: [],
     async run({ getGbp, clientId }) {
       try {
@@ -68,60 +52,14 @@ the same grid size.`,
     },
   },
   {
-    id: "m2.snap.gsc_metrics", title: "Capture Search Console data",
-    type: "auto", dependsOn: [],
-    async run({ getOauth }) {
-      try {
-        const g = await getOauth();
-        const end = new Date(); end.setDate(end.getDate() - 3); // GSC has 2-3 day lag
-        const start = new Date(end); start.setDate(end.getDate() - 30);
-        const fmt = (d) => d.toISOString().slice(0, 10);
-        const r = await g.gscQuery({
-          startDate: fmt(start), endDate: fmt(end),
-          dimensions: ["query"], rowLimit: 25,
-        });
-        const totals = (r?.rows || []).reduce(
-          (acc, row) => ({ clicks: acc.clicks + row.clicks, impressions: acc.impressions + row.impressions }),
-          { clicks: 0, impressions: 0 },
-        );
-        const top3 = (r?.rows || []).slice(0, 3).map((r) => `  "${r.keys[0]}": ${r.clicks} clicks / ${r.impressions} imp / pos ${r.position.toFixed(1)}`).join("\n");
-        return { summary: `GSC 30d: ${totals.clicks} clicks / ${totals.impressions} impressions.\nTop 3:\n${top3}`, outcome_data: { ...totals, top_queries: (r?.rows || []).slice(0, 10) } };
-      } catch (e) {
-        return { summary: `OAuth/GSC not ready — pull manually from Search Console and fill fields 2.4.10-13 + 2.4.18-29.` };
-      }
-    },
-  },
-  {
-    id: "m2.snap.ga4_metrics", title: "Capture GA4 + CallRail metrics",
-    type: "hybrid", dependsOn: [],
-    async run({ getOauth }) {
-      try {
-        const g = await getOauth();
-        const r = await g.ga4RunReport({
-          dateRanges: [{ startDate: "30daysAgo", endDate: "today" }],
-          dimensions: [{ name: "sessionDefaultChannelGroup" }],
-          metrics: [{ name: "sessions" }, { name: "totalUsers" }],
-          orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
-          limit: 10,
-        });
-        const total = (r?.rows || []).reduce((sum, row) => sum + Number(row.metricValues[0].value || 0), 0);
-        const organic = (r?.rows || []).find((row) => row.dimensionValues[0].value === "Organic Search");
-        return { summary: `GA4 30d: ${total} total sessions, ${organic ? organic.metricValues[0].value : "0"} organic. Top channels:\n${(r?.rows || []).map((row) => `  ${row.dimensionValues[0].value}: ${row.metricValues[0].value}`).join("\n")}` };
-      } catch (e) {
-        return { summary: `OAuth/GA4 not ready — pull manually from GA4 and fill fields 1.x + 2.4.14-17 + 2.4.30-36.` };
-      }
-    },
-    instructions: `Also pull CallRail (or your call-tracking tool): total calls, missed calls, top source.`,
-  },
-  {
-    id: "m2.snap.competitors", title: "Snapshot top 5 competitors",
+    id: "m2.snap.competitors", title: "Competitor snapshot",
     type: "manual", dependsOn: [],
     instructions: `Re-scrape "<primary service> in <primary market>" via step-1-maps-scraper.cjs (rate-limited, max 1/day).
 Pull top 5: name, GBP URL, current rank, review count, rating. Update fields 2.5.1-31. Flag any new entrants.`,
   },
   {
     id: "m2.snap.business_outcomes", title: "Capture business-outcome KPIs",
-    type: "manual", dependsOn: ["m2.snap.ga4_metrics"],
+    type: "manual", dependsOn: ["m2.snap.gbp_metrics"],
     instructions: `From client + CRM: total leads, total phone calls, form leads, closed jobs, lead-to-customer close rate, monthly revenue. Fill section 1.0.`,
   },
 
@@ -185,7 +123,7 @@ A reply is posted only after the client's consent is on record. It counts as rep
     },
   },
   {
-    id: "m2.exec.focus_area_work", title: "Execute focus-area tasks",
+    id: "m2.exec.focus_area_work", title: "This month's focus work",
     type: "manual", dependsOn: ["m2.plan.rotating_focus"],
     instructions: `Complete the 3-5 tasks in the plan (m2.plan.rotating_focus). Document in section 3.x of monthly record.`,
   },
@@ -336,7 +274,7 @@ Goal: replicate 5+ per quarter.`,
     },
   },
   {
-    id: "m2.exec.site_audit_recurring", title: "Monthly: broken-link + page-speed scan",
+    id: "m2.exec.site_audit_recurring", title: "Site health check",
     type: "auto", dependsOn: [],
     async run({ client }) {
       if (!client.website_url) return { summary: "No website_url" };
@@ -395,6 +333,12 @@ Goal: replicate 5+ per quarter.`,
         outcome_data: { pages_checked: checked.length, broken_count: broken.length, broken, psi: psiResults },
       };
     },
+  },
+  {
+    // monthly_s3_monthly_v1 (11-9): new on the list. The checks already run (citation-recheck, citation-live-check); this step shows what they found.
+    id: "m2.exec.listing_upkeep", title: "Citation and listing upkeep",
+    type: "auto", dependsOn: [],
+    async run() { return { summary: "Shown from the monthly listing checks (citation-recheck, citation-live-check); nothing to run by hand." }; },
   },
   {
     id: "m2.exec.gbp_attributes_refresh", title: "Quarterly: refresh GBP attributes",

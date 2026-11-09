@@ -276,7 +276,7 @@ function fakeGoogle({ existing = {}, putStatus = {}, readFail = false, consent =
     if (!new RegExp(`id === "${id.replace(/\./g, "\\.")}" \\? ${fn}\\(\\)`).test(a)) fail(`8 ${id}'s card is not wired into rowStepCardsHtml`);
   if (!/import "\/shared\/monthly-weekly\.js\?v=/.test(a)) fail("8 the admin must load shared/monthly-weekly.js");
   for (const id of W.IDS) if (!STEPS.noHandDone(id)) fail(`8 ${id} must have no hand Mark step complete`);
-  if (!/admin\.js\?v=20261109p/.test(html) || !/admin\.css\?v=20261109e/.test(html) || !/steps-57-64\.js\?v=20261109f/.test(a)) fail("8 the ?v= keys were not bumped");
+  if (!/admin\.js\?v=20261109q/.test(html) || !/admin\.css\?v=20261109f/.test(html) || !/steps-57-64\.js\?v=20261109g/.test(a)) fail("8 the ?v= keys were not bumped");   // updated on purpose by monthly_s3_monthly_v1 (11-9): admin.js q, admin.css f, steps-57-64 g
   if (!/Skip this week…/.test(a) || !/Nothing new this month/.test(a) || !/Send for approval/.test(a)) fail("8 the cards must carry Skip this week, Nothing new this month and Send for approval");
   if (!/mw-strip/.test(read("admin/admin.css"))) fail("8 the week strip has no style");
   if (/—/.test(read("shared/monthly-weekly.js").replace(/^\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, ""))) fail("8 no em dash in text a person reads");

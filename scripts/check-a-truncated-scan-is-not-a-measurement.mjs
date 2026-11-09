@@ -50,13 +50,16 @@ const problems = [];
 //    the MONTHLY number — the one a client's month-2+ report is measured against — still coming
 //    from a script anyone could interrupt. → feedback_fix_the_class_not_the_instance
 const GRID_STEPS = ["m1.audit.grid_baseline", "m2.snap.grid_scan"];
-for (const id of GRID_STEPS) {
+// monthly_s3_monthly_v1 (11-9), changed on purpose: the MONTHLY step ("Map-rank scans") no longer has an executor or a Run button. It READS the scans the rankings job recorded
+// (shared/monthly-monthly.js), so it can never start a scan or be interrupted by hand. Only the Month 1 baseline still runs in the product.
+for (const id of ["m1.audit.grid_baseline"]) {
   if (!new RegExp(`"${id.replace(/\./g, "\\.")}":\\s*async`).test(src)) {
     problems.push(`${id} has no executor in flow-execute — the product would answer it with `
       + `\`mustRunLocally\` and a terminal command, which is a manual step and cannot be `
       + `interrupted safely.`);
   }
 }
+if (/"m2\.snap\.grid_scan":\s*async/.test(src)) problems.push("m2.snap.grid_scan has an executor again: the monthly scan step must only READ the recorded scans (no hand run, no paid scan).");
 
 // ── 2. The instructions must not send anyone to a terminal.
 let steps = 0;
@@ -104,28 +107,25 @@ if (steps < GRID_STEPS.length) {
 // it per-source is that the max folds in THAT SOURCE's own running value, so match that.
 const perSource = [...src.matchAll(
   /fullFor\[\s*s\.source\s*\]\s*=\s*Math\.max\(\s*fullFor\[\s*s\.source\s*\]\s*\|\|\s*0\s*,/g)].length;
-// The baseline and the monthly re-run now share readGridSessions(), so the fold lives in ONE
-// place plus the tracker's own copy. Fewer than two means a reader stopped judging per source.
-if (perSource < 2) {
-  problems.push(`completeness is judged per-source in only ${perSource} place(s) — the shared `
-    + `readGridSessions() and m2.snap.rank_tracker must each do it, or a complete 25-point `
+// The baseline reads through readGridSessions() in flow-execute; the monthly card reads through completeSessions() in shared/monthly-monthly.js. Both must fold per source.
+const MM = readFileSync(`${SITE}/shared/monthly-monthly.js`, "utf8");
+const monthlyPerSource = /full\[\s*s\.source\s*\|\|\s*""\s*\]\s*=\s*Math\.max\(\s*full\[\s*s\.source\s*\|\|\s*""\s*\]\s*\|\|\s*0\s*,/.test(MM);
+if (perSource < 1 || !monthlyPerSource) {
+  problems.push(`completeness is judged per-source in flow-execute ${perSource} place(s) and ${monthlyPerSource ? "also" : "NOT"} in shared/monthly-monthly.js — both readers must do it, or a complete 25-point `
     + `automated scan gets branded truncated next to an 81-point hand-run one.`);
 }
 
 // ── 4. The comparison must actually DROP the truncated sessions rather than note them.
-const tracker = src.match(/"m2\.snap\.rank_tracker":[\s\S]{0,3000}?\n\s{2}\}/);
-if (!tracker) {
-  console.error("⚠️  INDETERMINATE — could not isolate m2.snap.rank_tracker; the parser has drifted.");
-  process.exit(2);
-}
-if (!/\.filter\(\s*\(s\)\s*=>\s*s\.total\s*===\s*fullFor\[\s*s\.source\s*\]\s*\)/.test(tracker[0])) {
-  problems.push("m2.snap.rank_tracker no longer filters sessions down to the complete ones — a "
+if (!/return all\.filter\(\(s\) => s\.pts\.length === full\[s\.source \|\| ""\]\)/.test(MM)) {
+  problems.push("shared/monthly-monthly.js completeSessions no longer filters sessions down to the complete ones — a "
     + "truncated scan would be compared against a full one and report movement that never happened.");
 }
-// It must not silently fall back to the newest session of any size.
-if (/const\s+cur\s*=\s*ordered\[0\]/.test(tracker[0])) {
-  problems.push("m2.snap.rank_tracker takes `ordered[0]` — the newest session of ANY size. On "
-    + "2026-09-12 that was a FIVE-point scan of an 81-point grid.");
+// It must not fall back to the newest session of any size, and must compare only like with like.
+if (!/complete = completeSessions\(x\.sessions, x\.keyword\)/.test(MM) || /const cur = \(?x\.sessions/.test(MM)) {
+  problems.push("the monthly scans card must take its result from the COMPLETE sessions only.");
+}
+if (!/s\.pts\.length === cur\.pts\.length && \(s\.source \|\| ""\) === \(cur\.source \|\| ""\)/.test(MM)) {
+  problems.push("the monthly scans card must compare only with a scan of the same grid size and source.");
 }
 
 if (problems.length) {
@@ -135,5 +135,5 @@ if (problems.length) {
 }
 
 console.log("✅ a truncated scan is not a measurement — grid_baseline runs in-product, its "
-  + "instructions name no terminal, and completeness is judged per source in both readers.");
+  + "instructions name no terminal, and completeness is judged per source in the baseline reader and in the monthly card.");
 process.exit(0);

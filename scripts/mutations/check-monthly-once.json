@@ -1,0 +1,261 @@
+[
+ [
+  "a scan is compared with a different grid size",
+  "monthlyonce",
+  "s.pts.length === cur.pts.length && (s.source || \"\") === (cur.source || \"\")",
+  "(s.source || \"\") === (cur.source || \"\")",
+  1
+ ],
+ [
+  "a scan is compared across sources",
+  "monthlyonce",
+  "s.pts.length === cur.pts.length && (s.source || \"\") === (cur.source || \"\")",
+  "s.pts.length === cur.pts.length",
+  1
+ ],
+ [
+  "a truncated scan counts as a result",
+  "monthlyonce",
+  "return all.filter((s) => s.pts.length === full[s.source || \"\"])",
+  "return all.filter((s) => s.pts.length > 0)",
+  1
+ ],
+ [
+  "another keyword's scan is used",
+  "monthlyonce",
+  "(!keyword || !s.keyword || norm(s.keyword) === norm(keyword))",
+  "true",
+  1
+ ],
+ [
+  "top 20 becomes top 3",
+  "monthlyonce",
+  "const TOP = 20;",
+  "const TOP = 3;",
+  1
+ ],
+ [
+  "a month with no scan settles as done",
+  "monthlyonce",
+  "rows, done: false, scans: 0, compared: false };",
+  "rows, done: over, scans: 0, compared: false };",
+  1
+ ],
+ [
+  "the next scan date is not shown",
+  "monthlyonce",
+  "next ? { right: `next ${day(next)}` } : {}));\n    rows.push(row(\"off\", \"Compared only",
+  "{}));\n    rows.push(row(\"off\", \"Compared only",
+  1
+ ],
+ [
+  "a number Google won't give reads 0",
+  "monthlyonce",
+  "text: \"not measured\", change: null",
+  "text: \"0\", change: null",
+  1
+ ],
+ [
+  "the tiles show numbers before the month is read",
+  "monthlyonce",
+  "if (early) return { key: k, label, value: null,",
+  "if (false) return { key: k, label, value: null,",
+  1
+ ],
+ [
+  "a measured 0 reads not measured",
+  "monthlyonce",
+  "if (!isNum(cur[k])) return",
+  "if (!isNum(cur[k]) || Number(cur[k]) === 0) return",
+  1
+ ],
+ [
+  "a new competitor is flagged against no earlier list",
+  "monthlyonce",
+  "prev && prev.length ? cur.filter",
+  "cur.filter",
+  1
+ ],
+ [
+  "a new competitor is never flagged",
+  "monthlyonce",
+  "!known.has(norm(c.name))",
+  "false",
+  1
+ ],
+ [
+  "a check that never ran reads 0 broken",
+  "monthlyonce",
+  "if (!c || !c.ran) return { tone: \"wait\"",
+  "if (false) return { tone: \"wait\"",
+  1
+ ],
+ [
+  "the site line drops what was not checked",
+  "monthlyonce",
+  "Not checked: ${nc.length ? nc.join(\", \") : \"nothing else\"}.",
+  "Checked everything.",
+  1
+ ],
+ [
+  "a page that did not answer counts as broken",
+  "monthlyoncesrv",
+  "broken: typeof od.broken_count === \"number\" ? od.broken_count : null",
+  "broken: (od.broken_count || 0) + unreach",
+  1
+ ],
+ [
+  "last month's site check is this month's result",
+  "monthlyoncesrv",
+  "|| !M.inMonth(month, at)) return",
+  "|| false) return",
+  1
+ ],
+ [
+  "0 posts is not a fine month",
+  "monthlyonce",
+  "(x.now != null && monthEnd(x.month) != null && x.now >= monthEnd(x.month))",
+  "false",
+  1
+ ],
+ [
+  "indexing is claimed without a read",
+  "monthlyonce",
+  "x.indexed == null ? \"indexing not checked\"",
+  "x.indexed == null ? \"indexed\"",
+  1
+ ],
+ [
+  "a draft is not RGA's move",
+  "monthlyonce",
+  "tone = \"you\"; label = \"Your move\"; send = true;",
+  "tone = \"wait\"; label = \"Your move\";",
+  1
+ ],
+ [
+  "the focus work settles without its steps",
+  "monthlyonce",
+  "const state = step == null ? \"off\" : settledStatus(t) ? \"ok\"",
+  "const state = step == null ? \"off\" : true ? \"ok\"",
+  1
+ ],
+ [
+  "a skipped step does not settle its task",
+  "monthlyonce",
+  "[\"done\", \"skipped\", \"declined\"].includes(t.status)",
+  "[\"done\"].includes(t.status)",
+  1
+ ],
+ [
+  "a task tied to nothing settles itself",
+  "monthlyonce",
+  "const state = step == null ? \"off\"",
+  "const state = step == null ? \"ok\"",
+  1
+ ],
+ [
+  "a listing check is claimed clean with no check",
+  "monthlyonce",
+  "if (ran || live > 0) {",
+  "if (true) {",
+  1
+ ],
+ [
+  "an unread live count reads no new listing",
+  "monthlyonce",
+  "if (ran && unread) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "Month 1 skipped sign-ups are not shown",
+  "monthlyonce",
+  "if (later.length) rows.push",
+  "if (false) rows.push",
+  1
+ ],
+ [
+  "the settle marks a skipped step done",
+  "monthlyoncesrv",
+  "if ([\"done\", \"skipped\", \"declined\"].includes(t.status)) continue;",
+  "if ([\"done\"].includes(t.status)) continue;",
+  1
+ ],
+ [
+  "the settle writes with nothing proven",
+  "monthlyoncesrv",
+  "if (!settled.length && !freeze) return { settled, wrote: false };",
+  "if (false) return { settled, wrote: false };",
+  1
+ ],
+ [
+  "the competitor list is not frozen",
+  "monthlyoncesrv",
+  "const freeze = data.competitors.fresh && !(rec.data && rec.data.competitors);",
+  "const freeze = false;",
+  1
+ ],
+ [
+  "a refused Google number is read as a value",
+  "monthlyoncesrv",
+  "x.status[f] === \"ok\" && Number.isFinite",
+  "Number.isFinite",
+  1
+ ],
+ [
+  "the read buys a scan",
+  "monthlyoncesrv",
+  "const here = sessions ?",
+  "const startRankScan = 1; const here = sessions ?",
+  1
+ ],
+ [
+  "a failed reviews read starts the replies",
+  "morningrun",
+  "if (!read || read.status !== \"ok\") return \"the reviews could not be read this morning\";",
+  "if (!read) read = { status: \"ok\", openIds: [\"x\"] };",
+  1
+ ],
+ [
+  "a covered review starts the replies again",
+  "morningrun",
+  "if ((read.openIds || []).some((id) => !covered.has(id))) return null;",
+  "if ((read.openIds || []).length) return null;",
+  1
+ ],
+ [
+  "a failed reply is never retried",
+  "morningrun",
+  "(Number(r.tries) || 0) < MAX_REPLY_TRIES)) return null;",
+  "false)) return null;",
+  1
+ ],
+ [
+  "a failed reply is retried forever",
+  "morningrun",
+  "(Number(r.tries) || 0) < MAX_REPLY_TRIES)) return null;",
+  "true)) return null;",
+  1
+ ],
+ [
+  "the replies start twice a day",
+  "morningrun",
+  "if (stampedToday(t, now)) return \"already started today\";\n  if (runningNow(t, now)) return \"a run is in progress\";\n  const rp",
+  "if (runningNow(t, now)) return \"a run is in progress\";\n  const rp",
+  1
+ ],
+ [
+  "the site check starts every day",
+  "morningrun",
+  "if (OM.inMonth(month, t.ran_at) && (t.outcome_data || (t.auto_result || {}).outcome_data)) return \"it already ran this month\";",
+  "",
+  1
+ ],
+ [
+  "the monthly part never runs",
+  "morningrun",
+  "if (om.ok) { try { await monthlyMorning",
+  "if (false) { try { await monthlyMorning",
+  1
+ ]
+]

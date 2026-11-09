@@ -75,7 +75,7 @@ const scope = {
   measuredKw: Array.from({ length: 5 }, (_, i) => ({ keyword: `kw${i}`, measured: true, points: 25, ranked: 0, top3: 0, top10: 0 })),
   partials: 0, keyword: "seo company", scanKeyword: "local seo services near me", radiusKm: 5.3,
   newest: { at: "2026-10-06T23:41:58.420Z" },
-  laterScanTitle: "Re-run the geo-grid map-rank scan",
+  laterScanTitle: "Map-rank scans",   // monthly_s3_monthly_v1 (11-9): the merged step is called Map-rank scans; the fixture follows the playbook
 
   rankedKw: [], totalPoints: 125, totalRanked: 0, totalTop3: 0, totalTop10: 0,
   pctOf: (n) => (Math.round((n / 125) * 1000) / 10).toFixed(1),
