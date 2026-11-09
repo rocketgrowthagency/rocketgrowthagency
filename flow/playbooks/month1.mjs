@@ -1123,10 +1123,10 @@ DONE = every place RGA asked is live or marked not for this business. It finishe
   {
     id: "m1.platform.bing_apple", title: "Set up Bing Places + Apple Business",
     type: "manual", dependsOn: ["m1.gbp.optimize_categories", "m1.gbp.hours_attributes", "m1.gbp.business_facts"],
-    actionLabel: "⚡ Generate",
-    instructions: `Bing Places (https://www.bingplaces.com/): Create account → Import from Google → verify by phone.
-Apple Business (https://business.apple.com/, which replaced Apple's older Business Connect on April 14, 2026): Claim listing → verify (Apple usually calls the number on record, so the client takes the code) → add hours, photos, services.
-Both are free.`,
+    instructions: `Bing Places (https://www.bingplaces.com/) and Apple Business (https://business.apple.com/, which replaced Apple's older Business Connect on April 14, 2026) are two rows of Build top-10 priority citations. This step shows those same two rows, so the two steps can't disagree: a press on either one shows on both.
+For each: search it for an existing listing and claim that before creating one. Copy the details (read from their Google profile, the same words as Google), sign up, press Submitted. Leave any "Import from Google" or listing sync off. Apple usually calls the number on record, so the client takes the code. Then paste the listing link: it's checked that it opens and names the business.
+Both are free.
+DONE = both are live or marked not for this business. It finishes itself. A tick from before this card reads "Done, but not proven" until then.`,
   },
   {
     id: "m1.gbp.knowledge_panel", title: "Claim + optimize brand knowledge panel",

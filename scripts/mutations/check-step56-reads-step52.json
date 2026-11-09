@@ -1,0 +1,163 @@
+[
+ [
+  "56 reads its own task's listings instead of 52's",
+  "citprogress",
+  "const top = (tasks || {})[STEP.TOP] || {}, p = listProgress(top);",
+  "const top = { ...((tasks || {})[STEP.TOP] || {}), listings: (task || {}).listings }, p = listProgress(top);",
+  1
+ ],
+ [
+  "56 shows every row of 52",
+  "citprogress",
+  "const rows = p.rows.filter((r) => BING_APPLE_KEYS.includes(r.key));",
+  "const rows = p.rows;",
+  1
+ ],
+ [
+  "56 is done with one of the two still open",
+  "citprogress",
+  "done: counts.open === 0 && counts.live + counts.not_for > 0, none: null };",
+  "done: counts.live + counts.not_for > 0, none: null };",
+  1
+ ],
+ [
+  "56 reads ready before 52 is built",
+  "citprogress",
+  "if (!p.ready) return { ready: false, rows: [], counts: p.counts, total: 0, done: false, none: null };",
+  "if (!p.ready) return { ready: true, rows: [], counts: p.counts, total: 0, done: false, none: null };",
+  1
+ ],
+ [
+  "a hand tick reads proven",
+  "citprogress",
+  "task.done_by !== \"checks\" && stepId === STEP.BING_APPLE && !bingAppleProgress(task, tasks).done",
+  "task.done_by !== \"checks\" && stepId === STEP.BING_APPLE && false",
+  1
+ ],
+ [
+  "progressOf forgets 56",
+  "citprogress",
+  "    if (stepId === STEP.BING_APPLE) return bingAppleProgress(task, tasks);\n",
+  "",
+  1
+ ],
+ [
+  "settle drops the tasks 56 reads",
+  "citbuild",
+  "const p = progressOf(stepId, t, tasks);",
+  "const p = progressOf(stepId, t);",
+  1
+ ],
+ [
+  "the nightly look writes 52 without settling 56",
+  "citbuild",
+  "  if (looks[STEP.TOP]) { const s = settleBingApple(nextTasks, now); if (s) { nextTasks[STEP.BING_APPLE] = s.task; moved[STEP.BING_APPLE] = s.moved; } }\n",
+  "",
+  1
+ ],
+ [
+  "a press on 52 doesn't settle 56",
+  "citbuildfn",
+  "const s56 = stepId === B.STEP.TOP ? B.settleBingApple(nextTasks, now) : null;",
+  "const s56 = null;",
+  1
+ ],
+ [
+  "56 takes directory presses of its own",
+  "citbuildfn",
+  "const allowed = SKIP.includes(action) || stepId !== B.STEP.BING_APPLE && (",
+  "const allowed = SKIP.includes(action) || (",
+  1
+ ],
+ [
+  "56 can't be skipped",
+  "citbuildfn",
+  "if (!B.ALL_STEPS.includes(stepId) && stepId !== B.STEP.BING_APPLE)",
+  "if (!B.ALL_STEPS.includes(stepId))",
+  1
+ ],
+ [
+  "the answer leaves 56 out",
+  "citbuildfn",
+  ", ...(s56 ? { [B.STEP.BING_APPLE]: after.tasks[B.STEP.BING_APPLE] } : {}) },",
+  " },",
+  1
+ ],
+ [
+  "56 finishing writes no feed line",
+  "citbuildfn",
+  "    if (s56) await B.noteDone(d, clientId, B.STEP.BING_APPLE, s56.moved);\n",
+  "",
+  1
+ ],
+ [
+  "56's buttons press 56",
+  "admin",
+  "cbRowsHtml(p.rows, (r) => cbListActs(P.STEP.TOP, r, pack), right),",
+  "cbRowsHtml(p.rows, (r) => cbListActs(step, r, pack), right),",
+  1
+ ],
+ [
+  "the old tick reads Done",
+  "admin",
+  "label: p.done ? \"Done\" : unproven ? \"Done, but not proven\" : `${p.counts.live} of ${p.total} live`",
+  "label: p.done || t.status === \"done\" ? \"Done\" : `${p.counts.live} of ${p.total} live`",
+  1
+ ],
+ [
+  "the row chip says Done for the old tick",
+  "admin",
+  "  if (task.status === \"done\" && P && P.doneUnproven(step, task, tasks)) return { text: \"Done, but not proven\", cls: \"active\" };\n",
+  "",
+  1
+ ],
+ [
+  "a skipped 52 isn't said on 56",
+  "admin",
+  "  if (top.status === \"skipped\") return acCardHtml(",
+  "  if (false) return acCardHtml(",
+  1
+ ],
+ [
+  "56 loses its Skip",
+  "admin",
+  "    acts: p.done ? \"\" : cbSkipLink(step) });\n}\nfunction cbCardHtml(",
+  "    acts: \"\" });\n}\nfunction cbCardHtml(",
+  1
+ ],
+ [
+  "the service area keeps USA on each town",
+  "citbuild",
+  "    if (country && US.test(country)) country = null;\n",
+  "",
+  1
+ ],
+ [
+  "the service area is Google's raw list again",
+  "citbuild",
+  "const service_area = pick(\"service_area\", areaLine(places), c.primary_market);",
+  "const service_area = pick(\"service_area\", places.join(\", \"), c.primary_market);",
+  1
+ ],
+ [
+  "towns in different states are merged",
+  "citbuild",
+  "    const key = `${region || \"\"}|${country || \"\"}`;",
+  "    const key = \"one\";",
+  1
+ ],
+ [
+  "a town is listed twice",
+  "citbuild",
+  "    if (!g.towns.includes(town)) g.towns.push(town);",
+  "    g.towns.push(town);",
+  1
+ ],
+ [
+  "56 gets a Run button again",
+  "playbooksjson",
+  "      \"hasRunner\": false,\n      \"actor\": \"rga\",\n      \"clientLabel\": null,\n      \"clientHint\": null,\n      \"clientForm\": null,\n      \"clientBucket\": \"admin\",\n      \"clientFeed\": \"Set up your business on Bing and Apple Maps\"",
+  "      \"hasRunner\": true,\n      \"actor\": \"rga\",\n      \"clientLabel\": null,\n      \"clientHint\": null,\n      \"clientForm\": null,\n      \"clientBucket\": \"admin\",\n      \"clientFeed\": \"Set up your business on Bing and Apple Maps\"",
+  1
+ ]
+]

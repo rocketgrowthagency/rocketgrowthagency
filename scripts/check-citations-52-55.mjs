@@ -90,7 +90,7 @@ const GBP = { title: "Rocket Growth Agency", phoneNumbers: { primaryPhone: "(424
   if (pk.name !== "Rocket Growth Agency" || pk.phone !== "(424) 242-2040" || pk.category !== "Internet marketing service" || pk.from.name !== "google") fail(`pack: Google's facts aren't the pack: ${JSON.stringify(pk)}`);
   if (pk.website !== "https://www.rocketgrowthagency.com/") fail(`pack: the website keeps Google's tracking tags: ${pk.website}`);
   if (pk.hours !== "Mon–Fri 9 AM–6 PM · Sat, Sun closed") fail(`pack: hours read wrong: ${pk.hours}`);
-  if (pk.service_area !== "Los Angeles County, CA, USA") fail("pack: the service area isn't Google's");
+  if (pk.service_area !== "Los Angeles County (CA)") fail(`pack: the service area isn't Google's, once per state (step56_reads_step52_v1): ${pk.service_area}`);
   if (!pk.description || pk.description.length > 250 || !GBP.profile.description.startsWith(pk.description.replace(/…$/, ""))) fail(`pack: the short description isn't the start of theirs: ${pk.description}`);
   if (pk.address_public !== false || pk.address) fail("pack: a profile with no storefront address shows one");
   const txt = B.packText(pk);
