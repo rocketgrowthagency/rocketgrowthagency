@@ -369,5 +369,19 @@
   "not_mine: [...SP.notMineOf(task0).filter((u) => !SP.sameUrl(u, b.url)), String(b.url || \"\").slice(0, 400)] }; summary = \"Removed",
   "}; summary = \"Removed",
   1
+ ],
+ [
+  "the page code reads as a link (portal)",
+  "portal",
+  "  return !!(x && x.in_schema && !x.on_page);\n}",
+  "  return false;\n}",
+  1
+ ],
+ [
+  "admin calls page code a link",
+  "admin",
+  "  const linked = (u, sep = \",\") => (codeOnly(u) ?",
+  "  const linked = (u, sep = \",\") => (false ?",
+  1
  ]
 ]

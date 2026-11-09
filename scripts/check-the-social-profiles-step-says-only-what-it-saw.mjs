@@ -197,7 +197,7 @@ try {
   for (const code of [line("monthDay"), hand, csBlock(P, hand)]) vm.runInContext(code.replace(/^const /gm, "var "), ctx);
   vm.runInContext(`var ogK5 = (html) => \`<div class="pm-k5">\${html}</div>\`;`, ctx);
   for (const n of ["_socialForm", "_socialEdit", "_socialFound", "_socialFailed", "_socialChannel", "socialSame", "socialName", "socialLink"]) vm.runInContext(line(n), ctx);
-  vm.runInContext(fn("socialFormHtml") + fn("socialCard"), ctx);
+  vm.runInContext(fn("socialCodeOnly") + fn("socialFormHtml") + fn("socialCard"), ctx);
 } catch (e) { console.error(`⚠️  INDETERMINATE: the card doesn't load (${e.message})`); process.exit(2); }
 const card = (task = {}, c = {}) => { ctx.__c = { clientId: "c1", task, isDone: task.status === "done", status: task.status || "pending", tasks: c.tasks || {} }; const o = vm.runInContext(`socialCard({}, __c)`, ctx); return { ...o, text: o.html.replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(/\s+/g, " ") }; };
 const NEVER = /you (do not|don't) have|you have no\b|no profiles? (found|exist)|this is yours|it's yours\b(?! ·)|your (facebook|instagram|youtube) is\b/i;
@@ -217,6 +217,14 @@ const kept = (state) => ({ ...yt, source: "site", check: { state, at: "2026-11-0
 { const auto = { ...kept("couldnt"), key: "facebook", label: "Facebook", url: "https://www.facebook.com/sparks", handle: "sparks", by: "their website" };
   const o = card({ status: "done", finder: { state: "read", found: [yt], at: "x" }, client_input: { profiles: [auto] } }); say("auto done", o, ["Done · we found these on your website", "Linked from your website", 'data-social-act="not_mine"', "Not mine", "We only check these are yours. RGA never posts on your accounts or changes them.", "Add a profile", "I don't use social media"], ["Your turn", "About 2 min", "Yes, it's mine"]);
   if (o.pills.length !== 1 || o.pills[0][0] !== "Done") fail("an auto-counted step shows a Your turn pill instead of Done");
+  // social_found_where_v1 (approved 11-8): a profile only in the page code (schema sameAs, RGA's YouTube) is never "linked from your website"
+  { const A = fs.readFileSync(`${SITE}/admin/admin.js`, "utf8");
+    if (!/const codeOnly = \(u\) => \{ const x = \(\(f && f\.found\) \|\| \[\]\)\.find\(\(y\) => same\(y\.url, u\)\); return !!\(x && x\.in_schema && !x\.on_page\); \};/.test(A) || !/\$\{linked\(p\.url\)\} the client confirmed it/.test(A) || !/const linked = \(u, sep = ","\) => \(codeOnly\(u\) \? "In their website's page code, not a link visitors can click ·" : `Linked from their website\$\{sep\}`\);/.test(A)) fail("admin's social card says 'Linked from their website' for a profile only in the page code"); }
+  const ytCode = { ...yt, url: "https://www.youtube.com/@code", handle: "@code", on_page: false, in_schema: true };
+  const codeAuto = { ...kept("opens"), key: "youtube", label: "YouTube", url: ytCode.url, handle: "@code", by: "their website", source: "site" };
+  const oc = card({ status: "done", finder: { state: "read", found: [ytCode], at: "x" }, client_input: { profiles: [codeAuto] } });
+  say("code only, done", oc, ["In your website's page code", "We'll add a link your visitors can click."], ["Linked from your website"]);
+  const op = card({ finder: { state: "read", found: [ytCode], not_linked: [], at: "x" } }); say("code only, asked", op, ["In your website's page code"], ["Linked from your website"]);
   const n = card({ status: "done", finder: { state: "read", found: [], at: "x" } }); say("auto none found", n, ["Done · no profiles linked from your website", "Have one? Add it, and we'll link it the same way.", "Add a profile"], ["I don't use social media", "Your turn"]);
   say("couldn't read stays open", card({ finder: { state: "couldnt", reason: "x", at: "x" } }), ["Could not check your website"], ["Done · "]); }
 say("done, could not check", card({ status: "done", finder: { state: "read", found: [], at: "x" }, client_input: { profiles: [{ ...kept("couldnt"), key: "facebook", label: "Facebook" }] } }), ["Could not check"], [" opens"]);
