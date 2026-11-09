@@ -529,6 +529,10 @@ export const FILES = {
   monthlysections: "shared/monthly-sections.js",
   monthlystart: "shared/monthly-start.js",   // monthly_start_v1: the focus rule, the cards, the portal line
   monthlyplanfn: "netlify/functions/admin-monthly-plan.js",
+  monthlyweekly: "shared/monthly-weekly.js",   // monthly_s2_weekly_v1: the four weekly cards, the week strips
+  replypost: "netlify/functions/_reply-post.js",   // monthly_s2_weekly_v1: an approved reply posts itself
+  weekskipfn: "netlify/functions/admin-week-skip.js",
+  weeklyreadfn: "netlify/functions/admin-monthly-weekly.js",
   monthlyplanread: "netlify/functions/_monthly-plan.js",
   adminjs: "admin/admin.js",
 };

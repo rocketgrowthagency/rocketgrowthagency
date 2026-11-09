@@ -1,0 +1,191 @@
+[
+ [
+  "a mark from the month before is counted in week 1",
+  "monthlyweekly",
+  "if (a == null || atMs == null || atMs < a || atMs >= b) return null;",
+  "if (a == null || atMs == null) return 1;",
+  1
+ ],
+ [
+  "biweekly is due every week",
+  "monthlyweekly",
+  "biweekly: { words: \"Every 2 weeks\", due: [1, 3] }",
+  "biweekly: { words: \"Every 2 weeks\", due: [1, 2, 3, 4] }",
+  1
+ ],
+ [
+  "an unread review count is shown as 0",
+  "monthlyweekly",
+  "x.newReviews == null ? \"new reviews not read yet\"",
+  "x.newReviews == null ? \"0 new reviews\"",
+  1
+ ],
+ [
+  "a review target appears on the asks card",
+  "monthlyweekly",
+  "Reviews are a result, never a target.",
+  "Aim for 5 reviews a month.",
+  1
+ ],
+ [
+  "a failed read is shown as no new review",
+  "monthlyweekly",
+  "if (rv.status && rv.status !== \"ok\") return",
+  "if (false) return",
+  1
+ ],
+ [
+  "a skipped week is asked again",
+  "monthlyweekly",
+  "if (sk) return { n, cls: \"off\", text: `Wk ${n} skipped` };\n      if (n < cur)",
+  "if (n < cur)",
+  1
+ ],
+ [
+  "photos get a quota",
+  "monthlyweekly",
+  "title: \"No quota\"",
+  "title: \"At least 5 a month\"",
+  1
+ ],
+ [
+  "the posts total ignores what the client chose",
+  "monthlyweekly",
+  "const M = wanted != null && wanted >= 1 && wanted <= 4 ? wanted : q.length || drafts.length || 4",
+  "const M = 4",
+  1
+ ],
+ [
+  "a reply posts without RGA having sent it",
+  "replypost",
+  "if (ir.decision !== \"approved\") return { ok: false, why: \"RGA has not sent these to the client.\" };",
+  "",
+  1
+ ],
+ [
+  "a reply posts without the client's approval",
+  "replypost",
+  "if (ap.decision !== \"approved\") return { ok: false, why: \"The client has not approved these.\" };",
+  "",
+  1
+ ],
+ [
+  "an approval for other reviews still posts",
+  "replypost",
+  "ap.drafted_ids.join(\"|\") !== ids.join(\"|\")",
+  "false",
+  1
+ ],
+ [
+  "an existing reply is replaced",
+  "replypost",
+  "if (before.replied) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "the reply is posted without reading the review first",
+  "replypost",
+  "if (!before || !before.ok) { fail(",
+  "if (false) { fail(",
+  1
+ ],
+ [
+  "a posted reply is called live without reading it back",
+  "replypost",
+  "const seen = back && back.ok && back.replied && String(back.comment || \"\").trim() === it.text;",
+  "const seen = true;",
+  1
+ ],
+ [
+  "a failure keeps no reason",
+  "replypost",
+  "fail = (why) => { rp[it.id] = { status: \"failed\", why, tries, last_try_at: at }; }",
+  "fail = () => { rp[it.id] = { status: \"failed\", tries, last_try_at: at }; }",
+  1
+ ],
+ [
+  "retrying never stops",
+  "replypost",
+  "(cur.tries || 0) >= MAX_TRIES) continue;",
+  "false) continue;",
+  1
+ ],
+ [
+  "a live reply is posted again",
+  "replypost",
+  "if (cur.status === \"live\" || cur.status === \"held\" ||",
+  "if (",
+  1
+ ],
+ [
+  "posting skips the client's authorization",
+  "replypost",
+  "if (!agreed) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "step 61 is left out of the posting path",
+  "replypost",
+  "const REPLY_KEYS = [\"m1.review.response\", \"m2.exec.review_responses\"];",
+  "const REPLY_KEYS = [\"m2.exec.review_responses\"];",
+  1
+ ],
+ [
+  "a week outside 1-4 can be skipped",
+  "monthlyweekly",
+  "if (!Number.isInteger(n) || n < 1 || n > 4)",
+  "if (!Number.isInteger(n))",
+  1
+ ],
+ [
+  "a week is skipped with no reason",
+  "monthlyweekly",
+  "if (!why) return { ok: false, error: \"Say why",
+  "if (false) return { ok: false, error: \"Say why",
+  1
+ ],
+ [
+  "photos can have a week skipped",
+  "monthlyweekly",
+  "const WEEKLY = [ID.PUSH, ID.REPLIES, ID.POSTS];",
+  "const WEEKLY = [ID.PUSH, ID.REPLIES, ID.POSTS, ID.PHOTOS];",
+  1
+ ],
+ [
+  "the skip is not read back",
+  "weekskipfn",
+  "if (action === \"skip_week\" ? !back ||",
+  "if (action === \"skip_week\" ? false ||",
+  1
+ ],
+ [
+  "the weekly read carries a customer name",
+  "weeklyreadfn",
+  "if (c && c.marked_sent_by_client && c.marked_sent_at) asks.push(c.marked_sent_at);",
+  "if (c && c.marked_sent_by_client && c.marked_sent_at) asks.push(c.name + c.marked_sent_at);",
+  1
+ ],
+ [
+  "an unreadable review list reads as zero",
+  "weeklyreadfn",
+  "let newReviews = null;",
+  "let newReviews = 0;",
+  1
+ ],
+ [
+  "the automation note says requests are auto-sent",
+  "adminjs",
+  "RGA writes each ask; the CLIENT sends it from their own phone and marks I sent it. RGA never sends a review request.",
+  "Auto-sends review requests (SMS/email).",
+  1
+ ],
+ [
+  "the old photos quota title returns",
+  "adminjs",
+  "wklPhotosCardHtml() {",
+  "wklPhotosCardHtml() { return \"Add 5+ photos\";",
+  1
+ ]
+]

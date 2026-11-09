@@ -139,7 +139,7 @@ Pull top 5: name, GBP URL, current rank, review count, rating. Update fields 2.5
 
   // === Phase 3 — Execute ===
   {
-    id: "m2.exec.gbp_posts", title: "Post 4 GBP updates this month",
+    id: "m2.exec.gbp_posts", title: "Google posts",
     type: "auto", dependsOn: ["m2.plan.rotating_focus"],
     async run({ client, clientId }) {
       const { draftMonthlyPostCalendar } = await import("../../lib/gbp-content-ai.mjs");
@@ -155,12 +155,12 @@ Pull top 5: name, GBP URL, current rank, review count, rating. Update fields 2.5
     },
   },
   {
-    id: "m2.exec.gbp_photos", title: "Add new photos",
+    id: "m2.exec.gbp_photos", title: "New photos",
     type: "manual", dependsOn: ["m2.plan.rotating_focus"],
     instructions: `Optional: there's no monthly quota. ⚡ drafts a shot list to hand the client (or take photos during a ride-along). Real photos only, no geotags. Upload to GBP.`,
   },
   {
-    id: "m2.exec.review_push", title: "Ask this month's customers for reviews",
+    id: "m2.exec.review_push", title: "Review asks",
     type: "manual", dependsOn: ["m2.plan.rotating_focus"],
     instructions: `The client adds the customers they served. RGA writes each request; the client sends it from their own phone or email, in one tap. RGA never sends one.
 Everyone gets asked the same way. One reminder after 3 days, never a second.
@@ -168,7 +168,7 @@ Everyone gets asked the same way. One reminder after 3 days, never a second.
 There's no review-count target. Count asks sent and reviews earned, and report both as measured.`,
   },
   {
-    id: "m2.exec.review_responses", title: "Respond to all new reviews",
+    id: "m2.exec.review_responses", title: "Review replies",
     type: "auto", dependsOn: [],
     instructions: `RGA drafts a reply to each new review and the client approves it first. Follow the same reply recipe as the first replies: refer to what the customer actually wrote, use the name sparingly, no keywords, no repeated sentences.
 A reply is posted only after the client's consent is on record. It counts as replied only once it is read back from Google and seen live; until then it shows as waiting, never as replied.`,
