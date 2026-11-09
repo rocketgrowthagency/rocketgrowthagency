@@ -115,7 +115,8 @@ for (const [label, start] of [["a new client", null], ["a step ticked done earli
   vm.runInContext(`var rcRow = (k, st, v) => k + ":" + st[1] + ":" + v + " | ";`, ctx);
   vm.runInContext(`var _accRoles = {}; ${(P.match(/^const RGA_ADMIN_(?:EMAIL|GITHUB) = "[^"]*";$/gm) || []).join(" ").replace(/const /g, "var ")}`, ctx);
 { const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b), ctx); vm.runInContext(csBlock(P, P.slice(a, b)), ctx); }   // the shared plan card (steps_1_4_clean_v1) + the client card system (10-29)
-  for (const n of ["accPart", "accDidLine", "accStep1Name", "accSiteName", "accessTestRow", "hostCheckParts", "hostFixHtml", "accessCardHtml"]) vm.runInContext(lift(n), ctx);
+  for (const n of ["accPart", "accDidLine", "accStep1Name", "accSiteName", "accessTestRow", "hostCheckParts", "hostFixHtml", "portalServiceEnded", "accessCardHtml"]) vm.runInContext(lift(n), ctx);
+  vm.runInContext("var _portalContractCache = {};", ctx);   // three_small_fixes_v1: no contract read = service not ended
   // 🔒 step3_finish_v1 B (Chris 10-28 "this is confusing"): ONE plain line + "Change ›"; the choice opens in place with Save / Cancel
   { vm.runInContext(lift("accMergeChoiceHtml"), ctx);
     const rga = vm.runInContext(`accMergeChoiceHtml({ merge_by: { by: "rga" } }, "c1")`, ctx), me = vm.runInContext(`accMergeChoiceHtml({ merge_by: { by: "client" } }, "c1")`, ctx);

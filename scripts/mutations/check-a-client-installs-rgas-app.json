@@ -222,5 +222,19 @@
   "  if (JSON.stringify((rec.tasks[STEP] || {}).client_input || null) !== JSON.stringify((rec0.tasks[STEP] || {}).client_input || null)) return json(409,",
   "  if (false) return json(409,",
   1
+ ],
+ [
+  "removed access still says has access",
+  "portal",
+  "  if (acc && acc.confirmed_at && !acc.removed_at && !_rcEditing.has(step.id)) {",
+  "  if (acc && acc.confirmed_at && !_rcEditing.has(step.id)) {",
+  1
+ ],
+ [
+  "removed access offers no way back",
+  "portal",
+  "        + `<div class=\"pm-cs-body\"><button type=\"button\" class=\"pm-commit\" data-acc-redo>Give access again</button></div>`, foot: csFoot() })}</div>`;",
+  ", foot: csFoot() })}</div>`;",
+  1
  ]
 ]

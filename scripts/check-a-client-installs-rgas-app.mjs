@@ -191,8 +191,8 @@ const handler = (needle) => { const i = P.indexOf(needle); if (i < 0) moved(`the
 const base = [fn("escapeHtml"), fn("escapeAttribute")].join("\n");
 const kit = planCardKit(P, base);
 const SRC = [base, kit, csBlock(P, `${base}\n${kit}`), line("stepLockOf"), line("RGA_ADMIN_EMAIL"), line("RGA_ADMIN_GITHUB"), multi("ACC_FILES"), line("GH_APP_INSTALL_URL"), line("ACCESS_TEST_CONSENT_INSTALL"),
-  ...["accStep1Name", "accSiteName", "accMergeChoiceHtml", "accessTestRow", "hostCheckParts", "hostFixHtml", "ghAppWanted", "ghAppGoneHtml", "ghAppInstallHtml", "ghAppCardHtml", "ghAppDoneHtml", "accessCardHtml", "accWhoOf", "accDevNote", "accDevNoteText", "accCustomSetupHtml", "ghAppWatch"].map(fn),
-  `var _ghAppNote = new Map(), _ghAppWatch = new Map(), _lockData = { tasks: {} }, _rcEditing = new Set(), _accPickSelf = new Set(), _accNames = { wix: "Wix" }, _accHosts = { netlify: "Netlify" };
+  ...["accStep1Name", "accSiteName", "accMergeChoiceHtml", "accessTestRow", "hostCheckParts", "hostFixHtml", "ghAppWanted", "ghAppGoneHtml", "ghAppInstallHtml", "ghAppCardHtml", "ghAppDoneHtml", "portalServiceEnded", "accessCardHtml", "accWhoOf", "accDevNote", "accDevNoteText", "accCustomSetupHtml", "ghAppWatch"].map(fn),
+  `var _portalContractCache = {}, _ghAppNote = new Map(), _ghAppWatch = new Map(), _lockData = { tasks: {} }, _rcEditing = new Set(), _accPickSelf = new Set(), _accNames = { wix: "Wix" }, _accHosts = { netlify: "Netlify" };
    var portalToken = async () => "tok", showPortalToast = (m) => { window.__toast = m; }, portalAlert = (m) => { window.__alert = m; }, clientError = (e, w) => "Couldn't " + w;
    var ghAppFind = async (id) => { window.__finds = (window.__finds || 0) + 1; return (window.__findSeq || []).shift() || { ok: false, state: "waiting" }; };
    var settleStepResult = async (listEl, j) => { window.__settled = { list: listEl && listEl.id, j }; return true; };
@@ -209,8 +209,9 @@ try {
   await pg.addScriptTag({ content: SRC });
   out = await pg.evaluate(async (CID) => {
     const root = document.getElementById("root"), now = new Date().toISOString();
-    const draw = (t, tasks = {}) => { root.innerHTML = accessCardHtml({ id: "m1.access.website" }, t, CID, tasks); return root; };
-    const txt = (el) => el.textContent.replace(/\s+/g, " ").trim();
+    // a card that throws is a card the client doesn't get: drawn as that, so the checks below fail instead of the gate not knowing
+    const draw = (t, tasks = {}) => { try { root.innerHTML = accessCardHtml({ id: "m1.access.website" }, t, CID, tasks); } catch (e) { root.innerHTML = `<p>THE CARD THREW: ${e.message}</p>`; } return root; };
+    const txt = (el) => (el ? el.textContent.replace(/\s+/g, " ").trim() : "");   // a missing element reads as nothing, so its check fails
     const r = {};
     // 1 · a GitHub site, no access yet
     const t1 = { status: "in_progress", client_input: { via: "invite", platform: "custom", files: "github", who: "self", at: "2026-11-08T10:00:00Z", detected: { host: "netlify" } } };
@@ -260,6 +261,15 @@ try {
     // 5b · website_access_gaps_v1 fix 1: GitHub said RGA's app was removed → Install again, never "has access"
     el = draw({ status: "done", client_input: { via: "invite", platform: "custom", files: "github", at: "2026-11-01T10:00:00Z" }, access: { ...appAcc, confirmed_at: "2026-11-08T11:00:00Z", removed_at: "2026-11-09T17:40:00Z", removed_how: "app_uninstalled", removed_by: "github" } });
     r.appGone = { text: txt(el), head: txt(el.querySelector(".pm-k5-h")), tone: (el.querySelector(".pm-cs-card") || {}).className || "", btn: !!el.querySelector("[data-gh-app-install]"), rows: [...el.querySelectorAll(".pm-cs-ev")].map(txt) };
+    // 5c · three_small_fixes_v1 #1: access removed by hand (a builder invite) → never "has access"; after their service ended → the plain truth
+    const wixAcc = { status: "done", client_input: { via: "invite", platform: "wix", at: "2026-11-01T10:00:00Z" }, access: { role: "Admin", account: "access@rocketgrowthagency.com", confirmed_at: "2026-11-01T11:00:00Z", removed_at: "2026-11-09T17:00:00Z", removed_how: "client_removed" } };
+    el = draw(wixAcc);
+    r.removedWix = { text: txt(el), tone: (el.querySelector(".pm-cs-card") || {}).className || "", redo: !!el.querySelector("[data-acc-redo]") };
+    _portalContractCache.k1 = { id: "k1", client_id: CID, status: "signed", notice_ends_on: "2026-11-02" };
+    el = draw(wixAcc); r.endedWix = { text: txt(el), redo: !!el.querySelector("[data-acc-redo]") };
+    el = draw({ status: "done", access: { ...appAcc, confirmed_at: "2026-11-01T11:00:00Z", removed_at: "2026-11-09T17:40:00Z", removed_how: "app_uninstalled" }, client_input: { via: "invite", platform: "custom", files: "github" } });
+    r.endedApp = { text: txt(el), install: !!el.querySelector("[data-gh-app-install]") };
+    delete _portalContractCache.k1;
     // 6 · not on GitHub: nothing changes
     r.wix = txt(draw({ status: "in_progress", client_input: { via: "invite", platform: "wix", at: "2026-11-08T10:00:00Z" } }));
     r.wixDone = txt(draw({ status: "done", client_input: { via: "invite", platform: "wix" }, access: { role: "Admin", account: "access@rocketgrowthagency.com", confirmed_at: "2026-11-01T11:00:00Z" } }));
@@ -296,6 +306,10 @@ if (out.switch.n !== 1 || out.switch.text !== "Switch to RGA's app" || out.switc
 const GN = out.appGone;
 if (!/^Give RGA access to your website/.test(GN.head) || !/\byou\b/.test(GN.tone) || !GN.btn || GN.rows.length !== 1 || !/^RGA's app was removed from acme\/site ?Your website changes are paused until it's back\. ?Nov 9$/.test(GN.rows[0]) || !GN.text.includes("Removed it on purpose? Tell RGA and we'll pause your website work.") || /has access/.test(GN.text))
   fail(`a removed app isn't drawn as "RGA's app was removed from acme/site" with Install on GitHub again (${GN.head} | ${GN.rows.join(" | ")} | ${GN.text.slice(0, 160)})`);
+if (!/RGA's access was removed ?Your website changes are paused until access is back\./.test(out.removedWix.text) || /has access/.test(out.removedWix.text) || !/Give access again/.test(out.removedWix.text) || !out.removedWix.redo || !/\byou\b/.test(out.removedWix.tone))
+  fail(`access removed by hand still reads as access, or doesn't offer Give access again (${out.removedWix.text.slice(0, 160)})`);
+if (!/We removed our access when your service ended ?Your website is yours, and nothing we built was taken off it\./.test(out.endedWix.text) || out.endedWix.redo || /has access|Give access again/.test(out.endedWix.text)) fail(`after their service ended the access step doesn't say we removed our access, plainly (${out.endedWix.text.slice(0, 160)})`);
+if (!/We removed our access when your service ended/.test(out.endedApp.text) || out.endedApp.install) fail("after their service ended, a removed app still asks them to install it again");
 if (/Install on GitHub|Switch to RGA's app|RGA's app/.test(out.wix + out.wixDone)) fail("a website that isn't on GitHub shows RGA's GitHub app");
 if (!out.ask.includes(LINE) || /Collaborators/.test(out.ask) || !/data-gh-app-install/.test(out.ask)) fail("picking GitHub in the ask still shows the collaborator steps, not Install on GitHub");
 

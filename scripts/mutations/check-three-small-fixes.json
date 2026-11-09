@@ -1,0 +1,51 @@
+[
+ [
+  "the later draft is hidden too",
+  "admin",
+  "  return (Date.parse(n.at || \"\") || 0) > (Date.parse(c.drafted_at || c.v || \"\") || 0);",
+  "  return true;",
+  1
+ ],
+ [
+  "a sent change reads already right",
+  "admin",
+  "  if (!n || !c || globalThis.rgaSiteChange.changeState(task) !== \"drafted\") return false;",
+  "  if (!n || !c) return false;",
+  1
+ ],
+ [
+  "the pill ignores the decision",
+  "admin",
+  "  const task = t || {}, st = wcAlreadyRightWins(task) ? \"none\" : SC.changeState(task);\n",
+  "  const task = t || {}, st = SC.changeState(task);\n",
+  1
+ ],
+ [
+  "the earlier draft isn't kept",
+  "admin",
+  "        + (wcAlreadyRightWins(task) ? `<details class=\"ob-wc-dfold\"><summary>An earlier draft (not sent)</summary>${wcDiffHtml(c)}</details>` : \"\") }));",
+  " }));",
+  1
+ ],
+ [
+  "the reason goes back in the label",
+  "admindeliv",
+  "label: `Line ${n + 1}`, ...(l.why ?",
+  "label: `Line ${n + 1}${l.why ? ` (${l.why})` : \"\"}`, ...(l.why ?",
+  1
+ ],
+ [
+  "saving drops the reason",
+  "sitechange",
+  "      ...(i && i.why ? { why: clip(i.why, 80) } : {}),",
+  "",
+  1
+ ],
+ [
+  "the portal never learns the end date",
+  "portal",
+  "  for (const c of Object.values(_portalContractCache || {})) if (c && c.client_id === clientId && c.status === \"signed\" && c.notice_ends_on && c.notice_ends_on <= today) return",
+  "  for (const c of []) if (c) return",
+  1
+ ]
+]
