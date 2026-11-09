@@ -72,7 +72,7 @@ export const ACTOR_MAP = {
   "m2.snap.competitors":     { actor: "rga" },
   "m2.snap.business_outcomes":{ actor: "both", clientLabel: "Submit this month's business numbers (leads, calls, revenue)", clientHint: "5-min form — gives us the full picture for your monthly report.", clientForm: "generic" },
   "m2.plan.rotating_focus":  { actor: "rga" },
-  "m2.plan.tasks_for_month": { actor: "rga" },
+  "m2.start.open_month":     { actor: "rga" },
   "m2.exec.gbp_posts":       { actor: "rga" },
   "m2.exec.gbp_photos":      { actor: "both", clientLabel: "Upload 5+ new photos this month", clientHint: "Recent jobs, team, equipment. We push to GBP automatically.", clientForm: "photo_upload" },
   "m2.exec.review_push":     { actor: "both", clientLabel: "This week's customer list", clientHint: "Paste names + phones for customers you served this week. We auto-send personalized review requests.", clientForm: "customer_list" },

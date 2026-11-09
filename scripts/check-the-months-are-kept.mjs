@@ -86,7 +86,7 @@ const fresh = (o = {}) => { DB.cur = makeDb({ onboarding: [JSON.parse(JSON.strin
   const a = await OM.openMonth(db.supa, CID, "2026-12-01");
   const row = db.T.client_monthly_records[0];
   if (!a.ok || !a.created || a.month_number !== 2) fail("2 openMonth must create December as Month 2");
-  if (!row || row.data.playbook_version !== "month2plus-v1" || JSON.stringify(row.data.tasks) !== "{}") fail("2 a new month carries playbook_version and empty tasks");
+  if (!row || row.data.playbook_version !== "month2plus-v1" || Object.keys(row.data.tasks).join() !== "m2.start.open_month") fail("2 a new month carries playbook_version and only step 1 (Open the month, settled by the month existing; monthly_start_v1)");
   if (!row || row.month_status !== "open" || !row.opened_at || row.month_number !== 2) fail("2 opened_at, month_status and month_number are set when the columns exist");
   const b = await OM.openMonth(db.supa, CID, "2026-12-01");
   if (!b.ok || b.created || db.T.client_monthly_records.length !== 1) fail("2 opening twice must not make a second row");

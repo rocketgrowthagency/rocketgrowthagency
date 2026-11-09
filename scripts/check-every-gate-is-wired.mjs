@@ -456,6 +456,7 @@ const NOT_PREFLIGHT = {
   'check-steps-57-64.mjs': 'the WEBSITE repo\'s admin steps 57-64 (steps_57_64_v1, 11-9), fakes + vm only (database, search, Google, model, admin card lifts); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-the-morning-run.mjs': 'the WEBSITE repo\'s morning run (steps_57_64_v1, 11-9), fakes only (database, runners, search count); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-the-months-are-kept.mjs': 'the WEBSITE repo\'s months (monthly_v1, 11-9), fakes only (a database behind a fake fetch); run by daily-health-check.sh; it reads no video pipeline output.',
+  'check-monthly-start.mjs': 'the WEBSITE repo\'s Start of month (monthly_start_v1, 11-9), fakes only (a database behind a fake fetch, no model); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-step58-reads-youtube.mjs': 'the WEBSITE repo\'s admin step 58 YouTube read-back (step58_youtube_readback_v1, 11-9), fakes only (database, YouTube); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-steps-59-63.mjs': 'the WEBSITE repo\'s admin steps 59, 60, 63 (steps_59_63_v1, 11-9), fakes + vm only (database, model, admin card lifts); run by daily-health-check.sh; it reads no video or pipeline file',
   'check-a-step-result-is-never-lost.mjs': 'the WEBSITE repo\'s step-result save (11-9 lost-write fix), fakes only (database); run by daily-health-check.sh; it reads no video or pipeline file',

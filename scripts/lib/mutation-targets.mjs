@@ -527,4 +527,8 @@ export const FILES = {
   adminmonths: "netlify/functions/admin-months.js",
   monthlyreportsfn: "netlify/functions/monthly-reports.js",
   monthlysections: "shared/monthly-sections.js",
+  monthlystart: "shared/monthly-start.js",   // monthly_start_v1: the focus rule, the cards, the portal line
+  monthlyplanfn: "netlify/functions/admin-monthly-plan.js",
+  monthlyplanread: "netlify/functions/_monthly-plan.js",
+  adminjs: "admin/admin.js",
 };

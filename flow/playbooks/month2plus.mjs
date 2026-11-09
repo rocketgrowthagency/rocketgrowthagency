@@ -127,26 +127,20 @@ Pull top 5: name, GBP URL, current rank, review count, rating. Update fields 2.5
 
   // === Phase 2 — Plan This Month's Focus ===
   {
-    id: "m2.plan.rotating_focus", title: "Pick this month's rotating focus",
-    type: "manual", dependsOn: ["m2.snap.rank_tracker", "m2.snap.gbp_metrics", "m2.snap.competitors"],
-    instructions: `Rotate across: GBP / Reviews / Website / Content / Citations / Links / Ads.
-Suggested if data available: rank dropped → Reviews+Citations. GBP views down → GBP. Website clicks low → Conversion. Competitor surged → Backlinks/PR.
-Store in field 3.8.5.`,
+    id: "m2.start.open_month", title: "Open the month",
+    type: "auto", dependsOn: [],
+    instructions: `The month opens by itself on the 1st (the morning run, or the hand-off before it). It carries over what last month left. There is nothing to press or skip: the month has to exist for anything else to happen.`,
   },
   {
-    id: "m2.plan.tasks_for_month", title: "Define this month's tasks",
-    type: "manual", dependsOn: ["m2.plan.rotating_focus"],
-    instructions: `Write 3-5 specific tasks for the focus area. Examples:
-- GBP focus: 4 weekly posts, 10 photos, 3 Q&A seeds
-- Reviews focus: send 50 review requests, target +10 reviews
-- Content focus: publish 2 blog posts, optimize 2 service pages
-- Links focus: 5 partnership outreach emails, 2 local PR pitches`,
+    id: "m2.plan.rotating_focus", title: "Plan the month",
+    type: "manual", dependsOn: ["m2.start.open_month"],
+    instructions: `A suggested focus is waiting, picked by a rule from last month's measured numbers (no model). Use this plan, or change the focus. The tasks come from RGA's own list for that focus; untick any that don't fit. The plan is saved on the month's record and tracked in the focus work step.`,
   },
 
   // === Phase 3 — Execute ===
   {
     id: "m2.exec.gbp_posts", title: "Post 4 GBP updates this month",
-    type: "auto", dependsOn: ["m2.plan.tasks_for_month"],
+    type: "auto", dependsOn: ["m2.plan.rotating_focus"],
     async run({ client, clientId }) {
       const { draftMonthlyPostCalendar } = await import("../../lib/gbp-content-ai.mjs");
       const month = new Date().toLocaleString("en-US", { month: "long", year: "numeric" });
@@ -162,12 +156,12 @@ Store in field 3.8.5.`,
   },
   {
     id: "m2.exec.gbp_photos", title: "Add new photos",
-    type: "manual", dependsOn: ["m2.plan.tasks_for_month"],
+    type: "manual", dependsOn: ["m2.plan.rotating_focus"],
     instructions: `Optional: there's no monthly quota. ⚡ drafts a shot list to hand the client (or take photos during a ride-along). Real photos only, no geotags. Upload to GBP.`,
   },
   {
     id: "m2.exec.review_push", title: "Ask this month's customers for reviews",
-    type: "manual", dependsOn: ["m2.plan.tasks_for_month"],
+    type: "manual", dependsOn: ["m2.plan.rotating_focus"],
     instructions: `The client adds the customers they served. RGA writes each request; the client sends it from their own phone or email, in one tap. RGA never sends one.
 Everyone gets asked the same way. One reminder after 3 days, never a second.
 
@@ -192,8 +186,8 @@ A reply is posted only after the client's consent is on record. It counts as rep
   },
   {
     id: "m2.exec.focus_area_work", title: "Execute focus-area tasks",
-    type: "manual", dependsOn: ["m2.plan.tasks_for_month"],
-    instructions: `Complete the 3-5 tasks defined in m2.plan.tasks_for_month. Document in section 3.x of monthly record.`,
+    type: "manual", dependsOn: ["m2.plan.rotating_focus"],
+    instructions: `Complete the 3-5 tasks in the plan (m2.plan.rotating_focus). Document in section 3.x of monthly record.`,
   },
   {
     id: "m2.exec.brand_mentions", title: "Find unlinked brand mentions, request links",

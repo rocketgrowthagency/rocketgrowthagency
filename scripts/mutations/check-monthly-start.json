@@ -1,0 +1,184 @@
+[
+ [
+  "a null review count is read as zero reviews",
+  "monthlystart",
+  "const reviews = num(prev.review_count)",
+  "const reviews = Number(prev.review_count || 0)",
+  1
+ ],
+ [
+  "ten reviews counts as few",
+  "monthlystart",
+  "const FEW_REVIEWS = 10;",
+  "const FEW_REVIEWS = 11;",
+  1
+ ],
+ [
+  "the review rule runs last",
+  "monthlystart",
+  "if (reviews != null && reviews < FEW_REVIEWS) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "profile views down does not suggest the profile",
+  "monthlystart",
+  "views < viewsBefore",
+  "views > viewsBefore + 1e9",
+  1
+ ],
+ [
+  "a one place map move counts as a slip",
+  "monthlystart",
+  "const SLIP_BY = 2;",
+  "const SLIP_BY = 1;",
+  1
+ ],
+ [
+  "low clicks needs no impressions",
+  "monthlystart",
+  "imps >= MIN_IMPRESSIONS &&",
+  "",
+  1
+ ],
+ [
+  "missing numbers suggest Reviews",
+  "monthlystart",
+  "return { focus: \"Google profile\", rule: \"missing\"",
+  "return { focus: \"Reviews\", rule: \"missing\"",
+  1
+ ],
+ [
+  "a Google number is stored in plain sight",
+  "monthlystart",
+  "reason: s.google ? null : s.reason",
+  "reason: s.reason",
+  1
+ ],
+ [
+  "a task from another focus is accepted",
+  "monthlystart",
+  "if (ids.some((i) => !list.some((t) => t.id === i)))",
+  "if (false)",
+  1
+ ],
+ [
+  "a plan with no tasks is accepted",
+  "monthlystart",
+  "if (!tasks.length) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "the done card loses who chose it",
+  "monthlystart",
+  "Chosen by ${plan.chosen_by || \"RGA\"}",
+  "Chosen",
+  1
+ ],
+ [
+  "the portal shows a suggestion before it is accepted",
+  "monthlystart",
+  "if (!p || !p.focus || !Array.isArray(p.tasks) || !p.tasks.length) return null;",
+  "if (!p) return null;",
+  1
+ ],
+ [
+  "the plan is not read back",
+  "monthlyplanfn",
+  "if (!same) return json(500",
+  "if (false) return json(500",
+  1
+ ],
+ [
+  "a second press overwrites the plan",
+  "monthlyplanfn",
+  "if (t.status === \"done\" && rec.data.plan) return json(409",
+  "if (false) return json(409",
+  1
+ ],
+ [
+  "Use this plan skips the focus check",
+  "monthlyplanfn",
+  "if (!r.ok) return json(400, { error: r.error });",
+  "",
+  1
+ ],
+ [
+  "the plan is not recorded",
+  "monthlyplanfn",
+  "await d.record({ clientId, kind: \"monthly_plan_chosen\"",
+  "await Promise.resolve({ clientId, kind: \"monthly_plan_chosen\"",
+  1
+ ],
+ [
+  "the month opens without its suggestion",
+  "openmonth",
+  "const sg = await require(\"./_monthly-plan\").suggestionFor(supa, clientId, month, nowMs);",
+  "const sg = null;",
+  1
+ ],
+ [
+  "step 1 is not settled by the month existing",
+  "openmonth",
+  "tasks: { [OPEN_STEP]: { status: \"done\"",
+  "tasks: { [OPEN_STEP]: { status: \"pending\"",
+  1
+ ],
+ [
+  "a suggestion is auto-accepted",
+  "openmonth",
+  "...(sg ? { plan_suggestion: sg } : {}) };",
+  "...(sg ? { plan_suggestion: sg, plan: { focus: sg.focus, tasks: [] } } : {}) };",
+  1
+ ],
+ [
+  "Open the month can be skipped",
+  "steps5764",
+  "const NO_SKIP = [ID.HANDOFF, ID.HANDOFF2, ID.OPEN_MONTH];",
+  "const NO_SKIP = [ID.HANDOFF, ID.HANDOFF2];",
+  1
+ ],
+ [
+  "Open the month gets a hand Done",
+  "steps5764",
+  "ID.HANDOFF2, ID.OPEN_MONTH, ID.PLAN];",
+  "ID.HANDOFF2];",
+  1
+ ],
+ [
+  "a monthly row says it waits for another step",
+  "steps5764",
+  "else if (SCHEDULE[step.id]) {",
+  "else if (false) {",
+  1
+ ],
+ [
+  "Monthly goes back to one step at a time",
+  "adminjs",
+  "if (scope === \"month2plus\") { s.uiState = \"active\"; continue; }",
+  "",
+  1
+ ],
+ [
+  "Month 1 opens every step at once",
+  "adminjs",
+  "if (!seenActive) { s.uiState = \"active\"; seenActive = true; continue; }",
+  "s.uiState = \"active\"; continue;",
+  1
+ ],
+ [
+  "the open card loses its error",
+  "adminjs",
+  "openError: err && err.month === sel ? err : null",
+  "openError: null",
+  1
+ ],
+ [
+  "the focus rule is not wired to the morning run's reason",
+  "morningrun",
+  "by: \"the morning run\", now: d.now()",
+  "now: d.now()",
+  1
+ ]
+]

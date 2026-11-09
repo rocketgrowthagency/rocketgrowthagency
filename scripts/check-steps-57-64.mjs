@@ -63,7 +63,7 @@ try {
     if (S.canSkip(ID.HANDOFF) || S.canSkip(ID.HANDOFF2) || !S.canSkip(ID.PANEL)) fail("skip: the card-side rule and the server rule disagree");
     // every step is skippable except the two
     const noSkip = [...M1, ...M2].filter((s) => !S.canSkip(s.id)).map((s) => s.id).sort().join();
-    if (noSkip !== [ID.HANDOFF, ID.HANDOFF2].sort().join()) fail(`skip: the steps with no Skip are ${noSkip}`);
+    if (noSkip !== [ID.HANDOFF, ID.HANDOFF2, "m2.start.open_month"].sort().join())   /* monthly_start_v1: Open the month has no Skip either */ fail(`skip: the steps with no Skip are ${noSkip}`);
   }
   // the server function, on a fake database
   const store = (m1, m2 = null) => {
