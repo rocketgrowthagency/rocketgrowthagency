@@ -52,6 +52,14 @@ const by = (cs, id) => (cs.find((x) => x.id === id) || {}).ok;
   if (by(cs3, "repo_is_site") === true) fail("a confirmation for ANOTHER repository counts for this one"); }
 { const cs = await run({ task: task({ site_change: { v: V, page_url: "https://www.other-client.test/x/", label: "add_page" } }) }, { repoFiles: { CNAME: "acme.test" } });
   if (by(cs, "website") !== false || PS.allOk(cs)) fail("a page bound for a different website than the client's record passes"); }
+// 11-8: a change across several pages (internal links, RGA's step 50) has no one page_url: every line's page must be on their website
+{ const links = (pages) => ({ v: V, label: "add_links", items: pages.map((pg, n) => ({ label: `Link ${n + 1}`, page: pg, after: "x", link: { text: "x", href: "/y/" } })) });
+  const ok2 = await run({ task: task({ site_change: links(["https://www.acme.test/a/", "https://acme.test/b/"]) }) }, { repoFiles: { CNAME: "acme.test" } });
+  if (by(ok2, "website") !== true) fail("a links change whose every page is on their website is refused as 'no address'");
+  const mixed = await run({ task: task({ site_change: links(["https://www.acme.test/a/", "https://www.other-client.test/b/"]) }) }, { repoFiles: { CNAME: "acme.test" } });
+  if (by(mixed, "website") !== false || PS.allOk(mixed)) fail("a links change with one page on another website passes");
+  const none = await run({ task: task({ site_change: links([]) }) }, { repoFiles: { CNAME: "acme.test" } });
+  if (by(none, "website") !== false) fail("a change with no page anywhere passes the website check"); }
 { const t = task(); t.approval.approved_build = [{ path: "rga-access-test/index.html", action: "add", sha: "deadbeef" }];
   const cs = await run({ task: t }, { repoFiles: { CNAME: "acme.test" } });
   if (by(cs, "files") !== false || PS.allOk(cs)) fail("a build whose fingerprint isn't the approved one passes"); }

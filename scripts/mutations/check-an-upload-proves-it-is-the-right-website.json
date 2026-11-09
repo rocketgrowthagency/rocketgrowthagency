@@ -23,7 +23,7 @@
  [
   "the website check ignores the address",
   "pubsafety",
-  "const sameSite = !!site && !!pageHost && site === pageHost;",
+  "const sameSite = !!site && hosts.length > 0 && hosts.every((h) => h === site);",
   "const sameSite = !!site;",
   1
  ],
@@ -291,6 +291,20 @@
   "admindeliv",
   "return !!(a.change_request || a.client_flagged); }",
   "return !!(a.change_request); }",
+  1
+ ],
+ [
+  "one page on their site passes a mixed links change",
+  "pubsafety",
+  "hosts.length > 0 && hosts.every((h) => h === site);",
+  "hosts.length > 0 && hosts.some((h) => h === site);",
+  1
+ ],
+ [
+  "a change with no page passes",
+  "pubsafety",
+  "const sameSite = !!site && hosts.length > 0 && hosts.every",
+  "const sameSite = !!site && hosts.every",
   1
  ]
 ]
