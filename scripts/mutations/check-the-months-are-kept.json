@@ -99,9 +99,9 @@
  ],
  [
   "the monthly hand-off does not close the month",
-  "flowexec",
-  "closed = await OM.closeMonth(supa, client.id, thisMonth, nowD)",
-  "closed = ({ ok: true, closed: true }) || await OM.closeMonth(supa, client.id, thisMonth, nowD)",
+  "monthlyclosesrv",
+  "const closed = await OM.closeMonth(d.supa, clientId, month, new Date(d.now()));",
+  "const closed = { ok: true, closed: true };",
   1
  ],
  [
@@ -120,9 +120,9 @@
  ],
  [
   "the monthly send does not keep the report",
-  "monthlyreport",
-  "const kept = await OM.keepReport(supa, {",
-  "const kept = await (async () => ({ ok: true }))(supa, {",
+  "monthlyclosesrv",
+  "const k = await d.keepReport({",
+  "const k = await (async () => ({ ok: true }))({",
   1
  ],
  [
@@ -149,8 +149,8 @@
  [
   "a step is in two sections",
   "monthlysections",
-  "ids: [\"m2.report.generate\",",
-  "ids: [\"m2.plan.rotating_focus\", \"m2.report.generate\",",
+  "ids: [\"m2.report.freeze\",",
+  "ids: [\"m2.plan.rotating_focus\", \"m2.report.freeze\",",
   1
  ],
  [

@@ -116,7 +116,7 @@ const fresh = (o = {}) => { DB.cur = makeDb({ onboarding: [JSON.parse(JSON.strin
   if (db.T.clients[0].client_portal_stage !== "stage_5_monthly") fail("3 the Month 1 hand-off must move the client to the monthly stage (no manual advance)");
   if (!r || r.outcome === "indeterminate") fail("3 the Month 1 hand-off must succeed on a good database");
   // monthly hand-off: Month 3+ is created, this month is closed
-  const dbm = fresh({ monthly: [{ id: "m", client_id: CID, reporting_month: "2026-12-01", created_at: "x", month_status: "open", data: { tasks: { "m2.exec.gbp_posts": { status: "skipped", skip_reason: "nothing to post" } } } }] });
+  const dbm = fresh({ monthly: [{ id: "m", client_id: CID, reporting_month: "2026-12-01", created_at: "x", month_status: "open", data: { tasks: { "m2.exec.gbp_posts": { status: "skipped", skip_reason: "nothing to post" }, "m2.report.deliver": { status: "done" } } } }] });
   const r2 = await FE.stepRunners.handoff2({ client: { id: CID, workspace_id: "w" }, month: "2026-12-01" });
   const jan = dbm.T.client_monthly_records.find((x) => x.reporting_month === "2027-01-01"), dc = dbm.T.client_monthly_records.find((x) => x.reporting_month === "2026-12-01");
   if (!jan || jan.month_number !== 3) fail("3 the monthly hand-off must create January as Month 3");
@@ -124,7 +124,7 @@ const fresh = (o = {}) => { DB.cur = makeDb({ onboarding: [JSON.parse(JSON.strin
   if (!jan || !(jan.data.carried_over || {}).skipped?.length) fail("3 January must carry December's skipped step");
   if (!r2 || r2.outcome === "indeterminate") fail("3 the monthly hand-off must succeed");
   // a failed open closes nothing
-  const bad = fresh({ dropPost: true, monthly: [{ id: "m", client_id: CID, reporting_month: "2026-12-01", created_at: "x", month_status: "open", data: { tasks: {} } }] });
+  const bad = fresh({ dropPost: true, monthly: [{ id: "m", client_id: CID, reporting_month: "2026-12-01", created_at: "x", month_status: "open", data: { tasks: { "m2.report.deliver": { status: "done" } } } }] });
   const r3 = await FE.stepRunners.handoff2({ client: { id: CID, workspace_id: "w" }, month: "2026-12-01" });
   if (bad.T.client_monthly_records[0].month_status === "closed" || !r3 || r3.outcome !== "indeterminate") fail("3 a month that could not open its successor must stay open");
 }
@@ -189,11 +189,11 @@ const fresh = (o = {}) => { DB.cur = makeDb({ onboarding: [JSON.parse(JSON.strin
   if (!k.ok || !k.kept || db.T.client_monthly_reports.length !== 1) fail("6 a sent report must be kept and read back");
   await OM.keepReport(db.supa, { clientId: CID, reportingMonth: "2026-12-01", subject: "Your December report", html: "<p>h</p>", gmailMessageId: "g1" });
   if (db.T.client_monthly_reports.length !== 1) fail("6 the same send must not be kept twice");
-  const src = read("netlify/functions/send-monthly-report.js"), m1 = read("netlify/functions/admin-month1-report.js");
+  const src = read("netlify/functions/_monthly-close.js"), m1 = read("netlify/functions/admin-month1-report.js");
   const iKeep = m1.indexOf("keepReport"), iTest = m1.indexOf("if (isTest) return");
   if (iKeep < 0 || iTest < 0 || iKeep < iTest) fail("6 the Month 1 report must be kept only AFTER the test returns (never on the test)");
-  if (!/keepReport\(supa, \{ clientId, reportingMonth: current\.reporting_month/.test(src)) fail("6 the monthly send must keep the report it sent");
-  if (src.indexOf("keepReport") < src.indexOf("sendGmail({ workspaceId")) fail("6 the report must be kept only after the send");
+  if (!/d\.keepReport\(\{ clientId, reportingMonth: month/.test(src)) fail("6 the monthly send must keep the report it sent");   // monthly_s5_close_v1: the send is _monthly-close.js sendReport
+  if (src.indexOf("d.keepReport") < src.lastIndexOf("d.gmail({ workspaceId")) fail("6 the report must be kept only after the send");
   // the portal list: newest first, no address
   db.T.client_monthly_reports.push({ id: R2, client_id: CID, reporting_month: "2027-01-01", month_number: 3, subject: "Jan", html: "<p>j</p>", sent_at: "2027-02-05T15:00:00Z", sent_to: "c@x.com" });
   MR.__useDeps({ supa: db.supa, gate: { email: "p@x.com" } });

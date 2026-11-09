@@ -64,6 +64,6 @@ if (/We'll book this with you each month/.test(JSON.stringify(A["m2.call.monthly
 if (!fs.existsSync(`${SITE}/docs/supabase/RGA_SLOT_HOLD_PURPOSE_M2_2026-10-20.sql`) || !/'m2_monthly'/.test(read("docs/supabase/RGA_SLOT_HOLD_PURPOSE_M2_2026-10-20.sql"))) fail("step 20: the SQL file for the monthly booking is gone");
 // 🔒 ready_to_sell_plan_v1 D5 (10-21): the client picks the time in the portal once the report is out; row 26 shows "report
 // first" until then, and the client's request (Confirm / Decline) after — never "email times" by hand
-if (!/title: "The client picks a call time once this month's report is out"/.test(ADM) || !/: closeoutAdminHtml\("m2_monthly"\)/.test(ADM)) fail("step 20: admin row 26 doesn't say report first, then the client's request");
+if (!/Offered once \$\{monthWord\(x\.month\)\}'s report is sent or skipped/.test(read("shared/monthly-close.js")) || !/closeoutAdminHtml\("m2_monthly"\)/.test(ADM))   // monthly_s5_close_v1 (11-9): the call card says it fail("step 20: admin row 26 doesn't say report first, then the client's request");
 if (F.length) { console.error("🔴 Monthly (steps 16–20) regressed:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ Monthly holds: list cadence (client's, read back) + done = everyone asked + cell or email · numbers quarterly, Not sure stored, never block the report, old numbers kept · photos a suggestion counted on Google · video optional + quarterly with RGA's script · call = report first, RGA emails times, next month never waits, SQL file ready");

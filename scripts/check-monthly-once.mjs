@@ -296,7 +296,8 @@ function baseDeps({ rec, nums = { months: {} }, sessions = [], events = [], now 
   for (const [id, fn] of [["m2.snap.grid_scan", "oncScansCardHtml"], ["m2.snap.gbp_metrics", "oncNumbersCardHtml"], ["m2.snap.competitors", "oncCompetitorsCardHtml"], ["m2.exec.site_audit_recurring", "oncSiteCardHtml"], ["m2.exec.blog_posts", "oncBlogCardHtml"], ["m2.exec.focus_area_work", "oncWorkCardHtml"], ["m2.exec.listing_upkeep", "oncListingsCardHtml"]])
     if (!new RegExp(`id === "${id.replace(/\./g, "\\.")}" \\? ${fn}\\(`).test(a)) fail(`12 ${id}'s card is not wired into rowStepCardsHtml`);
   if (!/import "\/shared\/monthly-monthly\.js\?v=/.test(a)) fail("12 the admin must load shared/monthly-monthly.js");
-  if (!/admin\.js\?v=20261109q/.test(html) || !/admin\.css\?v=20261109f/.test(html) || !/steps-57-64\.js\?v=20261109g/.test(a) || !/monthly-sections\.js\?v=20261109c/.test(a)) fail("12 the ?v= keys were not bumped");
+const vge = (txt, re, min) => { const m = re.exec(txt); return !!m && m[1] >= min; };   // a ?v= key at least this one: later sections bump them again
+  if (!vge(html, /admin\.js\?v=(\w+)/, "20261109q") || !vge(html, /admin\.css\?v=(\w+)/, "20261109f") || !vge(a, /steps-57-64\.js\?v=(\w+)/, "20261109g") || !vge(a, /monthly-sections\.js\?v=(\w+)/, "20261109c")) fail("12 the ?v= keys were not bumped");
   if (!/mo-tiles/.test(read("admin/admin.css"))) fail("12 the number tiles have no style");
   for (const f of ["shared/monthly-monthly.js", "netlify/functions/_monthly-once.js", "netlify/functions/admin-monthly-once.js"]) if (/—/.test(strip(read(f)).replace(/`[^`]*`/g, (s) => s))) fail(`12 no em dash in ${f}`);
   const sec = a.slice(a.indexOf("MONTHLY · SECTION 3"), a.indexOf("// ── step 64 · into the monthly cycle"));

@@ -56,8 +56,9 @@ async function build({ recs = [{ reporting_month: "2026-10-01", gbp_calls: 4 }],
   const r = await vm.runInContext(`(${m1Src})`, ctx)({ client: {}, clientId: "c" });
   if (r.completed !== false || r.outcome !== "draft_ready" || !r.outcome_data?.report) fail("the Month 1 report is Done when built, or isn't stored for review (a built report is not a delivered one)"); }
 if (/node report\.mjs/.test(flow.replace(/^\s*\/\/.*$/mg, ""))) fail("a step still sends RGA to run node report.mjs locally");
-if (!/"m2\.report\.generate": async \(\{ client, clientId \}\) => buildServerReport\(client, clientId,/.test(flow)) fail("Monthly 24 doesn't build its report server-side");
+const mclose = fs.readFileSync(`${SITE}/netlify/functions/_monthly-close.js`, "utf8");   // monthly_s5_close_v1 (11-9): the monthly report is built by the morning run (21 freeze, 22 build) and sent by an admin's press
+if (!/async function build\(/.test(mclose) || !/composeLetter\(/.test(mclose)) fail("Monthly 22 doesn't build its report server-side");
 if (!/^exports\.buildReport = buildReport;/m.test(smr)) fail("send-monthly-report no longer exports its builder (the steps would build a different report)");
-if (!/tasks\["m2\.report\.deliver"\] = \{ \.\.\.t, status: "done"[\s\S]{0,200}?sent_message_id: outcome\.id/.test(smr)) fail("sending the monthly report doesn't stamp Monthly 25 with its Gmail id (Done would have no proof)");
+if (!/ft\[MC\.ID\.SEND\] = \{[^\n]*status: "done"[\s\S]{0,260}?sent_message_id: sent\.id/.test(mclose)) fail("sending the monthly report doesn't stamp Monthly 25 with its Gmail id (Done would have no proof)");
 if (F.length) { console.error("🔴 legacy runners / server reports:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ row 29 reads Google · rows 34/35 worksheets retired · Monthly 24 + Month 1 built server-side by the send's own builder · Month 1 stays open until sent · the send stamps Monthly 25");

@@ -1,0 +1,32 @@
+{
+  "searchTerm": "Veterinarians in Manhattan Beach, CA",
+  "auditedDate": "2026-10-21",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Veterinarian": 9,
+    "Emergency veterinarian service": 1
+  },
+  "categoryDistributionTop5": {
+    "Veterinarian": 4,
+    "Emergency veterinarian service": 1
+  },
+  "categoryDistributionTop3": {
+    "Veterinarian": 3
+  },
+  "majorityCategoryTop10": "Veterinarian",
+  "majorityCategoryTop5": "Veterinarian",
+  "majorityCategoryTop3": "Veterinarian",
+  "reviewsTop10": {
+    "min": 48,
+    "max": 424,
+    "median": 162,
+    "p25": 58,
+    "p75": 392
+  },
+  "reviewsTop3Avg": 203,
+  "ratingTop10Median": 4.8,
+  "ratingTop3Avg": 4.77,
+  "findingsDisabled": [],
+  "notes": null
+}

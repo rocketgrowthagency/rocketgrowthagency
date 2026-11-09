@@ -354,26 +354,26 @@ Lead-handling kills conversion more than rankings do.`,
 
   // === Phase 4 — Report & Deliver ===
   {
-    id: "m2.report.generate", title: "Generate monthly report",
-    type: "auto", dependsOn: ["m2.exec.focus_area_work"],
-    async run({ clientId }) {
-      const { saveAndPublishReport } = await import("../../lib/report-generator.mjs");
-      const result = await saveAndPublishReport(clientId, { publish: true });
-      return {
-        summary: `Monthly report generated + published.\n  Local: ${result.filePath}\n  Portal id: ${result.portalRow?.id}\n  Stats: ${result.summary.tasks_done} tasks done`,
-        outcome_data: result.summary,
-      };
-    },
+    // monthly_s5_close_v1 (11-9): new. Once Google's figures for the whole previous month are in (the 2nd) they are read and stored on that month's record; a number Google didn't give is "not given", never 0.
+    id: "m2.report.freeze", title: "Freeze the month's numbers",
+    type: "auto", dependsOn: [],
+    async run() { return { summary: "Runs in the website's morning run (netlify/functions/_monthly-close.js); nothing to run by hand." }; },
   },
   {
-    id: "m2.report.deliver", title: "Send report + post in portal",
+    // monthly_s5_close_v1: the report letter is built from the frozen numbers (the 3rd). It refuses to build with a number missing. The website's morning run does this; there is no runner here.
+    id: "m2.report.generate", title: "Build the report",
+    type: "auto", dependsOn: ["m2.report.freeze"],
+    async run() { return { summary: "Built by the website's morning run from the frozen numbers; nothing to run by hand." }; },
+  },
+  {
+    id: "m2.report.deliver", title: "Send the report",
     type: "manual", dependsOn: ["m2.report.generate"],
-    instructions: `Insert report into client_portal_content so client sees it on next login. Email client a 3-bullet summary + link.`,
+    instructions: `Read the report on the card, send yourself a test, then send it. It asks once more, naming who it goes to. It is kept and appears in the client's portal under Reports.`,
   },
   {
     id: "m2.call.monthly", title: "Run monthly call",
     type: "manual", dependsOn: ["m2.report.deliver"],
-    instructions: `20-30 min Google Meet. Use AI agenda. Record + upload notes URL to field 4.5.
+    instructions: `Optional. 20-30 min Google Meet; the agenda is drafted from the report. In quarter months (3, 6, 9) it is the quarterly review.
 
 Note how the call went on the card: Retained, At risk or Churned. It is saved on this step.
 When the call is over, press ✓ Mark step complete.`,
@@ -384,7 +384,7 @@ When the call is over, press ✓ Mark step complete.`,
     instructions: `Pick 1 great customer this month. Capture: original search, job value, brief story. Fill section 3.10. Use for future case studies + GBP posts.`,
   },
   {
-    id: "m2.handoff.next_month", title: "Transition to next month",
+    id: "m2.handoff.next_month", title: "Start the next month",
     type: "auto", dependsOn: ["m2.report.deliver"],
     async run({ clientId }) {
       const { ensureMonthlyState } = await import("../state.mjs");

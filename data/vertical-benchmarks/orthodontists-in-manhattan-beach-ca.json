@@ -1,0 +1,31 @@
+{
+  "searchTerm": "Orthodontists in Manhattan Beach, CA",
+  "auditedDate": "2026-10-20",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Orthodontist": 9,
+    "Dentist": 1
+  },
+  "categoryDistributionTop5": {
+    "Orthodontist": 5
+  },
+  "categoryDistributionTop3": {
+    "Orthodontist": 3
+  },
+  "majorityCategoryTop10": "Orthodontist",
+  "majorityCategoryTop5": "Orthodontist",
+  "majorityCategoryTop3": "Orthodontist",
+  "reviewsTop10": {
+    "min": 3,
+    "max": 1047,
+    "median": 80.5,
+    "p25": 39,
+    "p75": 229
+  },
+  "reviewsTop3Avg": 118,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 5,
+  "findingsDisabled": [],
+  "notes": null
+}

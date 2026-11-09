@@ -1,0 +1,33 @@
+{
+  "searchTerm": "Med spas in Manhattan Beach, CA",
+  "auditedDate": "2026-10-17",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Medical spa": 7,
+    "Day spa": 2,
+    "Skin care clinic": 1
+  },
+  "categoryDistributionTop5": {
+    "Medical spa": 3,
+    "Day spa": 2
+  },
+  "categoryDistributionTop3": {
+    "Medical spa": 3
+  },
+  "majorityCategoryTop10": "Medical spa",
+  "majorityCategoryTop5": "Medical spa",
+  "majorityCategoryTop3": "Medical spa",
+  "reviewsTop10": {
+    "min": 3,
+    "max": 253,
+    "median": 57,
+    "p25": 27,
+    "p75": 113
+  },
+  "reviewsTop3Avg": 141,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 4.97,
+  "findingsDisabled": [],
+  "notes": null
+}

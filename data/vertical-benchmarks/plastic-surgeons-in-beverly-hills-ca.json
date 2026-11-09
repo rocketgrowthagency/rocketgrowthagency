@@ -1,0 +1,33 @@
+{
+  "searchTerm": "Plastic surgeons in Beverly Hills, CA",
+  "auditedDate": "2026-09-30",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Plastic surgeon": 7,
+    "Plastic surgery clinic": 3
+  },
+  "categoryDistributionTop5": {
+    "Plastic surgeon": 2,
+    "Plastic surgery clinic": 3
+  },
+  "categoryDistributionTop3": {
+    "Plastic surgeon": 1,
+    "Plastic surgery clinic": 2
+  },
+  "majorityCategoryTop10": "Plastic surgeon",
+  "majorityCategoryTop5": "Plastic surgery clinic",
+  "majorityCategoryTop3": "Plastic surgery clinic",
+  "reviewsTop10": {
+    "min": 143,
+    "max": 1004,
+    "median": 233.5,
+    "p25": 187,
+    "p75": 311
+  },
+  "reviewsTop3Avg": 214,
+  "ratingTop10Median": 4.85,
+  "ratingTop3Avg": 4.67,
+  "findingsDisabled": [],
+  "notes": null
+}

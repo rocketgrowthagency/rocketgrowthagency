@@ -1,0 +1,34 @@
+{
+  "searchTerm": "Physical therapists in Manhattan Beach, CA",
+  "auditedDate": "2026-10-22",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Physical therapist": 5,
+    "Physical therapy clinic": 4,
+    "Wellness center": 1
+  },
+  "categoryDistributionTop5": {
+    "Physical therapist": 3,
+    "Physical therapy clinic": 2
+  },
+  "categoryDistributionTop3": {
+    "Physical therapist": 1,
+    "Physical therapy clinic": 2
+  },
+  "majorityCategoryTop10": "Physical therapist",
+  "majorityCategoryTop5": "Physical therapist",
+  "majorityCategoryTop3": "Physical therapy clinic",
+  "reviewsTop10": {
+    "min": 1,
+    "max": 260,
+    "median": 50.5,
+    "p25": 11,
+    "p75": 96
+  },
+  "reviewsTop3Avg": 84,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 4.9,
+  "findingsDisabled": [],
+  "notes": null
+}

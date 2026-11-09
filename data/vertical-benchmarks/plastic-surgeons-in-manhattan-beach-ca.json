@@ -1,0 +1,34 @@
+{
+  "searchTerm": "Plastic surgeons in Manhattan Beach, CA",
+  "auditedDate": "2026-10-16",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Plastic surgeon": 7,
+    "Plastic surgery clinic": 2,
+    "Surgical center": 1
+  },
+  "categoryDistributionTop5": {
+    "Plastic surgeon": 3,
+    "Plastic surgery clinic": 1,
+    "Surgical center": 1
+  },
+  "categoryDistributionTop3": {
+    "Plastic surgeon": 3
+  },
+  "majorityCategoryTop10": "Plastic surgeon",
+  "majorityCategoryTop5": "Plastic surgeon",
+  "majorityCategoryTop3": "Plastic surgeon",
+  "reviewsTop10": {
+    "min": 6,
+    "max": 212,
+    "median": 64,
+    "p25": 12,
+    "p75": 169
+  },
+  "reviewsTop3Avg": 59,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.83,
+  "findingsDisabled": [],
+  "notes": null
+}

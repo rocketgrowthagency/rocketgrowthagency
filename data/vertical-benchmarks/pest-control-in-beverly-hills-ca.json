@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Pest control in Beverly Hills, CA",
+  "auditedDate": "2026-10-07",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Pest control service": 10
+  },
+  "categoryDistributionTop5": {
+    "Pest control service": 5
+  },
+  "categoryDistributionTop3": {
+    "Pest control service": 3
+  },
+  "majorityCategoryTop10": "Pest control service",
+  "majorityCategoryTop5": "Pest control service",
+  "majorityCategoryTop3": "Pest control service",
+  "reviewsTop10": {
+    "min": 3,
+    "max": 125,
+    "median": 42,
+    "p25": 9,
+    "p75": 66
+  },
+  "reviewsTop3Avg": 22,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 4.97,
+  "findingsDisabled": [],
+  "notes": null
+}

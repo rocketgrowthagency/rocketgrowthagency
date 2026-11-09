@@ -1,0 +1,35 @@
+{
+  "searchTerm": "Yoga studios in Beverly Hills, CA",
+  "auditedDate": "2026-10-15",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Yoga studio": 5,
+    "Pilates studio": 4,
+    "Physical fitness program": 1
+  },
+  "categoryDistributionTop5": {
+    "Yoga studio": 2,
+    "Pilates studio": 2,
+    "Physical fitness program": 1
+  },
+  "categoryDistributionTop3": {
+    "Yoga studio": 2,
+    "Pilates studio": 1
+  },
+  "majorityCategoryTop10": "Yoga studio",
+  "majorityCategoryTop5": "Yoga studio",
+  "majorityCategoryTop3": "Yoga studio",
+  "reviewsTop10": {
+    "min": 22,
+    "max": 891,
+    "median": 58,
+    "p25": 33,
+    "p75": 91
+  },
+  "reviewsTop3Avg": 420,
+  "ratingTop10Median": 4.85,
+  "ratingTop3Avg": 4.87,
+  "findingsDisabled": [],
+  "notes": null
+}

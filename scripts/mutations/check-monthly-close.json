@@ -1,0 +1,163 @@
+[
+ [
+  "a number Google did not give is stored as 0",
+  "monthlyclose",
+  "google: { views: isNum(cur.views) ? Number(cur.views) : null,",
+  "google: { views: isNum(cur.views) ? Number(cur.views) : 0,",
+  1
+ ],
+ [
+  "the freeze reads before the month is over",
+  "monthlyclose",
+  "if (at == null || x.now == null || x.now < at) return",
+  "if (at == null || x.now == null) return",
+  1
+ ],
+ [
+  "a partial freeze counts as complete",
+  "monthlyclose",
+  "return { state: missing.length ? \"partial\" : \"complete\", missing, frozen };",
+  "return { state: \"complete\", missing, frozen };",
+  1
+ ],
+ [
+  "the letter builds with a number missing",
+  "monthlyclose",
+  "const miss = numbersOf(frozen).filter((n) => n.value == null)",
+  "const miss = numbersOf(frozen).filter((n) => n.value === -1)",
+  1
+ ],
+ [
+  "a missing number reads as a change",
+  "monthlyclose",
+  "if (n.value == null) return { text: \"Google didn't give this number\", cls: \"flat\" };",
+  "if (n.value == null) return { text: \"same as the month before\", cls: \"flat\" };",
+  1
+ ],
+ [
+  "a quarter month is a plain call",
+  "monthlyclose",
+  "Number(n) >= 3 && Number(n) % 3 === 0",
+  "Number(n) >= 3 && Number(n) % 4 === 0",
+  1
+ ],
+ [
+  "the To do item shows before the 5th",
+  "monthlyclose",
+  "if (at == null || now == null || now < at || settledOf(x.sendTask)) return null;",
+  "if (at == null || now == null || settledOf(x.sendTask)) return null;",
+  1
+ ],
+ [
+  "the To do item stays after the report is sent",
+  "monthlyclose",
+  "if (at == null || now == null || now < at || settledOf(x.sendTask)) return null;",
+  "if (at == null || now == null || now < at) return null;",
+  1
+ ],
+ [
+  "the next month starts before the report is settled",
+  "monthlyclose",
+  "return settledOf(s) ? { ok: true, why: null }",
+  "return true ? { ok: true, why: null }",
+  1
+ ],
+ [
+  "the confirm no longer names the address",
+  "monthlyclose",
+  "at ${email}? They receive",
+  "? They receive",
+  1
+ ],
+ [
+  "the freeze overwrites a complete freeze with a worse read",
+  "monthlyclosesrv",
+  "if (out.state === \"partial\" && had && MC.buildCheck(had).ok) return { state: \"already\", missing: [], wrote: false };   // never replace a complete freeze with a worse read",
+  "",
+  1
+ ],
+ [
+  "an expired month is read anyway",
+  "monthlyclosesrv",
+  "if (pre.state === \"early\" || pre.state === \"expired\") return",
+  "if (pre.state === \"early\") return",
+  1
+ ],
+ [
+  "the build reads Google live instead of the frozen record",
+  "monthlyclosesrv",
+  "const frozen = rec.data && rec.data.frozen, chk = MC.buildCheck(frozen);",
+  "const frozen = (await d.readNumbers(clientId, month)), chk = MC.buildCheck(frozen);",
+  1
+ ],
+ [
+  "a test send marks the report kept",
+  "monthlyclosesrv",
+  "return { status: 200, body: { ok: true, test: true, sent_to: to } };",
+  "await d.keepReport({ clientId, reportingMonth: month, html: draft.html }); return { status: 200, body: { ok: true, test: true, sent_to: to } };",
+  1
+ ],
+ [
+  "a test goes to the client",
+  "monthlyclosesrv",
+  "const to = String(adminEmail || \"\").trim();",
+  "const to = String(client.primary_contact_email || \"\").trim();",
+  1
+ ],
+ [
+  "the real send is not kept in the reports table",
+  "monthlyclosesrv",
+  "const k = await d.keepReport({",
+  "const k = await Promise.resolve({ ok: true, kept: true }); void ({",
+  1
+ ],
+ [
+  "a failed send is treated as sent",
+  "monthlyclosesrv",
+  "if (!sent || !sent.ok) return { status: 502, body: { ok: false, error: `The email didn't send",
+  "if (false) return { status: 502, body: { ok: false, error: `The email didn't send",
+  1
+ ],
+ [
+  "this month closes before the next one opens",
+  "monthlyclosesrv",
+  "const om = await OM.openMonth(d.supa, clientId, next,",
+  "await OM.closeMonth(d.supa, clientId, month, new Date(d.now())); const om = await OM.openMonth(d.supa, clientId, next,",
+  1
+ ],
+ [
+  "the morning run sends the report",
+  "monthlyclosesrv",
+  "const b = await guard(\"build\", () => build({ clientId, month, deps: d }));",
+  "const b = await guard(\"build\", () => build({ clientId, month, deps: d })); await sendReport({ clientId, month, deps: d });",
+  1
+ ],
+ [
+  "the 5th's cron sends again",
+  "monthlyreport",
+  "return { ok: true, month: m, frozen: f.state, built: b.state,",
+  "await exports.sendGmail({ workspaceId: null, to: \"x\", subject: \"x\", html: \"x\", text: \"x\" }); return { ok: true, month: m, frozen: f.state, built: b.state,",
+  1
+ ],
+ [
+  "the door lets anyone send",
+  "monthlyclosefn",
+  "const gate = deps && deps.gate ? deps.gate : await requireWorkspaceForClient(event, clientId);",
+  "const gate = { ok: true };",
+  1
+ ],
+ [
+  "the letter prints a street address",
+  "monthlyreportemail",
+  "Questions? Just reply to this email.<br>",
+  "Rocket Growth Agency, 9937 Jefferson Blvd.<br>",
+  1
+ ],
+ [
+  "the letter drops the portal button",
+  "monthlyreportemail",
+  "See the full report in your portal</a>",
+  "</a>",
+  1
+ ]
+]

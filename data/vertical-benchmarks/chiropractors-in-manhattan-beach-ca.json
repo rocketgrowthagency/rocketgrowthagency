@@ -1,0 +1,33 @@
+{
+  "searchTerm": "Chiropractors in Manhattan Beach, CA",
+  "auditedDate": "2026-10-18",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Chiropractor": 9,
+    "Wellness center": 1
+  },
+  "categoryDistributionTop5": {
+    "Chiropractor": 4,
+    "Wellness center": 1
+  },
+  "categoryDistributionTop3": {
+    "Chiropractor": 2,
+    "Wellness center": 1
+  },
+  "majorityCategoryTop10": "Chiropractor",
+  "majorityCategoryTop5": "Chiropractor",
+  "majorityCategoryTop3": "Chiropractor",
+  "reviewsTop10": {
+    "min": 4,
+    "max": 365,
+    "median": 30.5,
+    "p25": 13,
+    "p75": 99
+  },
+  "reviewsTop3Avg": 120,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.83,
+  "findingsDisabled": [],
+  "notes": null
+}

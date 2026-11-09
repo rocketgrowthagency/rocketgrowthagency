@@ -1,0 +1,33 @@
+{
+  "searchTerm": "Locksmiths in Beverly Hills, CA",
+  "auditedDate": "2026-10-08",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Emergency locksmith service": 2,
+    "Locksmith": 8
+  },
+  "categoryDistributionTop5": {
+    "Emergency locksmith service": 2,
+    "Locksmith": 3
+  },
+  "categoryDistributionTop3": {
+    "Emergency locksmith service": 2,
+    "Locksmith": 1
+  },
+  "majorityCategoryTop10": "Locksmith",
+  "majorityCategoryTop5": "Locksmith",
+  "majorityCategoryTop3": "Emergency locksmith service",
+  "reviewsTop10": {
+    "min": 13,
+    "max": 1023,
+    "median": 175,
+    "p25": 127,
+    "p75": 380
+  },
+  "reviewsTop3Avg": 331,
+  "ratingTop10Median": 4.95,
+  "ratingTop3Avg": 4.97,
+  "findingsDisabled": [],
+  "notes": null
+}

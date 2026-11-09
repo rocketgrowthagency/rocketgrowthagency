@@ -1,0 +1,35 @@
+{
+  "searchTerm": "Locksmiths in Manhattan Beach, CA",
+  "auditedDate": "2026-10-24",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Key duplication service": 3,
+    "Locksmith": 6,
+    "Emergency locksmith service": 1
+  },
+  "categoryDistributionTop5": {
+    "Key duplication service": 1,
+    "Locksmith": 3,
+    "Emergency locksmith service": 1
+  },
+  "categoryDistributionTop3": {
+    "Key duplication service": 1,
+    "Locksmith": 2
+  },
+  "majorityCategoryTop10": "Locksmith",
+  "majorityCategoryTop5": "Locksmith",
+  "majorityCategoryTop3": "Locksmith",
+  "reviewsTop10": {
+    "min": 2,
+    "max": 176,
+    "median": 41.5,
+    "p25": 17,
+    "p75": 73
+  },
+  "reviewsTop3Avg": 30,
+  "ratingTop10Median": 4.25,
+  "ratingTop3Avg": 4.1,
+  "findingsDisabled": [],
+  "notes": null
+}

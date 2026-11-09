@@ -366,7 +366,8 @@ try {
     if (!c.current || c.current.id !== "2026-09" || Object.keys(c.prior).length) fail(`a resend of September picks ${c.current && c.current.id}`);
     if (S.reportMonthFor(new Date("2027-01-05T09:00:00Z")) !== "2026-12") fail(`the report in January covers ${S.reportMonthFor(new Date("2027-01-05T09:00:00Z"))}; approved 2026-12`);
     const src = fs.readFileSync(`${SITE}/netlify/functions/send-monthly-report.js`, "utf8");
-    if (!/const pick = pickReportRecords\(recs, month\);/.test(src) || /\(recs \|\| \[\]\)\[0\]/.test(src)) fail("send-monthly-report doesn't pick its record with pickReportRecords (or still takes the newest record)");
+    if (!/priorOf\(require\("\.\/_open-month"\)\.currentReportingMonth\(/.test(src) || /\(recs \|\| \[\]\)\[0\]/.test(src))   // monthly_s5_close_v1: the 5th builds the month just ended (never the newest record)
+  fail("send-monthly-report doesn't pick its record with pickReportRecords (or still takes the newest record)");
     const R = req("./portal-review-requests.js");
     const idx = R.stoppedIndex([{ id: "a", customers: [{ phone: "(720) 555-0199", stopped: true, stopped_at: "2026-10-03T12:00:00Z" }] }, { id: "b", customers: [{ phone: "7205550199" }, { email: "x@y.test" }] }]);
     if (!R.stoppedBefore({ phone: "7205550199" }, idx, "b", 0) || R.stoppedBefore({ phone: "(720) 555-0199", stopped: true }, idx, "a", 0) || R.stoppedBefore({ email: "x@y.test" }, idx, "b", 1)) fail("portal-review-requests doesn't refuse a customer whose cell asked to stop on another list (or refuses one who didn't)");

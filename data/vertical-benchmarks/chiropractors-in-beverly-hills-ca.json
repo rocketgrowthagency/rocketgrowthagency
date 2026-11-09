@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Chiropractors in Beverly Hills, CA",
+  "auditedDate": "2026-10-02",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Chiropractor": 10
+  },
+  "categoryDistributionTop5": {
+    "Chiropractor": 5
+  },
+  "categoryDistributionTop3": {
+    "Chiropractor": 3
+  },
+  "majorityCategoryTop10": "Chiropractor",
+  "majorityCategoryTop5": "Chiropractor",
+  "majorityCategoryTop3": "Chiropractor",
+  "reviewsTop10": {
+    "min": 12,
+    "max": 343,
+    "median": 61,
+    "p25": 19,
+    "p75": 114
+  },
+  "reviewsTop3Avg": 154,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.9,
+  "findingsDisabled": [],
+  "notes": null
+}

@@ -1,0 +1,32 @@
+{
+  "searchTerm": "Mortgage brokers in Beverly Hills, CA",
+  "auditedDate": "2026-10-12",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Mortgage broker": 7,
+    "Mortgage lender": 3
+  },
+  "categoryDistributionTop5": {
+    "Mortgage broker": 4,
+    "Mortgage lender": 1
+  },
+  "categoryDistributionTop3": {
+    "Mortgage broker": 3
+  },
+  "majorityCategoryTop10": "Mortgage broker",
+  "majorityCategoryTop5": "Mortgage broker",
+  "majorityCategoryTop3": "Mortgage broker",
+  "reviewsTop10": {
+    "min": 2,
+    "max": 145,
+    "median": 54,
+    "p25": 17,
+    "p75": 80
+  },
+  "reviewsTop3Avg": 98,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.97,
+  "findingsDisabled": [],
+  "notes": null
+}

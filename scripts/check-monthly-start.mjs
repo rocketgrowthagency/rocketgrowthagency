@@ -345,8 +345,9 @@ const board = () => {
   if (!/import "\/shared\/monthly-start\.js\?v=/.test(a)) fail("8 the admin must load shared/monthly-start.js");
   if (!/admin-monthly-plan/.test(a)) fail("8 the admin must call admin-monthly-plan");
   const html = read("admin/index.html"), ver = (a.match(/shared\/monthly-sections\.js\?v=(\w+)/) || [])[1];
-  if (!/admin\.js\?v=20261109q/.test(html) || ver !== "20261109c") fail("8 the ?v= keys for admin.js and the sections module were not bumped");
-  if (!/portal\.js\?v=20261109i/.test(read("portal/index.html"))) fail("8 the ?v= key for portal.js was not bumped");
+const vge = (txt, re, min) => { const m = re.exec(txt); return !!m && m[1] >= min; };   // a ?v= key at least this one: later sections bump them again
+  if (!vge(html, /admin\.js\?v=(\w+)/, "20261109q") || !(ver >= "20261109c")) fail("8 the ?v= keys for admin.js and the sections module were not bumped");
+  if (!vge(read("portal/index.html"), /portal\.js\?v=(\w+)/, "20261109i")) fail("8 the ?v= key for portal.js was not bumped");
   const mr = read("netlify/functions/_morning-run.js");
   if (!/month_open_error/.test(mr) || !/by: "the morning run"/.test(mr)) fail("8 the morning run must say who opened the month and keep why it couldn't");
   if (!/month_open_error/.test(a)) fail("8 the open card must read why the month couldn't open");

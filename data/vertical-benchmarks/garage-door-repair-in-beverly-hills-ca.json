@@ -1,0 +1,32 @@
+{
+  "searchTerm": "Garage door repair in Beverly Hills, CA",
+  "auditedDate": "2026-10-09",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Garage door supplier": 10
+  },
+  "categoryDistributionTop5": {
+    "Garage door supplier": 5
+  },
+  "categoryDistributionTop3": {
+    "Garage door supplier": 3
+  },
+  "majorityCategoryTop10": "Garage door supplier",
+  "majorityCategoryTop5": "Garage door supplier",
+  "majorityCategoryTop3": "Garage door supplier",
+  "reviewsTop10": {
+    "min": 1,
+    "max": 130,
+    "median": 6.5,
+    "p25": 1,
+    "p75": 69
+  },
+  "reviewsTop3Avg": 11,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 5,
+  "findingsDisabled": [
+    "categoryServiceVsProduct"
+  ],
+  "notes": "\"Garage door supplier\" is the dominant category in the top 5 of this search despite the search being service-intent. The semantic categoryServiceVsProduct finding is disabled to avoid giving prospects bad advice — telling them to switch categories that successful competitors actively use."
+}

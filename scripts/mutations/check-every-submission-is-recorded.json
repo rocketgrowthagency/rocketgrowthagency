@@ -113,16 +113,16 @@
  ],
  [
   "monthly report not recorded",
-  "monthlyreport",
-  "await recordSubmission({ supa, clientId, workspaceId: client.workspace_id, kind: \"monthly_report_sent\"",
-  "await Promise.resolve({ supa, clientId, workspaceId: client.workspace_id, kind: \"monthly_report_sent\"",
+  "monthlyclosesrv",
+  "await d.record({ clientId, workspaceId: client.workspace_id, kind: \"monthly_report_sent\"",
+  "await Promise.resolve({ clientId, workspaceId: client.workspace_id, kind: \"monthly_report_sent\"",
   1
  ],
  [
   "monthly report recorded without what went",
-  "monthlyreport",
-  "to ${to}`, extra: artifact });",
-  "to ${to}` });",
+  "monthlyclosesrv",
+  "extra: artifact });",
+  "});",
   1
  ],
  [

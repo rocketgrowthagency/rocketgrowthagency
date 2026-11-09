@@ -199,12 +199,13 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
 
 // ── (6) frozen reports ──────────────────────────────────────────────────────────────────────────────────────────────
 {
-  const m = SRC["send-monthly-report.js"];
-  const sendAt = m.indexOf("const outcome = await sendGmail"), rawAt = m.indexOf('source: "monthly-report"');
+  // monthly_s5_close_v1 (11-9): the send is _monthly-close.js sendReport (an admin's press); the 5th's cron only builds
+  const m = fs.readFileSync(`${SITE}/netlify/functions/_monthly-close.js`, "utf8");
+  const sendAt = m.lastIndexOf("d.gmail({ workspaceId"), rawAt = m.indexOf('source: "monthly-report"');
   ok(rawAt > sendAt && sendAt > 0, "(6) the report isn't saved as sent AFTER it is sent");
-  ok(/gmail_message_id: outcome\.id, subject: built\.subject, html: built\.html, text: built\.text \} \}\);\s*\n\s*artifact\.frozen/.test(m), "(6) what's frozen isn't the subject, html and text that went out");
-  ok(/try \{\s*\n\s*const frozen = await require\("\.\/_raw-store"\)\.saveRaw/.test(m) && /artifact\.frozen = frozen\.ok/.test(m) && /catch \(e\) \{ artifact\.frozen = \{ ok: false/.test(m), "(6) a failed freeze can break the send or goes unrecorded");
-  ok(/x\.frozen && x\.frozen\.ok === false/.test(SRC["_job-manifest.js"]), "(6) System health doesn't flag a report sent without its copy");
+  ok(/gmail_message_id: sent\.id \|\| null, subject: draft\.subject, html: draft\.html, text: draft\.text \} \}\);\s*\n\s*result\.frozen/.test(m), "(6) what's frozen isn't the subject, html and text that went out");
+  ok(/try \{\s*\n\s*const frozenCopy = await d\.saveRaw/.test(m) && /result\.frozen = frozenCopy\.ok/.test(m) && /catch \(e\) \{ rethrowBugs\(e\); result\.frozen = \{ ok: false/.test(m), "(6) a failed freeze can break the send or goes unrecorded");
+  ok(/j\.frozen && j\.frozen\.ok === false/.test(fs.readFileSync(`${SITE}/admin/admin.js`, "utf8")), "(6) the admin doesn't say when a sent report's safety copy was not saved");
 }
 
 // ── (7) the Business Profile purge ──────────────────────────────────────────────────────────────────────────────────
@@ -398,7 +399,7 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
     ok(ch.includes(esc(WORDS.disconnected)) && !/<b class="num">0<\/b>/.test(ch), "(10) the report's channel box shows a Google number it couldn't read as 0"); }
   { const rp = reportJs; ok(/num\(current\.review_count\) === 0 && GL\(\)\.status\(current, "review_count"\) === "ok"/.test(rp), "(10) the report tells a client whose review count Google didn't give to 'get the first reviews'"); }
   { const sm = SRC["send-monthly-report.js"], m1 = read("netlify/functions/_month1-report.js"), mat = read("netlify/functions/_mature.js");
-    ok(/liveRows\(/.test(sm) && /const googleWords = \(m\) =>/.test(sm) && /const present = METRICS\.filter\(\(m\) => \(current\[m\.key\] != null && current\[m\.key\] !== ""\) \|\| googleWords\(m\)\)/.test(sm), "(10) the monthly email could show a Google number it couldn't read as 0, or leave the row out without saying why");
+    ok(/const googleWords = \(m\) =>/.test(sm) && /const present = METRICS\.filter\(\(m\) => \(current\[m\.key\] != null && current\[m\.key\] !== ""\) \|\| googleWords\(m\)\)/.test(sm), "(10) the monthly email could show a Google number it couldn't read as 0, or leave the row out without saying why");
     ok(/if \(x === null \|\| y === null\) continue;/.test(m1 || "") && /googleWhy/.test(m1 || ""), "(10) the Month 1 report could show a Google figure it couldn't read as 0, or not say why it can't compare");
     ok(/if \(a === null \|\| b === null \|\| !t\) return null;/.test(mat || "") && /GOOGLE_KPIS/.test(mat || ""), "(10) the KPI alert could read an unread Google number as a drop, or call it fine without saying it wasn't checked"); }
   { const M1 = load("_month1-report.js"); const r = M1.buildMonth1Report({ client: { business_name: "X" }, months: [{ reporting_month: "2026-06-01", gbp_calls: null, gbp_impressions: null, gsc_clicks: 40, gsc_impressions: 900, _google: { gbp_calls: "could_not_read", gbp_impressions: "could_not_read" } }, { reporting_month: "2026-07-01", gbp_calls: null, gbp_impressions: null, gsc_clicks: 55, gsc_impressions: 1200, _google: { gbp_calls: "could_not_read", gbp_impressions: "could_not_read" } }], kickoffAt: "2026-07-05", now: at("2026-08-20"), playbook: [], tasks: {} });
@@ -647,7 +648,7 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
       ok(!f.calls.some((c) => c.method === "DELETE") && r.failed > 0, "(12) a saved file was deleted although its ledger line couldn't be written, or the failure wasn't reported"); }
     { const f = mk(); await RS.expire({ sources: ["rank-grid"], enabled: true, ledger: async () => {}, now: NOW, fetchFn: f, env }); ok(true, ""); }
     ok(K.GOOGLE_RAW_SOURCES.includes("monthly-report") && !K.GOOGLE_RAW_SOURCES.includes(K.KEPT_REPORT_SOURCE), "(12) the report as sent isn't on the expiry list, or the Google-free copy is");
-    const m = SRC["send-monthly-report.js"]; ok(/KEPT_REPORT_SOURCE/.test(m) && /withoutGoogle\(current\)/.test(m) && /GOOGLE_FIELDS\) if \(f in o\) o\[f\] = null/.test(read("netlify/functions/_google-numbers.js")), "(12) the Google-free copy of the report isn't saved beside the one as sent"); }
+    const m = fs.readFileSync(`${SITE}/netlify/functions/_monthly-close.js`, "utf8"); ok(/KEPT_REPORT_SOURCE/.test(m) && /withoutGoogle: true/.test(m) && /GOOGLE_FIELDS\) if \(f in o\) o\[f\] = null/.test(read("netlify/functions/_google-numbers.js")), "(12) the Google-free copy of the report isn't saved beside the one as sent"); }
 }
 
 if (F.length) { console.error(`🔴 check-data-keep: ${F.length} problem${F.length === 1 ? "" : "s"}`); F.forEach((m) => console.error("  - " + m)); process.exit(1); }

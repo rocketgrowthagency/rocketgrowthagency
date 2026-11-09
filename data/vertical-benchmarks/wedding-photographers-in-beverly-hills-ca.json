@@ -1,0 +1,31 @@
+{
+  "searchTerm": "Wedding photographers in Beverly Hills, CA",
+  "auditedDate": "2026-10-14",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Wedding photographer": 7,
+    "Photographer": 3
+  },
+  "categoryDistributionTop5": {
+    "Wedding photographer": 5
+  },
+  "categoryDistributionTop3": {
+    "Wedding photographer": 3
+  },
+  "majorityCategoryTop10": "Wedding photographer",
+  "majorityCategoryTop5": "Wedding photographer",
+  "majorityCategoryTop3": "Wedding photographer",
+  "reviewsTop10": {
+    "min": 7,
+    "max": 190,
+    "median": 47,
+    "p25": 22,
+    "p75": 72
+  },
+  "reviewsTop3Avg": 40,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 5,
+  "findingsDisabled": [],
+  "notes": null
+}

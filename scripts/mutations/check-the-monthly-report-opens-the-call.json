@@ -1,16 +1,16 @@
 [
  [
   "the send doesn't stamp this month",
-  "monthlyreport",
-  "try { await stampThisMonth(supa, clientId, current.reporting_month, artifact, outcome.id, to); }",
-  "try { }",
+  "monthlyclosesrv",
+  "if (d.stampThisMonth && month === priorOf(require(\"./_step-record\").currentReportingMonth(new Date(d.now())))) { try {",
+  "if (false) { try {",
   1
  ],
  [
   "a resend of an older month opens the call",
-  "monthlyreport",
-  "  if (!month) {\n    try { await stampThisMonth",
-  "  if (true) {\n    try { await stampThisMonth",
+  "monthlyclosesrv",
+  "month === priorOf(require(\"./_step-record\").currentReportingMonth(new Date(d.now())))",
+  "true",
   1
  ],
  [

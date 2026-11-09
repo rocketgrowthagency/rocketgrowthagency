@@ -1,0 +1,34 @@
+{
+  "searchTerm": "Optometrists in Beverly Hills, CA",
+  "auditedDate": "2026-10-03",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Medical clinic": 1,
+    "Optometrist": 8,
+    "Eye care center": 1
+  },
+  "categoryDistributionTop5": {
+    "Medical clinic": 1,
+    "Optometrist": 4
+  },
+  "categoryDistributionTop3": {
+    "Medical clinic": 1,
+    "Optometrist": 2
+  },
+  "majorityCategoryTop10": "Optometrist",
+  "majorityCategoryTop5": "Optometrist",
+  "majorityCategoryTop3": "Optometrist",
+  "reviewsTop10": {
+    "min": 30,
+    "max": 2023,
+    "median": 375,
+    "p25": 62,
+    "p75": 627
+  },
+  "reviewsTop3Avg": 857,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.9,
+  "findingsDisabled": [],
+  "notes": null
+}

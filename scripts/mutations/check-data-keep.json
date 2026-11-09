@@ -223,27 +223,27 @@
  ],
  [
   "the report is frozen before it is sent",
-  "monthlyreport",
-  "const outcome = await sendGmail({ workspaceId",
-  "const __f = { source: \"monthly-report\" };\n  const outcome = await sendGmail({ workspaceId"
+  "monthlyclosesrv",
+  "const draft = rec.data && rec.data.report_draft;\n  if (!draft || !draft.html) return { status: 409",
+  "const draft = rec.data && rec.data.report_draft; const __f = { source: \"monthly-report\" };\n  if (!draft || !draft.html) return { status: 409"
  ],
  [
   "the frozen copy drops the html",
-  "monthlyreport",
-  "subject: built.subject, html: built.html, text: built.text } });\n    artifact.frozen",
-  "subject: built.subject, text: built.text } });\n    artifact.frozen"
+  "monthlyclosesrv",
+  "subject: draft.subject, html: draft.html, text: draft.text } });\n      result.frozen",
+  "subject: draft.subject, text: draft.text } });\n      result.frozen"
  ],
  [
   "a failed freeze can break the send",
-  "monthlyreport",
-  "  } catch (e) { artifact.frozen = { ok: false, error: String(e.message).slice(0, 160) }; }",
-  "  } catch (e) { throw e; }"
+  "monthlyclosesrv",
+  "catch (e) { rethrowBugs(e); result.frozen = { ok: false, error: String(e.message || e).slice(0, 160) }; }",
+  "catch (e) { throw e; }"
  ],
  [
   "System health stops flagging an unsaved copy",
-  "jobmanifest",
-  "const unfrozen = r.filter((x) => x.frozen && x.frozen.ok === false).length;",
-  "const unfrozen = 0;"
+  "adminjs",
+  "j.frozen && j.frozen.ok === false",
+  "false"
  ],
  [
   "the purge turns on for any truthy value",
@@ -817,9 +817,9 @@
  ],
  [
   "the Google-free copy of the sent report keeps Google's figures",
-  "monthlyreport",
-  "gk.withoutGoogle(current), prior: gk.withoutGoogle(prior)",
-  "current, prior"
+  "monthlyclosesrv",
+  "deps: d, withoutGoogle: true })",
+  "deps: d, withoutGoogle: false })"
  ],
  [
   "the KPI alert reads a month list the reader doesn't return",

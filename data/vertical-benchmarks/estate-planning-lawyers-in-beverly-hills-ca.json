@@ -1,0 +1,31 @@
+{
+  "searchTerm": "Estate planning lawyers in Beverly Hills, CA",
+  "auditedDate": "2026-10-13",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Estate planning attorney": 9,
+    "Real estate attorney": 1
+  },
+  "categoryDistributionTop5": {
+    "Estate planning attorney": 5
+  },
+  "categoryDistributionTop3": {
+    "Estate planning attorney": 3
+  },
+  "majorityCategoryTop10": "Estate planning attorney",
+  "majorityCategoryTop5": "Estate planning attorney",
+  "majorityCategoryTop3": "Estate planning attorney",
+  "reviewsTop10": {
+    "min": 2,
+    "max": 727,
+    "median": 49.5,
+    "p25": 12,
+    "p75": 105
+  },
+  "reviewsTop3Avg": 291,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.93,
+  "findingsDisabled": [],
+  "notes": null
+}

@@ -1,0 +1,32 @@
+{
+  "searchTerm": "Physical therapists in Beverly Hills, CA",
+  "auditedDate": "2026-10-06",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Physical therapy clinic": 7,
+    "Physical therapist": 3
+  },
+  "categoryDistributionTop5": {
+    "Physical therapy clinic": 4,
+    "Physical therapist": 1
+  },
+  "categoryDistributionTop3": {
+    "Physical therapy clinic": 3
+  },
+  "majorityCategoryTop10": "Physical therapy clinic",
+  "majorityCategoryTop5": "Physical therapy clinic",
+  "majorityCategoryTop3": "Physical therapy clinic",
+  "reviewsTop10": {
+    "min": 3,
+    "max": 210,
+    "median": 35.5,
+    "p25": 19,
+    "p75": 38
+  },
+  "reviewsTop3Avg": 94,
+  "ratingTop10Median": 4.75,
+  "ratingTop3Avg": 4.9,
+  "findingsDisabled": [],
+  "notes": null
+}

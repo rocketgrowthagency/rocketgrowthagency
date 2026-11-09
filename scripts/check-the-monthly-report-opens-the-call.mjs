@@ -9,8 +9,9 @@ import fs from "node:fs";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const file = `${SITE}/netlify/functions/send-monthly-report.js`;
 const src = fs.readFileSync(file, "utf8");
+const closeSrc = fs.readFileSync(`${SITE}/netlify/functions/_monthly-close.js`, "utf8");   // monthly_s5_close_v1 (11-9): the send moved to _monthly-close.js sendReport
 const fail = [];
-if (!/if \(!month\) \{\s*try \{ await stampThisMonth\(supa, clientId, current\.reporting_month, artifact, outcome\.id, to\);/.test(src)) fail.push("the send no longer stamps this month's record (or a resend of an older month now does)");
+if (!/d\.stampThisMonth && month === priorOf\(require\("\.\/_step-record"\)\.currentReportingMonth\(new Date\(d\.now\(\)\)\)\)\) \{ try \{ await d\.stampThisMonth\(clientId, month, artifact, sent\.id \|\| null, to\);/.test(closeSrc)) fail.push("the send no longer stamps this month's record (or a resend of an older month now does)");
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || "https://stub.invalid"; process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "stub";
 let stamp;
 try { ({ stampThisMonth: stamp } = createRequire(import.meta.url)(file)); } catch (e) { console.error(`⚠️  INDETERMINATE — send-monthly-report didn't load: ${e.message}`); process.exit(2); }

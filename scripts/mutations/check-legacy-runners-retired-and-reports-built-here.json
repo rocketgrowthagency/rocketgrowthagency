@@ -29,16 +29,16 @@
  ],
  [
   "Monthly 24 points at report.mjs again",
-  "exec",
-  "  \"m2.report.generate\": async ({ client, clientId }) => buildServerReport(client, clientId, { label: \"monthly\" }),",
-  "  \"m2.report.generate\": async ({ client, clientId }) => ({ summary: `Run: node report.mjs ${clientId}`, outcome: \"manual_required\" }),",
+  "monthlyclosesrv",
+  "async function build({",
+  "async function build_x({",
   1
  ],
  [
   "the send stops stamping Monthly 25",
-  "monthlyreport",
-  "      tasks[\"m2.report.deliver\"] = { ...t, status: \"done\",",
-  "      tasks[\"m2.report.deliver_x\"] = { ...t, status: \"done\",",
+  "monthlyclosesrv",
+  "ft[MC.ID.SEND] = { ...(ft[MC.ID.SEND] || {}), status: \"done\"",
+  "ft[MC.ID.SEND + \"_x\"] = { ...(ft[MC.ID.SEND] || {}), status: \"done\"",
   1
  ],
  [

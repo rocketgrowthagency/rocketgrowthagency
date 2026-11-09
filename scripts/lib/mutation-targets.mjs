@@ -533,6 +533,10 @@ export const FILES = {
   replypost: "netlify/functions/_reply-post.js",   // monthly_s2_weekly_v1: an approved reply posts itself
   monthlyonce: "shared/monthly-monthly.js",   // monthly_s3_monthly_v1: the seven once-a-month cards
   monthlyoncesrv: "netlify/functions/_monthly-once.js",   // monthly_s3_monthly_v1: the reads and the settle
+  monthlyclose: "shared/monthly-close.js",   // monthly_s5_close_v1: the five close-the-month cards
+  monthlyclosesrv: "netlify/functions/_monthly-close.js",   // monthly_s5_close_v1: freeze, build, send, hand-off
+  monthlyclosefn: "netlify/functions/admin-monthly-close.js",   // monthly_s5_close_v1: the only door that sends a monthly report
+  monthlyreportemail: "netlify/functions/_monthly-report-email.js",   // monthly_s5_close_v1: the report letter
   weekskipfn: "netlify/functions/admin-week-skip.js",
   weeklyreadfn: "netlify/functions/admin-monthly-weekly.js",
   monthlyplanread: "netlify/functions/_monthly-plan.js",

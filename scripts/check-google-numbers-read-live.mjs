@@ -319,7 +319,8 @@ const run = (oauth = OAUTH, from = "2026-09-01", to = "2026-10-31", extra = {}) 
   for (const p of ["portal/index.html", "portal/report/index.html", "admin/index.html"]) if (!/src="\/shared\/google-live\.js/.test(read(p))) fail(`${p} doesn't load shared/google-live.js`);
   const send = read("netlify/functions/send-monthly-report.js");
   if (/noGoogleCompare|gbpKeep|_gbp-keep/.test(send)) fail("the monthly email still has the 30-day compare path");
-  if (!/_google-numbers/.test(send) || !/liveRows/.test(send)) fail("the monthly email doesn't read Google live at send");
+  const closeSrc = read("netlify/functions/_monthly-close.js");   // monthly_s5_close_v1 (11-9): the month's Google figures are read live at the freeze (21) and frozen; the letter is built from that
+  if (!/require\("\.\/_google-numbers"\)\.googleNumbers/.test(closeSrc)) fail("the month's freeze doesn't read Google live");
   for (const f of ["netlify/functions/_month1-report.js", "netlify/functions/_monthly-value.js"]) if (/_gbp-keep/.test(read(f))) fail(`${f} still reads the 30-day keep`);
   if (!/_google-numbers/.test(read("netlify/functions/portal-monthly-value.js")) || !/liveRows/.test(read("netlify/functions/flow-execute.js"))) fail("the monthly value card or the report builders don't read live");
   const prr = read("netlify/functions/portal-review-requests.js");

@@ -1,0 +1,34 @@
+{
+  "searchTerm": "CPAs in Beverly Hills, CA",
+  "auditedDate": "2026-10-11",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Certified public accountant": 6,
+    "Accountant": 2,
+    "Accounting firm": 1,
+    "Tax attorney": 1
+  },
+  "categoryDistributionTop5": {
+    "Certified public accountant": 4,
+    "Accountant": 1
+  },
+  "categoryDistributionTop3": {
+    "Certified public accountant": 3
+  },
+  "majorityCategoryTop10": "Certified public accountant",
+  "majorityCategoryTop5": "Certified public accountant",
+  "majorityCategoryTop3": "Certified public accountant",
+  "reviewsTop10": {
+    "min": 7,
+    "max": 73,
+    "median": 28,
+    "p25": 19,
+    "p75": 37
+  },
+  "reviewsTop3Avg": 27,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 5,
+  "findingsDisabled": [],
+  "notes": null
+}

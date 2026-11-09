@@ -68,7 +68,7 @@ if (!/kind: "gbp_changed_on_google"/.test(watch) || !/kind: "gbp_hours_renewed"[
   if (!/nightlyPass\(clientId, \{[^\n]*\n[^\n]*record: \(o\) => recordSubmission\(\{ supa, \.\.\.o \}\) \}\)/.test(W)) fail("the nightly go-ahead pass isn't given the recorder"); }
 for (const [f, kind] of [["portal-step-later.js", "client_step_later"], ["portal-photo-team.js", "client_team_size"], ["portal-photo-keep.js", "gbp_photo_kept"]])
   if (!new RegExp(`^[ \\t]*await recordSubmission\\(\\{ supa, clientId, kind: "${kind}"`, "m").test(nc(read(`netlify/functions/${f}`)))) fail(`${f} doesn't record what the client did`);
-if (!/await recordSubmission\(\{ supa, clientId, workspaceId: client\.workspace_id, kind: "monthly_report_sent", stepId: "m2\.report\.deliver"[^\n]*\n[^\n]*extra: artifact \}\);/.test(nc(read("netlify/functions/send-monthly-report.js")))) fail("a monthly report goes out without a record of what went, to whom and when");
+if (!/await d\.record\(\{ clientId, workspaceId: client\.workspace_id, kind: "monthly_report_sent", stepId: MC\.ID\.SEND[^\n]*extra: artifact \}\)/.test(nc(read("netlify/functions/_monthly-close.js"))) || !/record: \(o\) => require\("\.\/_record"\)\.recordSubmission\(\{ supa, \.\.\.o \}\)/.test(nc(read("netlify/functions/_monthly-close.js")))) fail("a monthly report goes out without a record of what went, to whom and when");
 const admin = nc(read("admin/admin.js"));
 if (/by: "admin override"/.test(admin) || !/by: \(await supabase\.auth\.getSession\(\)\)\?\.data\?\.session\?\.user\?\.email \|\| "admin", actor: "rga"/.test(admin)) fail("admin's Done / Skip / Reset is recorded as \"admin override\", not the person");
 

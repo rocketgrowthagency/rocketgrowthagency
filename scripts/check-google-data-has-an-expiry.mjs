@@ -119,7 +119,7 @@ for (const f of files) {
   const sources = [...src.matchAll(/saveRaw\(\{\s*source:\s*["']([a-z0-9-]+)["']/g)].map((m) => m[1]);
   if (HOST_RE.test(src)) for (const s of sources) ok(K.GOOGLE_RAW_SOURCES.includes(s), `(3) ${f} saves a raw answer ("${s}") beside a Business Profile call and the source is not on GOOGLE_RAW_SOURCES (no expiry)`);
 }
-{ const m = read("send-monthly-report.js") || "";
+{ const m = read("_monthly-close.js") || "";   // monthly_s5_close_v1 (11-9): the send moved to _monthly-close.js sendReport
   ok(/saveRaw\(\{ source: "monthly-report", clientId/.test(m) && K.GOOGLE_RAW_SOURCES.includes("monthly-report"), "(3) the report as sent (it carries Google's numbers) isn't saved under a source that expires at 30 days");
   ok(!K.GOOGLE_RAW_SOURCES.includes(K.KEPT_REPORT_SOURCE) && /KEPT_REPORT_SOURCE/.test(m), "(3) the Google-free copy of the report is missing, or it was put on the expiry list"); }
 
