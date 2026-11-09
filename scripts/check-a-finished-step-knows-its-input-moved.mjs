@@ -38,18 +38,21 @@ const mk = (id, title, ran, deps) => ({ obj: { flowId: id, t: title }, dependsOn
 
 // ── THE REAL CASE ───────────────────────────────────────────────────────────────────────────────
 const K = mk("m1.strategy.keywords_locations", "Lock 3-5 primary keywords + 3 sub-locations", "2026-10-06T17:55:11Z");
-const G = mk("m1.audit.grid_baseline", "Run the geo-grid map-rank baseline", "2026-09-15T03:30:45Z", ["m1.strategy.keywords_locations"]);
+// out_of_date_means_changed_v1 (approved 11-8): the BASELINES (competitors, grid, KPIs) record where the client started and are never
+// out of date; the rule is shown on a step that works FROM the keyword plan, the business description.
+const G = mk("m1.gbp.business_description", "Write the Google description", "2026-09-15T03:30:45Z", ["m1.strategy.keywords_locations"]);
 ok(S(G, [K, G]).length === 1,
-  "the grid baseline, finished three weeks BEFORE the keyword plan was re-locked, is not reported as "
-  + "out of date — this is the exact card that showed Done over a measurement of a keyword the plan "
-  + "no longer contains");
+  "the description, written three weeks BEFORE the keyword plan was re-locked, is not reported as out of date");
+const GB = mk("m1.audit.grid_baseline", "Run the geo-grid map-rank baseline", "2026-09-15T03:30:45Z", ["m1.strategy.keywords_locations"]);
+ok(S(GB, [K, GB]).length === 0 && !/OUT OF DATE/.test(N(GB, [K, GB])) && /The starting map rank/.test(N(GB, [K, GB])),
+  "the map-rank BASELINE reads out of date (a baseline is meant to be older than the plan; re-running it would erase the before)");
 ok(/Run it again/i.test(N(G, [K, G])),
   "the stale note does not tell the operator what to do about it");
 ok(/Lock 3-5 primary keywords/.test(N(G, [K, G])),
   "the stale note does not name WHICH input moved");
 
 // ── FRESH STAYS SILENT ──────────────────────────────────────────────────────────────────────────
-const G2 = mk("m1.audit.grid_baseline", "Grid", "2026-10-06T18:30:00Z", ["m1.strategy.keywords_locations"]);
+const G2 = mk("m1.gbp.business_description", "Description", "2026-10-06T18:30:00Z", ["m1.strategy.keywords_locations"]);
 ok(S(G2, [K, G2]).length === 0, "a step that ran AFTER its dependency is reported stale");
 ok(N(G2, [K, G2]) === "", "a current step still renders a warning");
 

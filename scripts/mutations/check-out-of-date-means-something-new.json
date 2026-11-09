@@ -1,0 +1,44 @@
+[
+ [
+  "baselines go out of date again",
+  "admin",
+  "  if (step && step.obj && OB_BASELINES[step.obj.flowId]) return [];\n",
+  "",
+  1
+ ],
+ [
+  "a re-check that found nothing marks steps out of date",
+  "admin",
+  "    if (dep && obFoundNothingNew(dep.task)) continue;   // a re-check that found it already right isn't something new",
+  "",
+  1
+ ],
+ [
+  "already right by outcome doesn't count",
+  "admin",
+  "  return !!(SC && SC.ALREADY_RIGHT && SC.ALREADY_RIGHT.includes(o)) ||",
+  "  return false ||",
+  1
+ ],
+ [
+  "a baseline says nothing",
+  "admin",
+  "  if (base) return bAt ? `<p class=\"ob-why\">The starting ${base} · ",
+  "  if (base) return bAt ? `<p class=\"ob-why\">${base} · ",
+  1
+ ],
+ [
+  "the autopilot redrafts after a found-nothing re-check",
+  "webautorun",
+  "    if (SC.ALREADY_RIGHT.includes(o) || (dt.no_change_needed && (Date.parse(dt.no_change_needed.at) || 0) >= ms)) continue;",
+  "",
+  1
+ ],
+ [
+  "nothing is ever out of date",
+  "admin",
+  "    if (at && at > mine) out.push",
+  "    if (false) out.push",
+  1
+ ]
+]
