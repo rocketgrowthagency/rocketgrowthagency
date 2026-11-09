@@ -62,6 +62,9 @@ try {
   // admin draws the lines
   const lift = (src, name) => { const m = new RegExp(`^function ${name}\\(`, "m").exec(src); return m ? src.slice(m.index, src.indexOf("\n}\n", m.index) + 2) : null; };
   const ctx = vm.createContext({ escapeHtml: (s) => String(s), wcDay: (d) => `D(${d})`, acCk: (rows) => rows.map((r) => `[${r[3] ? "!" : "✓"} ${r[0]} | ${r[1]} | ${r[2]}]`).join("") });
+  // 🔄 11-8 night: the "connect it in …" lines name the access steps through obStepRef (the live order); the real line is lifted
+  // (no numbering in the vm, so it reads "its step", exactly what admin shows before the order is known)
+  vm.runInContext((A.match(/^const obStepRef = .*$/m) || [""])[0].replace(/^const /, "var "), ctx);
   vm.runInContext(lift(A, "wcTrackingRowsHtml"), ctx);
   const rows = (od) => vm.runInContext(`wcTrackingRowsHtml(${JSON.stringify({ auto_result: { outcome_data: od } })})`, ctx);
   const okRows = rows({ checked: "google_data", ga4_property: "529089636", ga4_through: "2026-11-02", gsc_site: "acme.test", gsc_domain: true, gsc_through: "2026-10-31", how: "Tag Manager GTM-X" });

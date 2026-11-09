@@ -16,6 +16,8 @@ try { A = fs.readFileSync(`${SITE}/admin/admin.js`, "utf8"); CSS = fs.readFileSy
 catch (e) { console.error(`⚠️  INDETERMINATE — couldn't load the admin: ${e.message}`); process.exit(2); }
 const lift = (name) => { const i = A.indexOf(`function ${name}(`); if (i < 0) return null; let d = 0; for (let k = A.indexOf("{", A.indexOf(")", i)); k < A.length; k++) { if (A[k] === "{") d++; else if (A[k] === "}") { d--; if (!d) return A.slice(i, k + 1); } } return null; };
 const code = ["codeResultHtml", "stepRunHistoryHtml", "runCounts"].map(lift);
+// 🔄 11-8 night: the footer names the business-details step through obStepRef (the live order); the real line comes too
+code.push((A.match(/^const obStepRef = .*$/m) || [null])[0]);
 if (code.some((x) => !x)) { console.error("⚠️  INDETERMINATE — codeResultHtml or stepRunHistoryHtml moved"); process.exit(2); }
 const bad = [], fail = (m) => bad.push(m);
 const B = "https://acme.test";
