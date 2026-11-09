@@ -201,5 +201,9 @@ try {
   }
 } catch (e) { console.error(`⚠️  INDETERMINATE: ${e.stack || e.message}`); process.exit(2); }
 
+// 11-9 on RGA: "Draft 2 scripts" reopened a finished 58; a matching read showed "You marked it pasted"
+{ const FXS = fs.readFileSync(path.join(SITE, "netlify/functions/flow-execute.js"), "utf8"), AS = fs.readFileSync(path.join(SITE, "admin/admin.js"), "utf8");
+  if (!/const KEEP_STATUS_ON_RUN = new Set\(\["m1\.brand\.youtube_setup"\]\);/.test(FXS) || !/status: keptStatus \|\| \(isDone \? "done" : "in_progress"\),/.test(FXS) || !/keptStatus \? \{ started_at: new Date\(\)\.toISOString\(\) \} :/.test(FXS)) fail("58: drafting the optional scripts can reopen a finished step again");
+  if (!/matched = !!\(yr && yr\.state === "matches"\);/.test(AS)) fail("58: a matching YouTube read is hidden behind 'You marked it pasted'"); }
 if (F.length) { console.error(`❌ step 58 reads YouTube: ${F.length} regression(s)`); for (const f of F) console.error("  · " + f); process.exit(1); }
 console.log("✅ step 58 reads YouTube back: matches finishes the step by itself, a different description is RGA's move with both side by side, a read that can't be made says why and is never matches or missing, Pasted is the only way only while there is no key (then refused and gone), Check now is read-before-write and read back, the morning run is a free read that never starts the runner, Copy is exactly what Studio takes, the key is read only from YOUTUBE_API_KEY and never stored");
