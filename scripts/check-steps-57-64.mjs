@@ -448,7 +448,7 @@ try {
     if (!imp) fail("wiring: admin.js doesn't import shared/steps-57-64.js");
     const av = (idx.match(/admin\/admin\.js\?v=([0-9a-z]+)/) || [])[1], cv = (idx.match(/admin\/admin\.css\?v=([0-9a-z]+)/) || [])[1];
     if (!av || av < "20261109d" || !cv || cv < "20261109c") fail(`wiring: the cache keys weren't bumped (admin.js ${av}, admin.css ${cv})`);
-    if (!/step-lock\.js\?v=20261109d/.test(A) || !/step-lock\.js\?v=20261109d/.test(read("portal/portal.js")) || !/portal\.js\?v=20261109d/.test(read("portal/index.html"))) fail("wiring: step-lock.js changed but its import keys (admin, portal) weren't bumped");
+    if (!/step-lock\.js\?v=20261109d/.test(A) || !/step-lock\.js\?v=20261109d/.test(read("portal/portal.js")) || !((read("portal/index.html").match(/portal\.js\?v=([0-9a-z]+)/) || [])[1] >= "20261109d")) fail("wiring: step-lock.js changed but its import keys (admin, portal) weren't bumped");
   }
   // the skip control routes to the one function; client rows too
   if (!/data-task-status"\) === "skipped" && uniS\(\)\) \{ uniSkipPress\(/.test(A)) fail("skip UI: a client row's Skip doesn't go to the one Skip");
