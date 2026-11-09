@@ -138,27 +138,27 @@
   "if (false && bd && bd.found) return {"
  ],
  [
-  "the suggested list loses its label",
+  "the brand-search list loses its label",
   "exec",
-  "return { summary: bd ? `${bd.head}\\n\\n${draft}` : draft,",
-  "return { summary: draft,"
+  "summary: `${out.summary}\\n\\nAlso found by searching business names:\\n${bd.found.text}`",
+  "summary: out.summary"
  ],
  [
   "the result does not say which list",
   "exec",
-  "list_source: \"suggested\", ",
-  ""
+  "list_source: \"trade_list\"",
+  "list_source: \"suggested\""
  ],
  [
   "the playbook words drift",
   "playbook",
-  "searching real business names, or a suggested list",
-  "a suggested list"
+  "Directories found by searching real business names are shown beside it",
+  "Directories are suggested"
  ],
  [
   "the canonical words drift",
   "sopm1",
-  "searching real business names, or a suggested list",
-  "a suggested list"
+  "Directories found by searching real business names are shown beside it",
+  "Directories are suggested"
  ]
 ]

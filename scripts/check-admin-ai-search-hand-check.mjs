@@ -72,7 +72,9 @@ if (!/Pick an answer for every tool/.test(adm)) fail("the admin form lets a tool
 const st = (pb.month1 || []).find((s) => s.id === "m1.platform.mentions");
 if (!st) fail("the Month 1 step Get mentioned on other sites is gone");
 else {
-  if (st.actor !== "rga" || st.type !== "manual" || st.clientBucket !== "admin") fail("the mentions step is not an RGA-side manual admin step");
+  // 🔄 citations_52_55_v1 (approved 11-9): the step is hybrid now (a runner finds the places by search; a person asks), still RGA's and admin-side
+  if (st.actor !== "rga" || st.type !== "hybrid" || st.clientBucket !== "admin") fail("the mentions step is not an RGA-side hybrid admin step");
+  if (!/never a made-up list/.test(st.instructions)) fail("the mentions step doesn't say its places come from a search, never a made-up list");
   if (!/Real sources only/.test(st.instructions) || !/no pay-for-placement/i.test(st.instructions)) fail('the mentions step lost "Real sources only" / no pay-for-placement');
   if (/(will|can) (make|get|help) (an? )?(AI|ChatGPT|Google)|guarantee|rank higher|more calls/i.test(st.instructions + " " + st.clientFeed)) fail("the mentions step promises a result");
   if (/—/.test(st.instructions + st.title + st.clientFeed)) fail("an em dash in the mentions step");

@@ -1027,7 +1027,7 @@ Use descriptive anchor text (NOT "click here"). Anchor = keyword.`,
   {
     id: "m1.cit.priority_top10", title: "Build top-10 priority citations",
     type: "hybrid", dependsOn: ["m1.audit.citations", "m1.web.nap_consistency", "m1.gbp.optimize_categories", "m1.gbp.hours_attributes", "m1.gbp.business_facts"],
-    actionLabel: "⚡ Draft this for me",
+    actionLabel: "⚡ Build the list",
     async run({ client }) {
       const draft = await aiSuggest(
         `You generate canonical NAP + business descriptions for citation building. The SAME copy is pasted into 10+ directories — consistency is critical.
@@ -1065,17 +1065,19 @@ BING: <best bing categories>
       );
       return { summary: `Citation-building canonical pack — copy/paste this EXACTLY into all 10 directories:\n\n${draft}` };
     },
-    instructions: `Work down the directory list. For each:
-1. Sign up → paste NAP + DESCRIPTION (use the right length per directory's char limit)
-2. Pick CATEGORIES from the per-directory list above
-3. Add hours + photos
-4. Insert row in client_citations: { directory_name, listing_url, status: 'live', nap_match: true }
-Aim for 1-2 citations per day for 5-7 days. Consistent NAP across all = the entire point.`,
+    // 🔄 citations_52_55_v1 (11-9): the server runner (flow-execute) builds the list from data and reads the details from Google; no model. Same text as playbooks.json.
+    instructions: `The run builds this client's list from data: the directories that fit their trade and country, in build order, with the ones the citation audit already found marked live. Every field is read from their Google profile, ready to paste, so every directory says the same words. No model picks a directory.
+For each directory on the card:
+1. Open sign-up, search it for an existing listing and claim that before creating one (a duplicate splits the listing's standing).
+2. Copy the details and paste them.
+3. Press Submitted. A search then looks for the listing every 2 days (at most 10 times) and marks it live only when it finds it naming the business with the same phone and website. A directory a search can't prove asks for the listing link instead, and the link is checked.
+A directory that doesn't fit: Not for this business, with a reason. For a business with no public street address, a directory whose own page says it needs one waits and doesn't hold the step up.
+DONE = every directory that fits is live or marked not for this business by a person. It finishes itself.`,
   },
   {
     id: "m1.cit.industry_specific", title: "Build industry-specific citations",
     type: "hybrid", dependsOn: ["m1.audit.citations", "m1.gbp.business_facts"],
-    actionLabel: "⚡ Draft this for me",
+    actionLabel: "⚡ Build the list",
     async run({ client }) {
       const draft = await aiSuggest(
         `You suggest industry-specific citation directories for a local business. The top-10 generic ones (Yelp, BBB, etc.) are already done — now suggest VERTICAL-specific ones.
@@ -1089,30 +1091,34 @@ Order by impact (highest first). Include any state/regional industry boards rele
       );
       return { summary: `Industry-specific citation directories:\n\n${draft}\n\nAdd each to client_citations as you complete them.` };
     },
-    instructions: `Work through the list. The top of the result says whether it shows directories found by searching real business names, or a suggested list. For each:
-1. Sign up → use the canonical NAP from m1.cit.priority_top10
-2. Verify (often phone/postcard)
-3. Insert row in client_citations: { directory_name, vertical: 'industry_specific', listing_url, status }`,
+    // 🔄 citations_52_55_v1 (11-9): RGA's own list per trade, never a model's suggestion. Same text as playbooks.json.
+    instructions: `The run reads the client's trade and builds the list from RGA's own researched list for that trade (home services, medical, legal, restaurants, marketing and web agencies). No model suggests a directory. A trade with no list yet says so: skip the step, or add a researched list. Directories found by searching real business names are shown beside it when that search is switched on.
+Each directory works like Build top-10 priority citations: open sign-up, copy the details (read from their Google profile), press Submitted, and the listing is proven live by a search or by its link.
+DONE = every directory on the list is live or marked not for this business by a person. It finishes itself.`,
   },
   {
     id: "m1.platform.yelp", title: "Claim and complete the Yelp profile",
-    type: "manual", dependsOn: ["m1.gbp.optimize_categories", "m1.gbp.hours_attributes", "m1.gbp.business_facts"],
-    instructions: `Yelp (https://biz.yelp.com/): the profile belongs to the client, never to RGA.
-1. Claim the page. Yelp verifies by phone or email, so the client takes the code.
-2. Fill in the name, address, phone, hours and photos from the facts the client confirmed, so they match the Google profile letter for letter.
-3. Reply to reviews that appear.
+    // 🔄 citations_52_55_v1 (11-9): a server runner reads the details; the card proves the claim and the page. Same text as playbooks.json.
+    type: "hybrid", dependsOn: ["m1.gbp.optimize_categories", "m1.gbp.hours_attributes", "m1.gbp.business_facts"],
+    actionLabel: "⚡ Read the details",
+    instructions: `Yelp (https://biz.yelp.com/): the profile belongs to the client, never to RGA. The run reads the details from their Google profile so every field is ready to paste.
+1. Claimed: claim the page (Yelp verifies by phone or email, so the client takes the code), then paste the page link. It's proven theirs by reading the page, or, when Yelp won't let the page be read, by one search that shows it; the card says which.
+2. Complete it: photos, hours, categories, the description and the website, the same words as Google. Press Done.
+3. Checked: the page is read again for the same phone and website.
 Never ask a customer for a Yelp review (Yelp bars it). Never advertise on Yelp as part of this.
-This is profile hygiene, not AI work: it makes no promise about any AI tool or any ranking. If Yelp will not list the business, write that on the step and move on.`,
+This is profile hygiene, not AI work: it makes no promise about any AI tool or any ranking. If Yelp will not list the business, skip the step with that reason.
+DONE = claimed, completed and checked. It finishes itself.`,
   },
   {
     id: "m1.platform.mentions", title: "Get mentioned on other sites",
-    type: "manual", dependsOn: ["m1.gbp.optimize_categories", "m1.gbp.business_facts"],
+    // 🔄 citations_52_55_v1 (11-9): a server runner finds the places by search; the card drafts, records and proves. Same text as playbooks.json.
+    type: "hybrid", dependsOn: ["m1.gbp.optimize_categories", "m1.gbp.business_facts"],
+    actionLabel: "⚡ Find places",
     instructions: `Real sources only. No pay-for-placement, no fake lists, no mention that is not a real page about the business.
-1. Best-of lists for their trade and city: find the ones that exist, and ask to be added.
-2. Local press and trade sites: one pitch a quarter, with something true to say.
-3. Trade bodies and sponsorships: only ones the client already belongs to or already pays.
-Write down each source with its link once it is live. If a list or site says no, write that and move on.
-Why: a mention is a real page a person can read, and that is the reason to do it. No study shows that mentions make an AI tool name a business, so this makes no promise about any AI tool or any ranking.`,
+The run finds the places by searching near the client (a chamber of commerce, business associations, a trade association, local news): never a made-up list. At most 4 searches, once. RGA can add a real place it knows (a partner or a supplier) by its link.
+For each place on the card: Draft the ask (written from the client's real facts; it never chooses the place), copy it, send it from RGA's email or their contact page, then press Asked. A search then looks on that site for a page naming the business every 2 days (at most 10 times) and marks the mention live when it finds one. A place that says no or doesn't fit: Not for this business, with a reason.
+Why: a mention is a real page a person can read, and that is the reason to do it. No study shows that mentions make an AI tool name a business, so this makes no promise about any AI tool or any ranking.
+DONE = every place RGA asked is live or marked not for this business. It finishes itself.`,
   },
   {
     id: "m1.platform.bing_apple", title: "Set up Bing Places + Apple Business",

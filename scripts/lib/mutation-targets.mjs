@@ -504,4 +504,9 @@ export const FILES = {
   googlelive: "netlify/functions/_google-live.js",
   googlenumbers: "netlify/functions/_google-numbers.js",
   googlefn: "netlify/functions/portal-google-numbers.js",
+  // citations_52_55_v1 (11-9): admin steps 52–55, the sign-ups RGA presses and the proof that each listing is live
+  citbuild: "netlify/functions/_citation-build.js",
+  citprogress: "shared/citation-progress.js",
+  citbuildfn: "netlify/functions/admin-citation-build.js",
+  citlivejob: "netlify/functions/citation-live-check.js",
 };

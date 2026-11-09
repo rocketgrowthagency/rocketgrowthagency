@@ -120,9 +120,12 @@ for (const v of [undefined, "", "0", "true", "yes", "1 "]) {
 
 // ── the step's wiring and words ──
 if (!/require\("\.\/_citation-brand-discovery"\)\.forStep\(/.test(exec)) F("the industry-specific step doesn't call the discovery");
-if (!/if \(bd && bd\.found\) return/.test(exec) || !/\$\{bd\.head\}/.test(exec)) F("the step must put the headline on whichever list it shows");
-if (!/summary: bd \? `\$\{bd\.head\}\\n\\n\$\{draft\}` : draft/.test(exec)) F("the suggested list must carry the headline that says it is the suggested list");
-if (!/list_source: "suggested"/.test(exec) || !/list_source: "brand_search"/.test(exec)) F("the result must record which list it shows");
+// 🔄 citations_52_55_v1 (approved 11-9): the step's list is RGA's own list per trade now, never a model's "suggested list". A real search
+// list is shown BESIDE it (labelled as found by searching business names) and recorded, never instead of it; the result says it is the trade list.
+if (!/if \(bd && bd\.found\) return \{ \.\.\.out, summary: `\$\{out\.summary\}\\n\\nAlso found by searching business names:\\n\$\{bd\.found\.text\}`/.test(exec)) F("a real brand-search list must be shown beside the trade list, labelled");
+if (!/brand_discovery: bd\.found\.brand_discovery/.test(exec)) F("the result must record the brand-search list when it shows one");
+if (!/list_source: "trade_list"/.test(exec)) F("the result must record that its list is RGA's trade list");
+if (/list_source: "suggested"/.test(exec)) F("a model-suggested list is back");
 if (/CITATION_BRAND_DISCOVERY\s*[:=]\s*["']?1/.test((exec + lib).replace(/\/\/.*$/gm, ""))) F("the switch is turned on in code");
 if (!/String\(env\.CITATION_BRAND_DISCOVERY \|\| ""\)\.trim\(\) === "1"/.test(lib)) F("the switch must be exactly 1");
 {
@@ -130,12 +133,12 @@ if (!/String\(env\.CITATION_BRAND_DISCOVERY \|\| ""\)\.trim\(\) === "1"/.test(li
   if (!s) F("the step is gone");
   else {
     if (s.title !== "Build industry-specific citations") F("the step's title changed");
-    if (!/searching real business names, or a suggested list/.test(s.instructions)) F("the step's words must say which lists it can show");
+    if (!/Directories found by searching real business names are shown beside it/.test(s.instructions) || /suggested list/.test(s.instructions)) F("the step's words must say the brand-search list is shown beside the trade list (citations_52_55_v1)");
     const order = pb.month1.map((x) => x.id);
     if (order.indexOf("m1.cit.industry_specific") < 0) F("the step moved out of the playbook");
   }
   const mjs = fs.readFileSync(path.join(process.env.SCRAPER_COPY_DIR || path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."), "flow/playbooks/month1.mjs"), "utf8");
-  if (!/searching real business names, or a suggested list/.test(mjs)) F("the canonical month1.mjs doesn't carry the same words");
+  if (!/Directories found by searching real business names are shown beside it/.test(mjs)) F("the canonical month1.mjs doesn't carry the same words");
 }
 if (/\bChris\b/.test(lib)) F("the owner's name is in a served file");
 if (/—/.test(lib.replace(/^\/\/.*$/gm, "").replace(/\/\/.*$/gm, ""))) F("an em dash in user-visible text");

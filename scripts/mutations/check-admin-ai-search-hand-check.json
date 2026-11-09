@@ -86,8 +86,8 @@
  [
   "the mentions step promises a result",
   "playbooksjson",
-  "this makes no promise about any AI tool or any ranking.\",\n      \"hasRunner\": false,\n      \"actor\": \"rga\",\n      \"clientLabel\": null,\n      \"clientHint\": null,\n      \"clientForm\": null,\n      \"clientBucket\": \"admin\",\n      \"clientFeed\": \"Asked for",
-  "this will get an AI tool to name the business.\",\n      \"hasRunner\": false,\n      \"actor\": \"rga\",\n      \"clientLabel\": null,\n      \"clientHint\": null,\n      \"clientForm\": null,\n      \"clientBucket\": \"admin\",\n      \"clientFeed\": \"Asked for",
+  "so this makes no promise about any AI tool or any ranking.\\nDONE = every place RGA asked",
+  "so this will get an AI tool to name the business.\\nDONE = every place RGA asked",
   1
  ]
 ]

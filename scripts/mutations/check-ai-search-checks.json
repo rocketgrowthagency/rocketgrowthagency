@@ -132,10 +132,10 @@
   "it will make your business appear in AI answers."
  ],
  [
-  "the Yelp step gets a runner claim",
+  "the Yelp step loses its reading runner",
   "playbook",
-  "\"title\": \"Claim and complete the Yelp profile\",\n      \"type\": \"manual\"",
-  "\"title\": \"Claim and complete the Yelp profile\",\n      \"type\": \"hybrid\""
+  "\"title\": \"Claim and complete the Yelp profile\",\n      \"type\": \"hybrid\"",
+  "\"title\": \"Claim and complete the Yelp profile\",\n      \"type\": \"manual\""
  ],
  [
   "the Yelp step leaves the canonical SOP",

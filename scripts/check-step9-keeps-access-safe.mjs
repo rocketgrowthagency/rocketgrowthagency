@@ -65,7 +65,8 @@ if (!/title: "Keep access safe"/.test(cb) || /actionLabel:/.test(cb) || !/selfSe
 // ── admin: the label, the retired draft never shown, every card state
 const A = read("admin/admin.js");
 if (!/: o\.sopType === "auto" \|\| o\.selfSettles (\|\| \(typeof wcRunsItself === "function" && wcRunsItself\(o\.flowId\)\) )?\? "auto" : "you"\);/.test(A) || !/selfSettles: !!s\.selfSettles,/.test(A)) fail("step 9 doesn't read \"Runs itself\"");
-if (!/const undoBtn = o\.selfSettles (\|\| wcRunsItself\(o\.flowId\) )?\? ""/.test(A)) fail("a step that settles itself offers Undo again (it is re-checked, not undone)");
+// (citations_52_55_v1, 11-9: steps 52–55 keep their own Undo on their card, on the same line)
+if (!/const undoBtn = o\.selfSettles (\|\| wcRunsItself\(o\.flowId\) )?(\|\| globalThis\.rgaCitationProgress\?\.isStep\(o\.flowId\) )?\? ""/.test(A)) fail("a step that settles itself offers Undo again (it is re-checked, not undone)");
 if (!/: o\.flowId === "m1\.access\.password_manager" \? ""   \/\/ 🔒 its old draft/.test(A)) fail("a done step 9 can show its retired draft again");
 const fnSrc = (n) => { const at = A.indexOf(`function ${n}(`); if (at < 0) { console.error(`⚠️  INDETERMINATE — ${n} moved`); process.exit(2); } return A.slice(at, A.indexOf("\n}\n", at) + 2); };
 const cst = (n) => { const at = A.search(new RegExp(`^const ${n} = `, "m")); if (at < 0) { console.error(`⚠️  INDETERMINATE — ${n} moved`); process.exit(2); } const eol = A.indexOf("\n", at), first = A.slice(at, eol); return (first.trimEnd().endsWith("{") ? A.slice(at, A.indexOf("\n};", at) + 3) : first).replace(/^const /, "var "); };

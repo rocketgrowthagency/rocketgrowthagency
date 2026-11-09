@@ -1,0 +1,359 @@
+[
+ [
+  "an agency isn't read as its own trade",
+  "citrade",
+  "  [\"marketing\", /\\b(marketing|",
+  "  [\"marketingX\", /\\b(marketing|",
+  1
+ ],
+ [
+  "Google's main category isn't read for the trade",
+  "citrade",
+  "c.gbp_primary_category]",
+  "]",
+  1
+ ],
+ [
+  "Yelp's confirmed hidden-address fact is dropped",
+  "citdirs",
+  "  yelp: { url: \"https://biz.yelp.com/\", hidden: true },",
+  "  yelp: { url: \"https://biz.yelp.com/\", hidden: null },",
+  1
+ ],
+ [
+  "Clutch leaves the marketing list",
+  "citdirs",
+  "{ key: \"clutch\", source: \"Clutch\",",
+  "{ key: \"clutchx\", source: \"Clutch\",",
+  1
+ ],
+ [
+  "an audit row off the directory's host is trusted",
+  "citbuild",
+  "audit_url: url && DIR.onDirectoryHost(url, d) ? url : null",
+  "audit_url: url || null",
+  1
+ ],
+ [
+  "an old-method audit row is trusted",
+  "citbuild",
+  "r.status === \"found\" && citIsCurrent(r) && r.url",
+  "r.status === \"found\" && r.url",
+  1
+ ],
+ [
+  "52 ignores the trade",
+  "citbuild",
+  "const p = directoriesFor(client, DIR.CITATION_DIRECTORIES);",
+  "const p = { trade: null, country: \"US\", use: DIR.CITATION_DIRECTORIES.slice(), left_out: [] };",
+  1
+ ],
+ [
+  "Google's tracking tags stay on the website",
+  "citbuild",
+  "const website = pick(\"website\", g && cleanSite(g.websiteUri), cleanSite(c.website_url));",
+  "const website = pick(\"website\", g && g.websiteUri, cleanSite(c.website_url));",
+  1
+ ],
+ [
+  "an unknown storefront is guessed",
+  "citbuild",
+  "(publishesStreetAddress(c) ? true : c.geography_model ? false : null)",
+  "(publishesStreetAddress(c) ? true : false)",
+  1
+ ],
+ [
+  "a search result needn't name the business",
+  "citbuild",
+  "!DIR.CIT_NOT_A_LISTING.test(String(x.link)) && DIR.listingNamesBusiness(x.link, x.title, name));",
+  "!DIR.CIT_NOT_A_LISTING.test(String(x.link)));",
+  1
+ ],
+ [
+  "a result on the host needn't have the listing shape",
+  "citbuild",
+  "x && DIR.isDirectoryListing(x.link, dir) && !DIR.CIT_NOT_A_LISTING",
+  "x && DIR.onDirectoryHost(x.link, dir) && !DIR.CIT_NOT_A_LISTING",
+  1
+ ],
+ [
+  "a different phone still goes live",
+  "citbuild",
+  "const wrong = [\"phone\", \"website\"].filter((f) => res.found.match[f] === false);",
+  "const wrong = [];",
+  1
+ ],
+ [
+  "a search that didn't run counts as a try",
+  "citbuild",
+  "if (res.kind === \"search\" && res.ran) e.tries",
+  "if (res.kind === \"search\") e.tries",
+  1
+ ],
+ [
+  "a search is spent with no budget",
+  "citbuild",
+  "  if (!deps.canSearch()) return { kind: \"search\", ran: false, spent: false, why: \"no searches to spare this run\" };",
+  "",
+  1
+ ],
+ [
+  "a pasted link needn't name the business",
+  "citbuild",
+  "    if (!DIR.listingNamesBusiness(entry.link, htmlTitle(pg.html), name) && !pageNames(pg.html, name)) return { kind: \"link\", ran: true, spent: false, found: null, why: \"the page doesn't name the business\" };",
+  "",
+  1
+ ],
+ [
+  "a refused page reads as a page that doesn't name them",
+  "citbuild",
+  "if (pg.status !== 200) return { kind: \"link\", ran: false,",
+  "if (pg.status >= 500) return { kind: \"link\", ran: false,",
+  1
+ ],
+ [
+  "a link off the directory is accepted",
+  "citbuild",
+  "if (!d || !DIR.onDirectoryHost(u, d)) return",
+  "if (!d) return",
+  1
+ ],
+ [
+  "not for this business needs no reason",
+  "citbuild",
+  "if (s.length < 3) return { error:",
+  "if (s.length < 0) return { error:",
+  1
+ ],
+ [
+  "undo doesn't restore what was there",
+  "citbuild",
+  "    if (cur.prev) listings[key] = cur.prev; else delete listings[key];",
+  "    delete listings[key];",
+  1
+ ],
+ [
+  "an undo never reopens the step",
+  "citbuild",
+  "if (!p.done && t.status === \"done\" && t.done_by === \"checks\")",
+  "if (false)",
+  1
+ ],
+ [
+  "the checks override a skip",
+  "citbuild",
+  "  if (t.status === \"skipped\" || t.status === \"declined\") return { task: t, moved: null };",
+  "  if (t.status === \"declined\") return { task: t, moved: null };",
+  1
+ ],
+ [
+  "undo on a skip isn't exact",
+  "citbuild",
+  "next = { ...t, status: p.status || \"pending\", completed_at: p.completed_at || null",
+  "next = { ...t, status: \"pending\", completed_at: null",
+  1
+ ],
+ [
+  "no cap on searches a run",
+  "citbuild",
+  "Math.max(0, Math.min(cap, left - SEARCH_RESERVE)) : 0;",
+  "Math.max(0, left - SEARCH_RESERVE) : 0;",
+  1
+ ],
+ [
+  "no reserve kept",
+  "citbuild",
+  "Math.max(0, Math.min(cap, left - SEARCH_RESERVE)) : 0;",
+  "Math.max(0, Math.min(cap, left)) : 0;",
+  1
+ ],
+ [
+  "an unreadable count spends searches",
+  "citbuild",
+  "Math.max(0, Math.min(cap, left - SEARCH_RESERVE)) : 0;",
+  "Math.max(0, Math.min(cap, left - SEARCH_RESERVE)) : cap;",
+  1
+ ],
+ [
+  "a test client is looked at",
+  "citbuild",
+  "    if (String(c.source || \"\").startsWith(\"test:\")) continue;",
+  "",
+  1
+ ],
+ [
+  "a person's press made while it searched is overwritten",
+  "citbuild",
+  "if (!cur || cur.state !== \"submitted\" || cur.at !== L.stamp || (cur.link || null) !== L.link) continue;",
+  "if (!cur) continue;",
+  1
+ ],
+ [
+  "a place that isn't on the list can be pressed",
+  "citbuild",
+  "  if (!known) return { status: 404,",
+  "  if (false) return { status: 404,",
+  1
+ ],
+ [
+  "the client's own site is a place",
+  "citbuild",
+  "(own && onHost(h, own)) || ",
+  "",
+  1
+ ],
+ [
+  "an em dash survives in the ask",
+  "citbuild",
+  ".replace(/\\s*\\u2014\\s*/g, \", \")",
+  "",
+  1
+ ],
+ [
+  "a placeholder survives in the ask",
+  "citbuild",
+  "/\\[[^\\]]*\\]|\\{\\{|<[a-z]/i.test",
+  "/\\{\\{|<[a-z]/i.test",
+  1
+ ],
+ [
+  "a waiting directory holds the step up",
+  "citprogress",
+  "const done = rows.length > 0 && counts.open === 0 && counts.live + counts.not_for > 0;",
+  "const done = rows.length > 0 && counts.open + counts.waiting === 0 && counts.live + counts.not_for > 0;",
+  1
+ ],
+ [
+  "a list where everything waits is done",
+  "citprogress",
+  "const done = rows.length > 0 && counts.open === 0 && counts.live + counts.not_for > 0;",
+  "const done = rows.length > 0 && counts.open === 0;",
+  1
+ ],
+ [
+  "a business with no street address never waits",
+  "citprogress",
+  "if (sab && item.hidden === false) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "an unknown hidden-address fact isn't said",
+  "citprogress",
+  ": \"Check their sign-up: it may need a street address\")",
+  ": \"\")",
+  1
+ ],
+ [
+  "Yelp is done without the page checked",
+  "citprogress",
+  "return { rows, done: !!(claimedOk && co && ck && ck.ok === true) };",
+  "return { rows, done: !!(claimedOk && co) };",
+  1
+ ],
+ [
+  "55 is done with nothing asked",
+  "citprogress",
+  "done: chosen.length > 0 && chosen.every(",
+  "done: chosen.every(",
+  1
+ ],
+ [
+  "the search keeps going past 10 tries",
+  "citprogress",
+  "if (tries >= MAX_TRIES) return { ...base, state: \"not_found\"",
+  "if (false) return { ...base, state: \"not_found\"",
+  1
+ ],
+ [
+  "the record isn't read again before the write",
+  "citbuildfn",
+  "    const rec = await readStepRecord(d.supa, clientId, stepId);",
+  "    const rec = rec0;",
+  1
+ ],
+ [
+  "a write that doesn't read back is reported saved",
+  "citbuildfn",
+  "if (!back || back.status !== s.task.status ||",
+  "if (!back ||",
+  1
+ ],
+ [
+  "anyone can press without RGA's login",
+  "citbuildfn",
+  "  if (gate.error) return gate.error;",
+  "",
+  1
+ ],
+ [
+  "a skipped step takes presses",
+  "citbuildfn",
+  "  if (t0.status === \"skipped\" && !SKIP.includes(action)) return json(409",
+  "  if (false) return json(409",
+  1
+ ],
+ [
+  "any Yelp link is accepted as theirs",
+  "citbuildfn",
+  "(!B.httpUrl(url) || !DIR.isDirectoryListing(url, YELP_DIR))",
+  "(!B.httpUrl(url))",
+  1
+ ],
+ [
+  "a skipped RGA step is left out of the Month 1 report",
+  "month1report",
+  "    if (theirs(s) || NOT_WORK.test(s.id) || !t || t.status !== \"skipped\" || !String(t.skip_reason || \"\").trim()) continue;",
+  "    continue;",
+  1
+ ],
+ [
+  "52 builds every directory for every client",
+  "flowexec",
+  "return citListRun(\"m1.cit.priority_top10\", client, cit, tasks, () => directoriesForClient(client));",
+  "return citListRun(\"m1.cit.priority_top10\", client, cit, tasks, () => ({ use: CITATION_DIRECTORIES, left_out: [] }));",
+  1
+ ],
+ [
+  "53 asks a model",
+  "flowexec",
+  "    const out = await citListRun(\"m1.cit.industry_specific\", client, cit, tasks, null);",
+  "    const out = await citListRun(\"m1.cit.industry_specific\", client, cit, tasks, null); await aiDraft(\"Suggest directories\", \"x\").catch(() => \"\");",
+  1
+ ],
+ [
+  "55 searches again on every run",
+  "flowexec",
+  "if (Array.isArray(prev.places) && prev.searched_at) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "55 searches into the reserve",
+  "flowexec",
+  "if (left < queries.length + CB.SEARCH_RESERVE)",
+  "if (left < 0)",
+  1
+ ],
+ [
+  "a hand Mark step complete returns on 52 to 55",
+  "admin",
+  "o.flowId === GL_STEP || globalThis.rgaCitationProgress?.isStep(o.flowId) ? \"\" :",
+  "o.flowId === GL_STEP ? \"\" :",
+  1
+ ],
+ [
+  "a press doesn't spin",
+  "admin",
+  "  mgBusy(b, true);\n  try {\n    const r = await fetch(CB_FN,",
+  "  try {\n    const r = await fetch(CB_FN,",
+  1
+ ],
+ [
+  "the look doesn't check in",
+  "citlivejob",
+  "exports.handler = require(\"./_job-checkin\").withCheckin(\"citation-live-check\", exports.handler);",
+  "",
+  1
+ ]
+]

@@ -110,8 +110,8 @@
  [
   "the build step lists every submit-only directory",
   "exec",
-  "const submitOnly = directoriesForClient(client).use.filter((d) => !d.discoverable);",
-  "const submitOnly = CITATION_DIRECTORIES.filter((d) => !d.discoverable);"
+  "() => directoriesForClient(client));",
+  "() => ({ use: CITATION_DIRECTORIES, left_out: [] }));"
  ],
  [
   "the stale promise to build is back (the step text)",

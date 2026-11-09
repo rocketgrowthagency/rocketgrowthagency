@@ -163,7 +163,8 @@ for (const f of ["netlify/functions/admin-google-check.js", "netlify/functions/g
   if (/Mark step complete|Done by hand on purpose/.test(hb)) fail("card B still has the old hand-tick / 'done by hand' wording");
   if (!/g\.state === "with_rga" && \(g\.rga \|\| \[\]\)\.length && g\.rga\.every\(\(x\) => x\.fact === "area" && Array\.isArray\(x\.add\)\) \? areaAddCardHtml\(g\)/.test(AJS)) fail("step 28 still draws the old 'change it in Google Business Profile' card for an area-only change (card B)");
   // (admin_step42_landing_auto_v1, 11-6: the Google link step joins the same no-hand-tick list)
-  if (!/const doneBtn = zcWaits(?: \|\| siteStep)?(?: \|\| o\.flowId === GL_STEP)? \? "" :/.test(AJS)) fail("step 28 still offers Mark step complete while places wait on Google");
+  // (citations_52_55_v1, 11-9: steps 52–55 joined the same no-hand-tick line)
+  if (!/const doneBtn = zcWaits(?: \|\| siteStep)?(?: \|\| o\.flowId === GL_STEP)?(?: \|\| globalThis\.rgaCitationProgress\?\.isStep\(o\.flowId\))? \? "" :/.test(AJS)) fail("step 28 still offers Mark step complete while places wait on Google");
   if (!/body: JSON\.stringify\(\{ client_id: c\.id, dry: true \}\)/.test(AJS) || !/if \(add\) add\.disabled = !all;/.test(AJS)) fail("card B doesn't fill its checks from the dry run, or enables Add without all five");
 }
 

@@ -7,7 +7,7 @@
 //     for the robots address is not a robots file. A tie between Allow and Disallow goes to Allow. It promises nothing about any AI tool, and it is no score.
 //  2. THE AUDIT REWRITE (ai-readiness-audit.js): no FAQ-schema line; the header carries no market-share figure; the weights lean on visible facts, not JSON-LD;
 //     the score is admin-only and the client gets a list of facts, not a number; a check that did not run is never a "no".
-//  3. THE YELP STEP: in both SOP sources, RGA's, no runner, client-owned, never asks a customer for a Yelp review, makes no AI or ranking promise.
+//  3. THE YELP STEP: in both SOP sources, RGA's, a runner that only reads (citations_52_55_v1, 11-9), client-owned, never asks a customer for a Yelp review, makes no AI or ranking promise.
 //  4. NOTHING ELSE: no readiness number in the client portal, no "visibility" or "invisible" claim in the new code.
 // Runs the SHIPPED modules against fake pages: no network, no production data.
 import fs from "node:fs";
@@ -148,7 +148,9 @@ const pg = (path, o = {}) => ({ url: origin + path, status: 200, noindexBy: [], 
   const y = PB.month1.find((s) => s.id === "m1.platform.yelp");
   if (!y) fail("the Yelp step is not in playbooks.json");
   else {
-    if (y.actor !== "rga" || y.type !== "manual" || y.hasRunner !== false) fail("the Yelp step should be RGA's manual step with no runner");
+    // 🔄 citations_52_55_v1 (approved 11-9): the step now has a runner that only READS (the details from Google, ready to paste); the claim
+    // and the completing stay a person's, proven by reading the Yelp page. So: RGA's hybrid step, with a runner, and the runner never writes to Yelp.
+    if (y.actor !== "rga" || y.type !== "hybrid" || y.hasRunner !== true) fail("the Yelp step should be RGA's hybrid step whose runner reads the details");
     if (!(y.dependsOn || []).includes("m1.gbp.business_facts")) fail("the Yelp step doesn't wait on the client-confirmed facts");
     if (!/client/i.test(y.instructions) || !/belongs to the client/i.test(y.instructions)) fail("the Yelp step doesn't say the profile is the client's");
     if (!/Never ask a customer for a Yelp review/.test(y.instructions)) fail("the Yelp step doesn't forbid asking a customer for a Yelp review");
@@ -161,7 +163,10 @@ const pg = (path, o = {}) => ({ url: origin + path, status: 200, noindexBy: [], 
   if (!/id: "m1\.platform\.yelp"/.test(M1)) fail("the Yelp step is missing from the canonical SOP");
   if (new Set(ids).size !== ids.length) fail("a step id is duplicated in playbooks.json");
   const FX = read("netlify/functions/flow-execute.js");
-  if (/"m1\.platform\.yelp":\s*async/.test(FX)) fail("the Yelp step has a runner; it is a person's step");
+  // 🔄 citations_52_55_v1: the runner exists and only reads; nothing in it may write to Yelp or claim the page for the client
+  { const i = FX.indexOf('"m1.platform.yelp": async'), body = i < 0 ? "" : FX.slice(i, FX.indexOf("\n  },", i));
+    if (!body) fail("the Yelp step's reading runner is missing");
+    if (/yelp\.com\/[^"'`]*(claim|signup)|method:\s*"(POST|PATCH|PUT)"/i.test(body)) fail("the Yelp step's runner writes to Yelp; the claim is a person's"); }
 }
 
 // ── 4 · nothing else ──
