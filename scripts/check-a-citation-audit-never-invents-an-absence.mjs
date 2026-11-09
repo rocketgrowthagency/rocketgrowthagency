@@ -559,6 +559,10 @@ const count = (rows, s) => rows.filter((r) => r.status === s).length;
   if (/padEnd\(1[0-9]\)/.test(code)) F(`a hardcoded column width is back in flow-execute: ${(code.match(/padEnd\(1[0-9]\)/) || [])[0]} — "${longest.source}" is ${String(longest.source).length} characters`);
 }
 
+// 11-8: step 52 read "Run the citation audit first" over 7 measured rows: citationRows filtered by citIsCurrentMethod (reads `notes`) but
+// never selected `notes`, so every current-method row looked old. Whatever reads rows through that filter must select notes.
+{ const fx = fs.readFileSync(`${SITE}/netlify/functions/flow-execute.js`, "utf8"), m = /async function citationRows[\s\S]*?\n}\n/.exec(fx);
+  if (!m || (/citIsCurrentMethod/.test(m[0]) && !/select=[^`&]*\bnotes\b/.test(m[0]))) fails.push("citationRows filters by the audit's method but doesn't read the notes that carry it (every row reads as old: step 52 says nothing was measured)"); }
 if (fails.length) {
   console.error("🔴 a citation audit is inventing an absence:");
   for (const f of fails) console.error("   · " + f);

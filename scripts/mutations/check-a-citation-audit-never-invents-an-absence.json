@@ -62,8 +62,8 @@
  [
   "a failed run and a re-read run get the same confident sentence (the original bug)",
   "exec",
-  "      : reread ? `no new searches \u2014 ${reread} result${reread === 1 ? \" was\" : \"s were\"} still current`\n      : \"not one search completed\";",
-  "      : \"no new searches \u2014 every result was still current\";"
+  "      : reread ? `no new searches — ${reread} result${reread === 1 ? \" was\" : \"s were\"} still current`\n      : \"not one search completed\";",
+  "      : \"no new searches — every result was still current\";"
  ],
  [
   "a run that learned nothing still claims the step is complete",
@@ -87,7 +87,7 @@
   "a failed write is stamped on each row, where a found row never shows it",
   "exec",
   "      out.writeError = String(e.message).slice(0, 80);",
-  "      for (const r of out) if (r.status !== \"unknown\") r.note = `${r.note ? `${r.note} \u00b7 ` : \"\"}not saved`;"
+  "      for (const r of out) if (r.status !== \"unknown\") r.note = `${r.note ? `${r.note} · ` : \"\"}not saved`;"
  ],
  [
   "a run whose results could not be saved still completes the step",
@@ -176,14 +176,14 @@
  [
   "the write catch swallows a programming error again",
   "exec",
-  "      if (e instanceof ReferenceError || e instanceof SyntaxError) throw e;\n      // \ud83d\udd11 THE MEASUREMENT STILL HAPPENED.",
-  "      // \ud83d\udd11 THE MEASUREMENT STILL HAPPENED."
+  "      if (e instanceof ReferenceError || e instanceof SyntaxError) throw e;\n      // 🔑 THE MEASUREMENT STILL HAPPENED.",
+  "      // 🔑 THE MEASUREMENT STILL HAPPENED."
  ],
  [
   "citationRows swallows a programming error and reports 'nothing measured yet'",
   "exec",
-  "    if (e instanceof ReferenceError || e instanceof SyntaxError) throw e;\n    // \ud83d\udd34 A DATABASE WE CANNOT READ IS NOT A CLIENT WITH NO CITATIONS.",
-  "    // \ud83d\udd34 A DATABASE WE CANNOT READ IS NOT A CLIENT WITH NO CITATIONS."
+  "    if (e instanceof ReferenceError || e instanceof SyntaxError) throw e;\n    // 🔴 A DATABASE WE CANNOT READ IS NOT A CLIENT WITH NO CITATIONS.",
+  "    // 🔴 A DATABASE WE CANNOT READ IS NOT A CLIENT WITH NO CITATIONS."
  ],
  [
   "a listing pattern stops matching the real listing that proves it",
@@ -200,7 +200,7 @@
  [
   "an unsearched directory stops saying why it was excluded",
   "citdirs",
-  "    note: \"an owner portal, not indexed pages \u2014 confirm in the Bing Places dashboard\" },",
+  "    note: \"an owner portal, not indexed pages — confirm in the Bing Places dashboard\" },",
   "  },"
  ],
  [
@@ -266,7 +266,14 @@
  [
   "the method tag leaks onto the card",
   "exec",
-  "      const kept = String(hit.notes || \"\").replace(/^\\[[^\\]]*\\]\\s*\\d{4}-\\d{2}-\\d{2}\\s*\u2014\\s*/, \"\").trim();",
+  "      const kept = String(hit.notes || \"\").replace(/^\\[[^\\]]*\\]\\s*\\d{4}-\\d{2}-\\d{2}\\s*—\\s*/, \"\").trim();",
   "      const kept = String(hit.notes || \"\");"
+ ],
+ [
+  "citationRows forgets the notes",
+  "flowexec",
+  "&select=source,url,status,updated_at,notes&order=source.asc",
+  "&select=source,url,status,updated_at&order=source.asc",
+  1
  ]
 ]
