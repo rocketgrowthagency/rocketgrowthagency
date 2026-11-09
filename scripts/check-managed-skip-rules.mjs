@@ -228,7 +228,7 @@ try {
     const sec = (t, mode) => (R.buildMonth1Report({ client: { business_name: "Acme" }, tasks: t, playbook: PB.month1, mode, now: new Date(CLOCK) }).sections.find((s) => s.key === "skipped") || { lines: [] }).lines;
     for (const mode of ["managed", null]) {
       const l = sec({ "m1.gbp.photos": { status: "skipped", skipped_at: NOV5, skipped_by: "rga" }, "m1.brand.youtube_setup": { status: "skipped", skipped_by: "client" }, "m1.tracking.call_setup": { status: "skipped" } }, mode);
-      if (l.join("|") !== "Provide 20+ business photos (Nov 5)") fail(`the Month 1 report (${mode}) doesn't list RGA's skip, or lists a skip the client chose (${JSON.stringify(l)})`);
+      if (l.join("|") !== "Provide 20+ business photos: skipped for now; we'll come back to it") fail(`the Month 1 report (${mode}) doesn't list RGA's skip, or lists a skip the client chose (${JSON.stringify(l)})`);
     }
   }
   // admin: who skipped, the skip lines, the form tracking line (lifted, pure)

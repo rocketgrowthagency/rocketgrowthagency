@@ -1,0 +1,247 @@
+[
+ [
+  "a match ignores nothing: spacing counts again",
+  "ytread",
+  "return !!a && !!b && b.includes(a); }",
+  "return !!a && !!b && b === a; }",
+  1
+ ],
+ [
+  "a different description matches",
+  "ytread",
+  "return !!a && !!b && b.includes(a); }",
+  "return true; }",
+  1
+ ],
+ [
+  "a failed read is stored as matches",
+  "ytread",
+  "if (read.state !== \"ok\") return { state: \"cant\"",
+  "if (read.state !== \"ok\") return { state: \"matches\"",
+  1
+ ],
+ [
+  "a channel not found reads as no description (differs)",
+  "ytread",
+  "if (!item) return { state: \"cant\", why: \"the channel couldn't be found by its handle\", ...(/^forUsername/.test(q) ? { need_handle: true } : {}) };",
+  "if (!item) return { state: \"ok\", description: \"\" };",
+  1
+ ],
+ [
+  "an API error is read as matching",
+  "ytread",
+  "return { state: \"cant\", why: `YouTube answered ${r.status}` };",
+  "return { state: \"ok\", description: \"\" };",
+  1
+ ],
+ [
+  "no key is not noticed (Pasted would go away with nothing reading)",
+  "ytread",
+  "if (!key) return { state: \"cant\", why: \"no key yet\", no_key: true };",
+  "if (!key) return { state: \"cant\", why: \"no key yet\" };",
+  1
+ ],
+ [
+  "a match no longer finishes the step",
+  "ytread",
+  "status: \"done\", completed_at: v.read_at, done_by: \"youtube read\"",
+  "status: n.status, completed_at: v.read_at, done_by: \"youtube read\"",
+  1
+ ],
+ [
+  "a failed read finishes the step",
+  "ytread",
+  "if (v.state === \"matches\" && !",
+  "if (v.state !== \"never\" && !",
+  1
+ ],
+ [
+  "the key is put in the error message",
+  "ytread",
+  "catch { return { state: \"cant\", why: \"YouTube didn't answer\" }; }",
+  "catch (e) { return { state: \"cant\", why: `YouTube didn't answer ${String(e.message)}` }; }",
+  1
+ ],
+ [
+  "the key is read from a different variable",
+  "ytread",
+  "const KEY_ENV = \"YOUTUBE_API_KEY\";",
+  "const KEY_ENV = \"YOUTUBE_KEY\";",
+  1
+ ],
+ [
+  "the record is not read again before the write",
+  "ytread",
+  "const rec = await readStepRecord(d.supa, clientId, STEP);   // 🔴 again, right before writing",
+  "const rec = rec0;",
+  1
+ ],
+ [
+  "the write is not read back",
+  "ytread",
+  "if (!back || !back.yt_read || back.yt_read.read_at !== at || back.status !== t.status)",
+  "if (false)",
+  1
+ ],
+ [
+  "Check now is not recorded",
+  "ytread",
+  "if (record && d.record) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "the whole channel description is always stored",
+  "ytread",
+  "return { state: \"matches\", read_at: at };",
+  "return { state: \"matches\", read_at: at, yt_desc: String(read.description) };",
+  1
+ ],
+ [
+  "Pasted still works when a key is set",
+  "steppressfn",
+  "if (action === \"youtube_pasted\" && (d.key === undefined ? YT.keySet() : !!d.key))",
+  "if (false)",
+  1
+ ],
+ [
+  "Check now has no press",
+  "steppressfn",
+  "if (action === \"youtube_check\") {",
+  "if (false) {",
+  1
+ ],
+ [
+  "the morning run sends 58 through the script runner",
+  "morningrun",
+  "if (READS.includes(p.id)) await d.readYoutube(c.id); else await d.start(c.id, p.id);",
+  "await d.start(c.id, p.id);",
+  1
+ ],
+ [
+  "the morning run reads 58 once and never again after it ran",
+  "morningrun",
+  "if (READS.includes(id)) return require(\"./_social-profiles\").channelOf(tasks) ? null : \"their channel isn't confirmed yet\";",
+  "if (false) return null;",
+  1
+ ],
+ [
+  "the morning run reads 58 with no confirmed channel",
+  "morningrun",
+  "channelOf(tasks) ? null : \"their channel isn't confirmed yet\"",
+  "channelOf(tasks) ? null : null",
+  1
+ ],
+ [
+  "the card offers Pasted whenever a read can't be made",
+  "steps5764",
+  "paste: !!(yt && pack && noKey)",
+  "paste: !!(yt && pack)",
+  1
+ ],
+ [
+  "a failed read shows as matching on the card",
+  "steps5764",
+  "const matched = !!(yr && yr.state === \"matches\"),",
+  "const matched = !!(yr && yr.state !== \"differs\"),",
+  1
+ ],
+ [
+  "Copy puts the labels back",
+  "steps5764",
+  "return { description: [d, ph ? `Call ${ph}` : \"\"].filter(Boolean).join(\"\\n\\n\")",
+  "return { description: [\"Description\", d, ph ? `Links: ${ph}` : \"\"].filter(Boolean).join(\"\\n\\n\")",
+  1
+ ],
+ [
+  "Copy has no Call line",
+  "steps5764",
+  "ph ? `Call ${ph}` : \"\"",
+  "\"\"",
+  1
+ ],
+ [
+  "the website Copy is gone",
+  "admin",
+  "${cp.website ? cbCopyBtn(UNI_YT, \"website\", cp.website, \"Copy website\") : \"\"}",
+  "",
+  1
+ ],
+ [
+  "the Copy hint is gone",
+  "admin",
+  "In Links: + Add link, title Website",
+  "",
+  1
+ ],
+ [
+  "the admin Copy is the labelled text again",
+  "admin",
+  "text = cp.description, done",
+  "text = `Description\\n${cp.description}`, done",
+  1
+ ],
+ [
+  "a legacy /user/ link isn't looked up by forUsername",
+  "ytread",
+  "return { q: `forUsername=${encodeURIComponent(decodeURIComponent(m[1]))}` };",
+  "return { need: true };",
+  1
+ ],
+ [
+  "a /c/ link is guessed instead of asking for the handle",
+  "ytread",
+  "  return { need: true };\n}",
+  "  return { q: queryFor(`@${h}`) };\n}",
+  1
+ ],
+ [
+  "the entered handle doesn't win",
+  "ytread",
+  "  if (o) { const h = o.startsWith",
+  "  if (false) { const h = o.startsWith",
+  1
+ ],
+ [
+  "no Google description reads as an ordinary failure",
+  "ytread",
+  ", no_desc: true };",
+  " };",
+  1
+ ],
+ [
+  "the entered handle isn't read back",
+  "steppressfn",
+  "saved.tasks[STEP].yt_handle !== handle",
+  "false",
+  1
+ ],
+ [
+  "the entered handle isn't recorded",
+  "steppressfn",
+  "summary: `RGA entered the channel's handle",
+  "summary: `RGA did something with the channel's handle",
+  1
+ ],
+ [
+  "the card has no Enter the @handle button",
+  "admin",
+  "\"Enter the @handle\"",
+  "\"Retry\"",
+  1
+ ],
+ [
+  "the Skip BUTTON is back on 58",
+  "admin",
+  "|| o.flowId === \"m1.brand.youtube_setup\" ? \"\" : btn(\"skipped\", \"Skip\")",
+  "? \"\" : btn(\"skipped\", \"Skip\")",
+  1
+ ],
+ [
+  "the clips are a second card again",
+  "admin",
+  "  rows.push(vids, ...clipRows);",
+  "  rows.push(vids);",
+  1
+ ]
+]

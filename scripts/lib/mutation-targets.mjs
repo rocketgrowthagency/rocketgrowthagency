@@ -518,4 +518,5 @@ export const FILES = {
   reviewstep: "netlify/functions/_review-step.js",
   morningrun: "netlify/functions/_morning-run.js",
   morningrunjob: "netlify/functions/morning-run.js",
+  ytread: "netlify/functions/_youtube-read.js",
 };

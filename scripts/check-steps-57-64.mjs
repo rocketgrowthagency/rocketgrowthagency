@@ -130,12 +130,12 @@ try {
   // ═══ 2 · EVERY ROW OPENS ═══
   const lift = (name) => { const m = new RegExp(`^function ${name}\\(`, "m").exec(A); if (!m) throw new Error(`${name} moved`); return A.slice(m.index, A.indexOf("\n}\n", m.index) + 2); };
   const line = (name) => { const m = new RegExp(`^const ${name} = [^\\n]*$`, "m").exec(A); if (!m) throw new Error(`${name} moved`); return m[0].replace(/^const /, "var "); };
-  const ctx = vm.createContext({ rgaSteps5764: S, rgaCitationProgress: req(path.join(SITE, "shared/citation-progress.js")), escapeHtml: (x) => String(x), escapeAttribute: (x) => String(x), acDay: (d) => `D(${String(d).slice(0, 10)})`,
+  const ctx = vm.createContext({ setTimeout: () => 0, rgaSteps5764: S, rgaCitationProgress: req(path.join(SITE, "shared/citation-progress.js")), escapeHtml: (x) => String(x), escapeAttribute: (x) => String(x), acDay: (d) => `D(${String(d).slice(0, 10)})`,
     obStepRef: (id) => `step <${id.split(".").pop()}>`, acCardHtml: (o) => `<CARD ${JSON.stringify(o)}>`, cbOpen: (u, l) => (u ? `<a href="${u}">${l} ↗</a>` : ""), cbCopyBtn: (s, k, t, l) => `<copy ${l}>`, state: {},
     CB_MARK: { live: ["ok", "✓"], ok: ["ok", "✓"], off: ["off", "–"], run: ["run", "↻"] }, CB_TILE: "<tile>", mgBusy() {} });
   const names = { fn: ["uniRunsItselfFor", "uniRowsHtml", "uniSkippedHtml", "uniBasicsHtml", "uniRowEnd", "uniWrapRow", "uniPanelCardHtml", "uniChannelCardHtml", "uniReviewsCardHtml", "month1ReportAdminHtml", "uniHandoffCardHtml", "uniRowPill"],
     ln: ["UNI_OWN_CARD", "UNI_REACHED", "uniS", "uniScopeOf", "uniCtx", "uniNoRowRun", "uniMarkHtml", "uniBtn", "uniSkipLinkHtml", "uniTasksOf", "UNI_YT", "UNI_FN_SKIP"] };
-  vm.runInContext(names.ln.map(line).concat(names.fn.map(lift)).join("\n") + "\nvar uniYtDetails = function(){};", ctx);
+  vm.runInContext(names.ln.map(line).concat(names.fn.map(lift)).join("\n") + "\nvar uniYtDetails = function(){}; var uniYtCheck = function(){};", ctx);
   const run = (code) => vm.runInContext(code, ctx);
   const opts = (h) => { const m = /<CARD (\{.*?\})>(?=<|$)/s.exec(h); try { return m ? JSON.parse(m[1]) : {}; } catch { return {}; } };
   const cardsOf = (h) => [...h.matchAll(/<CARD (\{.*?\})>/gs)].map((m) => { try { return JSON.parse(m[1]); } catch { return {}; } });
@@ -169,7 +169,11 @@ try {
     if (!/No Skip on this step/.test(lk) || !/move into the next month itself/.test(lk)) fail("rows: the hand-off's card doesn't say, in one line, why it has no Skip");
     // a client-facing row keeps its own Skip (the override cluster): no second link; a row with a body gets the link only
     ctx.__o = { ...stepObj(ID.YT), clientFacing: true }; ctx.__s = { uiState: "active", task: { status: "pending" }, dependsOn: [] };
+    if (!/data-uni-skip/.test(run("uniWrapRow(__h, __o, __s, 'month1', [__s])"))) fail("rows: step 58 has no quiet 'Skip this step…' link (step58_card_v2: its row Skip BUTTON is gone, the link stays)");
+    ctx.__o = { ...stepObj(ID.REVIEWS || ID.PANEL), flowId: "m1.review.system", clientFacing: true };
     if (/data-uni-skip/.test(run("uniWrapRow(__h, __o, __s, 'month1', [__s])"))) fail("rows: a client-facing row gets a second Skip link");
+    if (!/o\.flowId === "m1\.brand\.youtube_setup" \? "" : btn\("skipped", "Skip"\)/.test(A)) fail("58: the row's Skip BUTTON is back in the client override cluster");
+    if (!/UNI_NO_RULE_BOX = new Set\(\["m1\.report\.month1"/.test(A) || !/doneWhenLine && !UNI_NO_RULE_BOX\.has\(o\.flowId\)/.test(A)) fail("62: the grey 'Done when ... press Mark step complete' box is drawn again on the report step");
     const adminOnly = M1.find((x) => !x.clientLabel && !x.clientBucket?.match(/act|supply|approve/) && !S.RUNS_ITSELF.includes(x.id) && !/^m1\.(platform|cit)\./.test(x.id));
     ctx.__o = stepObj(adminOnly.id); ctx.__h = rowHtml('<div class="ob-body">work</div>'); ctx.__s = { uiState: "active", task: { status: "in_progress" }, dependsOn: [] };
     const act = run("uniWrapRow(__h, __o, __s, 'month1', [__s])");
@@ -284,23 +288,27 @@ try {
     const social = { client_input: { profiles: [{ key: "youtube", url: "https://www.youtube.com/@rocketgrowthagency", handle: "@rocketgrowthagency" }] } };
     const tasks = (o) => ({ [ID.SOCIAL]: social, [ID.YT]: o });
     ctx.state = { selectedClient: RGA, flowM1State: { tasks: tasks({}) }, onboardingData: { tasks: tasks({}) } };
-    const withDetails = { channel_details: { pack: PACK, read_at: "2026-11-10T12:00:00Z" }, auto_result: { outcome_data: { videos: [{ n: 1 }, { n: 2 }] } } };
+    const withDetails = { channel_details: { pack: PACK, read_at: "2026-11-10T12:00:00Z" }, yt_read: { state: "cant", no_key: true, why: "no key yet", read_at: "2026-11-10T12:00:00Z" }, auto_result: { outcome_data: { videos: [{ n: 1 }, { n: 2 }] } } };
     ctx.__t = withDetails; ctx.state.flowM1State = ctx.state.onboardingData = { tasks: tasks(withDetails) };
     let h = run("uniChannelCardHtml(__t)"), cs = cardsOf(h);
-    const main = cs[0] || {}, clips = cs[1] || {};
-    if (cs.length !== 2) fail(`58 card: ${cs.length} cards (wanted the channel card and the optional clips card)`);
-    if (!/Their channel: @rocketgrowthagency/.test(main.body) || !/never make a second/.test(main.body)) fail("58 card: their confirmed channel isn't the first row");
-    if (!/data-uni-yt="youtube_pasted"/.test(main.body) || !/studio\.youtube\.com/.test(main.body) || !/<copy Copy>/.test(main.body)) fail("58 card: Open YouTube Studio, Copy and Pasted aren't on the details row");
+    const main = cs[0] || {};
+    if (cs.length !== 1) fail(`58 card: ${cs.length} cards (step58_card_v2 wanted ONE: the clips fold into a Videos row)`);
+    if (main.title !== "Their YouTube channel") fail(`58 card: the title reads "${main.title}"`);
+    if (!/@rocketgrowthagency/.test(main.body) || !/The channel the client confirmed/.test(main.body)) fail("58 card: their confirmed channel isn't the first row");
+    if (!/data-uni-yt="youtube_pasted"/.test(main.body) || !/studio\.youtube\.com/.test(main.body) || !/<copy Copy description>/.test(main.body) || !/Put the description, phone and website on it/.test(main.body)) fail("58 card (no key yet): Open YouTube Studio, Copy description and Pasted aren't on the one \"Put the description, phone and website on it\" row");
     if (!/Rocket Growth Agency helps local service businesses/.test(main.body) || !/rocketgrowthagency\.com/.test(main.body) || !/\(424\) 242-2040/.test(main.body)) fail("58 card: the description and links (from their Google profile) aren't shown to paste");
     if (/CHANNEL_NAME|CHANNEL_DESCRIPTION|Run again/.test(h)) fail("58 card: the old write-up or its buttons are in the card");
-    if (!/Clips · optional/.test(clips.label || "") || !/0 of 2/.test(clips.when || "") || !/Record 2 short videos/.test(clips.body || "")) fail("58 card: the clips card isn't optional '0 of 2'");
-    if (main.label !== "1 of 2") fail(`58 card: the open state reads ${main.label}`);
+    if (/Clips · optional|1 of 2|clips optional/.test(main.label + main.when + main.body) || !/Videos: none yet/.test(main.body) || !/Record 2 short videos/.test(main.body)) fail("58 card: the optional videos aren't one 'Videos: none yet' row, or the old '1 of 2 / clips optional' corner label is back");
+    if (main.label !== "Your move") fail(`58 card: the open state reads ${main.label}`);
+    { const h1 = run("uniChannelCardHtml(__t)"); if (/Skip<\/button>|Skip this step/.test(h1)) fail("58 card: a Skip button sits in the card"); }
+    { ctx.__t = { ...withDetails, channel_details: { pack: PACK, read_at: "2026-11-10T12:00:00Z" }, auto_result: {} }; const d1 = cardsOf(run("uniChannelCardHtml(__t)"))[0] || {}; if (!/data-onboard-run=\\?"m1\.brand\.youtube_setup/.test(d1.body) || !/Draft 2 scripts/.test(d1.body)) fail("58 card: with no scripts the Videos row has no 'Draft 2 scripts' button"); ctx.__t = withDetails; }
     // pasted → done, and a clip arriving does not reopen it
     const pasted = { ...withDetails, status: "done", channel_pasted: { by: "chris@rga", at: "2026-11-10T13:00:00Z" }, clips: [{ id: "c1", kind: "link", url: "https://drive.example.com/a", name: "clip 1", at: "2026-11-11T10:00:00Z" }] };
     ctx.__t = pasted; ctx.state.flowM1State = ctx.state.onboardingData = { tasks: tasks(pasted) };
     cs = cardsOf(run("uniChannelCardHtml(__t)"));
-    if (cs[0].label !== "Done" || !/Channel details pasted/.test(cs[0].body) || /youtube_pasted/.test(cs[0].body)) fail("58 card: pasted isn't Done (or still offers Pasted)");
-    if (!/data-uni-yt="clip_link" data-uni-clip="c1"/.test(cs[1].body) || !/1 of 2/.test(cs[1].when)) fail("58 card: an arriving clip doesn't offer the video link");
+    if (cs[0].label !== "Done" || !/Description and phone on the channel/.test(cs[0].body) || !/You marked it pasted/.test(cs[0].body) || !/Website link on the channel/.test(cs[0].body) || !/Pasted; YouTube doesn.t let us read links back/.test(cs[0].body) || /data-uni-yt=\\?"youtube_pasted/.test(cs[0].body)) fail("58 card: pasted isn't the Done card with the two truthful rows (or still offers Pasted)");
+    if (!/Show what to paste/.test(cs[0].body)) fail("58 card: the paste block isn't folded under 'Show what to paste' once done");
+    if (!/data-uni-yt="clip_link" data-uni-clip="c1"/.test(cs[0].body) || !/Videos: 1 of 2/.test(cs[0].body)) fail("58 card: an arriving clip doesn't offer the video link in the Videos row");
     // the channel isn't confirmed yet → waiting, never Pasted
     ctx.__t = { channel_details: { pack: PACK, read_at: "2026-11-10T12:00:00Z" } }; ctx.state.flowM1State = ctx.state.onboardingData = { tasks: { [ID.YT]: ctx.__t } };
     const h0 = run("uniChannelCardHtml(__t)").replace(/\\"/g, '"');
@@ -330,7 +338,7 @@ try {
     j = await callP({ action: "youtube_pasted" }); if (j.ok || !/isn.t confirmed/.test(j.error || "")) fail("58 press: Pasted works with no confirmed channel");
     PRESS.__useDeps({ ...pdeps(s1), gate: { error: { statusCode: 401, body: "{}" } } }); j = await callP({ action: "youtube_pasted" }); if (j.ok) fail("58 press: someone outside RGA pressed Pasted");
     PRESS.__useDeps(null);
-    if (!/client_input/.test("") && !/if \(done && !t\.channel_pasted\) why = "RGA finished it"/.test(read("shared/step-lock.js"))) fail("58: the step-lock still locks the client's clips once RGA pastes the details");
+    if (!/if \(done && !t\.channel_pasted && !\(t\.yt_read && t\.yt_read\.state === "matches"\)\) why = "RGA finished it"/.test(read("shared/step-lock.js"))) fail("58: the step-lock still locks the client's clips once RGA pastes the details");
     const pf = read("netlify/functions/admin-step-press.js"); if (/\.clips[^\n]*status|status[^\n]*\.clips/.test(pf.replace(/\/\/[^\n]*/g, ""))) fail("58 press: a clip is read to decide the step's status");
     if (!/UNI_OWN_CARD\.has\(o\.flowId\)\) return "";/.test(A)) fail("58: the old 'What this produced' write-up can still show");
   }

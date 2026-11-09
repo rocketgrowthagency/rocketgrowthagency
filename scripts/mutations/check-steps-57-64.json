@@ -226,15 +226,15 @@
  [
   "58 is done without the details pasted",
   "steps5764",
-  "const done = !!(yt && pasted);",
+  "const done = !!(yt && (pasted || matched));",
   "const done = !!yt;",
   1
  ],
  [
   "Pasted is offered before the channel is confirmed",
   "steps5764",
-  "pasteable: !!(yt && pack) });",
-  "pasteable: !!pack });",
+  "paste: !!(yt && pack && noKey)",
+  "paste: !!pack",
   1
  ],
  [
@@ -324,7 +324,7 @@
  [
   "no Skip link on an unfinished step",
   "admin",
-  "const mayOffer = !own && !o.clientFacing && ![\"done\", \"skipped\", \"declined\"].includes(st) && U.canSkip(o.flowId);",
+  "const mayOffer = !own && (!o.clientFacing || o.flowId === UNI_YT) && ![\"done\", \"skipped\", \"declined\"].includes(st) && U.canSkip(o.flowId);",
   "const mayOffer = false;",
   1
  ],
@@ -415,7 +415,7 @@
  [
   "the client's clips lock once RGA pastes the details",
   "steplock",
-  "if (done && !t.channel_pasted) why = \"RGA finished it\";",
+  "if (done && !t.channel_pasted && !(t.yt_read && t.yt_read.state === \"matches\")) why = \"RGA finished it\";",
   "if (done) why = \"RGA finished it\";",
   1
  ],

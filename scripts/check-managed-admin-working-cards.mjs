@@ -141,7 +141,7 @@ try {
       }
       for (const id of ids) {
         const mk = (W) => { W.host.innerHTML = `<div class="ob-step" data-ob-step="${id}"></div>`; W.w.__x.injectSeeClientLinks(W.host, [{ obj: { flowId: id, actor: "both", clientFacing: true, managedStepNo: 3, managedRole: "check", clientStepNo: 4 } }], (o) => W.w.__x.stepKind(o)); return W.host.innerHTML; };
-        seeN++; if (mk(A) !== mk(B)) seeDiff++;
+        seeN++; if (id !== "m1.brand.youtube_setup" && mk(A) !== mk(B)) seeDiff++;   // step58_card_v2: step 58 puts the block under its one "More" (approved)
       }
     }
     must(tagDiff === 0 && tagN > 500, `proof: ${tagDiff} of ${tagN} who tags differ from before for self-serve / null clients`);

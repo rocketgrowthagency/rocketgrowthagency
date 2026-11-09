@@ -53,6 +53,32 @@ if (!open.some((l) => /customers/i.test(l))) fail("step 15: \"Still open\" misse
 if (open.some((l) => /video/i.test(l))) fail("step 15: an optional step (videos) is listed as still open");
 if (open.some((l) => /hours/i.test(l))) fail("step 15: a done step is listed as still open");
 if (/still open/i.test(rep.text) && !/carries into month 2/i.test(rep.text)) fail("step 15: \"Still open\" doesn't say it carries into Month 2");
+// ── month1_report_v2 (approved, the owner 11-9): the report stops contradicting itself
+{
+  const kt = { ...tasks, "m1.kickoff.call": { status: "done", completed_at: "2026-10-09T15:00:00Z" }, "m1.review.response": { status: "done", completed_at: "2026-11-09T10:00:00Z", outcome_data: { reviews: { total: 0 } } },
+    "m1.gbp.photos": { status: "skipped", skipped_at: "2026-11-09T11:00:00Z", skipped_by: "rga" }, "m1.gbp.hours_attributes": { status: "skipped", skipped_at: "2026-11-09T11:00:00Z", skipped_by: "rga", skip_reason: "the client has no set hours" } };
+  const blk = { business_name: "Rocket Plumbing" }, NOW9 = new Date("2026-11-09T18:00:00Z");
+  const R2 = MR.buildMonth1Report({ client: blk, tasks: kt, playbook: PB.month1, months: [], now: NOW9, kickoffAt: kt["m1.kickoff.call"].completed_at,
+    baseline: { gsc_impressions: 9471, gsc_clicks: 1, gsc_window: "28d", captured_at: "2026-09-15T10:00:00Z" },
+    pageMeasures: [{ url: "https://x.example/a", published_at: "2026-11-08T10:00:00Z", measure: { state: "ok", windows: [{ weeks: 2, state: "not_yet" }, { weeks: 4, state: "not_yet" }, { weeks: 8, state: "not_yet" }] } },
+      { url: "https://x.example/b", published_at: "2026-09-01T10:00:00Z", measure: { state: "ok", windows: [{ weeks: 2, state: "ok", clicks: 1234, impressions: 56789, position: 4.2 }] } }] });
+  const sec = (k) => (R2.sections.find((x) => x.key === k) || { lines: [] }).lines;
+  if (!/covering the work from the start through Nov 9\./.test(sec("summary")[0]) || /since the kickoff/.test(R2.text)) fail(`report v2: the summary says "since the kickoff" or doesn't name the build date (${sec("summary")[0]})`);
+  if (!sec("baseline").some((l) => /^Google Search \(the 28 days before Sep 15\): 9,471 impressions, 1 click$/.test(l))) fail(`report v2: the search baseline doesn't name its period with thousands commas (${sec("baseline").join(" | ")})`);
+  if (!sec("work").some((l) => /^Checked reviews: none on Google yet, nothing to reply to \(Nov 9\)$/.test(l)) || sec("work").some((l) => /Respond to all existing reviews/i.test(l))) fail(`report v2: zero reviews isn't "Checked reviews: none on Google yet" (${sec("work").join(" | ")})`);
+  if (!sec("skipped").includes("Provide 20+ business photos: skipped for now; we'll come back to it") || !sec("skipped").some((l) => /: the client has no set hours$/.test(l))) fail(`report v2: a skip with no reason isn't "skipped for now; we'll come back to it", or a reason is lost (${sec("skipped").join(" | ")})`);
+  if (!sec("pages").includes("https://x.example/a went live Nov 8. Too new for Search Console numbers; they show in next month's report.")) fail(`report v2: a page with no Search Console data isn't the one honest line (${sec("pages").join(" | ")})`);
+  if (!sec("pages").some((l) => /1,234 clicks, 56,789 impressions/.test(l))) fail(`report v2: real page numbers lost, or lack thousands commas (${sec("pages").join(" | ")})`);
+  if (R2.subject !== "Your Month 1 report: Rocket Plumbing" || /—/.test(R2.subject)) fail(`report v2: the subject is "${R2.subject}"`);
+  if (MR.FORBIDDEN.test(R2.text)) fail("report v2: the report trips the forbidden-claims rule");
+  const R3 = MR.buildMonth1Report({ client: blk, tasks: kt, playbook: PB.month1, months: [], now: NOW9, baseline: { gsc_impressions: 12000, gsc_clicks: 3, captured_at: "2026-09-15T10:00:00Z" } });
+  if (!(R3.sections.find((x) => x.key === "baseline").lines.some((l) => /^Google Search \(as measured Sep 15\): 12,000 impressions, 3 clicks$/.test(l)))) fail("report v2: a baseline with no stated window invents one");
+  // the admin card: counts, no green ticks, no stale grey box
+  const SV = req(`${SITE}/shared/steps-57-64.js`), v = SV.reportView({ outcome_data: { report: { subject: R2.subject, sections: R2.sections, built_at: "2026-11-09T18:00:00Z" } } }, {});
+  if (!v.rows.every((r) => r.state === "off" && r.mark === "·") || !v.rows.some((r) => /^Work completed in Month 1 \(\d+\)$/.test(r.title))) fail(`report v2: the 62 card's section rows lack counts or still carry green ticks (${v.rows.map((r) => r.title).join(" | ")})`);
+  if (!/UNI_NO_RULE_BOX = new Set\(\["m1\.report\.month1"/.test(ADM) || !/doneWhenLine && !UNI_NO_RULE_BOX\.has\(o\.flowId\)/.test(ADM)) fail("report v2: the grey 'Done when ... Mark step complete' box is drawn on the report step");
+  if (!/gsc_window: gsc\?\.window/.test(EX)) fail("report v2: the baseline step doesn't keep the window of its search numbers");
+}
 // 🔄 10-26 (steps_6_20_clean_v1, step 15 waiting): the band says "Opens about <date>"
 if (!/title: end \? `Opens about \$\{/.test(P) || !/Anything still open carries into Month 2; nothing waits for it/.test(P)) fail("step 15: the portal still says the call waits until everything is done");
 const BK = read("netlify/functions/portal-book-kickoff.js");

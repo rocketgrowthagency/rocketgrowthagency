@@ -1137,7 +1137,7 @@ Their profile shows and the name, phone and website agree: done by itself. A det
 A search that could not be read is never "no panel": it tries again tomorrow. It looks again each quarter.`,
   },
   {
-    id: "m1.brand.youtube_setup", title: "Create YouTube channel for video SEO",
+    id: "m1.brand.youtube_setup", title: "Their YouTube channel",
     type: "hybrid", dependsOn: [],
     actionLabel: "⚡ Draft this for me",
     async run({ client }) {
