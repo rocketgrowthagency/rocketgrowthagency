@@ -457,6 +457,7 @@ const NOT_PREFLIGHT = {
   'check-the-morning-run.mjs': 'the WEBSITE repo\'s morning run (steps_57_64_v1, 11-9), fakes only (database, runners, search count); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-the-months-are-kept.mjs': 'the WEBSITE repo\'s months (monthly_v1, 11-9), fakes only (a database behind a fake fetch); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-monthly-weekly.mjs': 'the WEBSITE repo\'s Every week (monthly_s2_weekly_v1, 11-9), fakes only (a database behind a fake fetch, a fake Google); run by daily-health-check.sh; it reads no video pipeline output.',
+  'check-monthly-quarter.mjs': 'the WEBSITE repo\'s Every quarter (monthly_s4_quarterly_v1, 11-9), fakes only (no network, no email, no search, no Google write); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-monthly-close.mjs': 'the WEBSITE repo\'s Close the month (monthly_s5_close_v1, 11-9), fakes only (no network, no email, no model); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-monthly-once.mjs': 'the WEBSITE repo\'s Once a month (monthly_s3_monthly_v1, 11-9), fakes only (no network, no paid scan); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-monthly-start.mjs': 'the WEBSITE repo\'s Start of month (monthly_start_v1, 11-9), fakes only (a database behind a fake fetch, no model); run by daily-health-check.sh; it reads no video pipeline output.',

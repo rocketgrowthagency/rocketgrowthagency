@@ -58,7 +58,7 @@ the same grid size.`,
 Pull top 5: name, GBP URL, current rank, review count, rating. Update fields 2.5.1-31. Flag any new entrants.`,
   },
   {
-    id: "m2.snap.business_outcomes", title: "Capture business-outcome KPIs",
+    id: "m2.snap.business_outcomes", title: "Their numbers: booked jobs and revenue (quarterly)",
     type: "manual", dependsOn: ["m2.snap.gbp_metrics"],
     instructions: `From client + CRM: total leads, total phone calls, form leads, closed jobs, lead-to-customer close rate, monthly revenue. Fill section 1.0.`,
   },
@@ -128,40 +128,7 @@ A reply is posted only after the client's consent is on record. It counts as rep
     instructions: `Complete the 3-5 tasks in the plan (m2.plan.rotating_focus). Document in section 3.x of monthly record.`,
   },
   {
-    id: "m2.exec.brand_mentions", title: "Find unlinked brand mentions, request links",
-    type: "hybrid", dependsOn: [],
-    async run({ client }) {
-      const ownDomain = (client.website_url || "").replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
-      const q = `"${client.business_name}" -site:${ownDomain} -site:facebook.com -site:instagram.com -site:linkedin.com -site:yelp.com`;
-      const draft = await aiSuggest(
-        `You write outreach emails for backlink acquisition. Output 2 versions Chris can paste:
-
-VERSION_A — Casual ("we noticed you mentioned us"):
-SUBJECT: <40 char>
-BODY: <3 short paragraphs, friendly tone, ask for the link, give the exact URL to add>
-
-VERSION_B — Value-add ("here's something useful for your readers"):
-SUBJECT: <40 char>
-BODY: <3 short paragraphs, lead with help/value, then ask for the link>
-
-Use {{site_name}} and {{mention_url}} as placeholders.`,
-        `Business: ${client.business_name}\nWebsite to link to: ${client.website_url}\nWhat they do: ${client.primary_service} in ${client.primary_market}`,
-        { maxTokens: 600 },
-      );
-      return {
-        summary: `Brand-mentions outreach kit:\n\n1. Run this Google search to find unlinked mentions:\n   ${q}\n\n2. Or click: https://www.google.com/search?q=${encodeURIComponent(q)}\n\n3. For each result that mentions ${client.business_name} but doesn't link to ${client.website_url}, send one of these:\n\n${draft}`,
-        outcome_data: { search_query: q },
-      };
-    },
-    instructions: `Open the Google search URL above. For each unlinked mention found:
-1. Note site name + the page URL where the mention is
-2. Find the site owner's email (use the website's contact page, hunter.io free tier, or LinkedIn)
-3. Personalize one of the AI templates (replace {{site_name}} + {{mention_url}})
-4. Send + log in client_backlinks (status="pending" until link goes up)
-5. Follow up 7 days later if no response`,
-  },
-  {
-    id: "m2.exec.local_pr", title: "Quarterly: pitch local press / 'best of'",
+    id: "m2.exec.local_pr", title: "Links and local press (quarterly)",
     type: "hybrid", dependsOn: [],
     async run({ client }) {
       const draft = await aiSuggest(
@@ -195,17 +162,10 @@ THEN suggest 3 sponsorship targets relevant to this business:
 3. Reach out to all 3 sponsorship targets
 4. Track every pitch in client_backlinks (status="pending" → "live" once linked)`,
   },
-  {
-    id: "m2.exec.competitor_backlink_steal", title: "Quarterly: replicate competitor backlinks",
-    type: "manual", dependsOn: ["m2.snap.competitors"],
-    instructions: `Use Ahrefs / Moz / Ubersuggest free tier on top 3 competitors.
-For each competitor backlink: directory? add us. Guest post? pitch same site. Sponsorship? consider next year. Press? pitch journalist.
-Goal: replicate 5+ per quarter.`,
-  },
   // m2.exec.haro_pitches RETIRED 2026-10-20 (client_portal_final_review_v1): Connectively shut Dec 2024; journalist requests
   // fold into m2.exec.local_pr (quarterly local press + best-of lists).
   {
-    id: "m2.exec.youtube_video", title: "Publish 1-2 YouTube videos",
+    id: "m2.exec.youtube_video", title: "Video (optional)",
     type: "hybrid", dependsOn: [],
     async run({ client }) {
       const { default: OpenAI } = await import("openai");
@@ -225,7 +185,7 @@ Goal: replicate 5+ per quarter.`,
     instructions: `Record both. Title + description + tags exactly as drafted. Geotag the videos. Embed each on the most-relevant service or location page.`,
   },
   {
-    id: "m2.exec.cannibalization_audit", title: "Quarterly: keyword cannibalization check",
+    id: "m2.exec.cannibalization_audit", title: "Keyword overlap check (quarterly)",
     type: "auto", dependsOn: [],
     async run({ client }) {
       if (!client.website_url) return { summary: "No website_url" };
@@ -341,12 +301,12 @@ Goal: replicate 5+ per quarter.`,
     async run() { return { summary: "Shown from the monthly listing checks (citation-recheck, citation-live-check); nothing to run by hand." }; },
   },
   {
-    id: "m2.exec.gbp_attributes_refresh", title: "Quarterly: refresh GBP attributes",
+    id: "m2.exec.gbp_attributes_refresh", title: "Review the Google profile details (quarterly)",
     type: "manual", dependsOn: [],
     instructions: `Walk down the list and bring new options to the client to confirm. About-you details are theirs to say, and RGA never ticks those for them. Skip ones that don't apply. Items marked ★ are likely net-new since last quarter — check those first.`,
   },
   {
-    id: "m2.exec.mystery_shop", title: "Test client's lead handling",
+    id: "m2.exec.mystery_shop", title: "Lead-handling test (only with call tracking)",
     type: "manual", dependsOn: [],
     instructions: `Make a test call as a customer. Did anyone answer? How long? Quality? Did they offer a quote/booking? Score 1-5. Fill section 3.9.
 Lead-handling kills conversion more than rankings do.`,
@@ -379,7 +339,7 @@ Note how the call went on the card: Retained, At risk or Churned. It is saved on
 When the call is over, press ✓ Mark step complete.`,
   },
   {
-    id: "m2.win_story.capture", title: "Capture customer win story",
+    id: "m2.win_story.capture", title: "Win story (drafted from a 5-star review, one tap)",
     type: "manual", dependsOn: [],
     instructions: `Pick 1 great customer this month. Capture: original search, job value, brief story. Fill section 3.10. Use for future case studies + GBP posts.`,
   },

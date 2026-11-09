@@ -535,6 +535,8 @@ export const FILES = {
   monthlyoncesrv: "netlify/functions/_monthly-once.js",   // monthly_s3_monthly_v1: the reads and the settle
   monthlyclose: "shared/monthly-close.js",   // monthly_s5_close_v1: the five close-the-month cards
   monthlyclosesrv: "netlify/functions/_monthly-close.js",   // monthly_s5_close_v1: freeze, build, send, hand-off
+  monthlyquarter: "shared/monthly-quarter.js",   // monthly_s4_quarterly_v1: the seven every-quarter cards
+  monthlyquartersrv: "netlify/functions/_monthly-quarter.js",   // monthly_s4_quarterly_v1: reads, settle, presses, the client answers
   monthlyclosefn: "netlify/functions/admin-monthly-close.js",   // monthly_s5_close_v1: the only door that sends a monthly report
   monthlyreportemail: "netlify/functions/_monthly-report-email.js",   // monthly_s5_close_v1: the report letter
   weekskipfn: "netlify/functions/admin-week-skip.js",

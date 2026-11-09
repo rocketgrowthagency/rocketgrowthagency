@@ -370,8 +370,8 @@ async function ready(w) { await MCS.freeze({ clientId: "c1", month: MONTH, deps:
   if (!/data-cls-send/.test(as) || !/data-cls-test/.test(as) || !/Read the report/.test(as) || !/Send me a test/.test(as)) fail("9 the card carries Read the report, Send to <email> and Send me a test");
   if (!/Send to \$\{v\.to\}/.test(as)) fail("9 the send button names the address");
   if (!/import "\/shared\/monthly-close\.js\?v=20261109a"/.test(a)) fail("9 the admin imports shared/monthly-close.js");
-  if (!/monthly-sections\.js\?v=20261109d/.test(a) || !/steps-57-64\.js\?v=20261109h/.test(a)) fail("9 the changed shared files need new ?v= keys");
-  if (!/admin\.js\?v=20261109r/.test(ih) || !/admin\.css\?v=20261109g/.test(ih)) fail("9 admin.js / admin.css ?v= keys must be bumped (r, g)");
+  if (!/monthly-sections\.js\?v=20261109e/.test(a) || !/steps-57-64\.js\?v=20261109h/.test(a)) fail("9 the changed shared files need new ?v= keys");
+  if (!/admin\.js\?v=20261109s/.test(ih) || !/admin\.css\?v=20261109g/.test(ih)) fail("9 admin.js / admin.css ?v= keys must be bumped (r, g)");
   if (!/portal\.js\?v=20261109j/.test(ph)) fail("9 portal.js ?v= must be bumped (j)");
   if (!/#report-\\d\{4\}-\\d\{2\}/.test(p) || !/data-mr-month/.test(p) || !/function openMonthlyReport/.test(p)) fail("9 the portal opens the Reports tab on that month's report (#report-YYYY-MM)");
   const band = ["shared/monthly-close.js", "netlify/functions/_monthly-report-email.js"].map((f) => strip(read(f))).join("\n");
