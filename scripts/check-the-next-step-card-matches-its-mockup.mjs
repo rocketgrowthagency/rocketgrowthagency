@@ -156,7 +156,7 @@ function escapeAttribute(s){return escapeHtml(s);}
 const ctx = { console };
 vm.createContext(ctx);
 try {
-  const parts = ["buildPortalNextActionHtml", "kickoffFacts", "kickoffPhase", "countSetupGaps", "svcSetupState"].map(lift);
+  const parts = ["buildPortalNextActionHtml", "month1SentOf", "kickoffFacts", "kickoffPhase", "countSetupGaps", "svcSetupState"].map(lift);
   vm.runInContext(`${prelude}\n${parts.join("\n\n")}\n`
     + `globalThis.B=buildPortalNextActionHtml;globalThis.M=_kickoffMine;`
     + `globalThis.W=_kickoffWhen;globalThis.U=_kickoffUnknown;globalThis.TZ=_kickoffTz;`, ctx);

@@ -210,6 +210,43 @@ const run = (oauth = OAUTH, from = "2026-09-01", to = "2026-10-31", extra = {}) 
   if (rows[0].gbp_calls !== null || rows[0]._google.gbp_calls !== "could_not_read" || rows[0].form_leads !== 4) fail("liveRows kept a stored Google number, or dropped RGA's own");
 }
 
+// ── 5b · portal_after_month1_v1 (the owner 11-9: two dashboard tiles said "Couldn't read Google just now" while the report read the same numbers) ──
+// CAUSE pinned here: the dashboard asked the synchronous door for everything, search keywords included (one request per month, the slowest part), once, with no second try.
+// Now: it asks without them, a read that really failed is tried again after a minute (twice) and says so, and a tile says "couldn't read" only when the read failed.
+{
+  const log = google({ pages: reviewPages() });
+  const r = await LIVE.readGoogleLive({ supa: supaNone, oauth: OAUTH, from: "2026-09-01", to: "2026-10-31", businessName: "Acme Plumbing", deps: deps(), skipSearches: true });
+  const oct = r.months["2026-10-01"];
+  if (log.some((l) => l.url.includes("/searchkeywords/"))) fail("a read asked without search keywords still asked Google for them");
+  if (oct.status.searches_direct !== "not_asked" || oct.values.searches_direct !== null) fail(`skipped searches aren't "not_asked" with no number (${oct.status.searches_direct}/${oct.values.searches_direct})`);
+  if (oct.status.calls !== "ok" || oct.status.new_reviews !== "ok" || oct.values.new_reviews !== 7) fail(`asking without searches lost the calls or new-reviews read (calls ${oct.status.calls}, new reviews ${oct.values.new_reviews})`);
+  const door = read("netlify/functions/portal-google-numbers.js"), gl = read("shared/google-live.js"), por = read("portal/portal.js");
+  if (!/skipSearches: body\.skip_searches === true/.test(door) || !/skip_searches: o\.skipSearches === true/.test(gl) || !/skipSearches: true/.test(por)) fail("the dashboard's read doesn't ask the door for the lean read (skip_searches)");
+  // RUN the browser side: the real shared/google-live.js + the portal's own retry functions, a fake window, a fake clock
+  const vm = await import("node:vm");
+  const calls = []; let mode = "fail504";
+  const FIELDS = ["calls", "website_clicks", "directions", "impressions", "searches_direct", "searches_discovery", "actions", "review_count", "new_reviews", "average_rating"];
+  const okMonth = { status: Object.fromEntries(FIELDS.map((f) => [f, /^searches_/.test(f) ? "not_asked" : "ok"])), values: Object.fromEntries(FIELDS.map((f) => [f, f === "calls" ? 11 : f === "new_reviews" ? 2 : 1])) };
+  const fakeFetch = async (url, init) => { calls.push(JSON.parse(init.body)); return mode === "fail504" ? { ok: false, json: async () => null } : { ok: true, json: async () => ({ ok: true, months: { "2026-11-01": okMonth } }) }; };
+  const win = { fetch: fakeFetch }; vm.runInNewContext(gl, { window: win });
+  const cut = (a, b) => { const i = por.indexOf(a), j = por.indexOf(b); if (i < 0 || j < i) { console.error("⚠️  INDETERMINATE — the portal's retry functions moved"); process.exit(2); } return por.slice(i, j); };
+  const src = cut("const GLIVE_RETRY_MS", "function caDeltaHtml");
+  const timers = []; const sandbox = { GLV: () => win.RGAGoogleLive, gliveRepaint: () => {}, setTimeout: (fn, ms) => { timers.push({ fn, ms }); } };
+  vm.runInNewContext(src + "\nthis.__read = gliveRead; this.__note = gliveRetryNote;", sandbox);
+  const recs = [{ reporting_month: "2026-11-01" }]; win.RGAGoogleLive.strip(recs);
+  await sandbox.__read("c1", recs, "tok", 0, { setTimeout: sandbox.setTimeout });
+  if (calls[0].skip_searches !== true) fail("the dashboard's request doesn't carry skip_searches");
+  if (win.RGAGoogleLive.note(recs[0], "gbp_calls") !== "Couldn't read Google just now." || recs[0].gbp_calls !== null) fail("a failed read isn't 'Couldn't read Google just now' with no number");
+  if (sandbox.__note("c1") !== "Trying again in a minute." || timers.length !== 1 || timers[0].ms !== 60000) fail(`a failed read doesn't say when it tries again, or doesn't schedule it (${sandbox.__note("c1")}, ${timers.map((t) => t.ms)})`);
+  mode = "ok"; await timers.shift().fn();   // the retry, after a minute
+  if (recs[0].gbp_calls !== 11 || recs[0].new_reviews !== 2 || win.RGAGoogleLive.note(recs[0], "gbp_calls") !== "" || sandbox.__note("c1") !== "") fail(`the retry didn't fill the tiles with Google's numbers and clear the message (${recs[0].gbp_calls}/${recs[0].new_reviews}/"${sandbox.__note("c1")}")`);
+  const recs2 = [{ reporting_month: "2026-11-01" }]; win.RGAGoogleLive.strip(recs2); mode = "fail504";
+  await sandbox.__read("c2", recs2, "tok", 0, { setTimeout: sandbox.setTimeout });
+  await timers.shift().fn(); await timers.shift().fn();   // retry 1 and retry 2 both fail
+  if (timers.length !== 0 || sandbox.__note("c2") !== "Reload the page to try again.") fail(`after two failed retries it neither stops nor says how to try again (${timers.length} timers, "${sandbox.__note("c2")}")`);
+  if (!/GLV\(\)\.status\(cur, col\) === "could_not_read" && gliveRetryNote\(cur\.client_id\)/.test(por)) fail("the Call-button taps / New reviews tiles don't carry the retry words");
+}
+
 // ── 6 · the door: staff-or-owner, no secret out, read only ──
 {
   const door = read("netlify/functions/portal-google-numbers.js");

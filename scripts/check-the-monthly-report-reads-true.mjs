@@ -619,6 +619,13 @@ try {
   process.exit(2);
 }
 
+// month1_email_v1 (11-9, "drop the street address from client emails"): the monthly report email carries no street address, and the shell keeps it only for a sender that asks
+{
+  const doc = await import(`${SITE}/shared/email-doc.js`), sm = fs.readFileSync(`${SITE}/netlify/functions/send-monthly-report.js`, "utf8");
+  const h = doc.buildBrandedEmail({ title: "Your report", bodyHtml: "<p>x</p>" }), t = doc.plainTwin({ title: "Your report", lines: ["x"] });
+  check(!/Jefferson|Culver City|90232/.test(h + t) && !/postalAddress/.test(sm), "the monthly report email prints no street address (client email)");
+  check(/Jefferson/.test(doc.buildBrandedEmail({ title: "x", postalAddress: true })), "the street address is kept for a marketing sender (postalAddress: true)");
+}
 console.log("");
 if (fails.length) {
   console.error(`🔴 the monthly report printed ${fails.length} thing(s) its inputs don't support.`);

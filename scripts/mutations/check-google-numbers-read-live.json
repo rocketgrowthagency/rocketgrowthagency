@@ -117,5 +117,47 @@
   "for (const f of [\"calls\", \"website_clicks\", \"directions\", \"impressions\"]) { o.status[f] = \"no_data\"; o.values[f] = null; }",
   "",
   1
+ ],
+ [
+  "the dashboard asks for search keywords again",
+  "portal",
+  "max: 3, skipSearches: true",
+  "max: 3",
+  1
+ ],
+ [
+  "a lean read still asks for search keywords",
+  "googlelive",
+  "if (skipSearches) { for (const k of months)",
+  "if (false) { for (const k of months)",
+  1
+ ],
+ [
+  "the retry never happens",
+  "portal",
+  "else if (attempt < GLIVE_RETRIES) {",
+  "else if (false) {",
+  1
+ ],
+ [
+  "the tile doesn't say when it tries again",
+  "portal",
+  "s === \"pending\" ? \"Trying again in a minute.\"",
+  "s === \"pending\" ? \"\"",
+  1
+ ],
+ [
+  "the door ignores the lean read",
+  "googlefn",
+  "skipSearches: body.skip_searches === true",
+  "skipSearches: false",
+  1
+ ],
+ [
+  "the browser forgets to send the lean read",
+  "googlelivejs",
+  "skip_searches: o.skipSearches === true",
+  "skip_searches: false",
+  1
  ]
 ]

@@ -128,7 +128,7 @@
  [
   "the button opens Setup",
   "portal",
-  "data-portal-goto=\"${/To do/.test(action.btn) ? \"approvals\" : \"setup\"}\"",
+  "data-portal-goto=\"${action.goto || (/To do/.test(action.btn) ? \"approvals\" : \"setup\")}\"",
   "data-portal-goto=\"setup\"",
   1
  ],

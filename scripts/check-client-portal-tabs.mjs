@@ -30,7 +30,7 @@ if (/a month/i.test(String(stepOf("m2.exec.youtube_video").clientInstructions ||
 if (!/quarter/i.test(stepOf("m2.exec.youtube_video").clientLabel || "") || !stepOf("m2.exec.youtube_video").clientOptional) fail("the video isn't quarterly and optional any more: re-read the Ongoing card's words");
 if (!/3 months/i.test(stepOf("m2.snap.business_outcomes").clientLabel || "")) fail("the numbers aren't every 3 months any more: re-read the Ongoing card's words");
 for (const w of ["once your campaign goes live", "Once service begins we track", "Your results appear here once your campaign is live", "You have <strong>0</strong> data points", "reports so far", "View Action Items"]) if (P.includes(w)) fail(`old words are back: "${w}"`);
-if (!/data-portal-goto="\$\{\/To do\/\.test\(action\.btn\) \? "approvals" : "setup"\}"/.test(P)) fail("Go to To do doesn't open To do");
+if (!/data-portal-goto="\$\{action\.goto \|\| \(\/To do\/\.test\(action\.btn\) \? "approvals" : "setup"\)\}"/.test(P)) fail("Go to To do doesn't open To do");
 if (!/const n = _todoTotalN != null \? Math\.max\(0, _todoTotalN - \(mine\.length - n0\)\)/.test(P)) fail("the next-step card doesn't use To do's number");
 if (!/if \(_todoTotalN !== todoN\) \{ _todoTotalN = todoN;/.test(P)) fail("To do's number doesn't reach the next-step card");
 // 🔒 Chris 10-30: "client portal now lost all steps 1-4 … should be in memory to never be lost". The four stay on the page, always.

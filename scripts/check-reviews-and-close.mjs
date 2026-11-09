@@ -79,6 +79,69 @@ if (/still open/i.test(rep.text) && !/carries into month 2/i.test(rep.text)) fai
   if (!/UNI_NO_RULE_BOX = new Set\(\["m1\.report\.month1"/.test(ADM) || !/doneWhenLine && !UNI_NO_RULE_BOX\.has\(o\.flowId\)/.test(ADM)) fail("report v2: the grey 'Done when ... Mark step complete' box is drawn on the report step");
   if (!/gsc_window: gsc\?\.window/.test(EX)) fail("report v2: the baseline step doesn't keep the window of its search numbers");
 }
+// ── month1_email_v1 + portal_after_month1_v1 (approved, the owner 11-9): the EMAIL is the short letter; the portal says Month 1 is done
+{
+  const NOT_WORK_RE = /^m1\.(close|kickoff|handoff|audit|report|call|access)\./, ME = load("_month1-email.js"), SENDER = read("netlify/functions/admin-month1-report.js");
+  const T = {}, plain = (id, at) => { T[id] = { status: "done", completed_at: at }; };
+  for (const s of PB.month1) if (!/^m1\.(close|kickoff|handoff|audit|report|call|access)\./.test(s.id)) plain(s.id, "2026-11-05T10:00:00Z");
+  T["m1.review.response"] = { status: "done", completed_at: "2026-11-09T10:00:00Z", outcome_data: { reviews: { total: 0 } } };
+  T["m1.gbp.photos"] = { status: "skipped", skipped_by: "rga", skipped_at: "2026-11-09T11:00:00Z", skip_reason: "Chris said to wait for the new photographer" };
+  for (const id of ["m1.cit.priority_top10", "m1.cit.industry_specific", "m1.platform.yelp", "m1.platform.mentions", "m1.platform.bing_apple"]) T[id] = { status: "skipped", skipped_by: "rga", skipped_at: "2026-11-09T11:00:00Z", skip_reason: "Chris: sign-ups wait" };
+  T["m1.web.blog_seed"] = { status: "skipped", skipped_by: "rga", skip_reason: "Nobody has time for blogs, Chris" };
+  const NOW9 = new Date("2026-11-09T18:00:00Z");
+  const months = [{ reporting_month: "2026-09-01", gsc_clicks: 6, gbp_impressions: 60, gbp_calls: null, review_count: 0 }, { reporting_month: "2026-10-01", gsc_clicks: 11, gbp_impressions: 55, gbp_calls: null, review_count: 0 }];
+  const rep = MR.buildMonth1Report({ client: { business_name: "Rocket Plumbing" }, tasks: T, playbook: PB.month1, months, now: NOW9, kickoffAt: "2026-10-09T15:00:00Z", baseline: { reviews: 0, captured_at: "2026-10-09T10:00:00Z" } });
+  const M = ME.buildMonth1Email({ rep, client: { primary_contact_name: "Dana Lee" }, now: NOW9 });
+  const txt = M.lines.join("\n"), stored = { ...rep, comparisons: undefined, items: undefined };
+  // the hero + the three numbers, each with its change
+  if (!/^✓ Month 1 complete · Nov 9$/m.test(txt) || !/^Your foundation is built, Dana\.$/m.test(txt)) fail(`email: the hero isn't "Month 1 complete · <date>" + "Your foundation is built, <first name>." (${txt.split("\n").slice(0, 2)})`);
+  if (!/^WHERE THINGS STAND · OCTOBER VS SEPTEMBER$/m.test(txt) || !/^Clicks from Google Search: 11 \(▲ 5 from 6\)$/m.test(txt) || !/^Google profile views: 55 \(▼ 5 from 60\)$/m.test(txt) || !/^Google reviews: 0 \(same as at the start\)$/m.test(txt)) fail(`email: the three headline numbers lack their change (${txt.split("\n").slice(4, 9).join(" | ")})`);
+  const noG = ME.buildMonth1Email({ rep: { ...rep, comparisons: [] }, client: {}, now: NOW9 }).lines.join("\n");
+  if (!/^Clicks from Google Search: n\/a \(Google didn't give this number\)$/m.test(noG) || /^Clicks from Google Search: 0\b/m.test(noG)) fail("email: a number Google didn't give is shown as 0 or isn't said so");
+  if (ME.buildMonth1Email({ rep: stored, client: {}, now: NOW9, playbook: PB.month1, tasks: T }).lines.join("\n") !== ME.buildMonth1Email({ rep: stored, client: {}, now: NOW9, playbook: PB.month1, tasks: T }).lines.join("\n") || !/Clicks from Google Search: 11 \(▲ 5 from 6\)/.test(ME.buildMonth1Email({ rep: stored, client: {}, now: NOW9, playbook: PB.month1, tasks: T }).lines.join("\n"))) fail("email: a report stored before the comparison data existed can't be read back for its numbers");
+  // what we did: grouped, client words, top 3 + "+ N more", counts computed
+  const nW = rep.items.done.length, byG = (g) => rep.items.done.filter((d) => d.group === g).length;
+  if (!new RegExp(`^WHAT WE DID · ${nW} THINGS$`, "m").test(txt) || !new RegExp(`^Your Google profile \\(${byG("gbp")} done\\)$`, "m").test(txt) || !new RegExp(`^Your website \\(${byG("web")} done\\)$`, "m").test(txt) || !new RegExp(`^Reviews, tracking and your brand \\(${byG("other")} done\\)$`, "m").test(txt)) fail("email: the groups or their counts aren't computed from the work done");
+  if (byG("gbp") < 4 || !new RegExp(`^  \\+ ${byG("gbp") - 3} more$`, "m").test(txt) || (txt.match(/^- /gm) || []).length < 9) fail("email: a group shows more than its top 3, or the '+ N more' count is wrong");
+  const FEED = Object.fromEntries(PB.month1.filter((s) => s.clientFeed).map((s) => [s.id, s.clientFeed])), internal = PB.month1.filter((s) => s.clientFeed && !NOT_WORK_RE.test(s.id) && T[s.id] && T[s.id].status === "done").map((s) => s.title);
+  for (const d of rep.items.done) if (FEED[d.id] && d.text !== FEED[d.id] && d.id !== "m1.review.response") fail(`email: ${d.id} isn't in the client's own words (${d.text})`);
+  if (internal.some((t) => txt.includes(t)) || /Lock primary|Match NAP|header\/footer|schema|GSC|GA4|GBP/.test(txt)) fail("email: an internal step title or jargon reached the client");
+  if (!rep.items.done.some((d) => d.id === "m1.review.response" && d.text === "Checked your Google reviews: none yet, nothing to reply to") || /Replied to your Google reviews/.test(txt)) fail("email: zero reviews reads as 'Replied to your Google reviews'");
+  const clean = ME.buildMonth1Email({ rep: { ...rep, items: { done: [], carried: [] } }, client: {}, now: NOW9 }).lines.join("\n");
+  if (/\bundefined\b|NaN/.test(txt + clean)) fail("email: undefined or NaN reached the letter");
+  // coming next: client words, no internal reason, no name; the five directory steps are one line
+  if (!/^COMING NEXT$/m.test(txt) || !/^- A new photo and a Google post each week, and more review asks$/m.test(txt) || !/^- Business photos: whenever you're ready to share them$/m.test(txt)) fail("email: 'Coming next' lacks the weekly line or the photos line");
+  if ((txt.match(/^- Listings on directories \(Yelp, Bing, Apple Maps and others\): scheduled for a later month$/gm) || []).length !== 1 || /Yelp profile|Bing Places|citations?\b/i.test(txt.replace(/Listings on directories[^\n]*/, ""))) fail("email: the directory steps aren't one collapsed line");
+  if (/photographer|sign-ups wait|Nobody has time|Chris said|Chris:/.test(txt) || /skipped by rga/i.test(txt)) fail("email: an internal skip reason or a person's name reached the client");
+  if (!/: later$/m.test(txt)) fail("email: a carried item isn't '<client words>: later'");
+  // the button, the sign-off, no em dash
+  if (!/href="https:\/\/www\.rocketgrowthagency\.com\/portal\/#month1-report"/.test(M.html) || !/See the full report in your portal/.test(M.html) || M.url !== "https://www.rocketgrowthagency.com/portal/#month1-report") fail("email: the one button doesn't open the portal's Reports on this report");
+  if (!/^Questions\? Just reply to this email\.$/m.test(txt) || !/^Chris, Rocket Growth Agency$/m.test(txt) || /—/.test(txt + M.html)) fail("email: the sign-off is missing or an em dash is in the letter");
+  // the shell: logo cell left of the wordmark and in the footer, and NO street address for a client email
+  const doc = await import(`${SITE}/shared/email-doc.js`);
+  const html = doc.buildBrandedEmail({ title: "", preheader: M.preheader, intro: "", bodyHtml: M.html }), twin = doc.plainTwin({ title: "Your Month 1 report", intro: "", lines: M.lines, cta: { url: M.url, label: "See the full report in your portal" } });
+  if ((html.match(/bgcolor="#2457e6"[^>]*><img src="https:\/\/www\.rocketgrowthagency\.com\/images\/assets\/rga_icon-header\.png/g) || []).length !== 2 || html.indexOf('bgcolor="#2457e6"') > html.indexOf("Growth</span>")) fail("email: the blue rocket square isn't a table cell with the hosted PNG in the header (before the wordmark) and the footer");
+  if (/Jefferson|Culver City|\b90232\b/.test(html + twin)) fail("email: a client email prints the street address");
+  if (!/Jefferson/.test(doc.buildBrandedEmail({ title: "x", postalAddress: true })) || !/Jefferson/.test(doc.plainTwin({ title: "x", postalAddress: true })) || /Jefferson/.test(doc.buildBrandedEmail({ title: "x" })) || /Jefferson/.test(doc.plainTwin({ title: "x" }))) fail("email: the street address isn't kept for a sender that passes postalAddress (marketing / outreach), or is printed by default");
+  if (!/hello@rocketgrowthagency\.com/.test(html) || !/\(424\) 242-2040/.test(twin)) fail("email: the footer lost the contact line");
+  for (const f of ["netlify/functions/send-invoice-email.js", "netlify/functions/send-monthly-report.js", "netlify/functions/_mature-deps.js", "netlify/functions/admin-month1-report.js"]) if (/postalAddress/.test(read(f))) fail(`email: ${f}, a client sender, prints the street address`);
+  if (!/require\("\.\/_month1-email"\)/.test(SENDER) || !/bodyHtml: m\.html/.test(SENDER) || /rep\.sections\.map\(\(s\) => `<h3/.test(SENDER)) fail("email: the Month 1 sender still sends the whole report as the email");
+  if (!/kind: "flow_step_done", payload: \{ step_id: STEP, status: "done"/.test(SENDER) || !FEED["m1.report.month1"] || FEED["m1.report.month1"] !== "Sent your Month 1 report") fail("feed: the send doesn't write the line 'What RGA did' reads (flow_step_done + the playbook's 'Sent your Month 1 report')");
+  if (!/comparisons: r\.comparisons, items: r\.items/.test(EX)) fail("email: the stored report doesn't keep its comparison data and items");
+  // the portal, RUN: the card, the badge, the report view
+  const lf = (n) => { const at = P.search(new RegExp(`\\nfunction ${n}\\(`)); if (at < 0) { console.error(`⚠️  ${n} moved`); process.exit(2); } let d = 0; for (let i = P.indexOf("{", P.indexOf(")", at)); i < P.length; i++) { if (P[i] === "{") d++; else if (P[i] === "}" && --d === 0) return P.slice(at, i + 1); } };
+  const pc = vm.createContext({ escapeHtml: (x) => String(x ?? "").replace(/</g, "&lt;"), monthDay: (v) => ({ "2026-11-09T18:00:00Z": "Nov 9" }[v] || String(v)) });
+  vm.runInContext(["month1SentOf", "monthlyWorkStarted", "month1ReportCardHtml"].map(lf).join("\n"), pc);
+  const sentOb = { data: { tasks: { "m1.report.month1": { status: "done", auto_result: { sent_message_id: "g1", sent_at: "2026-11-09T18:00:00Z" }, outcome_data: { report: { subject: rep.subject, sections: rep.sections } } }, "m1.handoff.month2": { status: "done" } } } };
+  pc.__a = sentOb; pc.__b = { data: { tasks: { "m1.report.month1": { status: "done", outcome_data: { report: { sections: rep.sections } } } } } };
+  const run = (e) => vm.runInContext(e, pc);
+  if (!run("month1SentOf(__a)") || run("month1SentOf(__b)") || run("month1SentOf(null)") || !run("monthlyWorkStarted(__a)") || run("monthlyWorkStarted(__b)")) fail("portal: 'sent' isn't the send's own proof (the Gmail id), or the hand-off check is wrong");
+  const card = run("month1ReportCardHtml(__a)");
+  if (!/id="month1-report"/.test(card) || rep.sections.some((s) => !card.includes(s.title)) || !card.includes(rep.sections.find((s) => s.key === "work").lines[0]) || !/sent Nov 9/.test(card) || run("month1ReportCardHtml(__b)") !== "") fail("portal: the Reports view doesn't show every section of the stored report once it was sent (and nothing before)");
+  if (!/title: "Month 1 is done\. Your report is ready\."/.test(P) || !/\$\{m1Sent\.at \? `Sent \$\{monthDay\(m1Sent\.at\)\}\. ` : ""\}From here: a Google post and a photo each week, and review asks\. Nothing needs you right now\./.test(P) || !/btn: "Read your report", goto: "reports", scroll: "month1-report"/.test(P)) fail("portal: the 'Your next step' card doesn't read 'Month 1 is done. Your report is ready.' with 'Read your report'");
+  if (!/monthlyWorkStarted\(onboarding\) \? "Monthly work" : "Setup in progress"/.test(P) || !/renderStatusPill\(single, sMonths, single\.client\?\.client_portal_stage, onboardingByClient\[single\.client_id\]/.test(P)) fail("portal: the badge doesn't become 'Monthly work' once the hand-off step is done");
+  if (!/\^#month1-report\$/.test(P) || !/function openMonth1Report\(\)/.test(P) || !/month1ReportCardHtml\(onboarding\)/.test(P)) fail("portal: the email's #month1-report link doesn't open Reports on the report");
+}
 // 🔄 10-26 (steps_6_20_clean_v1, step 15 waiting): the band says "Opens about <date>"
 if (!/title: end \? `Opens about \$\{/.test(P) || !/Anything still open carries into Month 2; nothing waits for it/.test(P)) fail("step 15: the portal still says the call waits until everything is done");
 const BK = read("netlify/functions/portal-book-kickoff.js");

@@ -149,5 +149,124 @@
   "        gsc_window: gsc?.window ? String(gsc.window) : null,",
   "",
   1
+ ],
+ [
+  "the email prints the street address again",
+  "emaildoc",
+  "${postalAddress ? `${POSTAL}<br>` : \"\"}",
+  "${POSTAL}<br>",
+  1
+ ],
+ [
+  "the plain twin prints the street address again",
+  "emaildoc",
+  "...(postalAddress ? [\"Rocket Growth Agency\", \"9937 Jefferson Blvd. Suite 120, Culver City, CA 90232\"] : [])",
+  "\"Rocket Growth Agency\", \"9937 Jefferson Blvd. Suite 120, Culver City, CA 90232\"",
+  1
+ ],
+ [
+  "the header logo loses its blue cell",
+  "emaildoc",
+  "<td width=\"26\" height=\"26\" bgcolor=\"${BRAND}\"",
+  "<td width=\"26\" height=\"26\"",
+  1
+ ],
+ [
+  "a step reads as its internal title in the email",
+  "month1report",
+  "(w.fewer || clientWords(w.step))",
+  "(w.fewer || w.step.title)",
+  1
+ ],
+ [
+  "a carried item shows the skip reason's company, not client words",
+  "month1report",
+  "`${carriedWords(s)}: later`",
+  "`${s.title}: ${(tasks && tasks[s.id] && tasks[s.id].skip_reason) || \"later\"}`",
+  1
+ ],
+ [
+  "the directory steps stop collapsing",
+  "month1report",
+  "if (DIRECTORY_STEPS.test(s.id)) { directories = true; continue; }",
+  "",
+  1
+ ],
+ [
+  "a group shows every item",
+  "month1email",
+  "shown: list.slice(0, SHOWN).map((d) => d.text)",
+  "shown: list.map((d) => d.text)",
+  1
+ ],
+ [
+  "the top three become the top thirty",
+  "month1email",
+  "const SHOWN = 3;",
+  "const SHOWN = 30;",
+  1
+ ],
+ [
+  "a number Google didn't give shows as 0",
+  "month1email",
+  "return { label, value: null, change: \"Google didn't give this number\", tone: \"flat\" };",
+  "return { label, value: \"0\", change: \"same as the month before\", tone: \"flat\" };",
+  1
+ ],
+ [
+  "the change loses its from-number",
+  "month1email",
+  "${diff > 0 ? \"▲\" : \"▼\"} ${fmt(Math.abs(diff))} from ${fmt(c.from)}",
+  "${diff > 0 ? \"▲\" : \"▼\"} ${fmt(Math.abs(diff))}",
+  1
+ ],
+ [
+  "the button lands on the dashboard",
+  "month1email",
+  "portal/#month1-report",
+  "portal/",
+  1
+ ],
+ [
+  "the sender sends the whole report again",
+  "month1sendfn",
+  "bodyHtml: m.html",
+  "bodyHtml: rep.sections.map((s) => `<h3>${s.title}</h3>`).join(\"\")",
+  1
+ ],
+ [
+  "the send doesn't write the feed line",
+  "month1sendfn",
+  "kind: \"flow_step_done\", payload: { step_id: STEP",
+  "kind: \"month1_report_sent2\", payload: { step_id: STEP",
+  1
+ ],
+ [
+  "the portal card keeps the old text",
+  "portal",
+  "title: \"Month 1 is done. Your report is ready.\"",
+  "title: \"Your foundation is being built\"",
+  1
+ ],
+ [
+  "the badge never becomes Monthly work",
+  "portal",
+  "monthlyWorkStarted(onboarding) ? \"Monthly work\" : \"Setup in progress\"",
+  "\"Setup in progress\"",
+  1
+ ],
+ [
+  "the report view drops its sections",
+  "portal",
+  "${rep.sections.map(sec).join(\"\")}",
+  "",
+  1
+ ],
+ [
+  "sent is judged by status alone",
+  "portal",
+  "t && t.auto_result && t.auto_result.sent_message_id ? { at:",
+  "t && t.status === \"done\" ? { at:",
+  1
  ]
 ]
