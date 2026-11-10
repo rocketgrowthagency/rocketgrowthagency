@@ -64,15 +64,15 @@ if (/still open/i.test(rep.text) && !/carries into month 2/i.test(rep.text)) fai
       { url: "https://x.example/b", published_at: "2026-09-01T10:00:00Z", measure: { state: "ok", windows: [{ weeks: 2, state: "ok", clicks: 1234, impressions: 56789, position: 4.2 }] } }] });
   const sec = (k) => (R2.sections.find((x) => x.key === k) || { lines: [] }).lines;
   if (!/covering the work from the start through Nov 9\./.test(sec("summary")[0]) || /since the kickoff/.test(R2.text)) fail(`report v2: the summary says "since the kickoff" or doesn't name the build date (${sec("summary")[0]})`);
-  if (!sec("baseline").some((l) => /^Google Search \(the 28 days before Sep 15\): 9,471 impressions, 1 click$/.test(l))) fail(`report v2: the search baseline doesn't name its period with thousands commas (${sec("baseline").join(" | ")})`);
-  if (!sec("work").some((l) => /^Checked reviews: none on Google yet, nothing to reply to \(Nov 9\)$/.test(l)) || sec("work").some((l) => /Respond to all existing reviews/i.test(l))) fail(`report v2: zero reviews isn't "Checked reviews: none on Google yet" (${sec("work").join(" | ")})`);
+  if (!sec("baseline").some((l) => /^Google Search in the 28 days before Sep 15: 9,471 impressions, 1 click$/.test(l))) fail(`report v2: the search baseline doesn't name its period with thousands commas (${sec("baseline").join(" | ")})`);
+  if (!sec("work").some((l) => /^Checked your Google reviews: none yet, nothing to reply to \(Nov 9\)$/.test(l)) || sec("work").some((l) => /Respond to all existing reviews/i.test(l))) fail(`report v2: zero reviews isn't "Checked your Google reviews: none yet" (the client's words, client_monthly_v1) (${sec("work").join(" | ")})`);
   if (!sec("skipped").includes("Provide 20+ business photos: skipped for now; we'll come back to it") || !sec("skipped").some((l) => /: the client has no set hours$/.test(l))) fail(`report v2: a skip with no reason isn't "skipped for now; we'll come back to it", or a reason is lost (${sec("skipped").join(" | ")})`);
   if (!sec("pages").includes("https://x.example/a went live Nov 8. Too new for Search Console numbers; they show in next month's report.")) fail(`report v2: a page with no Search Console data isn't the one honest line (${sec("pages").join(" | ")})`);
   if (!sec("pages").some((l) => /1,234 clicks, 56,789 impressions/.test(l))) fail(`report v2: real page numbers lost, or lack thousands commas (${sec("pages").join(" | ")})`);
   if (R2.subject !== "Your Month 1 report: Rocket Plumbing" || /—/.test(R2.subject)) fail(`report v2: the subject is "${R2.subject}"`);
   if (MR.FORBIDDEN.test(R2.text)) fail("report v2: the report trips the forbidden-claims rule");
   const R3 = MR.buildMonth1Report({ client: blk, tasks: kt, playbook: PB.month1, months: [], now: NOW9, baseline: { gsc_impressions: 12000, gsc_clicks: 3, captured_at: "2026-09-15T10:00:00Z" } });
-  if (!(R3.sections.find((x) => x.key === "baseline").lines.some((l) => /^Google Search \(as measured Sep 15\): 12,000 impressions, 3 clicks$/.test(l)))) fail("report v2: a baseline with no stated window invents one");
+  if (R3.sections.find((x) => x.key === "baseline").lines.some((l) => /^Google Search|as measured/.test(l))) fail("report v2: a baseline with no recorded window must leave the search line out (client_monthly_v1), never sit a longer stretch beside a month figure");
   // the admin card: counts, no green ticks, no stale grey box
   const SV = req(`${SITE}/shared/steps-57-64.js`), v = SV.reportView({ outcome_data: { report: { subject: R2.subject, sections: R2.sections, built_at: "2026-11-09T18:00:00Z" } } }, {});
   if (!v.rows.every((r) => r.state === "off" && r.mark === "·") || !v.rows.some((r) => /^Work completed in Month 1 \(\d+\)$/.test(r.title))) fail(`report v2: the 62 card's section rows lack counts or still carry green ticks (${v.rows.map((r) => r.title).join(" | ")})`);
@@ -130,17 +130,19 @@ if (/still open/i.test(rep.text) && !/carries into month 2/i.test(rep.text)) fai
   if (!/comparisons: r\.comparisons, items: r\.items/.test(EX)) fail("email: the stored report doesn't keep its comparison data and items");
   // the portal, RUN: the card, the badge, the report view
   const lf = (n) => { const at = P.search(new RegExp(`\\nfunction ${n}\\(`)); if (at < 0) { console.error(`⚠️  ${n} moved`); process.exit(2); } let d = 0; for (let i = P.indexOf("{", P.indexOf(")", at)); i < P.length; i++) { if (P[i] === "{") d++; else if (P[i] === "}" && --d === 0) return P.slice(at, i + 1); } };
-  const pc = vm.createContext({ escapeHtml: (x) => String(x ?? "").replace(/</g, "&lt;"), monthDay: (v) => ({ "2026-11-09T18:00:00Z": "Nov 9" }[v] || String(v)) });
+  const pc = vm.createContext({ escapeHtml: (x) => String(x ?? "").replace(/</g, "&lt;"), escapeAttribute: (x) => String(x ?? "").replace(/"/g, "&quot;"), _m1Letter: new Map(), csCard: (o) => `<div data-cs>${o.head}|${o.side}|${o.body}</div>`, pcFold: (lab, html, attrs = "") => `<details${attrs}><summary>${lab}</summary>${html}</details>`, monthDay: (v) => ({ "2026-11-09T18:00:00Z": "Nov 9" }[v] || String(v)) });
+  // the card helpers are stubbed: this gate checks WHAT the card holds, the design is the browser gate's
   vm.runInContext(["month1SentOf", "monthlyWorkStarted", "month1ReportCardHtml"].map(lf).join("\n"), pc);
   const sentOb = { data: { tasks: { "m1.report.month1": { status: "done", auto_result: { sent_message_id: "g1", sent_at: "2026-11-09T18:00:00Z" }, outcome_data: { report: { subject: rep.subject, sections: rep.sections } } }, "m1.handoff.month2": { status: "done" } } } };
   pc.__a = sentOb; pc.__b = { data: { tasks: { "m1.report.month1": { status: "done", outcome_data: { report: { sections: rep.sections } } } } } };
   const run = (e) => vm.runInContext(e, pc);
   if (!run("month1SentOf(__a)") || run("month1SentOf(__b)") || run("month1SentOf(null)") || !run("monthlyWorkStarted(__a)") || run("monthlyWorkStarted(__b)")) fail("portal: 'sent' isn't the send's own proof (the Gmail id), or the hand-off check is wrong");
   const card = run("month1ReportCardHtml(__a)");
-  if (!/id="month1-report"/.test(card) || rep.sections.some((s) => !card.includes(s.key === "skipped" ? "Coming next" : s.title)) || /Skipped by RGA/.test(card) || !card.includes(rep.sections.find((s) => s.key === "work").lines[0]) || !/sent Nov 9/.test(card) || run("month1ReportCardHtml(__b)") !== "") fail("portal: the Reports view doesn't show every section of the stored report once it was sent (and nothing before)");
-  if (!/title: "Month 1 is done\. Your report is ready\."/.test(P) || !/\$\{m1Sent\.at \? `Sent \$\{monthDay\(m1Sent\.at\)\}\. ` : ""\}From here: a Google post and a photo each week, and review asks\. Nothing needs you right now\./.test(P) || !/btn: "Read your report", goto: "reports", scroll: "month1-report"/.test(P)) fail("portal: the 'Your next step' card doesn't read 'Month 1 is done. Your report is ready.' with 'Read your report'");
+  // client_monthly_v1 (11-9): ONE card, "Month 1 ... Sent Nov 9", and a fold that opens the LETTER (in the client's words, from the server); the stored sections are no longer dumped into the page
+  if (!/id="month1-report"/.test(card) || !/data-m1-letter/.test(card) || !/Sent Nov 9/.test(card) || /Skipped by RGA|Work completed in Month 1|<h5/.test(card) || run("month1ReportCardHtml(__b)") !== "") fail("portal: the Reports view must be one Month 1 card with a Read your report fold (and nothing before it was sent)");
+  if (!/title: "Month 1 is done\. Your report is ready\."/.test(P) || !/\$\{m1Sent\.at \? `Sent \$\{monthDay\(m1Sent\.at\)\}\. ` : ""\}Your report is under Reports\./.test(P) || /a Google post and a photo each week/.test(P) || !/btn: "Read your report", goto: "reports", scroll: "month1-report"/.test(P)) fail("portal: the 'Your next step' card doesn't read 'Month 1 is done. Your report is ready.' with 'Read your report' (and never promises a weekly post and photo)");
   if (!/monthlyWorkStarted\(onboarding\) \? "Monthly work" : "Setup in progress"/.test(P) || !/renderStatusPill\(single, sMonths, single\.client\?\.client_portal_stage, onboardingByClient\[single\.client_id\]/.test(P)) fail("portal: the badge doesn't become 'Monthly work' once the hand-off step is done");
-  if (!/\^#month1-report\$/.test(P) || !/function openMonth1Report\(\)/.test(P) || !/month1ReportCardHtml\(onboarding\)/.test(P)) fail("portal: the email's #month1-report link doesn't open Reports on the report");
+  if (!/\^#month1-report\$/.test(P) || !/function openMonth1Report\(\)/.test(P) || !/month1ReportCardHtml\(onboarding/.test(P)) fail("portal: the email's #month1-report link doesn't open Reports on the report");
 }
 // 🔄 10-26 (steps_6_20_clean_v1, step 15 waiting): the band says "Opens about <date>"
 if (!/title: end \? `Opens about \$\{/.test(P) || !/Anything still open carries into Month 2; nothing waits for it/.test(P)) fail("step 15: the portal still says the call waits until everything is done");
@@ -168,8 +170,8 @@ if (!/\|You gave us your hours\|/.test(h5) || !/\|Finished by you\|/.test(h5)) f
 if (!/\|Finished with RGA\|/.test(h3) || /finished \||not recorded|undefined|NaN|Invalid/i.test(h3)) fail(`fallback: a missing date is invented, or reads "not recorded" (${h3})`);
 if (!/fillBlankDoneRows\(listEl, numbered\);/.test(P) || !/if \(\(c\.textContent \|\| ""\)\.replace\(\/\\s\+\/g, " "\)\.trim\(\)\.length >= 25\) continue;/.test(P)) fail("fallback: the list no longer fills blank done rows (measured like the walk)");
 // month1_email_v1 (11-9 review): the portal's report view never shows RGA's skip reasons or who skipped; it reads "Coming next"
-{ const PJ = fs.readFileSync(path.join(SITE, "portal/portal.js"), "utf8");
-  if (!/s\.key === "skipped" \? \{ \.\.\.s, title: "Coming next", lines: nextLines\(s\.lines\) \}/.test(PJ)) fail("portal report: 'Skipped by RGA' with our internal reasons is back in the client's view"); }
+{ const PJ = fs.readFileSync(path.join(SITE, "shared/client-monthly.js"), "utf8");
+  if (!/s\.key === "open" \|\| s\.key === "skipped"\) continue;/.test(PJ) || !/title: "Coming next"/.test(PJ)) fail("portal report: 'Skipped by RGA' with our internal reasons is back in the client's view (the letter turns open and skipped into one Coming next, in client words)"); }
 // month1_email_v1 (11-9 review): the email matches the approved mockup's layout: three number tiles side by side, round check badges, blue "+ N more"
 { const ME = fs.readFileSync(path.join(SITE, "netlify/functions/_month1-email.js"), "utf8");
   if (!/<tr>\$\{numbers\.map\(numTile\)\.join\(""\)\}<\/tr>/.test(ME)) fail("email: the three numbers aren't tiles side by side (the approved layout)");

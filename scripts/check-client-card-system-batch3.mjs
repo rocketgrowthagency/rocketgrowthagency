@@ -273,7 +273,13 @@ const textOf = (h) => h.replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(
   const D0 = { key: "m2.exec.gbp_posts", prepared_at: ago(1), approval: null };
   const row = (d) => { ctx.__d = d; return run("ogPostsRow(__d)"); };
   const dr = row({ tasks: {}, deliverables: [] });
-  if (!new RegExp(`RGA is writing ${m}'s 4 posts`).test(textOf(dr)) || !/RGA is on it/.test(dr)) fail("posts: no draft isn't \"RGA is writing\"");
+  // client_monthly_v1 (11-9): the number is the client's own choice, never a fixed 4: none chosen = "this month's posts"; 4 = "about 4 posts for <month>"; 0 = no drafting
+  if (!new RegExp(`RGA is writing ${m}'s posts`).test(textOf(dr)) || !/RGA is on it/.test(dr) || /'s 4 posts/.test(textOf(dr))) fail("posts: no draft isn't \"RGA is writing\" (and never a fixed 4)");
+  { const w = (n) => { ctx.__d = { tasks: { "m2.exec.gbp_posts": { posts_wanted: n } }, deliverables: [] }; return textOf(run("ogPostsRow(__d)")); };
+    if (!new RegExp(`RGA is writing about 4 posts for ${m}`).test(w(4))) fail(`posts: a client who chose 4 reads "${w(4).slice(0, 120)}"`);
+    if (!new RegExp(`RGA is writing 2 posts for ${m}`).test(w(2))) fail(`posts: a client who chose 2 reads "${w(2).slice(0, 120)}"`);
+    if (!new RegExp(`RGA is writing 1 post for ${m}`).test(w(1))) fail(`posts: a client who chose 1 reads "${w(1).slice(0, 120)}"`);
+    if (!/You chose no posts this month/.test(w(0)) || /RGA is writing/.test(w(0))) fail(`posts: a client who chose none is told RGA is writing: "${w(0).slice(0, 120)}"`); }
   // a draft RGA hasn't cleared isn't "ready": the deliverable is the truth, not the task
   const un = row({ tasks: { "m2.exec.gbp_posts": { status: "done", outcome_data: { posts: [1, 2, 3, 4] } } }, deliverables: [] });
   if (/ready for your approval/.test(un)) fail("posts: a draft RGA hasn't cleared reads as ready for approval");

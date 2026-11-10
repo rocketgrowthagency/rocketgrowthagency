@@ -2,6 +2,7 @@
 // applies the mutations) and check-every-mutation-still-applies.mjs (which checks every anchor still matches daily).
 // A key → a path in the website repo, or "scraper:<path>" in this repo, or null (the gate itself is the target).
 export const FILES = {
+  clientmonthly: "shared/client-monthly.js",   // client_monthly_v1 (11-9): the client-words rules + the between-months state, one file the server and the portal both read
   stepwhat: "data/playbooks/what-it-does.json",
   stepmapbuild: "scraper:scripts/build-step-map.mjs",   // the sheet of every step (Chris 11-1)
   // client_portal_slim_v1 + client_portal_slim_visual_v1 (approved 11-4): managed mode's numbering

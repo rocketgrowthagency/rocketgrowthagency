@@ -134,9 +134,9 @@
  ],
  [
   "the Month 1 report gives the bare 20+ title",
-  "month1report",
-  "`${w.fewer || w.title}",
-  "`${w.title}",
+  "clientmonthly",
+  ": (w.fewer || clientWords(w.step)) }));",
+  ": clientWords(w.step) }));",
   1
  ],
  [

@@ -190,7 +190,7 @@
  ],
  [
   "access logistics count as work",
-  "month1report",
+  "clientmonthly",
   "const NOT_WORK = /^m1\\.(close|kickoff|handoff|audit|report|call|access)\\./;",
   "const NOT_WORK = /^m1\\.(close|kickoff|handoff|audit|report|call)\\./;",
   1

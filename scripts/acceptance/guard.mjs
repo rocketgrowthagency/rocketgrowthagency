@@ -21,8 +21,8 @@ export const READ_ONLY_FN_POSTS = {
   "portal-feed": onlyKeys(["client_id"]),
   // portal-google-numbers.js → _google-numbers.googleNumbers: "this file never writes" the cache; live Google reads only.
   "portal-google-numbers": onlyKeys(["client_id", "months", "skip_searches"]),
-  // monthly-reports.js — lists the kept reports, or one report by report_id; no write path.
-  "monthly-reports": onlyKeys(["client_id", "report_id"]),
+  // monthly-reports.js — lists the kept reports, or one report by report_id, or the Month 1 letter (month1_letter, client_monthly_v1: read-only); no write path.
+  "monthly-reports": onlyKeys(["client_id", "report_id", "month1_letter"]),
   // portal-cancel.js — action "read" returns viewFor(); "notice" writes the notice and "files" signs a link, so both stay blocked.
   "portal-cancel": (b) => onlyKeys(["client_id", "action"])(b) && b.action === "read",
   // portal-quarter-answer.js — kind "pending" only reads what waits on the client; "win"/"profile" save an answer.

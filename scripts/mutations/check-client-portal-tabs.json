@@ -37,7 +37,7 @@
  [
   "posts are dropped",
   "portal",
-  "      + lr(\"Google posts\", \"RGA writes 4. Nothing posts until you approve.\", \"Every month\")\n",
+  "      + lr(\"Google posts\", \"RGA writes the number you choose. Nothing posts until you approve.\", \"Every month\")\n",
   "",
   1
  ],

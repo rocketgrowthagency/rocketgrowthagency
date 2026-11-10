@@ -108,7 +108,7 @@ try {
       if (!a || a.asks.join("|") !== "Can't make a call this month? Skip this month") fail(`${L}: the ask isn't "Can't make a call this month? Skip this month" (${JSON.stringify(a && a.asks)})`);
       await press(h, "m2.call.monthly", "[data-fw-open]");
       a = await look(h, "m2.call.monthly");
-      const W = { h3: "Skip this month's call?", lis: ["Your November report stays in Reports.", "RGA is told, and can still ask you for a call.", "Next month's call opens after your next report, about Jan 5."], btns: ["Skip this month", "Keep the call"] };
+      const W = { h3: "Skip this month's call?", lis: ["Your November report stays in Reports.", "RGA is told, and can still ask you for a call.", "Next month's call opens after your next report, early January."], btns: ["Skip this month", "Keep the call"] };
       if (!a.sheet || !a.sheet.shown || !a.sheet.inCard || a.sheet.h3 !== W.h3 || a.sheet.lis.join("|") !== W.lis.join("|") || a.sheet.btns.join("|") !== W.btns.join("|")) fail(`${L}: the sheet isn't the approved one ${JSON.stringify(a.sheet)}`);
       if (a.band !== "Your report is out · pick a time" || a.side !== "November report" || !a.text.includes("Your November report · emailed Dec 5")) fail(`${L}: the card around the sheet reads «${a.band}» «${a.side}»`);
       const times = await h.page.evaluate((R) => { const r = [...document.querySelectorAll(R)].find((x) => x.offsetParent !== null); const w = r && r.querySelector("[data-fw-work]"); return w ? !w.hidden : null; }, ROW("m2.call.monthly"));

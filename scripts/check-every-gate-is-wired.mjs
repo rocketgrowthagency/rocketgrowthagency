@@ -460,6 +460,8 @@ const NOT_PREFLIGHT = {
   'check-monthly-weekly.mjs': 'the WEBSITE repo\'s Every week (monthly_s2_weekly_v1, 11-9), fakes only (a database behind a fake fetch, a fake Google); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-monthly-quarter.mjs': 'the WEBSITE repo\'s Every quarter (monthly_s4_quarterly_v1, 11-9), fakes only (no network, no email, no search, no Google write); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-monthly-before-january.mjs': 'the WEBSITE repo\'s Monthly before January (monthly_before_january_v1, 11-9), fakes only (no network, no email, no search, no Google write); run by daily-health-check.sh; it reads no video pipeline output.',
+  'check-client-monthly.mjs': 'the WEBSITE repo\'s client monthly side (client_monthly_v1, 11-9), source + fakes only (no network, no email, no search, no Google write); it proves itself against the before state; run by daily-health-check.sh; it reads no video pipeline output.',
+  'check-client-monthly-in-a-browser.mjs': 'client-portal gate, reads the live portal as RGA in chromium (read-only sign-in, writes blocked by acceptance/guard.mjs) with THIS repo\'s portal files: run after each portal deploy with node --env-file=.env scripts/check-client-monthly-in-a-browser.mjs (exit 2 = flaky, retry); it needs the live site so it cannot run pre-flight; a client\'s Ongoing work card cannot make a video unsafe',
   'check-monthly-close.mjs': 'the WEBSITE repo\'s Close the month (monthly_s5_close_v1, 11-9), fakes only (no network, no email, no model); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-monthly-once.mjs': 'the WEBSITE repo\'s Once a month (monthly_s3_monthly_v1, 11-9), fakes only (no network, no paid scan); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-monthly-weekly.mjs': 'the WEBSITE repo\'s Every week (monthly_s2_weekly_v1, 11-9), fakes only (a database behind a fake fetch, a fake Google); run by daily-health-check.sh; it reads no video pipeline output.',
@@ -744,6 +746,10 @@ console.log(`  ✓ every gate that reads the site can be pointed at a copy, so i
     "check-every-identity-points-at-rga.mjs":
       "reads live credential state (git, ssh, gh, netlify, gcloud); no file for a mutation to change. "
       + "Proves itself by parsing known output and exiting 2 when its own reading is wrong.",
+    "check-client-monthly.mjs":
+      "runs its own source checker on LIVE_BEFORE (today's strings, which it MUST fail), on an AFTER fixture and on the real files, and --against=<revision> runs it on the build's before state; it exits 1 when the checker cannot tell before from after (the 11-9 build proved it fails on 380620b1 in 31 ways).",
+    "check-client-monthly-in-a-browser.mjs":
+      "reads the live portal as the walk client in chromium with this repo's portal files, so no file copy can be mutated; the 11-9 build proved it fails on the old portal.js (CM_DIR + SITE_DIR on the pre-build checkout: 30+ failures), and a page that does not load exits 2, never green.",
   };
   for (const [g, why] of Object.entries(SELF_PROVING)) {
     if (!gates.includes(g)) { fail(`SELF_PROVING names ${g}, which does not exist`); continue; }

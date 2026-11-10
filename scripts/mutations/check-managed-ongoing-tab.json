@@ -51,7 +51,7 @@
  [
   "the report line promises the month just ended",
   "portal",
-  "\"Your monthly report\", \"Emailed on the 5th.\", \"Every month\")",
+  "\"Your monthly report\", \"RGA checks it and sends it early next month.\", \"Every month\")",
   "\"Your monthly report\", \"Emailed on the 5th, for the month just ended.\", \"Every month\")",
   1
  ],
@@ -212,8 +212,8 @@
  [
   "step 12 waits on the 3rd again",
   "portal",
-  "side: `about ${escapeHtml(monthDay(ogReportOn5()))}`,\n      body: csNote(\"It's emailed on the 5th.",
-  "side: `about ${escapeHtml(monthDay(ogReportAbout()))}`,\n      body: csNote(\"It's emailed on the 5th.",
+  "side: escapeHtml(ogReportEarly()),\n      body: csNote(\"RGA checks it and sends it early next month.",
+  "side: `about ${escapeHtml(monthDay(ogReportAbout()))}`,\n      body: csNote(\"RGA checks it and sends it early next month.",
   1
  ],
  [

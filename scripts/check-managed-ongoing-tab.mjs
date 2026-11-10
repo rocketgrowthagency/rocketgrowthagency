@@ -94,8 +94,8 @@ try {
         "9Your numbers Two numbers, about a minute. “Not sure” is a fine answer. Every 3 months", "10New photos When you have them. No monthly quota. Suggested",
         "11A video this quarter From RGA's script, about 60 seconds on your phone. Every 3 months · optional",
         "12Monthly check-in call Your report first, then about 20 minutes on Google Meet. Bring one job you're proud of. Every month",
-        "Done by RGA this month", "Google posts RGA writes 4. Nothing posts until you approve. Every month", "Review replies RGA drafts each one. You approve it first. As reviews come in",
-        "What we watched Your Google profile, website, speed and leads, from the checks that really ran. Every month", "Your monthly report Emailed on the 5th. Every month", "Nothing here needs you yet."]) has(t, w, L);
+        "Done by RGA this month", "Google posts RGA writes the number you choose. Nothing posts until you approve. Every month", "Review replies RGA drafts each one. You approve it first. As reviews come in",
+        "What we watched Your Google profile, website, speed and leads, from the checks that really ran. Every month", "Your monthly report RGA checks it and sends it early next month. Every month", "Nothing here needs you yet."]) has(t, w, L);
       for (const w of ["month just ended", "A customer win story", "A short video", "Your check-in call", "(you chose)", "5 new photos", "Your review requests are how the first ones come in"]) hasNot(t, w, L);
       const look = await h.page.evaluate(`(() => { const t = ${TAB}; const rv = t.querySelector('#step-row-og-reviews'); const card = rv && rv.querySelector('.pm-cs-card'); const pill = rv && rv.querySelector('.pm-pill');
         return { cust: !!t.querySelector('#step-row-og-customers'), cardTone: card && card.className, rowTone: rv && rv.className, pill: pill && pill.className, cards: t.querySelectorAll(':scope > .pm-cs .pm-cs-card').length, nos: [...t.querySelectorAll('.pm-og-lr .no')].map((n) => n.textContent) }; })()`);
@@ -183,7 +183,7 @@ try {
       for (const w of ["Optional", "usually the same day", "5 new photos", "5 more"]) hasNot(r10 || "", w, `${L} step 10`);
       // step 12, before the 5th's run
       const r12 = await rowText(h, "m2.call.monthly");
-      for (const w of ["First: your October report", "about Nov 5", "It's emailed on the 5th. Then you pick a time for the call here.", "Bring one job you're proud of", "What they needed, what you did, how it turned out", "Send it in writing instead"]) has(r12 || "", w, `${L} step 12`);
+      for (const w of ["First: your October report", "early November", "RGA checks it and sends it early next month. Then you pick a time for the call here.", "Bring one job you're proud of", "What they needed, what you did, how it turned out", "Send it in writing instead"]) has(r12 || "", w, `${L} step 12`);
       hasNot(r12 || "", "RGA writes it up as a Google post", `${L} step 12`);
       // the panel: last, four lines
       const pan = await h.page.evaluate(`(() => { const t = ${TAB}; const p = t.querySelector('.pm-og-rga'); const last = [...t.children].filter((c) => !c.hidden && c.offsetParent !== null).pop();
@@ -192,7 +192,7 @@ try {
       else {
         if (!pan.last) fail(`${L}: the Done by RGA panel isn't at the bottom of the tab`);
         if (pan.n !== 4) fail(`${L}: the panel has ${pan.n} lines; approved 4 (posts, replies, what we watched, the report)`);
-        for (const w of ["Done by RGA this month", "you approve what goes public", "Google posts · RGA is writing November's 4", "Review replies · none to answer yet", "What we watched · so far this month", "Your Google profile: checked nightly, nothing changed", "Your monthly report · about Nov 5", "Emailed on the 5th."]) has(pan.text, w, `${L} panel`);
+        for (const w of ["Done by RGA this month", "you approve what goes public", "Google posts · RGA is writing this month's posts", "Review replies · none to answer yet", "What we watched · so far this month", "Your Google profile: checked nightly, nothing changed", "Your monthly report · early December", "RGA checks it and sends it early next month. Every report stays under Reports."]) has(pan.text, w, `${L} panel`);
         if (pan.band) fail(`${L}: the panel shows an approval line with nothing waiting`);
       }
       for (const w of ["What we watched for you", "Google posts for this month"]) { const rows = await h.page.evaluate(`(() => [...${TAB}.querySelectorAll('.pm-og-row')].filter((r) => !r.closest('.pm-og-bare')).map((r) => r.innerText).join(" "))()`); if (rows.includes(w)) fail(`${L}: "${w}" is still its own row`); }
@@ -239,7 +239,9 @@ try {
       const L = "managed Monthly, Nov 6";
       for (const id of ["m2.call.monthly", "m2.exec.review_push", "m2.exec.gbp_photos"]) await openRow(h, id);
       const r12 = await rowText(h, "m2.call.monthly");
-      for (const w of ["Waits on RGA", "Your report didn't go out on the 5th", "RGA is on it", "The call opens when it's sent. Nothing needed from you."]) has(r12 || "", w, `${L} step 12`);
+      // client_monthly_v1 (11-9): the report never sends itself on the 5th. "Early" runs to the 10th, so on Nov 6 the call still waits on October's report, early November
+      for (const w of ["First: your October report", "early November", "RGA checks it and sends it early next month."]) has(r12 || "", w, `${L} step 12`);
+      for (const w of ["on the 5th", "didn't go out"]) hasNot(r12 || "", w, `${L} step 12`);
       const pan = await h.page.evaluate(`(() => { const p = ${TAB}.querySelector('.pm-og-rga'); const b = p && p.querySelector('.pm-cs-st.you'); return p ? { band: b ? b.innerText.replace(/\\s+/g, " ").trim() : "", first: !!b && p.querySelector('.pm-og-rh').nextElementSibling === b } : null; })()`);
       if (!pan || !pan.band.includes("4 posts for your approval") || !pan.band.includes("Open For your approval") || !pan.first) fail(`${L}: an approval waiting isn't one amber line at the top of the panel (${JSON.stringify(pan)})`);
       const r8 = await rowText(h, "m2.exec.review_push");

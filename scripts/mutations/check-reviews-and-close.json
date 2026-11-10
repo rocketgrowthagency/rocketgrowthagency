@@ -90,7 +90,7 @@
  [
   "the search baseline names no period",
   "month1report",
-  "Google Search${period ? ` (${period})` : \"\"}:",
+  "Google Search ${period}:",
   "Google Search:",
   1
  ],
@@ -111,8 +111,8 @@
  [
   "a skip with no reason is a bare title",
   "month1report",
-  "if (!why) return `${s.clientLabel || s.title}: skipped for now; we'll come back to it`;",
-  "if (!why) return `${s.clientLabel || s.title}`;",
+  "if (!why) return `${carriedWords(s)}: skipped for now; we'll come back to it`;",
+  "if (!why) return `${carriedWords(s)}`;",
   1
  ],
  [
@@ -173,21 +173,21 @@
  ],
  [
   "a step reads as its internal title in the email",
-  "month1report",
+  "clientmonthly",
   "(w.fewer || clientWords(w.step))",
   "(w.fewer || w.step.title)",
   1
  ],
  [
   "a carried item shows the skip reason's company, not client words",
-  "month1report",
+  "clientmonthly",
   "`${carriedWords(s)}: later`",
   "`${s.title}: ${(tasks && tasks[s.id] && tasks[s.id].skip_reason) || \"later\"}`",
   1
  ],
  [
   "the directory steps stop collapsing",
-  "month1report",
+  "clientmonthly",
   "if (DIRECTORY_STEPS.test(s.id)) { directories = true; continue; }",
   "",
   1
@@ -256,10 +256,10 @@
   1
  ],
  [
-  "the report view drops its sections",
+  "the Month 1 card loses its Read your report fold",
   "portal",
-  "${rep.sections.map(sec).join(\"\")}",
-  "",
+  "body: pcFold(\"Read your report\", `<div data-m1-letter-body></div>`, ` data-m1-letter`) })}</div>`;",
+  "body: \"\" })}</div>`;",
   1
  ],
  [

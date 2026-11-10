@@ -257,7 +257,10 @@ const submitted = (extra = {}) => ({ state: "submitted", at: iso(NOW - 3 * DAY),
   const sec = (k) => ((r.sections || []).find((x) => x.key === k) || { lines: [] }).lines.join("\n");
   if (!/Build industry-specific citations \(Nov 12\): the client doesn't want agency directories/.test(sec("skipped"))) fail(`report: a skipped step 53 isn't listed with its reason: ${sec("skipped")}`);
   if (/industry-specific/.test(sec("work"))) fail("report: a skipped step is listed as work done");
-  if (!/Build top-10 priority citations/.test(sec("work"))) fail("report: a done step 52 isn't in the work");
+  // client_monthly_v1 (11-9): the stored report reads in the client's words (the playbook clientFeed line), never the admin title
+  const feed52 = (pb.find((x) => x.id === "m1.cit.priority_top10") || {}).clientFeed;
+  if (!feed52 || !sec("work").includes(feed52)) fail("report: a done step 52 isn't in the work, in the client's words");
+  if (/Build top-10 priority citations/.test(sec("work"))) fail("report: the work lists step 52 by its admin title");
 }
 
 // ── 9 · the runners: 52/53 data only (53 never calls a model), 55's places from search, 54's pack ──
