@@ -787,7 +787,20 @@ run check-rank-tracking-sane.mjs       "every tracked grid measures a real posit
 run check-absent-rank-is-never-a-position.mjs "a business absent from the grid never renders as a rank"
 run check-almanac-accruing.mjs         "the local-search almanac still reflects its corpus"
 run check-no-two-clients-share-a-google-property.mjs "no client reports another business's Google data"
-run_args check-no-duplicate-google-listing.mjs --all "no client has a SECOND Google listing splitting its ranking signals"
+# 🔴 11-10 SERPAPI BUDGET: this check spends a LIVE Google Maps search per real client (plus a place lookup per suspected duplicate), and
+# it used to run every morning. A duplicate listing changes rarely, so it now runs WEEKLY (a stamp file, 7 days) and the other six
+# mornings spend nothing. It runs through the metered wrapper (consumer dupe-listing-health-check, client work).
+_dup_stamp="output/.cache/dup-listing-weekly.stamp"
+if [ -f "$_dup_stamp" ] && [ -z "$(find "$_dup_stamp" -mtime +6 2>/dev/null)" ]; then
+  say "  ⏭  $(printf '%-38s' 'check-no-duplicate-google-listing.mjs') weekly - last live Maps check is under 7 days old, no search spent today"
+else
+  _dup_f0=$FAIL; _dup_i0=$INDET
+  run_args check-no-duplicate-google-listing.mjs --all "no client has a SECOND Google listing splitting its ranking signals"
+  [ "$FAIL" -eq "$_dup_f0" ] && [ "$INDET" -eq "$_dup_i0" ] && { mkdir -p output/.cache; touch "$_dup_stamp"; }
+fi
+# 🔴 11-10 SerpAPI: the free account read (saves the snapshot, raises the 80% / projected-to-run-out alert, retracts it when healthy) and its gate.
+run_args serpapi-budget.mjs preflight "SerpAPI month is on track (alerts at 80% used or projected to run out; stops nothing above the client reserve)"
+run check-serpapi-budget.mjs "SerpAPI guards: search memory, one query, reserve, meter, alerts, dead-night verdict (fakes only, can fail)"
 run check-no-client-record-was-lost.mjs "NO CLIENT RECORD WAS LOST: every recorded answer, choice and done mark is still on its step; nothing vanished since yesterday's snapshot (Chris 10-20)"
 run check-client-dedupe-gate.mjs       "an archived client cannot be silently re-created"
 run retry-place-id-backfill.mjs        "every client has a Google place id (strongest dedupe key)"

@@ -28,6 +28,9 @@
 //   2  could not tell — no coordinates, no stored place key, no SerpApi key, API error, zero results
 
 import "dotenv/config";
+import { createRequire as __cr } from "node:module";
+// 11-10: every SerpAPI call goes through the metered wrapper (ledger + reserve). This is CLIENT work, so it may use the reserve.
+const { serpapiRequest } = __cr(import.meta.url)("../lib/serpapi-rate-aware.cjs");
 
 // 🔑 THE SITE PATH IS A DEFAULT, NOT A CONSTANT — so this gate can be pointed at a scratch
 // copy and its mutations actually run. → feedback_a_gate_that_cannot_fail
@@ -166,10 +169,11 @@ for (const c of clients) {
 
   let data;
   try {
-    const res = await fetch(url);
-    data = await res.json();
-    // 🔴 A non-200 or an error payload is NOT "no duplicate". It is "we could not look."
-    if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
+    const { res, stop } = await serpapiRequest(url.toString(), { consumer: "dupe-listing-health-check", ref: c.business_name, clientWork: true });
+    // 🔴 A stop, a non-200 or an error payload is NOT "no duplicate". It is "we could not look."
+    if (!res) throw new Error(`no answer (${stop || "error"})`);
+    data = res.data || {};
+    if (res.status >= 400 || data.error) throw new Error(data.error || `HTTP ${res.status}`);
   } catch (e) {
     console.log(`[dupe] ? ${c.business_name} — INDETERMINATE: Maps search failed (${e.message})`);
     indeterminate++;
@@ -250,9 +254,9 @@ async function stillResolvesById(placeId, key) {
     u.searchParams.set("type", "place");
     u.searchParams.set("place_id", placeId);
     u.searchParams.set("api_key", key);
-    const r = await fetch(u);
-    if (!r.ok) return null;
-    const d = await r.json();
+    const { res: r } = await serpapiRequest(u.toString(), { consumer: "dupe-listing-by-id", ref: placeId, clientWork: true });
+    if (!r || r.status >= 400) return null;
+    const d = r.data || {};
     // 🔑 "Google hasn't returned any results" for a place id = Google no longer knows it (gone), not "couldn't look" (10-15)
     if (d.error) return /not found|no results|hasn't returned any results/i.test(String(d.error)) ? false : null;
     return !!(d.place_results && Object.keys(d.place_results).length);

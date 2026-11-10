@@ -208,6 +208,8 @@ except Exception:
   if [ "$_prior_verif_fail" -gt 0 ] && [ -f "output/Step 2.5 (Audit)/${RUN}/audit-findings.json" ]; then
     say "  ↻ prior 6/6 failure (${_prior_verif_fail}×) — discarding the cached audit so reviews are re-scraped"
     rm -f "output/Step 2.5 (Audit)/${RUN}/audit-findings.json"
+    # 11-10: this is ONE targeted re-read of ONE lead (step 2.5 only; steps 1-2 are never re-run here). It is counted in the SerpAPI ledger.
+    node scripts/serpapi-budget.mjs note --consumer audit-reread --ref "$SLUG" >/dev/null 2>&1 || true
   fi
 
   # step-2.5 audit — reuse if today's already exists, else fresh (the voiceover needs its findings)

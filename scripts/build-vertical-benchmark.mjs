@@ -99,7 +99,7 @@ async function fetchSerpApiLeads(searchTerm) {
   const { createRequire } = await import('node:module');
   const require = createRequire(import.meta.url);
   const { serpapiGetRateAware } = require('../lib/serpapi-rate-aware.cjs');
-  const res = await serpapiGetRateAware(`https://serpapi.com/search?${params}`);
+  const res = await serpapiGetRateAware(`https://serpapi.com/search?${params}`, { consumer: 'vertical-benchmark', ref: searchTerm });
   if (!res) {
     console.warn(`   [serpapi] request failed (network or non-rate-limit error)`);
     return [];

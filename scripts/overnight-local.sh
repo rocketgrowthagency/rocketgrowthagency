@@ -363,6 +363,11 @@ fi
 # parked by a bug we later fixed stays dead forever. This gives each parked lead exactly ONE more attempt,
 # and ONLY when the capture/gate code has actually changed since the last parole (git commit time of
 # step-3 / build-video-landing / check-video-visual / step-6). No code change = no-op, so it cannot churn.
+# 🔴 11-10 SERPAPI BUDGET, ONCE AT THE START OF THE NIGHT: read the free account.json, save the snapshot the search wrapper enforces,
+# and judge the month. It ALERTS (reports/alerts + macOS + SKIPPED-NIGHTS.log) when 80% is used or the remaining nights cannot be
+# covered - and it NEVER stops a normal night. Below the 250 client reserve each search's own pre-flight stops it and leads are
+# marked "not searched". scripts/serpapi-budget.mjs - memory project_serpapi_budget.
+node scripts/serpapi-budget.mjs preflight 2>&1 | tee -a "$LOG" || true
 echo ">>> parole: re-trying leads parked before the last capture-code fix" | tee -a "$LOG"
 node scripts/parole-permafails.mjs --apply 2>&1 | tee -a "$LOG" || true
 
@@ -574,7 +579,7 @@ echo ">>> productivity: did the run actually build anything?" | tee -a "$LOG"
 if [ -f "$HARD_STOP_MARK" ]; then node scripts/check-run-productivity.mjs 2>&1 | tee -a "$LOG"; _prc=${PIPESTATUS[0]}
 else node scripts/check-run-productivity.mjs --heal 2>&1 | tee -a "$LOG"; _prc=${PIPESTATUS[0]}; fi
 if [ "${_prc:-0}" -ne 0 ]; then
-  echo ">>> 🔴 DEAD WINDOW detected — searches ran and produced no videos. See the cause + fix above." | tee -a "$LOG"
+  echo ">>> 🔴 DEAD WINDOW or DEAD NIGHT detected — nothing was built. See the cause + fix above." | tee -a "$LOG"
 fi
 
 echo ">>> verdict: what (if anything) needs a human" | tee -a "$LOG"

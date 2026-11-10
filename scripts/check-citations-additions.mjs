@@ -206,15 +206,16 @@ async function once({ left, tasks, client = base, claimWins = true, startFails =
       return []; } };
   return { r: await RC.recheckOnce({ clientId: "c1", trigger: "t", left, deps }), calls };
 }
-let o = await once({ left: 40, tasks: task(-100) });
+const LEFT_OK = RC.searchesFor(base) + RC.RESERVE + 19; // enough for the run plus the shared reserve, whatever it is
+let o = await once({ left: LEFT_OK, tasks: task(-100) });
 if (!o.r.ran || o.calls.starts !== 1 || o.calls.patches.length !== 1) fail(`a due client isn't started once: ${JSON.stringify(o.r)} ${o.calls.starts} starts`);
 if (!/recheck=is\.null/.test(o.calls.patches[0] && o.calls.patches[0].p)) fail("the first claim isn't conditional on no earlier recheck");
 if (o.calls.patches[0] && o.calls.patches[0].body.data.tasks["m1.audit.citations"].recheck.searches_at_most < 1) fail("the claim doesn't record the most searches it can cost");
-o = await once({ left: 40, tasks: task(-100, { recheck: { at: iso(-95) } }) });
+o = await once({ left: LEFT_OK, tasks: task(-100, { recheck: { at: iso(-95) } }) });
 if (!/recheck->>at=eq\./.test(o.calls.patches[0] && o.calls.patches[0].p)) fail("a later claim isn't conditional on the stamp it read");
-o = await once({ left: 40, tasks: task(-100), claimWins: false });
+o = await once({ left: LEFT_OK, tasks: task(-100), claimWins: false });
 if (o.r.ran || o.calls.starts) fail("a caller that lost the claim still started the run");
-o = await once({ left: 40, tasks: task(-100), startFails: true });
+o = await once({ left: LEFT_OK, tasks: task(-100), startFails: true });
 if (o.r.ran || !o.r.stamped || o.calls.starts !== 1) fail("a failed start isn't left stamped");
 o = await once({ left: null, tasks: task(-100) });
 if (o.r.ran || o.calls.patches.length || o.calls.starts) fail("with no count of searches left, it claimed or started");

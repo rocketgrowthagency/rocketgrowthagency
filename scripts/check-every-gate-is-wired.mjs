@@ -760,6 +760,8 @@ console.log(`  ✓ every gate that reads the site can be pointed at a copy, so i
       "runs its structural rules on LIVE_BEFORE (excerpts of the real pre-change code: the Mature checklist, admin-mature, the live Google read, the Advance target, 'Tell the client', the setup-era stage-6 cards), which it MUST fail, on an AFTER fixture, which it MUST pass, and on the real files; --against=<revision> reads the website at that git revision and MUST fail on main's HEAD from before the 11-10 build (ddfe1a8f); exits 2 INDETERMINATE when it cannot read; it also carries a 16-mutation suite for its runtime rules.",
     "check-client-monthly.mjs":
       "runs its own source checker on LIVE_BEFORE (today's strings, which it MUST fail), on an AFTER fixture and on the real files, and --against=<revision> runs it on the build's before state; it exits 1 when the checker cannot tell before from after (the 11-9 build proved it fails on 380620b1 in 31 ways).",
+    "check-serpapi-budget.mjs":
+      "runs every one of its 18 checks twice with FAKES ONLY (axios replaced, account.json a fixture): on this repo (all must pass) and on the pre-change commit (--against, f8f26ed1 by default), where at least 10 MUST fail, else it exits 2 INDETERMINATE; proven on 11-10 (16 of 17 fail on f8f26ed1; the 17th is the existing SERPAPI-HOLD guard that must keep holding).",
     "check-client-monthly-in-a-browser.mjs":
       "reads the live portal as the walk client in chromium with this repo's portal files, so no file copy can be mutated; the 11-9 build proved it fails on the old portal.js (CM_DIR + SITE_DIR on the pre-build checkout: 30+ failures), and a page that does not load exits 2, never green.",
   };

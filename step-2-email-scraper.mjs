@@ -20,7 +20,10 @@ const {
   siteHost: siteHostKey,
   emailRank,
 } = require('./lib/email-validation.cjs');
-const { serpapiGetRateAware, serpapiHealthCheck } = require('./lib/serpapi-rate-aware.cjs');
+const { serpapiRequest, serpapiHealthCheck } = require('./lib/serpapi-rate-aware.cjs');
+// 11-10: the email search remembers "searched, nothing found" for 90 days (lib/serpapi-memory.cjs) and runs ONE
+// SerpAPI query per business. A budget/quota stop is "NOT SEARCHED", never "no email".
+const searchMemory = require('./lib/serpapi-memory.cjs');
 
 const STEP1_DIR = path.join(process.cwd(), 'output', 'Step 1');
 const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
@@ -367,8 +370,18 @@ function buildFallbackUrls(baseUrl) {
   return urls;
 }
 
-async function discoverEmailViaSearch(siteHost, businessName, phone = '', searchTerm = '') {
+async function discoverEmailViaSearch(siteHost, businessName, phone = '', searchTerm = '', ctx = {}) {
+  // ctx.status is the honest outcome: found | none | none-free-only | memory-none | not-searched
+  ctx.status = 'none-free-only';
   if (!siteHost && !businessName) return '';
+  // SEARCH MEMORY (11-10): a business already searched with no result inside 90 days is never web-searched again.
+  const memKey = searchMemory.emailKey({ placeId: ctx.placeId, host: siteHost, name: businessName, city: ctx.city });
+  const remembered = searchMemory.recentNoEmail(memKey);
+  if (remembered) {
+    ctx.status = 'memory-none';
+    console.log(`   [email-search] SKIP "${businessName}" - searched ${remembered.ageDays.toFixed(0)}d ago, no email found (memory ${searchMemory.EMAIL_TTL_DAYS}d window, saves the searches)`);
+    return '';
+  }
   const ua = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
   // Extract vertical + city from searchTerm (e.g. "HVAC in Beverly Hills CA" → "HVAC Beverly Hills")
@@ -456,12 +469,24 @@ async function discoverEmailViaSearch(siteHost, businessName, phone = '', search
   const serpKey = process.env.SERPAPI_KEY;
   const candidates = []; // [{ email, tier, rank, source }]
 
+  // ONE paid query per business (11-10). Measured on the surviving Nov log (84 searched businesses, 23 found): the
+  // name query found most - `"<name>" email contact` 13% of the times it was tried vs host-email 9%, "@domain" 5%,
+  // brand+city 5%. So that one goes first and alone; the free DDG/Bing pass below still tries every variant.
+  // SERPAPI_EMAIL_QUERIES_MAX=N allows more (default 1). A stop (budget/quota/rate limit) is NOT "no email".
+  const serpQueries = [
+    ...(businessName ? [`"${businessName}" email contact`] : []),
+    ...(siteHost ? [`"@${siteHost}"`] : []),
+  ].slice(0, Math.max(1, Number(process.env.SERPAPI_EMAIL_QUERIES_MAX || 1)));
+  let serpCompleted = 0;
+  let serpStop = null;
   if (serpKey) {
-    for (const q of queries) {
+    for (const q of serpQueries) {
       try {
         const url = `https://serpapi.com/search?engine=google&q=${encodeURIComponent(q)}&api_key=${encodeURIComponent(serpKey)}&num=10&hl=en`;
-        const res = await serpapiGetRateAware(url);
-        if (!res) continue;
+        const { res, stop } = await serpapiRequest(url, { consumer: 'step2-email-search', ref: ctx.placeId || businessName });
+        if (stop === 'budget' || stop === 'quota' || stop === 'rate-limit') { serpStop = stop; break; }
+        if (!res) continue; // an error: neither found nor searched
+        serpCompleted++;
         // Build per-result snippet pool — each snippet is ~150-300 chars naturally,
         // so proximity check works correctly within a snippet (the att.net case).
         // Locked 2026-05-20: stringifying the whole JSON response broke proximity
@@ -534,6 +559,18 @@ async function discoverEmailViaSearch(siteHost, businessName, phone = '', search
   }
 
   if (!candidates.length) {
+    if (serpStop || (serpKey && serpCompleted === 0)) {
+      // We could not ask Google. That is NOT "no email": the lead stays unsearched and is asked again later.
+      ctx.status = 'not-searched';
+      console.log(`   [email-search] NOT SEARCHED "${businessName}" (${siteHost}) - ${serpStop ? `SerpAPI ${serpStop} stop` : 'the search call failed'}; this is not "no email", it will be searched later`);
+      return '';
+    }
+    if (serpKey && serpCompleted > 0) {
+      ctx.status = 'none';
+      searchMemory.recordNoEmail(memKey, { businessName, host: siteHost || '' });
+    } else {
+      ctx.status = 'none-free-only';
+    }
     console.log(`   [email-search] no cross-referenced email found for "${businessName}" (${siteHost})`);
     return '';
   }
@@ -541,11 +578,13 @@ async function discoverEmailViaSearch(siteHost, businessName, phone = '', search
   // Pick lowest rank (best cross-reference tier)
   candidates.sort((a, b) => a.rank - b.rank);
   const best = candidates[0];
+  ctx.status = 'found';
+  searchMemory.forgetNoEmail(memKey);
   console.log(`   [email-search] discovered ${best.email} for "${businessName}" via ${best.source} — tier=${best.tier} (rank ${best.rank})`);
   return best.email;
 }
 
-async function fetchWebsiteData(url, businessName = '', ctxPhone = '', ctxSearchTerm = '') {
+async function fetchWebsiteData(url, businessName = '', ctxPhone = '', ctxSearchTerm = '', ctx = {}) {
   const cleanWebsite = cleanUrl(url);
   const EMPTY = { facebook: '', instagram: '', linkedin: '', twitter: '', youtube: '', tiktok: '', email: '' };
   if (!cleanWebsite) return EMPTY;
@@ -595,7 +634,7 @@ async function fetchWebsiteData(url, businessName = '', ctxPhone = '', ctxSearch
   // that don't appear on the brand site itself (Mr. Speedy Plumbing case).
   if (!combined.email && (siteHost || businessName)) {
     try {
-      const discovered = await discoverEmailViaSearch(siteHost, businessName, ctxPhone, ctxSearchTerm);
+      const discovered = await discoverEmailViaSearch(siteHost, businessName, ctxPhone, ctxSearchTerm, ctx);
       if (discovered) combined.email = discovered;
     } catch (err) {
       console.log(`   [email-search] uncaught: ${err.message || err}`);
@@ -625,6 +664,7 @@ async function fetchWebsiteData(url, businessName = '', ctxPhone = '', ctxSearch
     }
   }
 
+  combined.emailSearchStatus = ctx.status || '';
   return combined;
 }
 
@@ -738,7 +778,9 @@ async function processCsv() {
           // Locked 2026-05-20.
           if (bizName) {
             try {
-              const discovered = await discoverEmailViaSearch('', bizName, bizPhone, bizSearchTerm);
+              const nsCtx = { placeId: (record['Place ID'] || record.placeId || '').trim(), city: record.City || '' };
+              const discovered = await discoverEmailViaSearch('', bizName, bizPhone, bizSearchTerm, nsCtx);
+              record['Email Search Status'] = nsCtx.status || '';
               if (discovered) {
                 record.email = discovered;
                 console.log(`Processing (${i + j + 1}/${records.length}): (no website) → search-fallback found email: ${discovered}`);
@@ -750,7 +792,7 @@ async function processCsv() {
         let result = { facebook: '', instagram: '', linkedin: '', twitter: '', youtube: '', tiktok: '', email: '' };
         for (let attempt = 0; attempt < 2; attempt++) {
           try {
-            result = await fetchWebsiteData(website, bizName, bizPhone, bizSearchTerm);
+            result = await fetchWebsiteData(website, bizName, bizPhone, bizSearchTerm, { placeId: (record['Place ID'] || record.placeId || '').trim(), city: record.City || '' });
             break;
           } catch (e) {
             if (attempt === 0) await new Promise(r => setTimeout(r, 1500));
@@ -760,6 +802,7 @@ async function processCsv() {
         for (const k of SOCIAL_KEYS) record[k] = result[k] || '';
         // Surface the mailbox-verification drop (email already cleared in result).
         if (result.emailSkipReason) record['Skip Reason'] = result.emailSkipReason;
+        record['Email Search Status'] = result.emailSearchStatus || '';
       })
     );
   }
@@ -819,10 +862,21 @@ async function processCsv() {
 
   let headers = Object.keys(records[0]).map((key) => ({ id: key, title: key }));
   const ensureField = (id) => { if (!headers.find((h) => h.id === id)) headers.push({ id, title: id }); };
-  ['email','facebook','instagram','linkedin','twitter','youtube','tiktok','Skip Reason'].forEach(ensureField);
+  ['email','facebook','instagram','linkedin','twitter','youtube','tiktok','Skip Reason','Email Search Status'].forEach(ensureField);
 
   const csvWriter = createObjectCsvWriter({ path: OUTPUT_CSV, header: headers });
   await csvWriter.writeRecords(records);
+  // Leads we could NOT search (budget / quota stop) are listed, never folded into "no email". The pipeline reads
+  // this line and re-queues the search; step 2 then asks only the ones still unsearched (memory covers the rest).
+  const notSearched = records.filter((r) => r['Email Search Status'] === 'not-searched');
+  console.log(`EMAIL_SEARCH_NOT_SEARCHED=${notSearched.length}`);
+  if (notSearched.length) {
+    try {
+      fs.mkdirSync(path.join(process.cwd(), 'output'), { recursive: true });
+      fs.appendFileSync(path.join(process.cwd(), 'output', 'serpapi-not-searched.jsonl'),
+        notSearched.map((r) => JSON.stringify({ at: new Date().toISOString(), business: r['Business Name'] || '', placeId: r['Place ID'] || '', search: r['Search Term'] || '' })).join('\n') + '\n');
+    } catch { /* best-effort */ }
+  }
   console.log(`Done! Output saved to ${OUTPUT_CSV} (${cacheHits} cache-hits saved scrape+SerpAPI calls; ${dedupHits} cross-search duplicates captured + skipped)`);
 }
 
