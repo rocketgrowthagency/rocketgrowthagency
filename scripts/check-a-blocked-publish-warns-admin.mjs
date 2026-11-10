@@ -36,7 +36,7 @@ function fakeFetch(s) {
       if (u.pathname === `/repos/${REPO}`) return r(200, JSON.stringify({ permissions: s.perm }));
       if (u.pathname === `/repos/${REPO}/git/trees/HEAD`) return r(200, JSON.stringify({ tree: Object.keys(s.repo).map((p) => ({ path: p, type: "blob" })) }));
       const m = u.pathname.match(new RegExp(`^/repos/${REPO}/contents/(.+)$`));
-      if (m) { const p = decodeURIComponent(m[1]); return p in s.repo ? r(200, s.repo[p]) : r(404); }
+      if (m) { const p = decodeURIComponent(m[1]); if (s.failRead && s.failRead.includes(p)) return r(502); return p in s.repo ? r(200, s.repo[p]) : r(404); }
       return r(404);
     }
     if (s.liveDown) throw new Error("timeout");
@@ -72,6 +72,10 @@ try {
   const prox = base(); prox.repo["v/joe/index.html"] = page("A video for Joe", '<video src="video.mp4"></video>'); prox.repo["netlify.toml"] = '[build]\n  publish = "."\n[[redirects]]\n  from = "/v/:slug/video.mp4"\n  to = "https://supa.test/storage/v1/object/public/outreach-videos/:slug/video.mp4"\n  status = 200\n  force = true\n'; prox.live = { ...prox.repo, "v/joe/video.mp4": "mp4" };
   const rp = await run(prox);
   if (byId(rp, "nothing_lost").ok !== true) fail(`a video served from storage under our own address reads as lost (${byId(rp, "nothing_lost").line})`);
+  // 11-10: GitHub refuses the netlify.toml read for a moment → the storage rule is unknown, so a served-from-storage video is "couldn't tell", never "would be lost"
+  const blip = { ...prox, failRead: ["netlify.toml"] };
+  const rb = await run(blip);
+  if (byId(rb, "nothing_lost").ok === false) fail("a passing failure to read netlify.toml reads as 'a deploy would remove' a video served from storage");
   const gone = base(); gone.repo["v/joe/index.html"] = page("A video for Joe", '<video src="video.mp4"></video>');
   if (byId(await run(gone), "nothing_lost").ok === false) fail("a file missing on BOTH sides reads as one a deploy would remove");
 
