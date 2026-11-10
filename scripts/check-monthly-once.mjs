@@ -110,17 +110,22 @@ const SESS = [
 
 // 4 the numbers
 {
-  const v = O.numbersView({ month: MONTH, now: d("2026-12-03"), cur: { views: 55, clicks: null, calls: 0 }, prev: { views: 60, clicks: 6, calls: 0 } });
+  // monthly_audit_v2 #5: "This month so far": month-to-date, partial, updated <date>; never final; not measured is never 0
+  const v = O.numbersView({ month: MONTH, now: d("2026-11-10"), soFar: { at: "2026-11-08T06:00:00Z", views: 55, clicks: null, calls: 0 } });
   const by = Object.fromEntries(v.tiles.map((t) => [t.key, t]));
-  if (by.views.text !== "55" || by.views.changeText !== "▼ 5" || by.views.cls !== "down") fail(`4 profile views vs the month before: ${JSON.stringify(by.views)}`);
-  if (by.clicks.text !== "not measured" || by.clicks.value !== null || by.clicks.changeText) fail(`4 a number Google would not give says "not measured", never 0: ${JSON.stringify(by.clicks)}`);
-  if (by.calls.text !== "0" || by.calls.changeText !== "no change") fail(`4 a measured 0 is a real 0: ${JSON.stringify(by.calls)}`);
-  const up = O.numbersView({ month: MONTH, now: d("2026-12-03"), cur: { views: 11, clicks: 5, calls: 2 }, prev: { views: 6, clicks: null, calls: 2 } });
-  if (up.tiles[0].changeText !== "▲ 5" || up.tiles[1].changeText !== "no month to compare") fail("4 up, and no comparison when the month before was not measured");
-  const early = O.numbersView({ month: MONTH, now: d("2026-11-20"), cur: { views: 5, clicks: 5, calls: 5 }, prev: {} });
-  if (!early.tiles.every((t) => /^reads Dec 2$/.test(t.text) && t.value === null) || early.done) fail(`4 before the 2nd the tiles say when the month is read: ${JSON.stringify(early.tiles.map((t) => t.text))}`);
-  const all = O.numbersView({ month: MONTH, now: d("2026-12-03"), cur: { views: null, clicks: null, calls: null }, prev: {} });
-  if (all.done || all.tone === "ok" || all.tiles.some((t) => t.text === "0")) fail("4 nothing measured is never done and never 0");
+  if (v.title !== "This month so far" || by.views.text !== "55" || by.views.changeText !== "so far") fail(`4 the tiles are the month so far: ${JSON.stringify(by.views)}`);
+  if (by.clicks.text !== "not measured" || by.clicks.value !== null) fail(`4 a number Google would not give says "not measured", never 0: ${JSON.stringify(by.clicks)}`);
+  if (by.calls.text !== "0") fail(`4 a measured 0 is a real 0: ${JSON.stringify(by.calls)}`);
+  if (!/partial/.test(v.when) || !/updated Nov 8/.test(v.when) || !/So far/.test(v.label) || !v.partial || !/not final|frozen on the 2nd/.test(JSON.stringify(v.rows))) fail(`4 the card must say so far, partial and the update date, and never read as final: ${v.when} / ${v.label}`);
+  const none = O.numbersView({ month: MONTH, now: d("2026-11-10"), soFar: null });
+  if (none.done || none.tone === "ok" || none.tiles.some((t) => t.text === "0" || t.value !== null)) fail("4 no read yet is never done and never 0");
+  const all = O.numbersView({ month: MONTH, now: d("2026-11-10"), soFar: { at: "2026-11-08T06:00:00Z", views: null, clicks: null, calls: null } });
+  if (all.done || all.tiles.some((t) => t.text === "0")) fail("4 nothing measured is never done and never 0");
+  // the rule failed on today's live state first: the old view (a final read on the 2nd, no "so far") breaks it
+  const liveBefore = { title: "Profile, search and website numbers", label: "Reads Dec 2", when: "runs itself", rows: [{ title: "The whole month is read on the 2nd" }] };
+  const soFarRule = (x) => x.title === "This month so far" && /partial/.test(x.when || "");
+  if (soFarRule(liveBefore)) fail("4 the month-so-far rule does not fire on today's live state");
+  if (!soFarRule(v)) fail("4 the month-so-far rule fails the new card");
   // the server read: an answer Google didn't give is null
   const rec = { tasks: {}, data: {}, row: { gsc_clicks: null }, prevRow: { gsc_clicks: 7 }, prevData: {}, ob: { data: {}, tasks: {} } };
   const dep = baseDeps({ rec, nums: { months: { "2026-11-01": { values: { impressions: 55, calls: 0 }, status: { impressions: "ok", calls: "could_not_read" } }, "2026-10-01": { values: { impressions: 60, calls: 1 }, status: { impressions: "ok", calls: "ok" } } } } });
@@ -193,6 +198,107 @@ const SESS = [
   if (none.done || none.tone === "ok" || /no new listing/.test(JSON.stringify(none.rows)) || !/switched off/.test(none.rows[0].title)) fail(`9 no check this month is never a clean result: ${JSON.stringify(none.rows)}`);
 }
 
+// 9b monthly_audit_v2 #6: the monthly re-read of the recorded listing links ("nothing changed" only when EVERY link was read)
+{
+  const rd = (r) => O.listingsView({ month: MONTH, checked: "2026-11-04T13:40:00Z", live: 0, later: [], on: true, reads: { at: "2026-11-09T06:00:00Z", ...r } });
+  const all = rd({ total: 5, read: 5, changed: [], failed: [] });
+  if (!/^5 of 5 listing links re-read Nov 9: nothing changed$/.test(all.rows[0].title)) fail(`9b every link read, none changed: ${all.rows[0].title}`);
+  const part = rd({ total: 5, read: 3, changed: [], failed: ["Yelp", "Bing Places"] });
+  if (/nothing changed/.test(JSON.stringify(part.rows)) || !/didn't open: Yelp, Bing Places/.test(part.rows[0].line) || !/^3 of 5/.test(part.rows[0].title)) fail(`9b a link that did not open is never "nothing changed": ${JSON.stringify(part.rows[0])}`);
+  const chg = rd({ total: 4, read: 4, changed: ["Yellow Pages"], failed: [] });
+  if (/nothing changed/.test(JSON.stringify(chg.rows)) || !/changed: Yellow Pages/.test(chg.rows[0].line)) fail("9b a changed link is named");
+  const zero = rd({ total: 0, read: 0, changed: [], failed: [] });
+  if (/nothing changed/.test(JSON.stringify(zero.rows))) fail("9b no links recorded is never nothing changed");
+  const old = O.listingsView({ month: MONTH, checked: "2026-08-04T13:40:00Z", live: 0, later: [], on: true, reads: { at: "2026-10-09T06:00:00Z", total: 5, read: 5, changed: [], failed: [] } });
+  if (/re-read/.test(JSON.stringify(old.rows))) fail("9b a read from another month is not this month's");
+  // the rule fails on today's live state (no re-read exists): the old card never says how many links were read
+  const liveBefore = O.listingsView({ month: MONTH, checked: "2026-11-04T13:40:00Z", live: 0, later: [], on: true });
+  if (/listing links? re-read/.test(JSON.stringify(liveBefore.rows))) fail("9b today's card must not claim a re-read it never made");
+  // the real re-read: free page reads, the changed / didn't-open split, no search
+  const CB = req(path.join(SITE, "netlify/functions/_citation-build.js"));
+  const pack = { name: "Pacific Plumbing", phone: "(310) 555-0100", website: "https://pacific.example" };
+  const tasks = { "m1.cit.priority_top10": { outcome_data: { pack }, listings: { a: { state: "live", live: { url: "https://dir.example/a" } }, b: { state: "live", link: "https://dir.example/b" }, c: { state: "live", link: "https://dir.example/c" }, d: { state: "submitted", link: "https://dir.example/d" } } } };
+  const urls = [];
+  const fetchFn = async (u) => { urls.push(u); const body = u.endsWith("/a") ? "<title>Pacific Plumbing</title> (310) 555-0100" : u.endsWith("/b") ? "<title>Some other company</title>" : null; if (body == null) throw new Error("timeout"); return { ok: true, status: 200, text: async () => body }; };
+  const r = await CB.readLiveLinks({ tasks, fetchFn, now: d("2026-11-09") });
+  if (r.total !== 3 || r.read !== 2 || r.changed.length !== 1 || r.failed.length !== 1) fail(`9b readLiveLinks: ${JSON.stringify(r)}`);
+  if (urls.some((u) => /serpapi|google\.com\/search/i.test(u))) fail("9b the re-read must be free page reads, never a search");
+}
+
+// 11 monthly_audit_v2 #7: Google profile watch · #8: Tracking still works
+{
+  const none = O.watchView({ read: true, watched: true, changes: [] });
+  if (none.rows[0].title !== "No outside changes this month (checked daily)" || !none.done) fail(`11 no changes: ${none.rows[0].title}`);
+  const unread = O.watchView({ read: false, watched: true, changes: [] });
+  if (unread.done || /No outside changes/.test(JSON.stringify(unread.rows)) || unread.label !== "Couldn't check") fail("11 a failed read of the watch records is never 'no outside changes'");
+  const nothingToWatch = O.watchView({ read: true, watched: false, changes: [] });
+  if (nothingToWatch.done || /No outside changes/.test(JSON.stringify(nothingToWatch.rows))) fail("11 with nothing on Google to watch it must not claim 'no outside changes'");
+  const some = O.watchView({ read: true, watched: true, changes: [{ step: "m1.gbp.hours_attributes", what: "weekly hours", at: "2026-11-05T10:00:00Z", open: true, core: false }, { step: "m1.gbp.business_facts", what: "phone number", at: "2026-11-06T10:00:00Z", open: true, core: true }] });
+  const acts = some.rows[0].actions || [];
+  if (acts.map((a) => a.label).join() !== "Accept,Put it back" || (some.rows[1].actions || []).length) fail(`11 Accept / Put it back on a hours change, none on a name / phone / address: ${JSON.stringify(some.rows.map((r) => r.actions))}`);
+  if (some.done || some.open !== 2 || some.tone !== "you") fail("11 an open change is not done");
+  const wired = fs.readFileSync(path.join(SITE, "admin/admin.js"), "utf8");
+  if (!wired.includes('"/.netlify/functions/admin-gbp-drift"') || !/action: ?|restore/.test(wired)) fail("11 Accept / Put it back must use the existing admin-gbp-drift path");
+  const T = O.trackingView;
+  const ok = T({ read: true, forms: { tracked: true, count: 4, lastAt: "2026-11-08" }, calls: { on: true, total: 7 } });
+  if (!/recorded this month: yes$/.test(ok.rows[0].title) || !ok.done) fail(`11 tracking works: ${ok.rows[0].title}`);
+  const bad = T({ read: true, forms: { tracked: true, count: 0, lastAt: "2026-10-27" }, calls: { on: true, total: 3 } });
+  if (bad.done || !/Form leads: none recorded since Oct 27/.test(bad.rows[0].line) || /: yes$/.test(bad.rows[0].title)) fail(`11 a channel that stopped is named with its date: ${bad.rows[0].title} / ${bad.rows[0].line}`);
+  const failed = T({ read: false });
+  if (failed.done || /working|: yes/.test(JSON.stringify(failed.rows)) || failed.label !== "Couldn't check") fail("11 a failed read is 'couldn't check', never 'working'");
+  const unk = T({ read: true, forms: { tracked: true, count: 2 }, calls: { on: true, total: null } });
+  if (unk.done || /: yes$/.test(unk.rows[0].title)) fail("11 a call total we could not read is never 'yes'");
+  const empty = T({ read: true, forms: { tracked: false }, calls: { on: false } });
+  if (empty.done) fail("11 with no tracking found it must not claim it works");
+  // the sections list them, runs-itself, numbered after the 25, skippable
+  const SEC = req(path.join(SITE, "shared/monthly-sections.js"));
+  for (const id of [O.ID.WATCH, O.ID.TRACKING]) { if (SEC.sectionOf(id).key !== "m2s-month") fail(`11 ${id} is not in Once a month`); if (!O.SELF.includes(id)) fail(`11 ${id} must run itself`); if (!SEC.APPENDED.includes(id)) fail(`11 ${id} must be numbered after the existing 25`); }
+  const pb = JSON.parse(fs.readFileSync(path.join(SITE, "data/playbooks/playbooks.json"), "utf8")).month2plus;
+  for (const id of [O.ID.WATCH, O.ID.TRACKING]) { const st = pb.find((x) => x.id === id); if (!st || st.type !== "auto" || st.hasRunner) fail(`11 ${id} is not an auto step with no runner in the playbook`); }
+  // the settle: the profile watch and tracking settle from their own view; a failed read settles nothing
+  const base = { tasks: {}, data: {}, row: { gsc_clicks: 4, total_calls: 6 }, prevRow: null, prevData: null, ob: { data: {}, tasks: { "m1.gbp.hours_attributes": { status: "done" } } } };
+  const dep = baseDeps({ rec: base, nums: { months: {} }, sessions: [], now: d("2026-11-10") });
+  const orig = dep.supa;
+  dep.supa = async (q) => q.startsWith("/client_activity") ? [] : q.startsWith("/client_ga4_daily") ? [{ event_name: "generate_lead", date: "2026-11-05", events: 3 }] : q.startsWith("/clients?") ? [{ call_tracking_provider: "callrail" }] : orig(q);
+  const rs = await MO.settle({ clientId: "c1", month: MONTH, deps: dep });
+  if (!rs.settled.includes(O.ID.WATCH) || !rs.settled.includes(O.ID.TRACKING)) fail(`11 the watch and tracking settle from their own reads: ${JSON.stringify(rs.settled)}`);
+  const dead = baseDeps({ rec: base, nums: { months: {} }, sessions: [], now: d("2026-11-10") });
+  dead.supa = async () => { throw new Error("down"); };
+  const rd2 = await MO.settle({ clientId: "c1", month: MONTH, deps: dead });
+  if (rd2.settled.includes(O.ID.WATCH) || rd2.settled.includes(O.ID.TRACKING)) fail("11 a failed read must never settle the watch or tracking");
+}
+
+// 12 monthly_audit_v2 #5/#6 in the settle: weekly month-to-date, monthly link re-read
+{
+  const rec = (extra = {}) => ({ tasks: { ...extra }, data: {}, row: { gsc_clicks: 4 }, prevRow: null, prevData: null, ob: { data: {}, tasks: {} } });
+  const nums = { months: { "2026-11-01": { values: { impressions: 55, calls: 2 }, status: { impressions: "ok", calls: "ok" } }, "2026-10-01": { values: {}, status: {} } } };
+  const dep = baseDeps({ rec: rec(), nums, sessions: [], now: d("2026-11-10") });
+  let links = 0; dep.readListingLinks = async () => { links++; return { total: 2, read: 2, changed: [], failed: [] }; };
+  await MO.settle({ clientId: "c1", month: MONTH, deps: dep });
+  const w = dep.writes[0] && dep.writes[0].tasks;
+  if (!w || !w[O.ID.NUMBERS].so_far || w[O.ID.NUMBERS].so_far.views !== 55 || w[O.ID.NUMBERS].so_far.clicks !== 4) fail(`12 the settle writes the month so far: ${JSON.stringify(w && w[O.ID.NUMBERS])}`);
+  if (!w || !w[O.ID.LISTINGS].link_reads || w[O.ID.LISTINGS].link_reads.total !== 2 || links !== 1) fail("12 the settle re-reads the listing links once");
+  // inside the same week / month: no second read
+  const fresh = rec({ [O.ID.NUMBERS]: { so_far: { at: "2026-11-08T06:00:00Z", views: 1, clicks: 1, calls: 1 } }, [O.ID.LISTINGS]: { link_reads: { at: "2026-11-02T06:00:00Z", total: 1, read: 1, changed: [], failed: [] } } });
+  const dep2 = baseDeps({ rec: fresh, nums, sessions: [], now: d("2026-11-10") }); let again = 0; dep2.readListingLinks = async () => { again++; return { total: 9, read: 9, changed: [], failed: [] }; };
+  await MO.settle({ clientId: "c1", month: MONTH, deps: dep2 });
+  const w2 = dep2.writes[0] && dep2.writes[0].tasks;
+  if (again || (w2 && w2[O.ID.NUMBERS].so_far.at !== "2026-11-08T06:00:00Z")) fail("12 a read from this week / this month is not repeated");
+  // a week later it refreshes
+  const dep3 = baseDeps({ rec: fresh, nums, sessions: [], now: d("2026-11-16") });
+  await MO.settle({ clientId: "c1", month: MONTH, deps: dep3 });
+  const w3 = dep3.writes[0] && dep3.writes[0].tasks;
+  if (!w3 || w3[O.ID.NUMBERS].so_far.views !== 55) fail("12 the numbers refresh a week later");
+  // a skipped step stays skipped and is not read; a failed numbers read writes no zero
+  const dep4 = baseDeps({ rec: rec({ [O.ID.NUMBERS]: { status: "skipped" } }), nums, sessions: [], now: d("2026-11-10") });
+  await MO.settle({ clientId: "c1", month: MONTH, deps: dep4 });
+  if (dep4.writes[0] && dep4.writes[0].tasks[O.ID.NUMBERS].so_far) fail("12 a skipped step is not read");
+  const dep5 = baseDeps({ rec: rec(), nums: { months: {} }, sessions: [], now: d("2026-11-10") });
+  await MO.settle({ clientId: "c1", month: MONTH, deps: dep5 });
+  const w5 = dep5.writes[0] && dep5.writes[0].tasks;
+  if (w5 && w5[O.ID.NUMBERS] && w5[O.ID.NUMBERS].so_far && w5[O.ID.NUMBERS].so_far.views === 0) fail("12 a number Google did not give is never written as 0");
+}
+
 // 10 the settle
 function baseDeps({ rec, nums = { months: {} }, sessions = [], events = [], now = d("2026-12-03"), locked = KW, onWrite } = {}) {
   const writes = [];
@@ -230,7 +336,7 @@ function baseDeps({ rec, nums = { months: {} }, sessions = [], events = [], now 
   broken.now = () => d("2026-11-10");
   broken.supa = async () => { throw new Error("down"); };
   const b = await MO.settle({ clientId: "c1", month: MONTH, deps: broken });
-  if (b.settled.includes(O.ID.SCANS) || b.settled.includes(O.ID.LISTINGS) || b.settled.includes(O.ID.NUMBERS)) fail("10 a failed read must never settle a step");
+  if (b.settled.includes(O.ID.SCANS) || b.settled.includes(O.ID.LISTINGS) || b.settled.includes(O.ID.NUMBERS)) fail("10 a failed read must never settle a step: " + JSON.stringify(b.settled));
   // a closed month refuses (writeStepTasks throws the closed error)
   const closed = baseDeps({ rec, nums, sessions: SESS.slice(0, 3), onWrite: () => { throw Object.assign(new Error("This month is closed."), { closedMonth: true }); } });
   let refused = false; try { await MO.settle({ clientId: "c1", month: MONTH, deps: closed }); } catch (err) { refused = !!err.closedMonth; }

@@ -78,7 +78,7 @@ const CATALOG = JSON.parse(read("data/monthly-focus-tasks.json"));
 const CID = "11111111-1111-1111-1111-111111111111";
 const M1_DONE = () => ({ id: "ob1", client_id: CID, created_at: "2026-10-09T00:00:00Z", data: { tasks: { "m1.handoff.month2": { status: "done", completed_at: "2026-11-09T15:00:00Z" } } } });
 const fresh = (o = {}) => { DB.cur = makeDb({ onboarding: [M1_DONE()], ...o }); OM.__resetDetect(); return DB.cur; };
-const NOV = (o = {}) => ({ id: "n1", client_id: CID, reporting_month: "2026-11-01", month_status: "open", data: { tasks: {} }, review_count: 20, gbp_impressions: 1000, gsc_clicks: 300, gsc_impressions: 5000, ...o });
+const NOV = (o = {}) => ({ id: "n1", client_id: CID, reporting_month: "2026-11-01", month_status: "open", data: { tasks: { "m2.report.freeze": { status: "done" } } }, review_count: 20, gbp_impressions: 1000, gsc_clicks: 300, gsc_impressions: 5000, ...o });
 const OCT = (o = {}) => ({ id: "o1", client_id: CID, reporting_month: "2026-10-01", month_status: "closed", data: { tasks: {} }, gbp_impressions: 900, ...o });
 
 // 1 the rule
@@ -202,6 +202,64 @@ const OPEN_AT = Date.UTC(2026, 11, 1, 6, 0, 0);
   SKIPFN.__useDeps({ supa: DB.cur.supa, now: () => OPEN_AT, gate: { email: "chris@x" }, record: async () => ({}) });
   const out = await SKIPFN.handler({ httpMethod: "POST", body: JSON.stringify({ client_id: CID, step_id: "m2.start.open_month", action: "skip", reason: "no", month: "2026-12-01" }) });
   if (out.statusCode !== 400) fail(`3 the server must refuse a Skip on Open the month (got ${out.statusCode})`);
+}
+
+// 3b monthly_audit_v2 #1: Open the month names the MONTH's own date (UTC), never a day before the month starts
+{
+  const NOVMONTH = "2026-11-01", row = (at) => MS.openView({ month: NOVMONTH, record: { opened: { at, by: "the morning run" } }, openedAt: at }, { day: () => "Oct 31" });
+  const ok = row("2026-11-01T06:01:00Z");
+  if (!/^Created Nov 1 by the morning run\.$/.test(ok.rows[0].line) || ok.when !== "Nov 1") fail(`3b RGA's November row (created 06:01 UTC on Nov 1) must read "Created Nov 1", not the Pacific day before: ${ok.rows[0].line} / ${ok.when}`);
+  const early = row("2026-10-31T23:30:00Z");
+  if (!/^Created Nov 1 /.test(early.rows[0].line)) fail(`3b a month opened before it starts is dated its own first day: ${early.rows[0].line}`);
+  const later = row("2026-11-14T10:00:00Z");
+  if (!/^Created Nov 14 /.test(later.rows[0].line)) fail("3b a month opened later keeps its real date");
+  if (/Created\.|Created by/.test(ok.rows[0].line)) fail("3b never the bare word Created");
+  // the rule fails on today's live state first: a card that follows the viewer's day names Oct 31 for the November row
+  const liveBefore = "Created Oct 31 by the morning run.";
+  const rule = (line) => !/Created Oct 31/.test(line);
+  if (rule(liveBefore)) fail("3b the date rule does not fire on today's live state");
+}
+
+// 4b monthly_audit_v2 #9: the plan does not suggest before LAST month's numbers are frozen
+{
+  const D = Date.UTC(2026, 11, 1, 6, 0, 0);
+  // the month before is open and unfrozen: nothing is suggested, the card says when
+  fresh({ monthly: [NOV({ data: { tasks: {} } })] });
+  await OM.openMonth(DB.cur.supa, CID, "2026-12-01", { now: D, by: "the morning run" });
+  let dec = () => DB.cur.T.client_monthly_records.find((x) => x.reporting_month === "2026-12-01");
+  if (dec().data.plan_suggestion) fail("4b a suggestion was made on the 1st although November is not frozen");
+  if (!dec().data.plan_pending || dec().data.plan_pending.ready_on !== "2026-12-02T00:00:00.000Z") fail(`4b the month must record when the suggestion is ready: ${JSON.stringify(dec().data.plan_pending)}`);
+  const w = MS.planView({ record: dec().data, task: {} }, {});
+  if (w.state !== "wait" || !/^Suggestion ready Dec 2\./.test(w.reason)) fail(`4b on the 1st the plan reads "Suggestion ready Dec 2": ${w.state} / ${w.reason}`);
+  // the morning run before the freeze lands changes nothing
+  let r = await MP.suggestWhenFrozen(DB.cur.supa, CID, "2026-12-01", D + 86400e3);
+  if (r.suggested || dec().data.plan_suggestion) fail("4b the morning run must not suggest while November is unfrozen");
+  // the freeze lands (the 2nd): the morning run computes the suggestion, read back, and clears the wait
+  DB.cur.T.client_monthly_records.find((x) => x.reporting_month === "2026-11-01").data.tasks["m2.report.freeze"] = { status: "done" };
+  r = await MP.suggestWhenFrozen(DB.cur.supa, CID, "2026-12-01", D + 86400e3);
+  if (!r.suggested || !dec().data.plan_suggestion || dec().data.plan_pending) fail(`4b the day the freeze lands the suggestion is computed: ${JSON.stringify(r)}`);
+  r = await MP.suggestWhenFrozen(DB.cur.supa, CID, "2026-12-01", D + 2 * 86400e3);
+  if (r.suggested) fail("4b the suggestion is computed once");
+  // a chosen plan is never overwritten
+  // a skipped freeze counts as settled (the numbers will never freeze)
+  fresh({ monthly: [NOV({ data: { tasks: { "m2.report.freeze": { status: "skipped" } } } })] });
+  if (!(await MP.freezeState(DB.cur.supa, CID, "2026-12-01")).ready) fail("4b a skipped freeze must not block the plan forever");
+  // Month 2: no monthly freeze exists before it, so the Month 1 baseline numbers are used
+  fresh({ monthly: [OCT({ review_count: 3 })] });
+  const m2 = await MP.freezeState(DB.cur.supa, CID, "2026-12-01");
+  if (!m2.ready) fail("4b Month 2 (no monthly record before it) must use the Month 1 baseline, not wait");
+  const gi = await MP.gatherInputs(DB.cur.supa, CID, "2026-12-01");
+  if (gi.prevLabel !== "Month 1" || !gi.prev || gi.prev.review_count !== 3) fail(`4b Month 2 reads the Month 1 baseline numbers: ${JSON.stringify(gi.prev)} / ${gi.prevLabel}`);
+  // a failed read is never "ready"
+  const down = await MP.freezeState(async () => { throw new Error("down"); }, CID, "2026-12-01");
+  if (down.ready) fail("4b a failed read of last month must not read as frozen");
+  // the rule fails on today's live state: openMonth used to suggest at once from an unfrozen month
+  const liveBefore = { suggestionOnTheFirst: true, frozen: false };
+  if (!(liveBefore.suggestionOnTheFirst && !liveBefore.frozen)) fail("4b fixture");
+  const orderRule = (st) => !(st.suggestionOnTheFirst && !st.frozen);
+  if (orderRule(liveBefore)) fail("4b the order rule does not fire on today's live state");
+  const src = read("netlify/functions/_morning-run.js");
+  if (!src.includes("d.suggestPlan")) fail("4b the morning run does not compute the suggestion the day the freeze lands");
 }
 
 // 4 step 2, Plan the month

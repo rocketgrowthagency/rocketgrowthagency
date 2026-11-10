@@ -128,8 +128,8 @@
  [
   "a suggestion is auto-accepted",
   "openmonth",
-  "...(sg ? { plan_suggestion: sg } : {}) };",
-  "...(sg ? { plan_suggestion: sg, plan: { focus: sg.focus, tasks: [] } } : {}) };",
+  ": sg ? { plan_suggestion: sg } : {}) };",
+  ": sg ? { plan_suggestion: sg, plan: { focus: sg.focus, tasks: [] } } : {}) };",
   1
  ],
  [
@@ -142,8 +142,8 @@
  [
   "Open the month gets a hand Done",
   "steps5764",
-  "ID.HANDOFF2, ID.OPEN_MONTH, ID.PLAN];",
-  "ID.HANDOFF2];",
+  "ID.OPEN_MONTH, ID.PLAN, ",
+  "",
   1
  ],
  [
@@ -179,6 +179,55 @@
   "morningrun",
   "by: \"the morning run\", now: d.now()",
   "now: d.now()",
+  1
+ ],
+ [
+  "Open the month dates a day before the month starts",
+  "monthlystart",
+  "Number.isFinite(startMs) && t0 < startMs ? new Date(startMs).toISOString() : at0",
+  "at0",
+  1
+ ],
+ [
+  "Open the month date follows the viewer's day, not UTC",
+  "monthlystart",
+  "`Created ${dayWords(at)}`",
+  "`Created ${day(at)}`",
+  1
+ ],
+ [
+  "a plan suggestion is made before last month is frozen",
+  "monthlyplanread",
+  "if (!fs.ready) return { pending: true, ready_on: fs.readyOn };",
+  "",
+  1
+ ],
+ [
+  "a failed read of last month reads as frozen",
+  "monthlyplanread",
+  "throw e; return { ready: false, readyOn }; }",
+  "throw e; return { ready: true, readyOn }; }",
+  1
+ ],
+ [
+  "Month 2 waits for a freeze that never exists",
+  "monthlyplanread",
+  "if (!rows.length) return { ready: true, readyOn, baseline: true };",
+  "if (!rows.length) return { ready: false, readyOn };",
+  1
+ ],
+ [
+  "a skipped freeze blocks the plan forever",
+  "monthlyplanread",
+  "if ([\"done\", \"skipped\", \"declined\"].includes(t.status)) return { ready: true, readyOn };",
+  "if ([\"done\"].includes(t.status)) return { ready: true, readyOn };",
+  1
+ ],
+ [
+  "the plan wait names no date",
+  "monthlystart",
+  "reason: pend ? `Suggestion ready ${dayWords(pend)}.",
+  "reason: pend ? `Suggestion ready soon.",
   1
  ]
 ]

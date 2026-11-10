@@ -51,8 +51,8 @@
  [
   "the quarter line is not a button again",
   "adminjs",
-  "data-cm-qprev=\"${escapeAttribute(sec.key)}\"",
-  "aria-disabled=\"true\"",
+  "class=\"ob-ph-h\" data-cm-qprev=\"${escapeAttribute(sec.key)}\"",
+  "class=\"ob-ph-h\" aria-disabled=\"true\"",
   1
  ],
  [
@@ -93,15 +93,50 @@
  [
   "the Open the month card loses its date again",
   "adminjs",
-  "openedAt: (row && (row.opened_at || row.created_at)) || (state.flowM2State && state.flowM2State.created_at) || null",
-  "openedAt: null",
+  "openedAt: (row && (row.opened_at || row.created_at))",
+  "openedAt: null, _x: (row && (row.opened_at || row.created_at))",
   1
  ],
  [
   "the Every quarter preview shows internal text again",
   "adminjs",
-  "<b>${escapeHtml(p ? p.t : (o.t || o.flowId))}</b>",
-  "<b>${escapeHtml((o.t || o.flowId) + \" (quarterly)\")}</b>",
+  "<b>${escapeHtml(p.t)}</b>",
+  "<b>${escapeHtml(p.t + \" (quarterly)\")}</b>",
+  1
+ ],
+ [
+  "the quarter preview rows lose their page numbers",
+  "adminjs",
+  "<span class=\"cm-q-n\">${nums.get(i) || \"\"}</span>",
+  "<span class=\"cm-q-n\"></span>",
+  1
+ ],
+ [
+  "the quarter preview drops the Preview only band",
+  "adminjs",
+  "<p class=\"cm-q-band\"><b>Preview only.</b>",
+  "<p class=\"cm-q-band\"><b>Soon.</b>",
+  1
+ ],
+ [
+  "the lead-handling test shows Month N when it does not apply",
+  "adminjs",
+  "not ? escapeHtml(\"not for \" + cname) : \"Month \" + nextQ",
+  "\"Month \" + nextQ",
+  1
+ ],
+ [
+  "the preview header drops its start date",
+  "adminjs",
+  "${startsOn ? `Starts ${escapeHtml(startsOn)} · ` : \"\"}Month ${nextQ}",
+  "Month ${nextQ}",
+  1
+ ],
+ [
+  "the appended steps are numbered into the old range",
+  "adminjs",
+  "let n = 0; obMonthlyOrder(steps).filter((i) => !isApp(i))",
+  "let n = 0; obMonthlyOrder(steps)",
   1
  ]
 ]

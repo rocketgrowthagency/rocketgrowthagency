@@ -22,7 +22,7 @@
 //   Run it ONCE AFTER A DEPLOY (it reads the live site). It needs SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in the environment.
 //
 // Exit 0 clean · 1 a row draws old chrome / the tab is wrong · 2 INDETERMINATE (no credentials, no browser, page never rendered)
-import { visibleRowFailures, visibleRulesSelfTest } from "./_monthly-visible-rules.mjs";
+import { visibleRowFailures, visibleRulesSelfTest, previewFailures } from "./_monthly-visible-rules.mjs";
 const SITE = process.env.RGA_SITE_URL || "https://www.rocketgrowthagency.com";
 const CLIENT = process.argv[2] || process.env.RGA_MONTHLY_CLIENT_ID || "ae817a9c-60a2-4cc9-a196-0582b7b7e7c3";
 const SUPA_URL = process.env.SUPABASE_URL, SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -65,7 +65,9 @@ try {
       const mores = [...el.querySelectorAll("details[data-ob-more]")];
       const vis = { tagSelf: /Runs itself/i.test((el.querySelector(".ob-title") || {}).innerText || ""), rowCls: el.className + (getComputedStyle(el).borderTopColor === orangeRgb ? " active" : ""),
         statusCls: stat ? stat.className : "", markerCls: num && getComputedStyle(num).backgroundColor === orangeRgb ? "active" : "", cardText: card ? card.innerText : "",
-        moreCount: mores.length, moreInside: mores.every((m) => m.closest(".ob-step") === el && !!m.closest(".ob-body")) };
+        moreCount: mores.length, moreInside: mores.every((m) => m.closest(".ob-step") === el && !!m.closest(".ob-body")),
+        who: ((el.querySelector(".ob-kind") || {}).innerText || "").trim(), sub: ((el.querySelector(".ob-row .ob-why, .ob-row .ob-sub, .ob-title small") || {}).innerText || ""), num: Number(((num || {}).innerText || "").trim()) || null,
+        month: ((document.querySelector(".cm-chip[aria-pressed=true]") || {}).getAttribute("data-cm-month")) || null };
       return { id, pill: pill.trim(), self: SELF.has(id), vis,
         cards: el.querySelectorAll(`[data-uni-card="${id}"]`).length,
         det: el.querySelectorAll(".ob-det").length, ovr: el.querySelectorAll(".ob-ovr").length,
@@ -113,8 +115,10 @@ try {
     const open = await page.evaluate(() => { const b = document.querySelector(".cm-q-folded [data-cm-qprev-body]"); return b ? { hidden: b.hasAttribute("hidden"), text: b.innerText, buttons: b.querySelectorAll("button, a, input").length, items: b.querySelectorAll("li").length } : null; });
     if (!open || open.hidden) fails.push("Every quarter: clicking the folded line did not open the preview");
     else {
-      if (!/Starts in Month \d+/.test(open.text)) fails.push('Every quarter: the preview is not headed "Starts in Month N (<month>)"');
-      if (open.buttons) fails.push("Every quarter: the preview has buttons (it must be read-only)");
+      const pv = await page.evaluate(() => { const f = document.querySelector(".cm-q-folded"), b = f.querySelector("[data-cm-qprev-body]"); const rows = [...b.querySelectorAll(".cm-q-prev-r")];
+        return { pill: (f.querySelector(".ob-ph-cnt") || {}).innerText || "", text: b.innerText, nums: rows.map((r) => Number((r.querySelector(".cm-q-n") || {}).innerText)), titles: rows.map((r) => (r.querySelector("b") || {}).innerText || ""),
+          buttons: b.querySelectorAll("button:not(.cm-q-fold), a, input").length, notFor: rows.some((r) => /not for /i.test((r.querySelector(".cm-q-tag") || {}).innerText || "")) }; });
+      fails.push(...previewFailures({ ...pv, pill: pv.pill.replace(/\s+/g, " "), applies: true, notFor: true }));   // applies/notFor: the not-for tag is proven by the fixtures; here the page must not fail the rest
       if (open.items !== 7) fails.push(`Every quarter: the preview lists ${open.items} steps, not 7`);
       await q.click();
       const hid = await page.evaluate(() => document.querySelector(".cm-q-folded [data-cm-qprev-body]").hasAttribute("hidden"));

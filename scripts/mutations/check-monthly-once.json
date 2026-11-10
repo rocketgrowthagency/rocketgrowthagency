@@ -56,17 +56,17 @@
   1
  ],
  [
-  "the tiles show numbers before the month is read",
+  "the month so far shows a number before any read",
   "monthlyonce",
-  "if (early) return { key: k, label, value: null,",
-  "if (false) return { key: k, label, value: null,",
+  "if (!sf) return { key: k, label, value: null, text: \"not read yet\"",
+  "if (false) return { key: k, label, value: null, text: \"not read yet\"",
   1
  ],
  [
   "a measured 0 reads not measured",
   "monthlyonce",
-  "if (!isNum(cur[k])) return",
-  "if (!isNum(cur[k]) || Number(cur[k]) === 0) return",
+  "if (!isNum(sf[k])) return",
+  "if (!isNum(sf[k]) || Number(sf[k]) === 0) return",
   1
  ],
  [
@@ -184,7 +184,7 @@
  [
   "the settle writes with nothing proven",
   "monthlyoncesrv",
-  "if (!settled.length && !freeze) return { settled, wrote: false };",
+  "if (!settled.length && !freeze && !touched) return { settled, wrote: false };",
   "if (false) return { settled, wrote: false };",
   1
  ],
@@ -256,6 +256,111 @@
   "morningrun",
   "if (om.ok) { try { await monthlyMorning",
   "if (false) { try { await monthlyMorning",
+  1
+ ],
+ [
+  "step 8 is final again, not the month so far",
+  "monthlyonce",
+  "[ID.NUMBERS]: \"This month so far\",",
+  "[ID.NUMBERS]: \"Profile, search and website numbers\",",
+  1
+ ],
+ [
+  "the so-far numbers lose their partial label",
+  "monthlyonce",
+  "when: sf ? `partial · updated ${upd}` : \"runs itself\"",
+  "when: \"runs itself\"",
+  1
+ ],
+ [
+  "a number Google did not give shows 0 in the month so far",
+  "monthlyonce",
+  "if (!isNum(sf[k])) return { key: k, label, value: null, text: \"not measured\"",
+  "if (!isNum(sf[k])) return { key: k, label, value: 0, text: \"0\"",
+  1
+ ],
+ [
+  "the month so far is refreshed daily instead of weekly (no, never: never)",
+  "monthlyoncesrv",
+  "nowMs - Date.parse(sf.at) >= 7 * 86400000",
+  "false",
+  1
+ ],
+ [
+  "the stored Search Console clicks alone settle the numbers",
+  "monthlyoncesrv",
+  "if ([c.views, c.calls].some((n) => n != null)) {",
+  "if ([c.views, c.clicks, c.calls].some((n) => n != null)) {",
+  1
+ ],
+ [
+  "nothing changed is said with a link unread",
+  "monthlyonce",
+  "const allRead = total > 0 && rd === total && !fl.length;",
+  "const allRead = total > 0;",
+  1
+ ],
+ [
+  "a link that did not open is hidden",
+  "monthlyonce",
+  "if (fl.length) parts.push(`didn't open: ${fl.slice(0, 6).join(\", \")}`);",
+  "",
+  1
+ ],
+ [
+  "the listing links are never re-read",
+  "monthlyoncesrv",
+  "if (cur && d.readListingLinks &&",
+  "if (false && d.readListingLinks &&",
+  1
+ ],
+ [
+  "a failed profile-watch read says no outside changes",
+  "monthlyonce",
+  "if (!x.read) return { tone: \"wait\", label: \"Couldn't check\", when: \"runs itself\", title, done: false, open: 0,",
+  "if (false) return { tone: \"wait\", label: \"Couldn't check\", when: \"runs itself\", title, done: false, open: 0,",
+  1
+ ],
+ [
+  "the profile watch claims no changes with nothing on Google to watch",
+  "monthlyonce",
+  "if (!x.watched) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "a name, phone or address change gets Accept / Put it back",
+  "monthlyoncesrv",
+  "core = id === \"m1.gbp.business_facts\" && require(\"./_core-change\").coreDiffs(dr).length > 0;",
+  "core = false;",
+  1
+ ],
+ [
+  "a failed Analytics read says tracking works",
+  "monthlyonce",
+  "if (!x.read) return { tone: \"wait\", label: \"Couldn't check\", when: \"runs itself\", title, done: false, rows: [row(\"off\", \"Couldn't read Google Analytics\"",
+  "if (false) return { tone: \"wait\", label: \"Couldn't check\", when: \"runs itself\", title, done: false, rows: [row(\"off\", \"Couldn't read Google Analytics\"",
+  1
+ ],
+ [
+  "a channel with no leads this month reads as working",
+  "monthlyonce",
+  "const ok = !unknown.length && !none.length;",
+  "const ok = !unknown.length;",
+  1
+ ],
+ [
+  "the two new steps are not appended after the 25",
+  "monthlysections",
+  "const APPENDED = [\"m2.exec.profile_watch\", \"m2.exec.tracking_check\"];",
+  "const APPENDED = [];",
+  1
+ ],
+ [
+  "the new steps leave Once a month",
+  "monthlysections",
+  "\"m2.exec.listing_upkeep\", \"m2.exec.profile_watch\", \"m2.exec.tracking_check\"] },",
+  "\"m2.exec.listing_upkeep\"] },",
   1
  ]
 ]

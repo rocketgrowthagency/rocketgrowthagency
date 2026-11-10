@@ -49,12 +49,36 @@ export function oldChromeFailures(SITE) {
   lacks(rd("shared/monthly-start.js"), "It never makes two.", "B7: the Open the month line still ends with \"It never makes two.\"");
   const qm = rd("shared/monthly-quarter.js");
   has(js, "QP[o.flowId]", "C: the Every quarter preview does not use the approved titles and plain lines");
-  for (const t of ["Their numbers: booked jobs and revenue", "Links and local press", "Review the Google profile details", "Keyword overlap check", "Win story", "Video (optional)", "Lead-handling test (only with call tracking)"]) has(qm, `t: "${t}"`, `C: the quarter preview lacks the approved title "${t}"`);
-  for (const bad of ["Publishes 1 or 2 YouTube videos", "Records the client's leads, calls, jobs and revenue", "(quarterly)"]) lacks(qm.slice(qm.indexOf("const PREVIEW")), bad, `C: the quarter preview carries internal text: "${bad}"`);
+  for (const t of ["Their numbers: booked jobs and revenue", "Links and local press", "Review the Google profile details", "Keyword overlap check", "Win story", "Video", "Lead-handling test"]) has(qm, `t: "${t}"`, `C: the quarter preview lacks the approved title "${t}"`);
+  for (const bad of ["Publishes 1 or 2 YouTube videos", "Records the client's leads, calls, jobs and revenue", "(quarterly)", "(optional)", "(only with call tracking)"]) lacks(qm.slice(qm.indexOf("const PREVIEW")), bad, `C: the quarter preview carries internal text: "${bad}"`);
   has(js, "(UNI_OWN_CARD.has(id) || monthlyOwn(id) ||", "B3: the Monthly row pill is not routed to the card's own chip (so a waiting runs-itself step says \"Active now\")");
   // C · the Every quarter line opens a read-only preview
   has(js, "data-cm-qprev=\"${escapeAttribute(sec.key)}\"", "C: the folded Every quarter line is not a button");
-  has(js, "Starts in Month ${nextQ}${escapeHtml(when)}", "C: the preview is not headed \"Starts in Month N (<month>)\"");
+  has(js, "Starts ${escapeHtml(startsOn)} · `", "C: the preview header is not \"Starts <date> · Month N\"");
+  has(js, "Preview only.</b> These open in Months 3, 6, 9 and 12. Nothing here can be done or skipped yet.", "C: the preview has no Preview only band");
+  has(js, "Results go into that month's report under \"This quarter\".", "C: the preview has no footer");
+  has(js, "\"not for \" + cname", "C: the lead-handling test has no \"not for <client>\" tag when it does not apply");
+  has(js, "nums.get(i)", "C: the preview rows are not numbered from the page numbers (14-20)");
+  for (const w of ["Client", "RGA", "Runs itself", "Client · optional"]) has(qm, `"${w}"`, `C: the preview lacks the who tag "${w}"`);
+  // monthly_audit_v2 (11-9): the approved audit
+  has(rd("shared/monthly-start.js"), "t0 < startMs", "AUDIT 1: Open the month can still show a date before the month starts");
+  has(js, "{ text: \"Client's move\", cls: \"queued\" }", "AUDIT 2: a client's-move weekly row has no Client's move chip");
+  has(js, "Client's move \\u00B7 optional", "AUDIT 2: New photos has no \"Client's move · optional\" chip");
+  lacks(js, "is a ranking signal", "AUDIT 3: the Review replies subtitle still makes a ranking claim");
+  has(js, "o.flowId === \"m2.exec.gbp_posts\" ? \"both\"", "AUDIT 4: Google posts is not tagged You + client");
+  const sec = rd("shared/monthly-sections.js"), mm = rd("shared/monthly-monthly.js");
+  has(sec, "\"m2.exec.profile_watch\", \"m2.exec.tracking_check\"", "AUDIT 7/8: the two new steps are not in Once a month");
+  has(sec, "const APPENDED", "AUDIT 7/8: the new steps are not numbered after the existing 25");
+  has(js, "app.forEach((id) =>", "AUDIT 7/8: the admin does not number the appended steps 26 and 27");
+  has(mm, "[ID.NUMBERS]: \"This month so far\"", "AUDIT 5: step 8 is not called This month so far");
+  has(mm, "partial · updated", "AUDIT 5: step 8 does not say partial and updated");
+  has(rd("netlify/functions/_monthly-once.js"), "nowMs - Date.parse(sf.at) >= 7 * 86400000", "AUDIT 5: the month-to-date numbers are not refreshed weekly");
+  has(mm, "nothing changed", "AUDIT 6: the listings card has no read-back wording");
+  has(rd("netlify/functions/_monthly-once.js"), "d.readListingLinks", "AUDIT 6: the morning run does not re-read the listing links");
+  has(rd("netlify/functions/_citation-build.js"), "async function readLiveLinks", "AUDIT 6: no live-link re-read exists");
+  has(js, "admin-gbp-drift", "AUDIT 7: the profile watch card does not use the existing Accept / Put it back path");
+  has(rd("netlify/functions/_monthly-plan.js"), "async function freezeState", "AUDIT 9: the plan does not wait for last month's freeze");
+  has(rd("netlify/functions/_morning-run.js"), "d.suggestPlan", "AUDIT 9: the morning run does not compute the suggestion the day the freeze lands");
   const pv = js.slice(js.indexOf("const foldedQ ="), js.indexOf("const html = buckets.filter"));
   if (/<button[^>]*(Skip|data-uni|data-onboard)/.test(pv.slice(pv.indexOf("cm-q-prev"))) ) fail("C: the quarter preview has buttons (it must be read-only)");
   // D · bottom blocks
@@ -65,7 +89,7 @@ export function oldChromeFailures(SITE) {
   lacks(mp, "websiteSections", "D: the Website Work block is still inside the Monthly tab");
   lacks(mp, "Optional add-on", "D: an \"Optional add-on\" block is still inside the Monthly tab");
   has(js, "\"monthlynew\", \"websitework\"", "D: websitework is not a known client tab");
-  if (!(((html.match(/admin\.js\?v=([0-9a-z]+)/) || [])[1] || "") >= "20261109u")) F.push("the admin.js ?v= was not bumped");
+  if (!(((html.match(/admin\.js\?v=([0-9a-z]+)/) || [])[1] || "") >= "20261109w")) F.push("the admin.js ?v= was not bumped");
   F.push(...visibleRulesSelfTest());   // the browser gate's rules fire on the 11-9 live state and stay quiet on the fixed one
   return F;
 }

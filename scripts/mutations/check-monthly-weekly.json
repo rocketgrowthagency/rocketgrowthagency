@@ -240,8 +240,36 @@
  [
   "the quarter line is not a button again",
   "adminjs",
-  "data-cm-qprev=\"${escapeAttribute(sec.key)}\"",
-  "aria-disabled=\"true\"",
+  "class=\"ob-ph-h\" data-cm-qprev=\"${escapeAttribute(sec.key)}\"",
+  "class=\"ob-ph-h\" aria-disabled=\"true\"",
+  1
+ ],
+ [
+  "a client's-move weekly row wears Active now",
+  "adminjs",
+  "if (v.label === \"Client's move\") return { text: \"Client's move\", cls: \"queued\" }; }",
+  "}",
+  1
+ ],
+ [
+  "New photos loses its optional chip",
+  "adminjs",
+  "if (v.tone === \"wait\") return { text: \"Client's move \\u00B7 optional\", cls: \"queued\" }; }",
+  "}",
+  1
+ ],
+ [
+  "Google posts is tagged Runs itself again",
+  "adminjs",
+  "o && o.flowId === \"m2.exec.gbp_posts\" ? \"both\" : mwKind(o, stepKind(o))",
+  "mwKind(o, stepKind(o))",
+  1
+ ],
+ [
+  "the Review replies subtitle claims a ranking signal again",
+  "adminjs",
+  "why: \"Every review gets a reply; the client approves each before it posts.\",",
+  "why: \"Responding to every review builds trust + is a ranking signal.\",",
   1
  ]
 ]

@@ -260,8 +260,8 @@ const task = (f, id) => f.store[id] || {};
 // 12 wiring
 {
   const a = read("admin/admin.js"), ih = read("admin/index.html");
-  if (!/import "\/shared\/monthly-quarter\.js\?v=20261109b"/.test(a)) fail("12 the admin imports shared/monthly-quarter.js");
-  if (!/monthly-sections\.js\?v=20261109e/.test(a)) fail("12 monthly-sections.js ?v= bumped (e)");
+  if (!((/import "\/shared\/monthly-quarter\.js\?v=(\w+)"/.exec(a) || [])[1] >= "20261109b")) fail("12 the admin imports shared/monthly-quarter.js");
+  if (!((/monthly-sections\.js\?v=(\w+)/.exec(a) || [])[1] >= "20261109e")) fail("12 monthly-sections.js ?v= bumped (e)");
   if (!(((ih.match(/admin\.js\?v=([0-9a-z]+)/) || [])[1] || "") >= "20261109u")) fail("12 admin.js ?v= bumped (u)");
   for (const fn of ["qrtOutcomesCardHtml", "qrtLinksCardHtml", "qrtProfileCardHtml", "qrtOverlapCardHtml", "qrtWinCardHtml", "qrtVideoCardHtml", "qrtLeadCardHtml"]) if (!new RegExp(`${fn}\\(\\)`).test(a)) fail(`12 the admin draws ${fn}`);
   const ad = read("netlify/functions/admin-monthly-quarter.js"), po = read("netlify/functions/portal-quarter-answer.js");

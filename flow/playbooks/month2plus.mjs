@@ -29,7 +29,7 @@ the same grid size.`,
 "Average grid rank improved from 28 to 14" tells a richer story than "ranked #15 in SF" — it is movement across the whole service area, not one point. Scans that stopped partway are ignored rather than averaged: a scan that stops early has measured one part of the map, so comparing it would report movement that never happened.`,
   },
   {
-    id: "m2.snap.gbp_metrics", title: "Profile, search and website numbers",
+    id: "m2.snap.gbp_metrics", title: "This month so far",
     type: "auto", dependsOn: [],
     async run({ getGbp, clientId }) {
       try {
@@ -299,6 +299,18 @@ THEN suggest 3 sponsorship targets relevant to this business:
     id: "m2.exec.listing_upkeep", title: "Citation and listing upkeep",
     type: "auto", dependsOn: [],
     async run() { return { summary: "Shown from the monthly listing checks (citation-recheck, citation-live-check); nothing to run by hand." }; },
+  },
+  {
+    // monthly_audit_v2 (11-9): new on the list. The daily gbp-profile-watch job records outside changes; this step shows them with Accept / Put it back.
+    id: "m2.exec.profile_watch", title: "Google profile watch",
+    type: "auto", dependsOn: [],
+    async run() { return { summary: "Shown from the daily gbp-profile-watch records; nothing to run by hand." }; },
+  },
+  {
+    // monthly_audit_v2 (11-9): new on the list. Reads the same Google data Month 1's tracking steps read.
+    id: "m2.exec.tracking_check", title: "Tracking still works",
+    type: "auto", dependsOn: [],
+    async run() { return { summary: "Checked monthly from Google Analytics and call tracking; nothing to run by hand." }; },
   },
   {
     id: "m2.exec.gbp_attributes_refresh", title: "Review the Google profile details (quarterly)",
