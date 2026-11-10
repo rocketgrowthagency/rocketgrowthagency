@@ -19,6 +19,7 @@ for (const [tag, vp] of [["desk", { width: 1200, height: 1000 }], ["phone", { wi
   for (const v of VIEWS) {
     await page.evaluate((v) => document.querySelector(`.portal-nav a[data-view="${v}"]`)?.click(), v);
     await page.waitForTimeout(5000);
+    if (v === "reports") { await page.evaluate(() => { const b = [...document.querySelectorAll(".pv-reports button, .pv-reports summary, [class*='pv-'] button")].find((x) => /Read your report/i.test(x.textContent || "")); if (b) b.click(); }); await page.waitForTimeout(6000); }
     await page.screenshot({ path: `${out}/${tag}-${v}.png`, fullPage: true });
     if (tag === "desk") {
       const txt = await page.evaluate(() => { const m = [...document.querySelectorAll("[class*='pv-']")].find((e) => e.offsetParent); return (m || document.querySelector("main") || document.body).innerText; });
