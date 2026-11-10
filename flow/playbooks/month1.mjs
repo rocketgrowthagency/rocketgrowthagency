@@ -1132,7 +1132,7 @@ DONE = both are live or marked not for this business. It finishes itself. A tick
     id: "m1.gbp.knowledge_panel", title: "Claim + optimize brand knowledge panel",
     type: "manual", dependsOn: ["m1.gbp.photos", "m1.audit.social"],
     actionLabel: "⚡ Draft this for me",
-    instructions: `Runs itself in the morning run (no Run button): one search of the brand name, no model. Google's knowledge panel is compared with their profile, the same details step 52 reads.
+    instructions: `Runs itself in the morning run (no Run button): one search of the brand name, no model. Google's knowledge panel is compared with their profile, the same details the top-10 citations step reads.
 Their profile shows and the name, phone and website agree: done by itself. A detail differs: your move, fix it on the profile (the business facts step). A brand panel that is not their profile: your move, claim it ("Claim this knowledge panel", signed in to an account on their official site or YouTube). No panel yet: done, normal for a business few people search by name.
 A search that could not be read is never "no panel": it tries again tomorrow. It looks again each quarter.`,
   },

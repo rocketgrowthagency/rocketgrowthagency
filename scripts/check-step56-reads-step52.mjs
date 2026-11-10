@@ -104,8 +104,10 @@ try {
   const line = (name) => { const m = new RegExp(`^const ${name} = [^\\n]*$`, "m").exec(A); if (!m) throw new Error(`${name} moved`); return m[0].replace(/^const /, "var "); };
   const ctx = vm.createContext({ rgaCitationProgress: P, escapeHtml: (x) => String(x), escapeAttribute: (x) => String(x), acDay: (d) => `D(${String(d).slice(0, 10)})`,
     obStepRef: () => "step 52", acCardHtml: (o) => `<CARD ${JSON.stringify(o)}>`, state: {} });
-  vm.runInContext(["CB_TILE", "_cbCopy", "cbP", "CB_MARK", "cbMark", "CB_RIGHT", "cbOpen", "cbSkipLink"].map(line).concat(["cbBtn", "cbCopyBtn", "cbPackHtml", "cbSkippedHtml", "cbListActs", "cbRowsHtml", "cbBingAppleCardHtml", "cbCardHtml", "cbRowPill"].map(lift)).join("\n"), ctx);
-  const card = (tasks) => { ctx.state = { flowM1State: { tasks } }; return vm.runInContext(`cbCardHtml(${JSON.stringify(S56)}, state.flowM1State.tasks[${JSON.stringify(S56)}])`, ctx); };
+  vm.runInContext(["stepTitleOf", "CB_TILE", "_cbCopy", "cbP", "CB_MARK", "cbMark", "CB_RIGHT", "cbOpen", "cbSkipLink"].map(line).concat(["cbBtn", "cbCopyBtn", "cbPackHtml", "cbSkippedHtml", "cbListActs", "cbRowsHtml", "cbBingAppleCardHtml", "cbCardHtml", "cbRowPill"].map(lift)).join("\n"), ctx);
+  // 11-9 night fixer: the skipped-52 title reads 52's name from the playbook (stepTitleOf, check-a-step-title-has-one-home), so the lift carries it and the playbook
+  const PB1 = JSON.parse(read("data/playbooks/playbooks.json")).month1;
+  const card = (tasks) => { ctx.state = { flowM1State: { tasks }, flowM1Playbook: PB1 }; return vm.runInContext(`cbCardHtml(${JSON.stringify(S56)}, state.flowM1State.tasks[${JSON.stringify(S56)}])`, ctx); };
   const opts = (h) => { const m = /<CARD (.*)>/s.exec(h); return m ? JSON.parse(m[1].slice(0, m[1].lastIndexOf("}") + 1)) : {}; };
   let h = card(T(top, {})), o = opts(h);
   if (o.label !== "0 of 2 live" || !/Bing Places and Apple Maps, the same rows as step 52/.test(o.title || "")) fail(`the open 56 card isn't the approved one (${o.label} · ${o.title})`);
@@ -117,7 +119,7 @@ try {
   o = opts(card(T(both, { status: "done", done_by: "checks" })));
   if (o.label !== "Done" || o.acts) fail(`a proven 56 doesn't read Done (${o.label})`);
   o = opts(card(T({ status: "skipped" }, {})));
-  if (!/is skipped/.test(o.title || "")) fail("a skipped 52 doesn't say so on 56");
+  if (!/^Build top-10 priority citations \(step 52\) is skipped/.test(o.title || "")) fail(`a skipped 52 doesn't say so on 56, by its name (${o.title})`);
   o = opts(card(T({}, handTick)));
   if (o.label !== "Done, but not proven" || !/Build the list on step 52 first/.test(o.title || "")) fail(`56 before 52 is built isn't said (${o.label} · ${o.title})`);
   if (!/Skipped: Sign-ups later/.test(card(T(top, { status: "skipped", skip_reason: "Sign-ups later", skipped_at: iso(NOW) })))) fail("a skipped 56 loses its Skipped card");
