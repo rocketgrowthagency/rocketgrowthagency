@@ -103,6 +103,7 @@ Tonight's report: $OUT
 Tonight's raw check output: $RAW/check-1.txt
 Range: website $W_SINCE..$W_HEAD · scraper $S_SINCE..$S_HEAD
 Worklog: $LOG"
+. "$(dirname "$0")/lib/find-claude.sh"   # find claude wherever it is installed (11-10 weekly audit "claude not found")
   (cd "$SITE" && claude -p "$PROMPT" --model opus --permission-mode acceptEdits --max-turns 250 \
      --allowedTools "Read" "Edit" "Write" "Grep" "Glob" "Bash(node:*)" "Bash(git:*)" "Bash(bash scripts/deploy-site.sh:*)" "Bash(grep:*)" "Bash(sed -n:*)" "Bash(ls:*)" "Bash(cat:*)" "Bash(python3:*)" "Bash(cp:*)" "Bash(curl -s:*)" \
      > "$RAW/fixer.txt" 2>&1) &

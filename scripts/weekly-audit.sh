@@ -18,6 +18,7 @@ record() {
 }
 tell() { [ -n "${BACKUP_QUIET:-}" ] || osascript -e "display notification \"$1\" with title \"RGA weekly audit\"" 2>/dev/null; }
 checkin start weekly-audit
+. "$(dirname "$0")/lib/find-claude.sh"   # find claude wherever it is installed (11-10 weekly audit "claude not found")
 if ! command -v claude >/dev/null 2>&1; then record false "claude not found"; tell "couldn't run: claude not found"; exit 2; fi
 cd "$SITE" || exit 2
 claude -p "$(cat "$SCR/scripts/weekly-audit-prompt.md")" --model opus --add-dir "$SCR" --max-turns 120 \
