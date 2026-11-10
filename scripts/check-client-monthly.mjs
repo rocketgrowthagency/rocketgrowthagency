@@ -52,6 +52,10 @@ function sourceFailures(S) {
   gone(/\u2014 not in the top 20/.test(p), 'an em dash in the map tile ("Checked Oct 6, then a dash, then not in the top 20 yet")');
   need(/periodSub/.test(p) && /arrives? about|arrive about/.test(p), "the Call-button taps and New reviews tiles name their month and when the next figures arrive");
   need(/next scan about/.test(p), "the map tile says the next scan date where it is known");
+  // 11-10 leftovers: the Dashboard's next step is drawn again after a save (one rule), and the map tile reads which scan path and zoom a scan was
+  need(/function redrawNextStep\(/.test(p) && (p.match(/redrawNextStep\(clientId\)/g) || []).length >= 4, "the Dashboard's next step is redrawn (redrawNextStep) after Send my list, No jobs, the cadence and the posts choice");
+  need(/_nextStepArgs\.set\(/.test(p) && /buildPortalNextActionHtml\(a\.stage/.test(p), "the redraw uses the SAME builder with the arguments the page was drawn with (no second copy of the rule)");
+  need(/grid_index, source, grid_zoom/.test(p), "the portal reads each scan's source and zoom, so the map tile compares like for like");
   need(/currentMonthOf|betweenMonths/.test(p.slice(p.indexOf("function whatToExpectHtml("))), "What to expect leads with where the client is now");
   // reports
   need(/function reportsByMonthHtml\(/.test(p) && /data-mr-upcoming/.test(p), "Reports is one card per month, with a card for the month that isn't over");
@@ -143,6 +147,9 @@ const AFTER = {
     const way = { monthly: inMonth }; const at = way.monthly ? "your customer list" : "step"; const bt = "Open your customer list";
     const rp = \`In progress \\u00b7 RGA checks it and sends it early \${next}\`;
     const monthlyAction = x ? CMo.betweenNextStep({ month: m.cur }) : null;
+    const _nextStepArgs = new Map(); function redrawNextStep(clientId) { _nextStepArgs.set(clientId, 1); buildPortalNextActionHtml(a.stage); }
+    function refreshAfterCustomers(clientId) { redrawNextStep(clientId); } redrawNextStep(clientId); redrawNextStep(clientId); redrawNextStep(clientId);
+    const sel = "client_id, keyword, market, map_rank, measured_at, grid_session_id, grid_index, source, grid_zoom";
     const dash = monthlyNow ? thisMonthHtml(a, b, c) : whatToExpectHtml(o); function thisMonthHtml() {}
     function monthlyKpisHtml() { return CM.monthTiles({ rank: CM.rankTileOf(r) }); }
     const e1 = _ogMonthNow.has(client.id) ? "Not measured yet. RGA's tracking check reads this." : "Live once your campaign starts.";`,
@@ -242,6 +249,28 @@ try {
   if (!scan || !scan.known || CM.shortDay(scan.at) !== "Nov 15") fail(`2 next scan after a done first window on Nov 9 is Nov 15: ${text(scan)}`);
   if (CM.nextScanOf({}, new Date("2026-11-09T12:00:00Z")) !== null) fail("2 a client with no scans has no next scan");
   if (CM.nextScanOf({ v2Campaign: { rank_schedule: { windows: { "2026-11-1": { status: "retry" } } } } }, new Date("2026-11-09T12:00:00Z")).known) fail("2 a window not done must not name a date");
+  // 11-10: the date is read from the ledger's OWN newest finished window, never the viewer's clock or zone
+  const nsw = (w) => ({ v2Campaign: { rank_schedule: { windows: w } } }), dayOf = (r) => (r && r.known ? CM.shortDay(r.at) : null);
+  if (dayOf(CM.nextScanOf(nsw({ "2026-11-1": { status: "done" } }), new Date("2026-11-10T19:10:00Z"))) !== "Nov 15") fail("2 RGA's real case: window 1 done Nov 10 -> next scan about Nov 15");
+  if (dayOf(CM.nextScanOf(nsw({ "2026-11-1": { status: "done" }, "2026-11-2": { status: "done" } }), new Date("2026-11-20T12:00:00Z"))) !== "Dec 1") fail("2 window 2 done -> the 1st of next month");
+  if (dayOf(CM.nextScanOf(nsw({ "2026-12-2": { status: "covered" } }), new Date("2026-12-20T12:00:00Z"))) !== "Jan 1") fail("2 a covered window counts, and December rolls into January");
+  // a client far east of UTC: the scan runs at 10:00 local, so the window is recorded on the PREVIOUS UTC day; the date must still be right
+  if (dayOf(CM.nextScanOf(nsw({ "2026-11-2": { status: "done" } }), new Date("2026-11-14T22:00:00Z"))) !== "Dec 1") fail("2 a client in Auckland (window 2 recorded on the 14th UTC) must still be told Dec 1");
+  if (dayOf(CM.nextScanOf(nsw({ "2026-11-1": { status: "done" } }), new Date("2026-11-16T12:00:00Z"))) !== null) fail("2 a window that is due names no date (no guess)");
+  if (dayOf(CM.nextScanOf(nsw({ "2026-11-1": { status: "started" } }), new Date("2026-11-10T12:00:00Z"))) !== null) fail("2 a scan still running names no date");
+  if (CM.nextScanOf(nsw({}), new Date("2026-11-10T12:00:00Z")) !== null || CM.nextScanOf(null, new Date()) !== null) fail("2 no schedule says nothing");
+  // 11-10: the map tile reads the newest scan and compares it only with a scan of the same path, keyword and zoom (an old 81-point scan of another keyword made every 25-point scan look unfinished)
+  { const cell = (sid, kw, src, zoom, at, i, rank) => ({ grid_session_id: sid, keyword: kw, source: src, grid_zoom: zoom, market: "Culver City, CA", measured_at: at, grid_index: i, map_rank: rank });
+    const rows = [];
+    for (let i = 0; i < 81; i++) rows.push(cell("sept", "seo company", "grid_scan", 14, `2026-09-15T03:${String(i % 60).padStart(2, "0")}:00Z`, i, 2 + (i % 2)));
+    for (let i = 0; i < 25; i++) { rows.push(cell("oct", "local seo services near me", "geo-grid", 13, "2026-10-06T23:41:00Z", i, i < 4 ? 12 : null)); rows.push(cell("octB", "seo company culver city ca", "geo-grid", 13, "2026-10-06T23:42:00Z", i, null)); rows.push(cell("nov", "local seo services near me", "geo-grid", 13, "2026-11-10T18:10:00Z", i, i < 6 ? 9 : null)); }
+    const R = CM.rankTileOf(rows);
+    if (!R || R.keyword !== "local seo services near me" || R.size !== 25 || CM.shortDay(R.at) !== "Nov 10") fail(`2 the map tile must read the Nov 10 scan, not September's 81-point one: ${text(R)}`);
+    else if (!R.prev || CM.shortDay(R.prev.at) !== "Oct 6") fail(`2 the Nov 10 scan is compared with Oct 6 (same keyword, 25 points, same zoom): ${text(R.prev)}`);
+    const diffZoom = CM.rankTileOf(rows.filter((r) => r.grid_session_id !== "octB").map((r) => (r.grid_session_id === "oct" ? { ...r, grid_zoom: 14 } : r)));
+    if (diffZoom && diffZoom.prev) fail("2 a scan at a different zoom must not be compared");
+    const kwB = CM.rankTileOf(rows.filter((r) => r.grid_session_id !== "oct"));
+    if (kwB && kwB.prev) fail("2 a scan of another keyword must not be compared"); }
   // figures arrive
   if (CM.shortDay(CM.figuresArriveMs("2026-11-01")) !== "Dec 2" || CM.shortDay(CM.figuresArriveMs("2026-10-01")) !== "Nov 2") fail("2 a month's Google figures arrive about the 2nd of the month after");
 } catch (e) { fail(`2 threw: ${e.message}`); }

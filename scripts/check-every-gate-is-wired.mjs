@@ -455,6 +455,7 @@ const NOT_PREFLIGHT = {
   'check-a-stuck-change-says-so.mjs': 'the WEBSITE repo\'s stuck-change fix (publish_failure_shows_v1, 11-8), fakes + source; run by daily-health-check.sh; it reads no video pipeline output.',
   'check-citations-52-55.mjs': 'the WEBSITE repo\'s admin steps 52-55 (citations_52_55_v1, 11-9), fakes only (database, Google profile, pages, SerpAPI, model); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-steps-57-64.mjs': 'the WEBSITE repo\'s admin steps 57-64 (steps_57_64_v1, 11-9), fakes + vm only (database, search, Google, model, admin card lifts); run by daily-health-check.sh; it reads no video pipeline output.',
+  'check-portal-has-no-em-dash.mjs': 'static scan of the WEBSITE repo\'s client portal source for an em dash in client-visible text (11-10); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-the-morning-run.mjs': 'the WEBSITE repo\'s morning run (steps_57_64_v1, 11-9), fakes only (database, runners, search count); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-the-months-are-kept.mjs': 'the WEBSITE repo\'s months (monthly_v1, 11-9), fakes only (a database behind a fake fetch); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-monthly-weekly.mjs': 'the WEBSITE repo\'s Every week (monthly_s2_weekly_v1, 11-9), fakes only (a database behind a fake fetch, a fake Google); run by daily-health-check.sh; it reads no video pipeline output.',
@@ -762,6 +763,8 @@ console.log(`  ✓ every gate that reads the site can be pointed at a copy, so i
       "runs its own source checker on LIVE_BEFORE (today's strings, which it MUST fail), on an AFTER fixture and on the real files, and --against=<revision> runs it on the build's before state; it exits 1 when the checker cannot tell before from after (the 11-9 build proved it fails on 380620b1 in 31 ways).",
     "check-serpapi-budget.mjs":
       "runs every one of its 18 checks twice with FAKES ONLY (axios replaced, account.json a fixture): on this repo (all must pass) and on the pre-change commit (--against, f8f26ed1 by default), where at least 10 MUST fail, else it exits 2 INDETERMINATE; proven on 11-10 (16 of 17 fail on f8f26ed1; the 17th is the existing SERPAPI-HOLD guard that must keep holding).",
+    "check-portal-has-no-em-dash.mjs":
+      "scans the website source with its own tokenizer (strings, template text, ${} expressions, comments, regex literals) and proves itself on 18 fixtures it must get right, then MUST find 100+ em dashes in the website at the build's before state (--against, 87c6fdbe by default; 153 there on 11-10), else it exits 2 INDETERMINATE; a copy of portal.js with one em dash put back is the mutation and it exits 1.",
     "check-client-monthly-in-a-browser.mjs":
       "reads the live portal as the walk client in chromium with this repo's portal files, so no file copy can be mutated; the 11-9 build proved it fails on the old portal.js (CM_DIR + SITE_DIR on the pre-build checkout: 30+ failures), and a page that does not load exits 2, never green.",
   };

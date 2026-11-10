@@ -250,9 +250,9 @@ try {
       }
     } finally { await h.close(); }
   }
-  // the kickoff's time-passed words (protocol step 1): the managed copy has no dash; self-serve keeps its own
-  { const P = fs.readFileSync(`${SITE}/portal/portal.js`, "utf8"), m = /pmManaged\(\) \? "If you missed it, no problem\. Pick another time and we'll send a new invite\." : "If you missed it, no problem — pick another time and we'll send a new invite\."/.exec(P);
-    if (!m) fail("the kickoff's time-passed line for a managed client isn't \"If you missed it, no problem. Pick another time and we'll send a new invite.\" (with today's line kept for everyone else)"); }
+  // the kickoff's time-passed words (protocol step 1): no dash for anyone (11-10: no em dash anywhere in the portal)
+  { const P = fs.readFileSync(`${SITE}/portal/portal.js`, "utf8"), m = /csNote\("If you missed it, no problem\. Pick another time and we'll send a new invite\."\)/.exec(P);
+    if (!m) fail("the kickoff's time-passed line for a managed client isn't \"If you missed it, no problem. Pick another time and we'll send a new invite.\" (and no dash for anyone)"); }
 } catch (e) {
   if (e instanceof HarnessUnavailable) { console.error(`⚠️  INDETERMINATE — ${e.message}`); process.exit(2); }
   console.error(`⚠️  INDETERMINATE — the gate threw: ${String(e.stack || e).slice(0, 400)}`); if (F.length) console.error("  failures so far:\n" + F.map((m) => "  · " + m).join("\n")); process.exit(2);

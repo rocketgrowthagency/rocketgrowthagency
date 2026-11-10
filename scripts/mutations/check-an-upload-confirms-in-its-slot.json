@@ -51,7 +51,7 @@
 [
 "the false promise comes back",
 "portal",
-"We'll write a review request for each${pmManaged() ? \". You send\" : \" — you send\"} ${n === 1 ? \"it\" : \"them\"} from your phone.",
+"We'll write a review request for each${pmManaged() ? \". You send\" : \", and you send\"} ${n === 1 ? \"it\" : \"them\"} from your phone.",
 "Review requests will start going out automatically.",
 1
 ],

@@ -51,7 +51,7 @@ for (const k of ["ga4", "gsc"]) {
 if (/calendly\.com/i.test(P)) F("a Calendly link is back in the portal — bookings run on Google Calendar; use \"Message us\"");
 if (/RGA_BOOKING_URL/.test(P)) F("RGA_BOOKING_URL is back — the setup-call link pointed at a page nobody watches");
 if (!/\} else if \(status === "no" && svc\.key === "gbp"\) \{/.test(P)) F("a client with no Business Profile gets the generic \"RGA sets it up\" branch");
-if (!/svc\.key === "gbp" \? "No — I need to set it up" : "No — RGA sets it up"/.test(P)) F("the Business Profile \"No\" answer still says RGA sets it up");
+if (!/svc\.key === "gbp" \? "No, I need to set it up" : "No, RGA sets it up"/.test(P)) F("the Business Profile \"No\" answer still says RGA sets it up");
 if (!/const gbpOwed = [^\n]+inventory\.gbp\?\.status === "no";/.test(P)) F("the portal no longer knows when the client still owes their Business Profile");
 const allAns = P.indexOf("if (allAnswered) {");
 const owedAt = P.indexOf("if (gbpOwed && (oauthGranted || !hasYes)) {", allAns);

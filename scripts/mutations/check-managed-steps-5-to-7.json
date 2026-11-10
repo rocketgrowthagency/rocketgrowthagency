@@ -21,7 +21,7 @@
  ["the managed wording reaches a self-serve client", "portal", "  const says = pmManaged();", "  const says = true;", 1],
  ["on a phone step 7's band squeezes its words beside the date", "portalcss", ".pm-cs .pm-k5.pm-cs-hwrap > .pm-cs-card > .pm-k5-h > span { grid-column:2; white-space:normal; }", "", 1],
  ["on a phone step 6's band squeezes its words beside the date", "portal", "}).replace('<div class=\"pm-k5\">', '<div class=\"pm-k5 pm-cs-hwrap\">'); }", "}); }", 1],
- ["the managed kickoff line gets its dash back", "portal", "pmManaged() ? \"If you missed it, no problem. Pick another time and we'll send a new invite.\"", "pmManaged() ? \"If you missed it, no problem — pick another time and we'll send a new invite.\"", 1],
+ ["the managed kickoff line gets its dash back", "portal", "csNote(\"If you missed it, no problem. Pick another time and we'll send a new invite.\")", "csNote(\"If you missed it, no problem \u2014 pick another time and we'll send a new invite.\")", 1],
  ["11-5: a waits list that didn't load reads as waiting again (step 5: Can't start yet · RGA is on it)", "portal", "return rgaWaits ? rgaWaits.has(step.id) : false;", "return rgaWaits ? rgaWaits.has(step.id) : true;", 1],
  ["11-5: a step we couldn't check draws no neutral card", "portal", "        ${rgaUnknown ? rgaUnknownHtml(clientId) : \"\"}\n", "", 1],
  ["11-5: a step we couldn't check keeps its customer form", "portal", "    const completionCtl = rgaUnknown ? \"\"\n      : listingWait", "    const completionCtl = listingWait", 1],
