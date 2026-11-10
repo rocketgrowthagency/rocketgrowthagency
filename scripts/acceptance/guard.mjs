@@ -17,6 +17,16 @@ const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 // 🔴 Add an entry ONLY after reading the function source and confirming no branch writes for that body.
 const onlyKeys = (allowed) => (b) => !!b && typeof b === "object" && Object.keys(b).every((k) => allowed.includes(k));
 export const READ_ONLY_FN_POSTS = {
+  // (11-9) portal-feed.js → _client-feed.feedLines + _reply-live.storedSummary: GETs only (runForClient's snapshot POST is not reachable).
+  "portal-feed": onlyKeys(["client_id"]),
+  // portal-google-numbers.js → _google-numbers.googleNumbers: "this file never writes" the cache; live Google reads only.
+  "portal-google-numbers": onlyKeys(["client_id", "months", "skip_searches"]),
+  // monthly-reports.js — lists the kept reports, or one report by report_id; no write path.
+  "monthly-reports": onlyKeys(["client_id", "report_id"]),
+  // portal-cancel.js — action "read" returns viewFor(); "notice" writes the notice and "files" signs a link, so both stay blocked.
+  "portal-cancel": (b) => onlyKeys(["client_id", "action"])(b) && b.action === "read",
+  // portal-quarter-answer.js — kind "pending" only reads what waits on the client; "win"/"profile" save an answer.
+  "portal-quarter-answer": (b) => onlyKeys(["client_id", "kind", "month"])(b) && b.kind === "pending",
   // netlify/functions/admin-messages.js — every branch only GETs client_activity/clients; `scope` picks the view.
   "admin-messages": onlyKeys(["scope"]),
   // netlify/functions/client-facts.js — POST {client_id} returns the card; it WRITES only when the body
