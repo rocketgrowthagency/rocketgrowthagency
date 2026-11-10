@@ -226,8 +226,8 @@
  [
   "a waiting runs-itself step loses its Runs itself chip",
   "adminjs",
-  "return runsOn(O.readsOn(sel))",
-  "return { text: \"Active now\", cls: \"active\" }",
+  "runsOn(monthlyNextText(id));   // monthly_s5_close_v1",
+  "({ text: \"Active now\", cls: \"active\" });   // monthly_s5_close_v1",
   1
  ],
  [

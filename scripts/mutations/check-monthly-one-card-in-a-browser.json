@@ -37,8 +37,8 @@
  [
   "a waiting runs-itself step loses its Runs itself chip",
   "adminjs",
-  "return runsOn(O.readsOn(sel))",
-  "return { text: \"Active now\", cls: \"active\" }",
+  "runsOn(monthlyNextText(id));   // monthly_s4_quarterly_v1",
+  "({ text: \"Active now\", cls: \"active\" });   // monthly_s4_quarterly_v1",
   1
  ],
  [
@@ -53,6 +53,55 @@
   "adminjs",
   "data-cm-qprev=\"${escapeAttribute(sec.key)}\"",
   "aria-disabled=\"true\"",
+  1
+ ],
+ [
+  "the chip date is the generic month-open date again",
+  "adminjs",
+  "return runsOn(monthlyNextText(id));   // monthly_s3_monthly_v1",
+  "return runsOn(O.readsOn(sel));   // monthly_s3_monthly_v1",
+  1
+ ],
+ [
+  "a waiting runs-itself Monthly row draws the orange active row class",
+  "adminjs",
+  "step4Waits ? \"waits\" : mqQuiet ? \"queued\" : \"active\"",
+  "step4Waits ? \"waits\" : \"active\"",
+  1
+ ],
+ [
+  "a waiting runs-itself Monthly row draws the orange chip",
+  "adminjs",
+  "step4Waits || mqQuiet ? \"queued\" : \"active\"}${!gsA",
+  "step4Waits ? \"queued\" : \"active\"}${!gsA",
+  1
+ ],
+ [
+  "Review replies wears Active now while it waits",
+  "adminjs",
+  "id === \"m2.exec.review_responses\" && task.status !== \"done\" && wklW()",
+  "false && id === \"m2.exec.review_responses\" && task.status !== \"done\" && wklW()",
+  1
+ ],
+ [
+  "step 24's More lands loose outside the row body",
+  "adminjs",
+  "if (body) body.insertAdjacentHTML(\"beforeend\", mh); else el.insertAdjacentHTML(\"beforeend\", `<div class=\"ob-body\">${mh}</div>`);",
+  "el.insertAdjacentHTML(\"beforeend\", mh);",
+  1
+ ],
+ [
+  "the Open the month card loses its date again",
+  "adminjs",
+  "openedAt: (row && (row.opened_at || row.created_at)) || (state.flowM2State && state.flowM2State.created_at) || null",
+  "openedAt: null",
+  1
+ ],
+ [
+  "the Every quarter preview shows internal text again",
+  "adminjs",
+  "<b>${escapeHtml(p ? p.t : (o.t || o.flowId))}</b>",
+  "<b>${escapeHtml((o.t || o.flowId) + \" (quarterly)\")}</b>",
   1
  ]
 ]

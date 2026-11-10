@@ -260,9 +260,9 @@ const task = (f, id) => f.store[id] || {};
 // 12 wiring
 {
   const a = read("admin/admin.js"), ih = read("admin/index.html");
-  if (!/import "\/shared\/monthly-quarter\.js\?v=20261109a"/.test(a)) fail("12 the admin imports shared/monthly-quarter.js");
+  if (!/import "\/shared\/monthly-quarter\.js\?v=20261109b"/.test(a)) fail("12 the admin imports shared/monthly-quarter.js");
   if (!/monthly-sections\.js\?v=20261109e/.test(a)) fail("12 monthly-sections.js ?v= bumped (e)");
-  if (!/admin\.js\?v=20261109t/.test(ih)) fail("12 admin.js ?v= bumped (t)");
+  if (!/admin\.js\?v=20261109u/.test(ih)) fail("12 admin.js ?v= bumped (u)");
   for (const fn of ["qrtOutcomesCardHtml", "qrtLinksCardHtml", "qrtProfileCardHtml", "qrtOverlapCardHtml", "qrtWinCardHtml", "qrtVideoCardHtml", "qrtLeadCardHtml"]) if (!new RegExp(`${fn}\\(\\)`).test(a)) fail(`12 the admin draws ${fn}`);
   const ad = read("netlify/functions/admin-monthly-quarter.js"), po = read("netlify/functions/portal-quarter-answer.js");
   if (!/requireWorkspaceForClient/.test(ad)) fail("12 the admin door is RGA's workspace only");

@@ -3,6 +3,7 @@
 // The browser half is check-monthly-one-card-in-a-browser.mjs (run once after a deploy). Returns an array of failure strings (empty = holds).
 import fs from "node:fs";
 import path from "node:path";
+import { visibleRulesSelfTest } from "./_monthly-visible-rules.mjs";
 
 export function oldChromeFailures(SITE) {
   const F = [], fail = (m) => F.push(m);
@@ -34,7 +35,22 @@ export function oldChromeFailures(SITE) {
   has(moves, "monthNumber(String(r.reporting_month).slice(0, 10), m1ClosedAt) == null) continue;", "B1: the To do \"Send the report\" is not limited to numbered months (RGA's Sep/Oct/Nov rows would show LATE items)");
   has(js, "\"m2.start.open_month\": { status: \"done\", completed_at: at, done_by: \"system\" }", "B2: a month row that exists is not settled as Open the month done on the record");
   has(js, "if (id === \"m2.start.open_month\") return task.status === \"done\" ?", "B2: the Open the month card reads Done from something other than its own status (the count then disagrees)");
-  has(js, "return runsOn(O.readsOn(sel))", "B3: a waiting runs-itself step has no \"Runs itself · <date>\" chip");
+  has(js, "return runsOn(monthlyNextText(id))", "B3: a waiting runs-itself step has no \"Runs itself\" chip fed by the card's own next date");
+  lacks(js, "runsOn(O.readsOn(sel))", "B3: the chip date is the generic month-open date again (Dec 1 on every runs-itself row); it must come from monthlyNextText, the card's own date");
+  lacks(js, "C.dayOfNext(sel, C.DAYS[id])", "B3: the chip date for the freeze step is computed apart from the card");
+  has(js, "function monthlyNextMs(id)", "B3: there is no single function giving the next date of a runs-itself Monthly step");
+  has(js, "d.scan.nextAt", "B3: the scans chip date is not the scans card's nextAt");
+  has(js, "const mqQuiet = ", "B4: a waiting runs-itself Monthly row has no quiet (neutral) styling");
+  has(js, "step4Waits ? \"waits\" : mqQuiet ? \"queued\" : \"active\"", "B4: the quiet Monthly row still gets the orange active row class");
+  has(js, "step4Waits || mqQuiet ? \"queued\" : \"active\"", "B4: the quiet Monthly row's chip is still the orange one");
+  has(js, "id === \"m2.exec.review_responses\" && task.status !== \"done\" && wklW()", "B5: Review replies has no chip of its own (it wears Active now while waiting)");
+  has(js, "if (body) body.insertAdjacentHTML(\"beforeend\", mh)", "B6: step 24's More link is appended outside the padded row body (flush left, between cards)");
+  has(js, "(row && (row.opened_at || row.created_at))", "B7: the Open the month card is not given the month row's date");
+  lacks(rd("shared/monthly-start.js"), "It never makes two.", "B7: the Open the month line still ends with \"It never makes two.\"");
+  const qm = rd("shared/monthly-quarter.js");
+  has(js, "QP[o.flowId]", "C: the Every quarter preview does not use the approved titles and plain lines");
+  for (const t of ["Their numbers: booked jobs and revenue", "Links and local press", "Review the Google profile details", "Keyword overlap check", "Win story", "Video (optional)", "Lead-handling test (only with call tracking)"]) has(qm, `t: "${t}"`, `C: the quarter preview lacks the approved title "${t}"`);
+  for (const bad of ["Publishes 1 or 2 YouTube videos", "Records the client's leads, calls, jobs and revenue", "(quarterly)"]) lacks(qm.slice(qm.indexOf("const PREVIEW")), bad, `C: the quarter preview carries internal text: "${bad}"`);
   has(js, "(UNI_OWN_CARD.has(id) || monthlyOwn(id) ||", "B3: the Monthly row pill is not routed to the card's own chip (so a waiting runs-itself step says \"Active now\")");
   // C · the Every quarter line opens a read-only preview
   has(js, "data-cm-qprev=\"${escapeAttribute(sec.key)}\"", "C: the folded Every quarter line is not a button");
@@ -49,6 +65,7 @@ export function oldChromeFailures(SITE) {
   lacks(mp, "websiteSections", "D: the Website Work block is still inside the Monthly tab");
   lacks(mp, "Optional add-on", "D: an \"Optional add-on\" block is still inside the Monthly tab");
   has(js, "\"monthlynew\", \"websitework\"", "D: websitework is not a known client tab");
-  has(html, "admin.js?v=20261109t", "the admin.js ?v= was not bumped");
+  has(html, "admin.js?v=20261109u", "the admin.js ?v= was not bumped");
+  F.push(...visibleRulesSelfTest());   // the browser gate's rules fire on the 11-9 live state and stay quiet on the fixed one
   return F;
 }

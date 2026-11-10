@@ -10,7 +10,9 @@
 //
 //   · exactly one card (data-uni-card) and no legacy detection block, Run button, OVERRIDE row, "Mark step complete"
 //   · exactly one "Skip this step…" (none on Open the month and Start the next month, which cannot be skipped)
-//   · no orange "Active now" on a runs-itself step that is waiting on its schedule
+//   · (monthly_fix_v3) what is VISIBLY drawn: a row whose title shows the "Runs itself" tag and whose card is not "Your move" wears no "Active now", no orange
+//     row border / class, no orange chip or marker; the chip's date is on that row's own card; every "More" is inside its row's body; Open the month's card names a date.
+//     The rules live in _monthly-visible-rules.mjs, which also proves they fire on the 11-9 live state (visibleRulesSelfTest) before the page is read.
 //   · each section's "d / t" equals the rows that read Done or Skipped, and "Open the month" Done means d >= 1
 //   · "Every quarter" (folded in a non-quarter month) opens a read-only preview and folds again
 //   · no "Website Work" block and no "Twilio" sentence on the Monthly tab; Website Work has its own tab
@@ -20,6 +22,7 @@
 //   Run it ONCE AFTER A DEPLOY (it reads the live site). It needs SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in the environment.
 //
 // Exit 0 clean · 1 a row draws old chrome / the tab is wrong · 2 INDETERMINATE (no credentials, no browser, page never rendered)
+import { visibleRowFailures, visibleRulesSelfTest } from "./_monthly-visible-rules.mjs";
 const SITE = process.env.RGA_SITE_URL || "https://www.rocketgrowthagency.com";
 const CLIENT = process.argv[2] || process.env.RGA_MONTHLY_CLIENT_ID || "ae817a9c-60a2-4cc9-a196-0582b7b7e7c3";
 const SUPA_URL = process.env.SUPABASE_URL, SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -37,7 +40,7 @@ try {
 } catch { /* reported below */ }
 if (!link) { console.error("INDETERMINATE: no sign-in link returned."); process.exit(2); }
 
-const fails = [];
+const fails = [...visibleRulesSelfTest()];
 const b = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 try {
   const page = await b.newPage();
@@ -58,7 +61,12 @@ try {
     return [...document.querySelectorAll('#monthlyChecklistHost .ob-step[data-ob-step^="m2."]')].map((el) => {
       const id = el.getAttribute("data-ob-step"), text = el.innerText || "";
       const pill = (el.querySelector(".ob-row .ob-status") || {}).innerText || "";
-      return { id, pill: pill.trim(), self: SELF.has(id),
+      const orangeRgb = "rgb(180, 83, 9)", card = el.querySelector(`[data-uni-card="${id}"]`), num = el.querySelector(".ob-num"), stat = el.querySelector(".ob-row .ob-status");
+      const mores = [...el.querySelectorAll("details[data-ob-more]")];
+      const vis = { tagSelf: /Runs itself/i.test((el.querySelector(".ob-title") || {}).innerText || ""), rowCls: el.className + (getComputedStyle(el).borderTopColor === orangeRgb ? " active" : ""),
+        statusCls: stat ? stat.className : "", markerCls: num && getComputedStyle(num).backgroundColor === orangeRgb ? "active" : "", cardText: card ? card.innerText : "",
+        moreCount: mores.length, moreInside: mores.every((m) => m.closest(".ob-step") === el && !!m.closest(".ob-body")) };
+      return { id, pill: pill.trim(), self: SELF.has(id), vis,
         cards: el.querySelectorAll(`[data-uni-card="${id}"]`).length,
         det: el.querySelectorAll(".ob-det").length, ovr: el.querySelectorAll(".ob-ovr").length,
         runBtn: el.querySelectorAll("[data-onboard-run]").length,
@@ -82,6 +90,7 @@ try {
     if (NO_SKIP.has(r.id) && r.skip) fails.push(`${tag}: has a Skip, it cannot be skipped`);
     if (r.self && /^Active now$/i.test(r.pill)) fails.push(`${tag}: a waiting runs-itself step wears "Active now"`);
   }
+  fails.push(...visibleRowFailures(rows.map((r) => ({ id: r.id, pill: r.pill, ...r.vis }))));
 
   // the section counts agree with the rows
   const phases = await page.evaluate(() => [...document.querySelectorAll("#monthlyChecklistHost .ob-phase:not(.cm-q-folded)")].map((ph) => {

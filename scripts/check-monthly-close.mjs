@@ -379,7 +379,7 @@ let M1_CLOSED = true;
   if (!/Send to \$\{v\.to\}/.test(as)) fail("9 the send button names the address");
   if (!/import "\/shared\/monthly-close\.js\?v=20261109a"/.test(a)) fail("9 the admin imports shared/monthly-close.js");
   if (!/monthly-sections\.js\?v=20261109e/.test(a) || !/steps-57-64\.js\?v=20261109h/.test(a)) fail("9 the changed shared files need new ?v= keys");
-  if (!/admin\.js\?v=20261109t/.test(ih) || !/admin\.css\?v=20261109h/.test(ih)) fail("9 admin.js / admin.css ?v= keys must be bumped (t, h)");
+  if (!/admin\.js\?v=20261109u/.test(ih) || !/admin\.css\?v=20261109h/.test(ih)) fail("9 admin.js / admin.css ?v= keys must be bumped (u, h)");
   if (!/portal\.js\?v=20261109j/.test(ph)) fail("9 portal.js ?v= must be bumped (j)");
   if (!/#report-\\d\{4\}-\\d\{2\}/.test(p) || !/data-mr-month/.test(p) || !/function openMonthlyReport/.test(p)) fail("9 the portal opens the Reports tab on that month's report (#report-YYYY-MM)");
   const band = ["shared/monthly-close.js", "netlify/functions/_monthly-report-email.js"].map((f) => strip(read(f))).join("\n");
