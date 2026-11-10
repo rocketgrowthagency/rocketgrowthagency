@@ -464,7 +464,7 @@ try {
   // the skip control routes to the one function; client rows too
   if (!/data-task-status"\) === "skipped" && uniS\(\)\) \{ uniSkipPress\(/.test(A)) fail("skip UI: a client row's Skip doesn't go to the one Skip");
   if (!/const reason = await rgaDialog\(\{ kind: "prompt", title: "Skip this step"/.test(A) || !/mgBusy\(b, true\);\s*try \{\s*const r = await fetch\(UNI_FN_SKIP/.test(A)) fail("skip UI: no reason prompt, or the button doesn't spin");
-  if (!/\(UNI_OWN_CARD\.has\(o\.flowId\) && s\.task\?\.status !== "skipped" \? `<div class="ob-done-card">\$\{rowStepCardsHtml\(o, s\)\}<\/div>` : ""\)/.test(A)) fail("cards: a done row loses its card");
+  if (!/\(\(UNI_OWN_CARD\.has\(o\.flowId\) \|\| monthlyOwn\(o\)\) && s\.task\?\.status !== "skipped" \? `<div class="ob-done-card">\$\{rowStepCardsHtml\(o, s\)\}<\/div>` : ""\)/.test(A)) fail("cards: a done row loses its card (a Monthly row too: 11-10 the morning run finished step 8 and its numbers vanished)");
   if (!/const rowHtmlList = rowHtmlList0\.map\(\(h, i\) => uniWrapRow\(h, steps\[i\]\.obj, steps\[i\], scope, steps\)\);/.test(A)) fail("rows: the checklist doesn't pass every row through uniWrapRow");
   if (!/obApplyStepAccordion|row\.classList\.add\("ob-row-toggle"\)/.test(A)) fail("rows: the accordion that opens a row is gone");
   const pbi = (id) => M1.find((s) => s.id === id) || {};

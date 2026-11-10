@@ -394,7 +394,7 @@
  [
   "a finished row loses its card",
   "admin",
-  "(UNI_OWN_CARD.has(o.flowId) && s.task?.status !== \"skipped\" ? `<div class=\"ob-done-card\">${rowStepCardsHtml(o, s)}</div>` : \"\")",
+  "((UNI_OWN_CARD.has(o.flowId) || monthlyOwn(o)) && s.task?.status !== \"skipped\" ? `<div class=\"ob-done-card\">${rowStepCardsHtml(o, s)}</div>` : \"\")",
   "(false ? `<div class=\"ob-done-card\">${rowStepCardsHtml(o, s)}</div>` : \"\")",
   1
  ],

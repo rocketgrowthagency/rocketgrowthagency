@@ -156,9 +156,9 @@ const t59 = { status: "done", completed_at: "2026-10-19T15:00:00Z", outcome_data
 }
 // the row wiring
 {
-  if (!/o\.flowId === "m1\.review\.system" \? "" : stepOutputHtml\(/.test(admin)) fail("3 the raw draft and run table are not hidden on 59");
+  if (!/o\.flowId === "m1\.review\.system"(?: \|\| monthlyOwn\(o\))? \? "" : stepOutputHtml\(/.test(admin)) fail("3 the raw draft and run table are not hidden on 59");
   if (!/o\.flowId === "m1\.review\.first_5" \? ""\s*\n?\s*: byClient && gp/.test(admin) && !/: o\.flowId === "m1\.review\.first_5" \? ""/.test(admin)) fail("4 the 'their word' line still shows on 60");
-  if (!/o\.flowId === "m1\.review\.first_5" \? "" : obDetectionHtml\(o, s\.task\)/.test(admin)) fail("4 'We measured' still shows on a done 60");
+  if (!/o\.flowId === "m1\.review\.first_5"(?: \|\| monthlyOwn\(o\))? \? "" : obDetectionHtml\(o, s\.task\)/.test(admin)) fail("4 'We measured' still shows on a done 60");
   if (!/\|\| o\.flowId === "m1\.review\.system" \? "" : stepSettingHtml/.test(admin)) fail("3 59 still shows the duplicate 'Now set to' line");
   if (!/\(o\.flowId === "m1\.call\.close" && s\.task\?\.status === "skipped"\) \? ""/.test(admin)) fail("5 a skipped 63 still has the row's Undo beside the card's");
   if (!/&& !rvNoRerun\(o\.flowId, s\.task\)/.test(admin)) fail("3 the Run again condition does not ask rvNoRerun");

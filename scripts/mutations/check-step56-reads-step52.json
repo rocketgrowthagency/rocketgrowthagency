@@ -163,8 +163,8 @@
  [
   "56's retired checklist output shows again",
   "admin",
-  "const resultBlock = o.flowId === \"m1.platform.bing_apple\" || o.flowId === \"m1.review.system\" ? \"\" : stepOutputHtml(result, s.task, o);",
-  "const resultBlock = o.flowId === \"m1.review.system\" ? \"\" : stepOutputHtml(result, s.task, o);",
+  "const resultBlock = o.flowId === \"m1.platform.bing_apple\" || o.flowId === \"m1.review.system\" || monthlyOwn(o) ? \"\" : stepOutputHtml(result, s.task, o);",
+  "const resultBlock = o.flowId === \"m1.review.system\" || monthlyOwn(o) ? \"\" : stepOutputHtml(result, s.task, o);",
   1
  ]
 ]
