@@ -54,6 +54,15 @@ bump_attempt(){ local k="$1" n; n=$(( $(attempts_for "$k") + 1 ))
 
 say "=== recovery-rounds START $(date) — chunk=${CHUNK} maxRounds=${MAX_ROUNDS} cap=${CAP} deadline=$(date -r "$DEADLINE" '+%H:%M' 2>/dev/null) ==="
 
+# 🔴 11-10 SERPAPI HOLD (Chris moved to Starter, 1,000 searches/month): every rebuild re-spends SerpAPI searches, so while
+# output/SERPAPI-HOLD exists no round runs and NO attempt is counted (a held night must never burn a lead's 3 tries).
+# Lifted by deleting the file once the per-night budget lands. → memory project_serpapi_budget
+if [ -f "$SCRAPER/output/SERPAPI-HOLD" ]; then
+  say ">>> SERPAPI HOLD: $(head -1 "$SCRAPER/output/SERPAPI-HOLD" 2>/dev/null). No recovery round tonight, no attempt counted."
+  say "=== recovery-rounds DONE $(date) — held (0 rounds) ==="
+  exit 0
+fi
+
 round=0
 while [ "$round" -lt "$MAX_ROUNDS" ]; do
   round=$((round+1))
