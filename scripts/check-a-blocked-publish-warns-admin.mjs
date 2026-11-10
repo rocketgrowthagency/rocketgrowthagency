@@ -150,8 +150,11 @@ if (!/Website work blocked · Acme Plumbing/.test(out.row.text) || !out.row.open
 // ── part 3 · the wiring ─────────────────────────────────────────────────────────────────────────────────────────────────────
 if ((A.match(/\$\{badge\}\$\{pbTagHtml\(o\.flowId\)\}/g) || []).length < 5) fail("the step rows don't carry the tag");
 if (!/const steps = sopSequencedSteps\(scope\);\s*\n\s*\/\/[^\n]*\n\s*if \(steps\.length && scope === "month1"\) paintPublishBlocked\(\);/.test(A)) fail("the warning isn't painted again once the steps load, so its step numbers can be missing");
-// admin_system_health_placement_v1 (11-8): the jobs card and the blocked rows show on the Dashboard and the System health tab only
-if (!/if \(!full && \(!needsLook \|\| SH\.view !== "dashboard"\)\) \{ host\.hidden = true;/.test(A)) fail("the System health card shows on pages other than the Dashboard (calls, docs, a client page)");
+// admin_system_health_placement_v1 (11-8) → admin_dashboard_top_v2 (11-9): the jobs card and the blocked rows show on the System health tab
+// ONLY; the Dashboard counts them in one Your work queue line (shLooks, which counts the blocked rows too)
+if (!/if \(!full\) \{ host\.hidden = true;/.test(A)) fail("the System health card shows on pages other than its own tab (the Dashboard, calls, docs, a client page)");
+if (!/const shLooks = \(\) => \(SH\.data \? \(\(SH\.data\.summary && SH\.data\.summary\.problems\) \|\| 0\) \+ \(Array\.isArray\(SH\.data\.blocked\) \? SH\.data\.blocked\.length : 0\) : null\);/.test(A)
+  || !/const looks = shLooks\(\);\s*\n\s*if \(looks\) todo\.push\(/.test(A)) fail("the Dashboard's work queue doesn't count the jobs and blocked websites that need a look");
 if (!/loadPublishBlocked\(state\.selectedClient\.id\)/.test(A) || !/<div id="publishBlockedBanner" hidden><\/div>/.test(IDX)) fail("the client page doesn't read the newest reading into its warning");
 if (!/publishBlockedRowsHtml\(blocked\)\}\$\{alerts\}/.test(A) || !/\$\{pbRows\}<\/div>`;/.test(A)) fail("System health (full or on the Dashboard) doesn't list blocked clients");
 const openPr = DEL.slice(DEL.indexOf('if (act === "open_pr")'), DEL.indexOf("// 🔒 ONLY THE APPROVED BUILD UPLOADS"));

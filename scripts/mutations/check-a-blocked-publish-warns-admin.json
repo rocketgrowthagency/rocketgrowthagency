@@ -100,8 +100,8 @@
  [
   "the jobs card shows on every page",
   "admin",
-  "if (!full && (!needsLook || SH.view !== \"dashboard\")) {",
-  "if (!full && !needsLook) {",
+  "if (!full) { host.hidden = true;",
+  "if (false) { host.hidden = true;",
   1
  ],
  [
