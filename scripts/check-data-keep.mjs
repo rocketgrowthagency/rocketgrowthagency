@@ -322,7 +322,8 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
     const w = { rows: fresh(), calls: [], ledger: [], patches: [], deletes: 0 };
     const through = (p) => (/reporting_month=lte\.([\d-]+)/.exec(p) || [])[1] || "9999-99-99";
     const any = (r) => K.GOOGLE_FIELDS.some((f) => r[f] != null) || (r.data && r.data.gbp != null);
-    const sel = (p) => w.rows.filter((r) => r.reporting_month <= through(p) && any(r));
+    // the JSON-key expiry (monthly_plan_basis, monthly_frozen_google, monthly_report_draft) queries the same table with no month guard and asks for rows holding THOSE blobs: these fixture rows hold none of them
+    const sel = (p) => (/reporting_month=lte\./.test(p) ? w.rows.filter((r) => r.reporting_month <= through(p) && any(r)) : []);
     w.supa = async (p, init = {}) => { const method = init.method || "GET"; w.calls.push(`${method} ${p.split("?")[0]}`); if (w.calls.length > 800) throw new Error("runaway");
       if (p.startsWith("/gbp_purge_ledger")) { if (method === "GET") { if (o.noLedgerColumns) throw new Error("Supabase 400: column gbp_purge_ledger.action does not exist"); return []; }
         if (o.ledgerWriteFails) throw new Error("Supabase 500"); w.ledger.push(JSON.parse(init.body)); return null; }

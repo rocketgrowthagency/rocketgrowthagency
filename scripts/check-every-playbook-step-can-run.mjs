@@ -44,6 +44,30 @@ const NO_EXECUTOR_OK = {
   // Two hand-run scans on RGA died partway and persisted as complete-looking sessions.
 };
 
+
+// 🔑 monthly_s3/s5 (11-9): the monthly steps that run themselves have NO entry in EXECUTORS on purpose. The morning run settles them from their own reads, so a
+// step counts as run-by-the-morning when the real chain is intact: the morning run calls the settler AND the settler names the step in code it executes.
+// Derived from the code each time (not a typed list), so a step that nothing settles still fails, and a settler that stops naming a step stops excusing it.
+const strip = (t) => t.replace(/^\s*\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+const rd = (rel) => { try { return strip(fs.readFileSync(path.join(SITE, rel), 'utf8')); } catch { return ''; } };
+const idMap = (t) => { const m = /const ID = \{([\s\S]*?)\};/.exec(t); const o = {}; if (m) for (const x of m[1].matchAll(/([A-Z_0-9]+):\s*"([a-z0-9_.]+)"/g)) o[x[1]] = x[2]; return o; };
+function settledByMorningRun() {
+  const out = new Set(), morning = rd('netlify/functions/_morning-run.js');
+  // 1 · the once-a-month steps: _monthly-once.js settle() walks a list of M.ID.* and marks each done from its own view
+  const once = rd('netlify/functions/_monthly-once.js'), M = idMap(rd('shared/monthly-monthly.js'));
+  if (/MO\.settle\(\{ clientId/.test(morning) && /async function settle\(/.test(once)) {
+    const loop = /for \(const id of \[([^\]]*)\]\) \{[\s\S]{0,400}?status: "done"/.exec(once.slice(once.indexOf('async function settle(')));
+    if (loop) for (const k of loop[1].matchAll(/M\.ID\.([A-Z_0-9]+)/g)) if (M[k[1]]) out.add(M[k[1]]);
+  }
+  // 2 · step 1 Open the month: the morning run calls OM.openMonth, which settles the step it names
+  const om = rd('netlify/functions/_open-month.js'), os = /const OPEN_STEP = "([a-z0-9_.]+)"/.exec(om);
+  if (os && /OM\.openMonth\(/.test(morning) && /async function openMonth\(/.test(om) && /OPEN_STEP/.test(om.slice(om.indexOf('async function openMonth(')))) out.add(os[1]);
+  // 3 · Freeze the month's numbers: the morning run calls closeMorning, which freezes and marks MC.ID.FREEZE done
+  const mc = rd('netlify/functions/_monthly-close.js'), C = idMap(rd('shared/monthly-close.js'));
+  if (/closeMorning\(/.test(morning) && /async function closeMorning\(/.test(mc) && /tasks\[MC\.ID\.FREEZE\] = \{[^}]*status: "done"/.test(mc) && C.FREEZE) out.add(C.FREEZE);
+  return out;
+}
+const MORNING = settledByMorningRun();
 const fail = [];
 let pb, src;
 try {
@@ -106,6 +130,7 @@ for (const [bookName, steps] of Object.entries({ month1: pb.month1, month2plus: 
       continue;
     }
     if (NO_EXECUTOR_OK[s.id]) continue;
+    if (MORNING.has(s.id)) continue;   // settled by the morning run (see settledByMorningRun)
 
     const blocks = steps.filter((o) => (o.dependsOn || []).includes(s.id)).map((o) => o.id);
     fail.push(

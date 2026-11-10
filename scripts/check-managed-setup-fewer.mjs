@@ -465,7 +465,10 @@ try {
       const t38 = A.fewerAdminLine(PH, { ...fewerT({}, PH, 13, "client"), detected: { n: 13, source: "google_profile" } });
       if (!t38.includes("Client finished with 13 on Google · Nov 5 · every kind at its minimum. The nightly check keeps counting toward 20.")) fail(`admin step 38's line isn't the approved one («${t38}»)`);
       const t60 = A.fewerAdminLine(RV, { ...fewerT({}, RV, 1, "client"), detected: { n: 1 } });
-      if (!t60.includes("Client finished with 1 of 5 asked · Nov 5. Their customers now come through Monthly step 12 (client step 8).")) fail(`admin step 60's line isn't the approved one («${t60}»)`);
+      // the Monthly number is read from the live order (obNumberOf), never pinned: 11-9's Monthly rebuild moved review_push from 12 to 9
+      const m12 = ctx.obNumberOf("m2.exec.review_push", "month2plus");
+      if (!m12) fail("the Monthly playbook has no m2.exec.review_push, so step 60's line can't be judged");
+      if (!t60.includes(`Client finished with 1 of 5 asked · Nov 5. Their customers now come through Monthly step ${m12} (client step 8).`)) fail(`admin step 60's line isn't the approved one («${t60}»)`);
       if (A.fewerAdminLine(PH, { status: "done" }) || A.fewerAdminLine("m1.gbp.verify", fewerT({}, PH, 1, "client")) || A.fewerAdminLine(PH, { ...fewerT({}, PH, 1, "client"), status: "pending" })) fail("admin draws a fewer line on a step that wasn't finished with fewer");
       const reset = A.mergeTaskState(fewerT({}, PH, 13, "client"), { status: "pending", completed_at: null });
       if (reset.fewer || reset.status !== "pending") fail("admin's Reset leaves the fewer note on a reopened step");

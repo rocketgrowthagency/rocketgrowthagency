@@ -43,6 +43,7 @@ const ALLOW = {
   "portal-step-recheck.js": "a measurement — kept append-only in client_step_detections",
   "portal-photo-remove.js": "records the removal itself: activity + publish log + Google change log",
   "portal-photo-check.js": "an AI look at an upload, kept as advice under photo_ai.uploads (the same key RGA's own check writes); the client submits nothing, and a second call is answered from it, so there is nothing to record (client_step10_upload_help_v1)",
+  "_monthly-once.js": "settle() marks the steps that run themselves done from a measured result the morning run read (rank, numbers, competitors, site check, listing checks): a machine run, nobody pressed or submitted anything, and each reading is already kept by its own source (monthly_s3_monthly_v1)",
   "portal-reply.js": "the reply IS the permanent record (client_activity rga_reply, written first); the step write only stamps replied_at on the ask",
 };
 const dir = `${SITE}/netlify/functions`;

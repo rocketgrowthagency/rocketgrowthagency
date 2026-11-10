@@ -76,6 +76,7 @@ const INVENTORY = {
   "citation-audit.js": "none:the profile's name and phone are used to compare and discarded; the saved line no longer repeats the phone (fixed 11-05)",
   "heal-onboarding-errors.js": "none:retries RGA's own manager invite and saves a status sentence; it reads no Google content",
   "_gbp-keep.js": "none:the registry itself (names hosts, writes nothing)",
+  "_reply-post.js": "none:posts the client-approved reply (RGA's own words, already in the change log) and reads the review back only to confirm it is live; it stores review ids, our reply text, a status and a reason, never the review text or the reviewer (its own 30-day note)",
   "_google-live.js": "none:the one live reader: it keeps Google's answer in memory for the request and writes no table, file or cache; it returns the answer to its caller",
 };
 const HOST_RE = new RegExp(K.BUSINESS_PROFILE_HOSTS.map((h) => h.replace(/\./g, "\\.")).join("|"));

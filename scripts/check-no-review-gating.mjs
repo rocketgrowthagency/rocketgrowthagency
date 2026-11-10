@@ -10,9 +10,9 @@
 import fs from "node:fs";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const SCR = process.env.SCRAPER_DIR || "/Users/chris/RGA/Rocket Growth Agency Scraper VS Code";
-const GATING = /negative filter|intercept[^.\n]{0,30}★|before (they|it) posts?\b|\b[1-5]★\s*\+|\b[1-5]★ and up\b|\bhappy (past |recent )?customers?\b|only (ask|request|text|email)[^.\n]{0,40}\b(happy|satisfied|positive|5★)/gi;
+const GATING = /negative filter|intercept[^.\n]{0,30}★|(?<!\b(?:repl(?:y|ies)|approves each)\b[^.\n]{0,40})before (they|it) posts?\b|\b[1-5]★\s*\+|\b[1-5]★ and up\b|\bhappy (past |recent )?customers?\b|only (ask|request|text|email)[^.\n]{0,40}\b(happy|satisfied|positive|5★)/gi;
 for (const [w, want] of [["NEGATIVE FILTER (intercept 1-3★ before they post)", true], ["5 reviews 4★+", true], ["Add 5 happy past customers", true], ["only ask the satisfied ones", true],
-  ["UNHAPPY-CUSTOMER PLAN", false], ["you're happy for Google to show it", false], ["5 recent past customers", false], ["IF_HAPPY", false]]) {
+  ["the client approves each reply before it posts", false], ["the client approves each before it posts", false], ["we hold the review before it posts", true], ["UNHAPPY-CUSTOMER PLAN", false], ["you're happy for Google to show it", false], ["5 recent past customers", false], ["IF_HAPPY", false]]) {
   GATING.lastIndex = 0;
   if (GATING.test(w) !== want) { console.error(`⚠️  INDETERMINATE — the detector is wrong about "${w}" (expected ${want ? "flag" : "pass"})`); process.exit(2); }
 }

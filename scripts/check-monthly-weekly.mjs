@@ -240,6 +240,10 @@ function fakeGoogle({ existing = {}, putStatus = {}, readFail = false, consent =
   }
   o = await press({ step_id: W.ID.PUSH, action: "unskip_week", week: 2 });
   if (o.code !== 200 || stored().week_skips[W.ID.PUSH]["2"]) fail("7 Undo must bring the week back");
+  // a skip that did not stick (the write answers with the record WITHOUT it) must say so, never "ok"
+  { const lost = async (q, init) => (init && init.method === "PATCH" && /client_monthly_records\?id=/.test(q) ? [{ data: JSON.parse(JSON.stringify(DB.cur.T.client_monthly_records[0].data)) }] : DB.cur.supa(q, init));
+    SKIPW.__useDeps(mk({ supa: lost })); const lo = await SKIPW.handler({ httpMethod: "POST", body: JSON.stringify({ client_id: CID, month: MONTH, step_id: W.ID.PUSH, action: "skip_week", week: 4, reason: "lost" }) });
+    if (lo.statusCode !== 500 || !/didn't save/.test(lo.body) || (stored().week_skips[W.ID.PUSH] || {})["4"]) fail(`7 a skip the write did not keep must answer 'That didn't save', never ok: ${lo.statusCode} ${lo.body}`); }
   // New photos: Nothing new this month
   o = await press({ step_id: W.ID.PHOTOS, action: "nothing_new" });
   const pt = () => stored().tasks[W.ID.PHOTOS];
@@ -275,6 +279,14 @@ function fakeGoogle({ existing = {}, putStatus = {}, readFail = false, consent =
   const a = read("admin/admin.js"), html = read("admin/index.html");
   for (const [id, fn] of [["m2.exec.review_push", "wklAsksCardHtml"], ["m2.exec.review_responses", "wklRepliesCardHtml"], ["m2.exec.gbp_posts", "wklPostsCardHtml"], ["m2.exec.gbp_photos", "wklPhotosCardHtml"]])
     if (!new RegExp(`id === "${id.replace(/\./g, "\\.")}" \\? ${fn}\\(\\)`).test(a)) fail(`8 ${id}'s card is not wired into rowStepCardsHtml`);
+  // the four cards themselves (not only the playbook): no old quota title is drawn by the admin's card code
+  for (const fn of ["wklAsksCardHtml", "wklRepliesCardHtml", "wklPostsCardHtml", "wklPhotosCardHtml"]) {
+    const i = a.indexOf(`function ${fn}(`); const body = i < 0 ? "" : a.slice(i, a.indexOf("\n}\n", i)).replace(/^\s*\/\/.*$/gm, "");
+    if (!body) fail(`8 ${fn} moved`); else if (/Add 5\+|Post 4 GBP|Add new photos|Ask this month's customers|Respond to all new reviews|New photos \(suggested\)/.test(body)) fail(`8 ${fn} draws an old quota title`);
+  }
+  // a runs-itself step that is waiting says "Runs itself · date" on all three monthly sections (never the orange "Active now"), and the quarter line is a real button
+  if ((a.match(/SELF\.includes\(id\)[^\n]*return runsOn\(monthlyNextText\(id\)\);/g) || []).length !== 3) fail("8 the once-a-month, every-quarter and close sections must each show the quiet 'Runs itself' chip for a waiting step");
+  if (!/<button type="button" class="ob-ph-h" data-cm-qprev=/.test(a)) fail("8 the quarter preview line must be a button");
   if (!/import "\/shared\/monthly-weekly\.js\?v=/.test(a)) fail("8 the admin must load shared/monthly-weekly.js");
   for (const id of W.IDS) if (!STEPS.noHandDone(id)) fail(`8 ${id} must have no hand Mark step complete`);
 const vge = (txt, re, min) => { const m = re.exec(txt); return !!m && m[1] >= min; };   // a ?v= key at least this one: later sections bump them again

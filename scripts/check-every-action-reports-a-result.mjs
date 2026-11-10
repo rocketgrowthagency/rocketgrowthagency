@@ -36,6 +36,8 @@ const TARGETS = [
 // Actions whose visible result IS the UI change they cause. Excused BY NAME with a reason — an
 // exemption must be argued, never assumed (same discipline as the pre-flight gate list).
 const UI_ONLY = {
+  "data-cm-qprev": "the Monthly tab's \"Every quarter\" preview (monthly_fix_v2, 11-9): opens or folds a read-only preview in place and flips the open class (visible) - nothing is saved",
+  "data-mp-task": "the focus-plan card's task tick (monthly plan draft): the checkbox itself visibly ticks or unticks and the choice is held as a draft in the page - nothing is saved until \"Use this plan\", which IS audited",
   "data-dk-refresh": "re-reads the admin Data card and redraws it; changes nothing",
   "data-pb-details": "the 'Website changes can't go live' warning's Details (admin_publish_blocked_warning, 11-8): opens or folds the warning's list and flips aria-expanded (visible); changes nothing",
   "data-bl-refresh": "re-reads the admin Blog card and redraws it; changes nothing",

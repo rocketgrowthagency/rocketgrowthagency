@@ -109,7 +109,8 @@ if (!stage4) {
         + `is a false all-clear, the exact failure that let "Needs your attention" say "All clear" `
         + `for the whole of Month 1.`);
     }
-    if (!/complete/i.test(body) || !/blocked|locked/i.test(body)) {
+    // 🔄 11-9 (monthly_v1): the all-done state is titled "Month 1 is handed off" (the hand-off moves the client to Monthly itself)
+    if (!/complete|handed off/i.test(body) || !/blocked|locked/i.test(body)) {
       problems.push(`The next-action card does not distinguish "all steps done" from "nothing is `
         + `actionable but work remains". Those are different states and a card with no action and `
         + `no explanation reads as a bug.`);

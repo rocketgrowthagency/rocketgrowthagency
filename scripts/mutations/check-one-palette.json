@@ -19,5 +19,26 @@
   "  const DL_PARTS = 4;",
   "  const DL_PARTS = 4; const Y = \"#FBBC05\";",
   1
+ ],
+ [
+  "the legend's Top 3 swatch drifts from the cell colour",
+  "admincss",
+  ".ag-legend b.g1 { background: #16a34a; }",
+  ".ag-legend b.g1 { background: #15803d; }",
+  1
+ ],
+ [
+  "a grid cell wears a one-off hex, not the rank scale",
+  "admincss",
+  ".ag-c.g4 { background: #eab308; }",
+  ".ag-c.g4 { background: #e0a800; }",
+  1
+ ],
+ [
+  "the 6-7 swatch drifts from its cell",
+  "admincss",
+  ".ag-legend b.g4 { background: #eab308; }",
+  ".ag-legend b.g4 { background: #ffcc00; }",
+  1
  ]
 ]

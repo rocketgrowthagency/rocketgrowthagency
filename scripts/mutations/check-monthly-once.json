@@ -73,7 +73,7 @@
   "a new competitor is flagged against no earlier list",
   "monthlyonce",
   "prev && prev.length ? cur.filter",
-  "cur.filter",
+  "true ? cur.filter",
   1
  ],
  [

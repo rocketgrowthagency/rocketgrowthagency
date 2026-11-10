@@ -46,11 +46,11 @@ try { FN = req("./admin-review-message.js"); FEWER = req(path.join(SITE, "shared
 const CID = "11111111-1111-1111-1111-111111111111";
 const ev = (b) => ({ httpMethod: "POST", headers: {}, body: JSON.stringify({ client_id: CID, ...b }) });
 let db, rewriteOut;
-const mkDb = (task) => {
+const mkDb = (task, lossy = false) => {
   const rec = { id: "r1", data: { tasks: { "m1.review.system": task } } };
   return async (p, init = {}) => {
     if (p.startsWith("/client_onboarding_records") && (!init.method || init.method === "GET")) return [{ id: rec.id, client_id: CID, data: JSON.parse(JSON.stringify(rec.data)) }];
-    if (p.startsWith("/client_onboarding_records") && init.method === "PATCH") { rec.data = JSON.parse(init.body).data; return [{ data: rec.data }]; }
+    if (p.startsWith("/client_onboarding_records") && init.method === "PATCH") { if (!lossy) rec.data = JSON.parse(init.body).data; return [{ data: rec.data }]; }
     if (p.startsWith("/clients")) return [{ id: CID, business_name: "Test Co" }];
     return [];
   };
@@ -92,6 +92,8 @@ try {
   if (rw2.j.ok !== false) fail("2 Rewrite says ok when the draft was unusable");
   db = mkDb({ status: "skipped", outcome_data: {} });
   if ((await call({ action: "save", text: good })).s === 200) fail("2 a skipped step accepts a saved message");
+  { db = mkDb({ status: "done", outcome_data: { google_review_link: "https://search.google.com/local/writereview?placeid=X", messages: { sms_1: "Hi {{first_name}}, thanks! {{review_link}}" } } }, true);
+    const lost = await call({ action: "save", text: good }); if (lost.s === 200) fail("2 a save the database did not keep is reported as saved (not read back)"); }
   FN.__useDeps(null);
   if ((await FN.handler({ httpMethod: "POST", headers: {}, body: JSON.stringify({ client_id: CID, action: "check", text: good }) })).statusCode === 200) fail("2 the function answers without RGA's login");
 } catch (e) { console.error(`INDETERMINATE: the function gate threw: ${e.stack || e.message}`); process.exit(2); }
@@ -108,7 +110,7 @@ const srcs = need.map(fnSrc);
 if (srcs.some((x) => !x)) { console.error(`INDETERMINATE: could not lift ${need.filter((_, i) => !srcs[i]).join(", ")} from admin.js`); process.exit(2); }
 const lineOf = (re) => { const m = admin.match(re); if (!m) { console.error(`INDETERMINATE: ${re} not found in admin.js`); process.exit(2); } return m[0]; };
 const consts = [lineOf(/^const rvShow = .*$/m), lineOf(/^const rvLinkOf = .*$/m), lineOf(/^const rvMk = .*$/m), lineOf(/^const rvRow = [\s\S]*?\n.*<\/span><span class="d">.*$/m), lineOf(/^const rvBtn = .*$/m),
-  lineOf(/^const cbOpen = .*$/m), lineOf(/^const acDay = .*$/m), lineOf(/^const OB_MSG_TILE = .*$/m), lineOf(/^const OB_CAL_TILE = .*$/m)];
+  lineOf(/^const cbOpen = .*$/m), lineOf(/^const acDay = .*$/m), lineOf(/^const OB_MSG_TILE = .*$/m), lineOf(/^const OB_CAL_TILE = .*$/m), lineOf(/^const stepTitleOf = .*$/m)];
 const sb = { state: { selectedClient: { id: CID } }, globalThis: null, setTimeout: () => 0, rvLoadRules: () => {}, sopSequencedSteps: () => [{ obj: { flowId: "m2.exec.review_push" } }],
   obNumberOf: () => 12, document: {}, console };
 sb.globalThis = sb; sb.rgaSetupFewer = FEWER; sb.rgaPortalMode = { stepNo: () => 8 };

@@ -499,7 +499,8 @@ async function sweep({ left = 100, n = 6, test = false, between = null, off = fa
   const adm = read("admin/admin.js");
   if (!/: globalThis\.rgaCitationProgress\?\.isStep\(id\) \? cbCardHtml\(id, t\)/.test(adm)) fail("card: the active and queued rows don't draw the card");
   if (!/\+ \(globalThis\.rgaCitationProgress\?\.isStep\(o\.flowId\) \? `<div class="ob-done-card">\$\{cbCardHtml\(o\.flowId, s\.task\)\}<\/div>` : ""\)/.test(adm)) fail("card: a done or skipped row loses its card");
-  if (!/o\.flowId === GL_STEP \|\| globalThis\.rgaCitationProgress\?\.isStep\(o\.flowId\) (\|\| uniS\(\)\?\.noHandDone\?\.\(o\.flowId\) )?\? "" :/.test(adm))   // steps_57_64_v1: one more clause for 57/58/61/62/64 fail("card: a hand 'Mark step complete' sits beside the rule that finishes the step");
+  if (!/o\.flowId === GL_STEP \|\| globalThis\.rgaCitationProgress\?\.isStep\(o\.flowId\) (\|\| uniS\(\)\?\.noHandDone\?\.\(o\.flowId\) )?\? "" :/.test(adm)) // steps_57_64_v1: one more clause for 57/58/61/62/64
+    fail("card: a hand 'Mark step complete' sits beside the rule that finishes the step");
   for (const fn of ["cbListCardHtml", "cbYelpCardHtml", "cbMentionsCardHtml"]) { const i = adm.indexOf(`function ${fn}(`); if (i < 0 || !/cbSkipLink\(step\)/.test(adm.slice(i, adm.indexOf("\n}\n", i)))) fail(`card: ${fn} doesn't offer Skip this step…`); }
   const h = adm.indexOf('e.target.closest("[data-cb-act]")');
   if (h < 0 || !/mgBusy\(b, true\)/.test(adm.slice(h, h + 4000))) fail("card: a press doesn't show it's working");

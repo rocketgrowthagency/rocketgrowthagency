@@ -45,7 +45,7 @@ const lift = (name) => {
   return b < 0 ? null : admin.slice(a, b + 3);
 };
 const srcSince = lift("stepWaitingSince");
-const srcDraft = lift("stepNudgeDraft") && `${lift("clientWords") || ""}\n${lift("stepNudgeDraft")}`;   // the draft names steps through clientWords()
+const srcDraft = lift("stepNudgeDraft") && `${lift("clientWords") || ""}\n${lift("rgaNounPlural") || ""}\n${lift("stepNudgeDraft")}`;   // the draft names steps through clientWords()
 if (!srcSince || !srcDraft) {
   console.error(`⚠️  INDETERMINATE — could not lift ${!srcSince ? "stepWaitingSince" : "stepNudgeDraft"} from admin.js`);
   process.exit(2);

@@ -208,7 +208,9 @@ if (!/clientWaitingNote/.test(src.slice(src.indexOf("const mine = open.filter"),
   // region made the check print a warning and pass, which is a gate that cannot fail.
   // → feedback_a_gate_that_cannot_fail · feedback_position_is_not_identity
   const ladderFrom = src.indexOf("stage_3_setup: (function () {");
-  const ladderTo = src.indexOf("const action = ACTIONS[stage];");
+  // 🔄 11-9 (portal_after_month1_v1 + client_monthly_v1): the ACTIONS table now ends at `const m1Sent = month1SentOf(` — the
+  // `const action = …` line was rewritten to layer the between-months and Month-1-sent cards over ACTIONS[stage]. Same table, new end marker.
+  const ladderTo = [src.indexOf("const m1Sent = month1SentOf("), src.indexOf("const action = ACTIONS[stage];")].filter((x) => x > -1).sort((a, b) => a - b)[0] ?? -1;
   const ladder = (ladderFrom !== -1 && ladderTo > ladderFrom) ? src.slice(ladderFrom, ladderTo) : "";
   const states = [...ladder.matchAll(/return \{([\s\S]*?)\n\s*\};/g)].map((m) => m[1]);
   if (states.length < 6) {

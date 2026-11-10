@@ -84,7 +84,8 @@ for (const [what, re] of [["the map grid", /task\("m1\.audit\.grid_baseline"\)/]
 if (!/k\.measured !== true/.test(REC)) F("#8 an unmeasured grid scan can become a finding");
 // #9
 const hand = FE.slice(FE.indexOf('["m1.handoff.month2", false]'));
-if (!/OM\.openMonth\(supa, client\.id, nextKey/.test(hand) || !/if \(!om\.ok\) return/.test(hand))   // monthly_v1: the one creator, which reads it back (_open-month.js) F("#9 the hand-off no longer creates (and reads back) the Month 2 record");
+if (!/OM\.openMonth\(supa, client\.id, nextKey/.test(hand) || !/if \(!om\.ok\) return/.test(hand)) // monthly_v1: the one creator, which reads it back (_open-month.js)
+  F("#9 the hand-off no longer creates (and reads back) the Month 2 record");
 
 if (fails.length) { console.error("🔴 an audit defect is back:"); for (const f of fails) console.error("   · " + f); process.exit(1); }
 console.log("✅ all eight audit defects stay fixed (#2–#9)");

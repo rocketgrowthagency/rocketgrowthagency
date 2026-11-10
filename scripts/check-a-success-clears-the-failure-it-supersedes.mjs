@@ -90,6 +90,10 @@ const DECLARED = {
   "site-archive-run.js": {
     pages_failed: { why: "a per-run tally in the job's answer, summed from this pass's chunks; each capture is its own run row that starts at 0" },
   },
+  // monthly_start_v1: step 1 "Open the month" says why it could not open; the morning run deletes the field the day the month does open
+  "_morning-run.js": {
+    month_open_error: { clear: /delete nd\.month_open_error;/ },
+  },
   "gbp-apply-change.js": {
     write_error: { why: "response only (json), never stored" },
   },

@@ -105,18 +105,41 @@ for (const f of files) {
 const adminSrc = strip(fs.readFileSync(JS[0], "utf8"));
 const legendMatch = adminSrc.match(/\[\["Top 3",[^\]]*\](?:,\s*\[[^\]]*\])*\]/);
 const rankFnMatch = adminSrc.match(/function rankColor\([\s\S]{0,700}?\n\}/);
-if (!legendMatch || !rankFnMatch) {
-  console.error("[palette] INDETERMINATE — could not locate the rank legend or rankColor(); the probe may be stale");
-  process.exit(2);
-}
-const legendTokens = new Set(legendMatch[0].match(SCALE) || []);
-const cellTokens = new Set(rankFnMatch[0].match(SCALE) || []);
-if (!legendTokens.size) {
-  problems.push("the rank legend uses no --admin-rank-* token — it is describing the grid in a different palette from the grid.");
-} else {
-  for (const t of legendTokens) {
-    if (!cellTokens.has(t)) problems.push(`the legend uses ${t} but rankColor() does not — legend and cells would disagree.`);
+let legendTokens = new Set(), cellTokens = new Set();
+if (legendMatch && rankFnMatch) {
+  legendTokens = new Set(legendMatch[0].match(SCALE) || []);
+  cellTokens = new Set(rankFnMatch[0].match(SCALE) || []);
+  if (!legendTokens.size) {
+    problems.push("the rank legend uses no --admin-rank-* token — it is describing the grid in a different palette from the grid.");
+  } else {
+    for (const t of legendTokens) {
+      if (!cellTokens.has(t)) problems.push(`the legend uses ${t} but rankColor() does not — legend and cells would disagree.`);
+    }
   }
+} else {
+  // 🔄 11-9 (monthly_v1 removed the old JS legend array): the map-grid legend is `.ag-legend b.gN` in admin.css and its cells are
+  // `.ag-c.gN`. SAME RULE, new home: every colour the legend shows must be the colour the cell of that class wears, and every cell colour
+  // must be one of the --admin-rank-* scale values declared in :root (a rank colour is never a one-off hex, never a state colour).
+  const css = strip(fs.readFileSync(CSS, "utf8"));
+  const root = {}; for (const m of css.matchAll(/(--admin-rank-[a-z]+)\s*:\s*(#[0-9a-fA-F]{6})/g)) root[m[1]] = m[2].toLowerCase();
+  const scale = new Set(Object.values(root));
+  const colourOf = (sel) => { const m = css.match(new RegExp(sel.replace(/\./g, "\\.") + "\\s*\\{\\s*background:\\s*(#[0-9a-fA-F]{6})", "i")); return m ? m[1].toLowerCase() : null; };
+  const legendInJs = /class="ag-legend"[\s\S]{0,600}?<b class="g1"><\/b>Top 3/.test(adminSrc);
+  if (!legendInJs || scale.size < 5 || !rankFnMatch) {
+    console.error("[palette] INDETERMINATE — could not locate the rank legend or rankColor(); the probe may be stale");
+    process.exit(2);
+  }
+  const seen = [];
+  for (const g of ["g1", "g2", "g3", "g4", "g5", "n"]) {
+    const cell = colourOf(`.ag-c.${g}`), leg = colourOf(`.ag-legend b.${g}`);
+    if (g === "n") { if (!leg || !cell) problems.push("the 'not ranking' swatch or cell has no colour."); continue; }
+    if (!cell) { problems.push(`the grid cell .ag-c.${g} has no colour in admin.css.`); continue; }
+    if (!scale.has(cell)) problems.push(`the grid cell .ag-c.${g} wears ${cell}, which is not an --admin-rank-* scale colour — a second palette.`);
+    seen.push(cell);
+    if (leg && leg !== cell) problems.push(`the legend swatch .ag-legend b.${g} is ${leg} but the cell .ag-c.${g} is ${cell} — legend and cells would disagree.`);
+    if (g === "g1" && !leg) problems.push("the legend has no Top 3 swatch colour.");
+  }
+  legendTokens = new Set(["ag-legend"]); cellTokens = new Set(seen);
 }
 
 console.log("── one palette: tokens, fallbacks, and scale kept apart from state ──");

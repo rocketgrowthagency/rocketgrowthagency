@@ -312,6 +312,8 @@ try {
     // the channel isn't confirmed yet → waiting, never Pasted
     ctx.__t = { channel_details: { pack: PACK, read_at: "2026-11-10T12:00:00Z" } }; ctx.state.flowM1State = ctx.state.onboardingData = { tasks: { [ID.YT]: ctx.__t } };
     const h0 = run("uniChannelCardHtml(__t)").replace(/\\"/g, '"');
+    { const unconf = S.channelView({ yt_read: { state: "cant", no_key: true, why: "no key" }, channel_details: { pack: { description_full: "x" } } }, {}, {});
+      if (unconf.rows.some((r) => r.paste || r.fix)) fail("58 card: Pasted / the fix button is offered before the client confirmed the channel (the channel row itself)"); }
     if (/data-uni-yt="youtube_pasted"/.test(h0) || !/isn.t confirmed yet/.test(h0)) fail("58 card: Pasted is offered before the client confirmed the channel");
     ctx.state.flowM1State = ctx.state.onboardingData = { tasks: tasks(pasted) };
     // the press
@@ -340,7 +342,7 @@ try {
     PRESS.__useDeps(null);
     if (!/if \(done && !t\.channel_pasted && !\(t\.yt_read && t\.yt_read\.state === "matches"\)\) why = "RGA finished it"/.test(read("shared/step-lock.js"))) fail("58: the step-lock still locks the client's clips once RGA pastes the details");
     const pf = read("netlify/functions/admin-step-press.js"); if (/\.clips[^\n]*status|status[^\n]*\.clips/.test(pf.replace(/\/\/[^\n]*/g, ""))) fail("58 press: a clip is read to decide the step's status");
-    if (!/UNI_OWN_CARD\.has\(o\.flowId\)\) return "";/.test(A)) fail("58: the old 'What this produced' write-up can still show");
+    { const i = A.indexOf("function stepOutputHtml("); if (i < 0 || !/if \(o && UNI_OWN_CARD\.has\(o\.flowId\)\) return "";/.test(A.slice(i, i + 900))) fail("58: the old 'What this produced' write-up can still show (stepOutputHtml must return nothing for a one-card step)"); }
   }
 
   // ═══ 5 · STEP 61 · READ FROM GOOGLE ═══

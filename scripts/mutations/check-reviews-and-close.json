@@ -103,9 +103,9 @@
  ],
  [
   "zero reviews lists the old title",
-  "month1report",
-  "tasks[s.id].outcome_data.reviews.total === 0 ? \"Checked reviews: none on Google yet, nothing to reply to\" : s.title",
-  "false ? \"\" : s.title",
+  "clientmonthly",
+  "w.id === \"m1.review.response\" && w.zeroReviews ? \"Checked your Google reviews: none yet, nothing to reply to\" : (w.fewer || clientWords(w.step))",
+  "(w.fewer || clientWords(w.step))",
   1
  ],
  [

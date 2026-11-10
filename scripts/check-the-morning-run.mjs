@@ -71,6 +71,11 @@ for (const s of M.STEPS) if (!dep(s)) { console.error(`⚠️  INDETERMINATE —
   if (plan({ [C]: { status: "done" }, [R]: { status: "pending" } }).includes(H)) fail("3: report pending must wait");
   if (plan({ [C]: { status: "done" }, [R]: { status: "declined" } }).includes(H)) fail("3: a declined report is not done or skipped");
   if (!plan({ [C]: { status: "done" }, [R]: { status: "done" } }).includes(H)) fail("3: report done + close call done starts the handoff");
+  { // the rule itself, not the playbook's dependsOn beside it: with the playbook saying nothing, the run still waits for BOTH
+    const bare = PB.map((s) => (s.id === H ? { ...s, dependsOn: [] } : s)), pb = (tasks) => ids(M.planClient({ tasks, playbook: bare, now: NOW }));
+    if (pb({ [R]: { status: "done" } }).includes(H) || pb({ [R]: { status: "done" }, [C]: { status: "pending" } }).includes(H)) fail("3: the handoff must wait for the close call itself (not only through the playbook's dependsOn)");
+    if (pb({ [C]: { status: "done" } }).includes(H) || pb({ [C]: { status: "done" }, [R]: { status: "pending" } }).includes(H)) fail("3: the handoff must wait for the report itself (not only through the playbook's dependsOn)");
+    if (!pb({ [C]: { status: "done" }, [R]: { status: "done" } }).includes(H)) fail("3: with both settled the handoff starts"); }
   if (!plan({ [C]: { status: "skipped" }, [R]: { status: "skipped" } }).includes(H)) fail("3: skipped counts");
   if (!plan({ [C]: { status: "declined" }, [R]: { status: "done" } }).includes(H)) fail("3: a declined close call is settled");
   if (plan({ [C]: { status: "done" }, [R]: { status: "done" }, [H]: { status: "done" } }).includes(H)) fail("3: done handoff never reruns");
@@ -196,7 +201,7 @@ const cl = (id, extra = {}) => ({ id, business_name: id, source: null, ...extra 
   const m = /\[functions\."morning-run"\]\s*\n\s*schedule = "([^"]+)"/.exec(toml);
   if (!m) fail("8: netlify.toml schedule missing");
   else if ([...toml.matchAll(/schedule = "([^"]+)"/g)].filter((x) => x[1] === m[1]).length !== 1) fail(`8: schedule ${m[1]} collides with another job`);
-  if (!/withCheckin\("morning-run"/.test(fn) || !/requireCronOrInternal/.test(fn)) fail("8: the function must check in and take only the scheduler or internal secret");
+  if (!/withCheckin\("morning-run"/.test(fn) || !/exports\.handler = async \(event\) => \{\s*const g = requireCronOrInternal\(event\); if \(g\.error\) return g\.error;/.test(fn)) fail("8: the function must check in and take only the scheduler or internal secret");
   if (/send|mail|resend|smtp/i.test(code)) fail("8: the morning run must never reach a send");
   if (/status:\s*["']done["']/.test(code)) fail("8: the morning run must never write done");
   if (!/flow-execute-heavy-background/.test(code)) fail("8: must go through the same runner as the Run button");

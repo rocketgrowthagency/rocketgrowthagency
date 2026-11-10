@@ -23,7 +23,7 @@ const req = createRequire(path.join(SITE, "netlify/functions/x.js"));
 
 // ---------- the fake database ----------
 const NEW = ["month_status", "opened_at", "closed_at", "month_number"];
-function makeDb({ cols = true, table = true, monthly = [], onboarding = [], clients = [], reports = [], race = false, dropPost = false } = {}) {
+function makeDb({ cols = true, table = true, monthly = [], onboarding = [], clients = [], reports = [], race = false, dropPost = false, dropClose = false } = {}) {
   const T = { client_monthly_records: monthly, client_onboarding_records: onboarding, clients, client_monthly_reports: reports, client_activity: [] };
   let seq = 1, raced = false;
   const err = (code, m) => Object.assign(new Error(`Supabase ${code}: ${m}`), { code });
@@ -45,7 +45,7 @@ function makeDb({ cols = true, table = true, monthly = [], onboarding = [], clie
       rows.push(row); return [JSON.parse(JSON.stringify(row))];
     }
     const hit = rows.filter(match);
-    if (method === "PATCH") { const b = JSON.parse(init.body); hit.forEach((r) => Object.assign(r, b)); return JSON.parse(JSON.stringify(hit)); }
+    if (method === "PATCH") { const b = JSON.parse(init.body); if (dropClose && b.month_status === "closed") return JSON.parse(JSON.stringify(hit)); hit.forEach((r) => Object.assign(r, b)); return JSON.parse(JSON.stringify(hit)); }
     let out = hit.slice();
     const ord = q.get("order");   // like PostgREST: honor order and project the selected columns
     if (ord) { const [col, dir] = ord.split("."); out.sort((a, b) => String(a[col] ?? "").localeCompare(String(b[col] ?? "")) * (dir === "desc" ? -1 : 1)); }
@@ -125,6 +125,9 @@ const fresh = (o = {}) => { DB.cur = makeDb({ onboarding: [JSON.parse(JSON.strin
   if (!jan || !(jan.data.carried_over || {}).skipped?.length) fail("3 January must carry December's skipped step");
   if (!r2 || r2.outcome === "indeterminate") fail("3 the monthly hand-off must succeed");
   // a failed open closes nothing
+  { const lost = fresh({ dropClose: true, monthly: [{ id: "m", client_id: CID, reporting_month: "2026-12-01", created_at: "x", month_status: "open", data: { tasks: {} } }] });
+    const lc = await OM.closeMonth(lost.supa, CID, "2026-12-01");
+    if (lc.ok || lc.closed) fail("3 a close the database did not keep must NOT be reported as closed (read back)"); }
   const bad = fresh({ dropPost: true, monthly: [{ id: "m", client_id: CID, reporting_month: "2026-12-01", created_at: "x", month_status: "open", data: { tasks: { "m2.report.deliver": { status: "done" } } } }] });
   const r3 = await FE.stepRunners.handoff2({ client: { id: CID, workspace_id: "w" }, month: "2026-12-01" });
   if (bad.T.client_monthly_records[0].month_status === "closed" || !r3 || r3.outcome !== "indeterminate") fail("3 a month that could not open its successor must stay open");
@@ -233,6 +236,7 @@ const fresh = (o = {}) => { DB.cur = makeDb({ onboarding: [JSON.parse(JSON.strin
   const out2 = await MORN.runMorning({ deps: d });
   if (mr.T.client_monthly_records.length !== 1 || out2.months_opened !== 0) fail("7 the morning run must not open a month twice");
   const met = read("netlify/functions/_metrics.js");
+  if (!/if \(!existing\) \{\s*const shim[\s\S]{0,700}?\.openMonth\(shim, clientId, reportingMonth/.test(met)) fail("7 _metrics must create a missing month through openMonth (the one creator), not any other way");
   if (/method: "POST",\s*\n\s*headers: \{ apikey: supaKey[^}]*\},\s*\n\s*body: JSON\.stringify\(\{ client_id: clientId, reporting_month/.test(met)) fail("7 _metrics must not create a month row itself (openMonth is the one creator)");
 }
 

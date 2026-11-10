@@ -98,6 +98,14 @@ const SESS = [
   const cmp = O.comparable(O.completeSessions(big.filter((s) => s.pts.length !== 1), KW)[0], O.completeSessions(big.filter((s) => s.pts.length !== 1), KW));
   if (cmp) fail("3 an 81-point grid must not be compared with 25-point scans");
   if (!/no earlier scan of the same keyword and grid size/i.test(v2.rows[0].line) || v2.compared) fail(`3 no like-for-like earlier scan must say so: ${v2.rows[0].line}`);
+  // the comparison rule itself, called directly (completeSessions already drops a smaller scan of the SAME source, so only this call proves the rule): a different grid size or source is never "like for like"
+  { const earlier = { at: "2026-10-03T17:00:00Z", pts: pts(25, 2), source: "geo-grid", keyword: KW }, cur2 = (n, src) => ({ at: "2026-11-17T17:00:00Z", pts: pts(n, 3), source: src, keyword: KW });
+    if (!O.comparable(cur2(25, "geo-grid"), [earlier])) fail("3 a same-size same-source earlier scan must be compared");
+    if (O.comparable(cur2(81, "geo-grid"), [earlier])) fail("3 a different grid size must never be compared (direct)");
+    if (O.comparable(cur2(25, "other-source"), [earlier])) fail("3 a scan from another source must never be compared (direct)"); }
+  // a month that has ended with no scan is NOT settled as done
+  { const gone = O.scansView({ month: MONTH, now: d("2026-12-05"), keyword: KW, sessions: [], nextAt: null });
+    if (gone.done || gone.tone === "ok") fail("3 a month that ended with no scan must never settle as done"); }
   // no scan yet / nothing locked
   const none = O.scansView({ month: MONTH, now: d("2026-11-05"), keyword: null, sessions: [], nextAt: null, why: "No locked main keyword yet" });
   if (none.tone === "ok" || !/No scan yet this month/.test(none.rows[0].title) || !/locked main keyword/.test(none.rows[0].line)) fail(`3 no scan must say why, never a result: ${JSON.stringify(none.rows)}`);
@@ -247,6 +255,9 @@ const SESS = [
   if (bad.done || bad.label !== "Check it" || !bad.rows.some((r) => /No events from Analytics for 7 days/.test(r.title) && /Oct 30/.test(r.line))) fail(`11 a stopped Analytics is named with its date: ${bad.label} / ${bad.rows.map((r) => r.title)}`);
   const failed = T({ read: false });
   if (failed.done || /working|: yes/.test(JSON.stringify(failed.rows)) || failed.label !== "Couldn't check") fail("11 a failed read is 'couldn't check', never 'working'");
+  // the failed-read guard on its own: with everything else present (so no other branch can say "couldn't check" for it), read:false must still refuse to say working
+  const failedFull = T({ read: false, forms: { tracked: true, count: 4, lastAt: "2026-11-08" }, calls: { on: true, total: 7 }, ga: GA });
+  if (failedFull.done || failedFull.label !== "Couldn't check" || !/Couldn't read Google Analytics/.test(JSON.stringify(failedFull.rows))) fail("11 a failed Analytics read must say it couldn't read, even when other numbers are at hand");
   const unk = T({ read: true, forms: { tracked: true, count: 2 }, calls: { on: true, total: null }, ga: GA });
   if (unk.done || unk.label === "Working" || /^Working/.test(unk.label)) fail("11 a call total we could not read is never working");
   const empty = T({ read: true, forms: { tracked: false }, calls: { on: false }, ga: GA });
@@ -328,6 +339,14 @@ function baseDeps({ rec, nums = { months: {} }, sessions = [], events = [], now 
     if (w[O.ID.WORK] && w[O.ID.WORK].status === "done") fail("10 the focus work must not settle while its task is open");
     if (!(dep.writes[0].rec.data.competitors || []).some((c) => c.name === "Bright Local SEO")) fail("10 the month's competitor list must be frozen into its record");
   }
+  // a step the client skipped or declined is never marked done by the checks, even when its view would say done
+  { const sk = baseDeps({ rec: { ...rec, tasks: { ...rec.tasks, [O.ID.SCANS]: { status: "skipped" }, [O.ID.SITE]: { ...rec.tasks[O.ID.SITE], status: "declined" } } }, nums, sessions: SESS.slice(0, 3) });
+    const rs = await MO.settle({ clientId: "c1", month: MONTH, deps: sk }); const wk = sk.writes[0] && sk.writes[0].tasks;
+    if (rs.settled.includes(O.ID.SCANS) || rs.settled.includes(O.ID.SITE) || (wk && (wk[O.ID.SCANS].status !== "skipped" || wk[O.ID.SITE].status !== "declined"))) fail("10 a skipped or declined step must stay as the client left it: " + JSON.stringify(rs)); }
+  // the Google profile watch marks a name / phone / address change as core (it gets no Accept / Put it back)
+  { const wo = await MO.watchOf({ clientId: "c1", month: MONTH, obTasks: { "m1.gbp.business_facts": { status: "done", google_drift: { what: "phone number", at: "2026-11-05T10:00:00Z", saved: { phone: "111" }, google: { phone: "222" } } }, "m1.gbp.hours_attributes": { status: "done", google_drift: { what: "weekly hours", at: "2026-11-06T10:00:00Z", saved: { hours: "a" }, google: { hours: "b" } } } }, d: { supa: async () => [] } });
+    const ph = wo.changes.find((c) => c.step === "m1.gbp.business_facts"), hr = wo.changes.find((c) => c.step === "m1.gbp.hours_attributes");
+    if (!ph || ph.core !== true || !hr || hr.core !== false) fail("11 a phone change must be read as a core change and an hours change must not: " + JSON.stringify(wo.changes)); }
   // nothing proven = nothing written
   const empty = baseDeps({ rec: { tasks: {}, data: {}, row: null, prevRow: null, prevData: null, ob: { data: {}, tasks: {} } }, sessions: [], locked: null, now: d("2026-11-10") });
   const e = await MO.settle({ clientId: "c1", month: MONTH, deps: empty });
@@ -395,6 +414,7 @@ function baseDeps({ rec, nums = { months: {} }, sessions = [], events = [], now 
   if (!w.log.starts.some((s) => s.includes(R))) fail("11 a failed reply post is retried by the morning run");
   const src = strip(read("netlify/functions/_morning-run.js"));
   if (!/monthlyMorning\(\{ d, c, month: monthKey, out \}\)/.test(src) || src.indexOf("openMonth(") > src.lastIndexOf("monthlyMorning({ d, c")) fail("11 runMorning must call the monthly part after the month opens");
+  if (!/if \(om\.ok\) \{ try \{ await monthlyMorning\(\{ d, c, month: monthKey, out \}\)/.test(src)) fail("11 runMorning must call the monthly part whenever the month opened (not behind a switch that is off)");
   if (/aiDraft|anthropic/i.test(src.slice(src.indexOf("MONTHLY (monthly_s3")))) fail("11 the morning run itself calls no model");
 }
 

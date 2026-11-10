@@ -103,6 +103,8 @@ const OCT = (o = {}) => ({ id: "o1", client_id: CID, reporting_month: "2026-10-0
   if (r.focus !== "Website" || !/5,000/.test(r.reason) || !/\b50 people\b/.test(r.reason) || !/1%/.test(r.reason)) fail(`1 low clicks must suggest Website with the real numbers: ${JSON.stringify(r)}`);
   r = run({ prev: { ...base.prev, gsc_clicks: 1, gsc_impressions: 40 } });
   if (r.focus === "Website") fail("1 a handful of impressions is not enough to call clicks low");
+  r = run({ prev: { ...base.prev, gsc_clicks: 0, gsc_impressions: 40 } });
+  if (r.focus === "Website") fail("1 zero clicks on a handful of impressions (40) is not enough to call clicks low");
   r = MS.suggestFocus({ prevLabel: "November", prev: null, prior: null, rank: null });
   if (r.focus !== "Google profile" || r.rule !== "missing" || !/aren't in yet/.test(r.reason) || r.missing.length !== 4) fail(`1 missing numbers must say so and suggest Google profile: ${JSON.stringify(r)}`);
   r = MS.suggestFocus({ prevLabel: "November", prev: { review_count: null, gbp_impressions: null, gsc_clicks: null, gsc_impressions: null }, prior: {}, rank: { latest: null, prior: null } });
@@ -190,6 +192,7 @@ const OPEN_AT = Date.UTC(2026, 11, 1, 6, 0, 0);
   if (!/Nothing carried over from November/.test(JSON.stringify(none))) fail("3 nothing carried over must say so");
   const bad = MS.openView({ month: "2026-12-01", record: null, openError: { error: "Supabase 503: timeout" } }, {});
   if (bad.done || !/couldn't open: Supabase 503/.test(JSON.stringify(bad)) || !/tries again tomorrow/.test(JSON.stringify(bad))) fail(`3 a month that couldn't open must say why and that it tries again tomorrow: ${JSON.stringify(bad)}`);
+  if (!/openError: err && err\.month === sel \? err : null/.test(read("admin/admin.js"))) fail("3 the admin's open card must be given the month's open error");
   const wait = MS.openView({ month: "2026-12-01", record: null }, {});
   if (wait.done || !/isn't open yet/.test(JSON.stringify(wait))) fail("3 a month not opened yet must say so");
   if (!STEPS.NO_SKIP.includes("m2.start.open_month") || STEPS.canSkip("m2.start.open_month")) fail("3 step 1 must have no Skip (shared model)");
@@ -278,6 +281,8 @@ const board = () => {
   const v0 = MS.planView({ record: rowOf().data, task: {} }, { ref: () => "step 12" });
   if (v0.state !== "suggest" || v0.focus !== "Reviews" || !/0 Google reviews/.test(v0.reason) || !v0.tasks.length || v0.tasks.some((k) => !k.on)) fail(`4 the card must show the suggestion, the reason and the tasks ticked: ${JSON.stringify(v0).slice(0, 300)}`);
   if (MS.FOCUSES.some((f) => !(v0.alternatives[f] || []).length)) fail("4 Change the focus must offer every focus with its task list");
+  { const cat = { Reviews: [{ id: "rev.ask", text: "a" }], Website: [{ id: "web.x", text: "b" }] }, pf = MS.planFrom({ focus: "Reviews", taskIds: ["rev.ask", "web.x"], catalog: cat, suggestedFocus: "Reviews", by: "chris", now: OPEN_AT });
+    if (pf.ok) fail("4 planFrom itself must refuse a plan that carries a task from another focus (even beside a valid one)"); }
   // refusals
   let r = await press({ focus: "Reviews", task_ids: ["gbp.posts"] });
   if (r.code !== 400) fail("4 a task from another focus must be refused");
@@ -360,6 +365,7 @@ const board = () => {
 
 // 6 the client portal
 {
+  if (MS.clientFocus({ plan: { focus: "Reviews", tasks: [] } }) !== null || MS.clientFocus({ plan: { tasks: CATALOG.focuses.Reviews.tasks.slice(0, 2) } }) !== null) fail("6 a plan with no focus or no chosen task is not shown to the client");
   if (MS.clientFocus({ plan_suggestion: { focus: "Reviews" } }) !== null) fail("6 the portal must show nothing until a plan is accepted");
   const f = MS.clientFocus({ plan: { focus: "Reviews", tasks: CATALOG.focuses.Reviews.tasks.slice(0, 3) } });
   if (!f || f.title !== "This month's focus: Reviews" || f.items.length !== 3 || f.items[0] !== "We ask your recent customers for a review, a few each week") fail(`6 the portal line and the tasks in client words: ${JSON.stringify(f)}`);
@@ -382,7 +388,7 @@ const board = () => {
   const m1 = fn("month1", mk(), [0, 1, 2, 3], {}, "", "", { onboardingData: {} }, () => null).map((s) => s.uiState);
   if (m1.join() !== "active,queued,locked,done") fail(`7 Month 1 must still open one step at a time: ${m1}`);
   // "When it moves" never says "after another step" for a monthly row
-  const rows = STEPS.basicRows({ id: "m2.exec.gbp_posts", dependsOn: ["m2.plan.rotating_focus"], instructions: "x" }, { tasks: { "m2.plan.rotating_focus": { status: "done" } }, activeId: null, owner: "rga" });
+  const rows = STEPS.basicRows({ id: "m2.exec.gbp_posts", dependsOn: ["m2.plan.rotating_focus"], instructions: "x" }, { tasks: { "m2.plan.rotating_focus": { status: "done" } }, activeId: "m2.exec.review_push", owner: "rga" });   // another step is "active": a scheduled step must still say it is open now
   const line = rows[rows.length - 1].line;
   if (/one step at a time|next after/.test(line) || !/open now/.test(line)) fail(`7 a scheduled Monthly step must say it is open now: ${line}`);
   const rows2 = STEPS.basicRows({ id: "m2.exec.focus_area_work", dependsOn: ["m2.plan.rotating_focus"], instructions: "x" }, { tasks: {}, activeId: null, owner: "rga", ref: () => "step 2" });

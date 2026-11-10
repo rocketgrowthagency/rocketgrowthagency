@@ -1,0 +1,37 @@
+[
+ [
+  "the morning run stops settling the once-a-month steps",
+  "morningrun",
+  "MO.settle({ clientId",
+  "MO.noop({ clientId",
+  1
+ ],
+ [
+  "the once-a-month settle stops walking the profile watch step",
+  "monthlyoncesrv",
+  "M.ID.WORK, M.ID.WATCH, M.ID.TRACKING]) {",
+  "M.ID.WORK, M.ID.TRACKING]) {",
+  1
+ ],
+ [
+  "the morning run stops opening the month (step 1)",
+  "morningrun",
+  "OM.openMonth(d.supa, c.id, monthKey",
+  "OM.openMonthGone(d.supa, c.id, monthKey",
+  1
+ ],
+ [
+  "the morning run stops running the close (freeze the numbers)",
+  "morningrun",
+  "MCS.closeMorning({",
+  "MCS.closeGone({",
+  1
+ ],
+ [
+  "the close stops marking the freeze step done",
+  "monthlyclosesrv",
+  "tasks[MC.ID.FREEZE] = { ...t, status: \"done\"",
+  "tasks[MC.ID.FREEZE] = { ...t, status: \"open\"",
+  1
+ ]
+]

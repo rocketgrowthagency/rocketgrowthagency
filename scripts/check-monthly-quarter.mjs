@@ -75,6 +75,8 @@ const task = (f, id) => f.store[id] || {};
     if (new RegExp(`["']${gone.replace(/\./g, "\\.")}["']`).test(strip(read("netlify/functions/flow-execute.js")))) fail(`1 flow-execute.js still names the merged step ${gone}`);
   }
   for (const s of PB.month2plus) for (const dep of s.dependsOn || []) if (!ids.includes(dep)) fail(`1 ${s.id} depends on ${dep}, which is not in the playbook`);
+  if (JSON.stringify(Object.keys(Q.RETIRED).sort()) !== JSON.stringify(["m2.exec.brand_mentions", "m2.exec.competitor_backlink_steal"]) || Object.values(Q.RETIRED).some((k) => k !== ID.LINKS)) fail(`1 BOTH old link steps (brand mentions, competitor backlinks) must be recorded as merged into the one link step: ${JSON.stringify(Q.RETIRED)}`);
+  if (/mystery/i.test(Q.TITLES[ID.LEAD] || "") || !/Lead-handling test/.test(Q.TITLES[ID.LEAD] || "") || /mystery/i.test(Q.leadView({ callTracking: true, task: {} }).title || "")) fail("1 the card the admin sees must call the lead step the lead-handling test, never a mystery shop");
   const lead = PB.month2plus.find((s) => s.id === ID.LEAD) || {};
   if (/mystery/i.test(lead.title || "") || !/call tracking/i.test(lead.title || "")) fail("1 the lead test replaces the mystery shop and says it needs call tracking");
   const links = PB.month2plus.find((s) => s.id === ID.LINKS) || {};
@@ -100,6 +102,8 @@ const task = (f, id) => f.store[id] || {};
   const open = Q.outcomesView({ task: {} }), ns = Q.outcomesView({ task: { status: "done", client_input: { not_sure: ["jobs_from_leads", "avg_job_value"] } } });
   const yes = Q.outcomesView({ task: { status: "done", client_input: { jobs_from_leads: "12 of 20", avg_job_value: "450" } } });
   if (!/About how many jobs came from Google this quarter\?/.test(JSON.stringify(open.rows))) fail("3 the ask is worded as approved");
+  { const stale = Q.outcomesView({ task: { status: "done", client_input: { jobs_from_leads: "777", avg_job_value: "9876", not_sure: ["jobs_from_leads", "avg_job_value"] } } });
+    if (/777|9876/.test(JSON.stringify(stale.rows))) fail("3 a number the client then marked Not sure must never be shown as a number"); }
   if (!ns.done || !ns.answered || !/not sure/i.test(JSON.stringify(ns.rows))) fail("3 \"Not sure\" is an answer and settles the step");
   if (/\b0\b/.test(JSON.stringify(ns.rows.map((r) => r.title)))) fail("3 not sure is never shown as 0");
   if (!/Reported by them/.test(JSON.stringify(yes.rows)) || !yes.done) fail("3 their answer is labeled as theirs");
@@ -203,7 +207,10 @@ const task = (f, id) => f.store[id] || {};
   if (task(live, ID.VIDEO).status !== "done" || task(live, ID.VIDEO).video_live !== true) fail("8 a video read live on their channel counts");
   const not = fake({ videoLive: async () => false }); await MQ.settle({ clientId: "c1", month: MONTH, deps: not });
   if (task(not, ID.VIDEO).status === "done" || Q.videoView({ task: task(not, ID.VIDEO), live: false }).done) fail("8 'scripts sent' is not a video; not live is not done");
-  const unread = fake({ videoLive: async () => null }); await MQ.settle({ clientId: "c1", month: MONTH, deps: unread });
+  { const sv = Q.videoView({ task: { scripts: 2 }, live: false }), sn = Q.videoView({ task: { scripts: 2 }, live: null });
+    if (sv.done || sv.live || sn.done || sn.live) fail("8 two scripts sent is not a video: only a read-live video counts"); }
+  const unread = fake({ videoLive: async () => null }); const unreadR = await MQ.settle({ clientId: "c1", month: MONTH, deps: unread });
+  if (unreadR.video !== "no_read") fail(`8 a failed YouTube read must say no_read, never not_live: ${unreadR.video}`);
   if (task(unread, ID.VIDEO).status === "done" || task(unread, ID.VIDEO).video_live) fail("8 a failed read counts nothing");
   if (Q.blockOf({ tasks: { [ID.VIDEO]: { status: "done" } }, monthNumber: 3 })) fail("8 a done flag without the read is not in the report");
   const ok = (items) => async (u) => ({ ok: true, json: async () => (/channels/.test(u) ? { items: [{ contentDetails: { relatedPlaylists: { uploads: "UU1" } } }] } : { items }) });

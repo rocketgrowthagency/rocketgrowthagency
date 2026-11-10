@@ -90,7 +90,10 @@ ok(/2 keywords tracked/.test(tracked),
 // ── AND THE RUNNER THAT NEEDED IT SETS IT ───────────────────────────────────────────────────────
 {
   const f = flow.replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
-  ok(/outcome_data: \{ action: "tracked", keywords: byKw\.size/.test(f),
+  // monthly_s3_monthly_v1 (11-9): m2.snap.rank_tracker was merged into m2.snap.grid_scan and neither has an executor any more (the morning run READS the scans), so no
+  // runner can say "drafted" of keywords it only measured. Either the runner still names its verb, or the runner is really gone; a runner that is back must name it.
+  const trackerBack = /["']m2\.snap\.(rank_tracker|grid_scan)["']\s*:\s*(async|function|\()/.test(f);
+  ok(trackerBack ? /outcome_data: \{ action: "tracked", keywords: byKw\.size/.test(f) : true,
     "the monthly rank tracker does not name its verb, so its confirmation says it DRAFTED the keywords "
     + "it only measured");
   ok(/started: true/.test(f), "no runner reports a started-but-unfinished scan, so the started shape is dead");

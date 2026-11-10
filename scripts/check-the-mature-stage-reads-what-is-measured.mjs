@@ -156,6 +156,7 @@ const STRONG_EAST = gridOf((r, c2) => (inner(r, c2) ? 2 : c2 === 4 ? 6 : null));
     if (rep.comparisons.some((x) => x.toYm === "2026-10")) fail("month 1 · a PART month (October, in progress) is compared (rule 1.3)");
     if (!/period incomplete|next report/.test(txt)) fail("month 1 · an incomplete period isn't called out");
     if (/Get GBP manager access/.test(txt)) fail("month 1 · access logistics are listed as work done");
+    if (((rep.items && rep.items.done) || []).some((d) => /^m1\.access\./.test(d.id)) || (rep.sections.find((x) => x.key === "work") || { lines: [] }).lines.some((l) => /access/i.test(l))) fail("month 1 · access logistics are listed as work done (in the client's words)");
     if (!/Call-button taps/.test(txt) || /\bleads?\b[^.]*website clicks|website clicks[^.]*are leads/i.test(txt)) fail("month 1 · calls aren't labelled as taps / clicks read as leads (rule 1.5)");
     if (/Direction requests/.test(txt)) fail("month 1 · directions are shown for a hidden-address business (rule 1.7)");
     if (R.FORBIDDEN.test(txt) || !R.FORBIDDEN.test("we improved your calls")) fail("month 1 · credit-taking / promise language isn't caught (rules 1.14–1.15)");

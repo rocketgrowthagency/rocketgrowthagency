@@ -30,6 +30,9 @@ import { execFileSync } from "node:child_process";
 import { JSDOM } from "jsdom";
 
 // steps_59_63_v1 (59: its message card) + steps_57_64_v1 (61: reads Google and drafts by itself), approved by the owner 11-9, draw differently on purpose
+// 11-9 night fixer: every Monthly row (m2.*) was redrawn on purpose for every mode by monthly_v1 + monthly_fix_v2 + monthly_audit_v2 (all approved 11-9,
+// held by the check-monthly-* gates), so the Month-1/setup proof below stays byte-identical and the Monthly rows are judged by their own gates
+const MONTHLY_REDRAWN = (id) => /^m2\./.test(id);
 const CHANGED_ON_PURPOSE = new Set(["m1.review.system", "m1.review.response", "m1.brand.youtube_setup", "m1.gbp.knowledge_panel", "m1.handoff.month2"]);
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const OLD_REV = "d658cfce";
@@ -54,6 +57,9 @@ const NEWMW = cut(AJS, "// ═══ MANAGED WORKING CARDS START", "// ═══
 // was stubbed with a function returning a truthy string, so EVERY step read "Runs itself" and 2232 who tags "differed". The real one is lifted; this world's
 // rgaSiteChange has no auto steps, so a self-serve tag must still match the before byte for byte (the autopilot's own tags: check-a-live-page-stays-true).
 const RUNS = cut(AJS, "function wcRunsItself(id) {", "\n}\n", "wcRunsItself");
+// 🔄 11-9 night fixer: same trap again. injectSeeClientLinks asks monthlyOwn (monthly_fix_v2, 11-9: a Monthly row's "See what the client sees" sits under
+// its one More). Stubbed truthy, EVERY step's link moved under a More and 273 of 276 blocks "differed". The real one is lifted (a Monthly id only).
+const MOWN = cut(AJS, "function monthlyOwn(idOrObj) {", "\n}\n", "monthlyOwn");
 
 const CID = "11111111-1111-1111-1111-111111111111";
 // every step id the playbook has (month 1 + monthly), so the before/after proof covers steps the dispatcher does not name too
@@ -89,8 +95,8 @@ function world({ mode = "managed", tasks = {}, src = AJS } = {}) {
   w.eval(fs.readFileSync(path.join(SITE, "shared/portal-mode.js"), "utf8"));
   w.eval(fs.readFileSync(path.join(SITE, "shared/portal-mode-words.js"), "utf8"));
   const MG = mgBlock(src), ROW = rowFn(src), KIND = kindBlock(src), SEE = seeFn(src), WHERE = whereFn(src);
-  const lifted = [MG, src === AJS ? NEWMW : "", src === AJS ? RUNS : "", ROW, KIND, SEE, WHERE].join("\n");
-  const names = [...new Set([...lifted.matchAll(/(?<![.\w])([A-Za-z_]\w*)\(/g)].map((m) => m[1]))].filter((n) => !/^(mg|mw)[A-Z]/.test(n) && !/^(if|for|function|return|clientStepWhere|injectSeeClientLinks|stepKind|kindTag|rowStepCardsHtml|wcRunsItself)$/.test(n) && !(n in w));
+  const lifted = [MG, src === AJS ? NEWMW : "", src === AJS ? RUNS : "", src === AJS ? MOWN : "", ROW, KIND, SEE, WHERE].join("\n");
+  const names = [...new Set([...lifted.matchAll(/(?<![.\w])([A-Za-z_]\w*)\(/g)].map((m) => m[1]))].filter((n) => !/^(mg|mw)[A-Z]/.test(n) && !/^(if|for|function|return|clientStepWhere|injectSeeClientLinks|stepKind|kindTag|rowStepCardsHtml|wcRunsItself|monthlyOwn)$/.test(n) && !(n in w));
   w.eval([...new Set([...ROW.matchAll(/(?<![.\w"'])([A-Z][A-Z0-9_]{2,})\b(?!["'])/g)].map((m) => m[1]))].filter((n) => !/^(MG_|MW_|KIND)/.test(n)).map((n) => `var ${n} = "__stub_${n}__";`).join("\n"));
   w.eval(names.map((n) => `var ${n} = function ${n}() { return "[${n}]"; };`).join("\n"));
   w.eval(`var renderOnboardingChecklist = () => window.__redraw(); var reloadScopeAndRerender = async () => window.__redraw(); var mergeStepTasks = (t) => { Object.assign(state.onboardingData.tasks, t); };`);
@@ -123,7 +129,7 @@ try {
       A.st.onboardingData.tasks[id] = task; B.st.onboardingData.tasks[id] = task;
       const a = A.w.__x.rowStepCardsHtml({ flowId: id, t: "T" }, { task }), b = B.w.__x.rowStepCardsHtml({ flowId: id, t: "T" }, { task });
       // steps_59_63_v1 (11-9): step 59 now draws its own card on every row state (held by check-steps-59-63); every other step stays byte-identical
-      compared++; if (a !== b && !CHANGED_ON_PURPOSE.has(id)) { diff++; if (diff <= 3) fail(`proof: mode ${JSON.stringify(mode)}, step ${id}, state ${JSON.stringify(task)} draws differently from before (if rowStepCardsHtml changed for another reason since ${OLD_REV}, re-pin OLD_REV after checking the change)`); }
+      compared++; if (a !== b && !CHANGED_ON_PURPOSE.has(id) && !MONTHLY_REDRAWN(id)) { diff++; if (diff <= 3) fail(`proof: mode ${JSON.stringify(mode)}, step ${id}, state ${JSON.stringify(task)} draws differently from before (if rowStepCardsHtml changed for another reason since ${OLD_REV}, re-pin OLD_REV after checking the change)`); }
     }
     await A.wait(); await B.wait(); requests += B.log.length;
   }
@@ -137,11 +143,11 @@ try {
       const A = world({ mode, src: OLDJS }), B = world({ mode, src: AJS });
       for (const id of ids) for (const actor of ["both", "rga", "client", undefined]) for (const clientFacing of [true, false]) for (const sopType of ["auto", "manual", undefined]) {
         const o = { flowId: id, actor, clientFacing, sopType, hasRunner: false, clientStepNo: 4, managedStepNo: 3, managedRole: "check" };
-        tagN++; if (A.w.__x.kindTag(o) !== B.w.__x.kindTag(o)) tagDiff++;
+        tagN++; if (A.w.__x.kindTag(o) !== B.w.__x.kindTag(o) && id !== "m2.exec.gbp_posts") tagDiff++;   // monthly_audit_v2 (approved 11-9): Google posts is "You + client" (RGA drafts, the client approves)
       }
       for (const id of ids) {
-        const mk = (W) => { W.host.innerHTML = `<div class="ob-step" data-ob-step="${id}"></div>`; W.w.__x.injectSeeClientLinks(W.host, [{ obj: { flowId: id, actor: "both", clientFacing: true, managedStepNo: 3, managedRole: "check", clientStepNo: 4 } }], (o) => W.w.__x.stepKind(o)); return W.host.innerHTML; };
-        seeN++; if (id !== "m1.brand.youtube_setup" && mk(A) !== mk(B)) seeDiff++;   // step58_card_v2: step 58 puts the block under its one "More" (approved)
+        const mk = (W) => { W.host.innerHTML = `<div class="ob-step" data-ob-step="${id}"><div class="ob-body"></div></div>`;   /* a real row has its .ob-body; since monthly_fix_v3 (11-9) a bare queued row gets one made for its More */ W.w.__x.injectSeeClientLinks(W.host, [{ obj: { flowId: id, actor: "both", clientFacing: true, managedStepNo: 3, managedRole: "check", clientStepNo: 4 } }], (o) => W.w.__x.stepKind(o)); return W.host.innerHTML; };
+        seeN++; if (id !== "m1.brand.youtube_setup" && !MONTHLY_REDRAWN(id) && mk(A) !== mk(B)) seeDiff++;   // step58_card_v2: step 58 puts the block under its one "More" (approved)
       }
     }
     must(tagDiff === 0 && tagN > 500, `proof: ${tagDiff} of ${tagN} who tags differ from before for self-serve / null clients`);

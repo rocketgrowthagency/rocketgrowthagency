@@ -127,6 +127,10 @@ const ALL = { cur: { views: 120, clicks: 40, calls: 9 }, prev: { views: 100, cli
   if (!doneAfterPurge.done || /not given|Waiting/i.test(doneAfterPurge.label)) fail("2 a frozen month whose Google figures were purged reads Frozen, not Waiting");
 }
 
+// a number Google did not give is never worded as a change (agenda + card both read changeOf): it says it was not given
+{ const gone = C.changeOf({ key: "views", label: "Profile views", value: null, prev: 100 }), nope = C.changeOf({ key: "views", label: "Profile views", value: null, prev: null });
+  if (!/didn't give/.test(gone.text) || !/didn't give/.test(nope.text) || /same as|▲|▼|from/.test(gone.text + nope.text)) fail(`2 a missing number must read "Google didn't give this number", never a change: ${gone.text} / ${nope.text}`); }
+
 // 3 build
 const REVIEW_TASKS = { "m2.exec.gbp_posts": { status: "done", completed_at: "2026-11-12T10:00:00Z" }, "m2.exec.site_audit_recurring": { status: "done", completed_at: "2026-11-05T10:00:00Z" } };
 let LETTER = null;
@@ -146,6 +150,7 @@ let LETTER = null;
     if (!/▲ 20 from 100/.test(h) || !/▼ 5 from 45/.test(h) || !/same as 9 the month before/.test(h)) fail("3 each tile carries its change against the month before");
     if (!/Posted an update to your Google profile/.test(h) || !/What we did/.test(h)) fail("3 what we did, in the client's words");
     if (!/Coming next/.test(h)) fail("3 Coming next");
+    if (!/<a href="https:\/\/www\.rocketgrowthagency\.com\/portal\/#report-2026-11"[^>]*>\s*See the full report in your portal\s*<\/a>/.test(h)) fail("3 the button must be labelled 'See the full report in your portal'");
     if ((h.match(/href="https:\/\/www\.rocketgrowthagency\.com\/portal\/#report-2026-11"/g) || []).length !== 1) fail("3 exactly one button, to the portal's Reports opened on this report");
     if (!/Questions\? Just reply to this email\.[\s\S]*Chris, Rocket Growth Agency/.test(h)) fail("3 the sign-off");
     if (/Jefferson|Culver City, CA|9937/.test(h + dr.text)) fail("3 no street address in a client email");
@@ -260,6 +265,7 @@ async function ready(w) { await MCS.freeze({ clientId: "c1", month: MONTH, deps:
   const closeMorning = mc.slice(mc.indexOf("async function closeMorning"), mc.indexOf("function todoFor"));
   if (/sendReport|gmail/.test(closeMorning)) fail("5 closeMorning (21, 22, 25) must never send");
   const door = strip(read("netlify/functions/admin-monthly-close.js"));
+  if (!/await requireWorkspaceForClient\(event, clientId\)/.test(door) || !/if \(gate\.error\) return gate\.error;/.test(door)) fail("5 the door must ask requireWorkspaceForClient for every request and return its refusal");
   if (!/requireWorkspaceForClient/.test(door) || !/action === "test"/.test(door) || !/gate\.email/.test(door)) fail("5 the door is admin-gated and the test goes to the signed-in admin");
   const toolbar = read("netlify/functions/_job-manifest.js"); if (!/Monthly report build \(never sends\)/.test(toolbar)) fail("5 the job list says the 5th's run never sends");
 }

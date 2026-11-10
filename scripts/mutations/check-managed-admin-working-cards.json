@@ -537,5 +537,12 @@
   "/admin/admin.css?v=2026",
   "/admin/admin.css?v=2025",
   1
+ ],
+ [
+  "every step's See-what link moves under a Monthly More (monthlyOwn says yes for a Month 1 step)",
+  "admin",
+  "return !!(id && /^m2\\./.test(id) && M && M.SECTIONS",
+  "return true || !!(id && /^m2\\./.test(id) && M && M.SECTIONS",
+  1
  ]
 ]

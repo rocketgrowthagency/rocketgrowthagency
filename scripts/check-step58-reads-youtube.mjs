@@ -27,7 +27,7 @@ const store = (yt, extra = {}) => {
   st.supa = async (q, init = {}) => {
     const m = (init.method || "GET").toUpperCase(), c = (x) => JSON.parse(JSON.stringify(x));
     if (q.startsWith("/client_onboarding_records") && m === "GET") return [c(st.rec)];
-    if (q.startsWith("/client_onboarding_records") && m === "PATCH") { st.writes++; st.rec.data = JSON.parse(init.body).data; return [c(st.rec)]; }
+    if (q.startsWith("/client_onboarding_records") && m === "PATCH") { st.writes++; if (!(st.drop > 0 && st.drop--)) st.rec.data = JSON.parse(init.body).data; return [c(st.rec)]; }
     if (q.startsWith("/clients")) return [{ id: CID, business_name: "Rocket Growth Agency" }];
     return [{ id: "x" }];
   };
@@ -190,7 +190,10 @@ try {
       if (bad.ok) fail("universal: a junk handle is saved");
       const ok = await press(st, { fetchFn: yt(200, item(PACK.description_full)) }, { action: "youtube_handle", handle: "@SomeName" });
       if (!ok.ok || task(st).yt_handle !== "@SomeName" || task(st).yt_read.state !== "matches" || !/forHandle=%40SomeName/.test(yt.urls[0] || "")) fail(`universal: the entered handle isn't saved and read (${JSON.stringify(ok).slice(0, 160)})`);
-      if (!st.records.some((r) => r.answer && r.answer.action === "youtube_handle")) fail("universal: the entered handle isn't recorded");
+      if (!st.records.some((r) => r.answer && r.answer.action === "youtube_handle" && /RGA entered the channel's handle/.test(r.summary || ""))) fail("universal: the entered handle isn't recorded (with its summary)");
+      { const lost = store({ status: "pending" }, { [ID.SOCIAL]: social }); lost.drop = 1;   // only the first write (the handle) is lost; the read that follows would otherwise save fine and hide it
+        const jl = await press(lost, { fetchFn: yt(200, item(PACK.description_full)) }, { action: "youtube_handle", handle: "@SomeName" });
+        if (jl.ok) fail("universal: a handle the write did not keep is reported as saved (not read back)"); }
       const nc = store({ status: "pending" }, { [ID.SOCIAL]: {} }); if ((await press(nc, {}, { action: "youtube_handle", handle: "@x_name" })).ok) fail("universal: a handle is saved for an unconfirmed channel"); }
     // no Google description: "Nothing to compare yet", never matches, never a plain can't-read
     { const st = store({ status: "pending" }); const j = await press(st, { pack: async () => ({ ...PACK, description_full: "" }), fetchFn: yt(200, item("Anything at all")) }, { action: "youtube_check" });
@@ -199,8 +202,16 @@ try {
     // the card draws the handle field button and the nothing-to-compare row
     { const A = read("admin/admin.js"); if (!/data-uni-yt="youtube_handle"/.test(A) || !/Enter the @handle/.test(A)) fail("universal: the card has no way to enter the @handle"); }
   }
-} catch (e) { console.error(`⚠️  INDETERMINATE: ${e.stack || e.message}`); process.exit(2); }
+} catch (e) {
+  // 🔴 A CRASH INSIDE THE PRODUCT'S OWN CODE (or after a regression was already found) IS A REGRESSION, NOT "I CANNOT TELL": a mutation that removes a guard makes the handler throw, and exit 2 hid that
+  const productCrash = /\/(netlify\/functions|shared)\/[^\n]*\.js:\d+/.test(String(e.stack || "").split("\n").slice(0, 3).join("\n"));
+  if (F.length || productCrash) { fail(`crashed: ${String(e.message || e).slice(0, 160)}`); console.error(`❌ step 58 reads YouTube: ${F.length} regression(s)`); for (const f of F) console.error("  · " + f); process.exit(1); }
+  console.error(`⚠️  INDETERMINATE: ${e.stack || e.message}`); process.exit(2);
+}
 
+{ const AA = read("admin/admin.js");
+  if (!/\|\| o\.flowId === "m1\.brand\.youtube_setup" \? "" : btn\("skipped", "Skip"\)/.test(AA)) fail("58: a Skip BUTTON is back on step 58 (it has the one skip line)");
+  if (!/rows\.push\(vids, \.\.\.clipRows\);/.test(AA)) fail("58: the clips are a second card again (they belong inside the one card)"); }
 // 11-9 on RGA: "Draft 2 scripts" reopened a finished 58; a matching read showed "You marked it pasted"
 { const FXS = fs.readFileSync(path.join(SITE, "netlify/functions/flow-execute.js"), "utf8"), AS = fs.readFileSync(path.join(SITE, "admin/admin.js"), "utf8");
   if (!/const KEEP_STATUS_ON_RUN = new Set\(\["m1\.brand\.youtube_setup"\]\);/.test(FXS) || !/status: keptStatus \|\| \(isDone \? "done" : "in_progress"\),/.test(FXS) || !/keptStatus \? \{ started_at: new Date\(\)\.toISOString\(\) \} :/.test(FXS)) fail("58: drafting the optional scripts can reopen a finished step again");

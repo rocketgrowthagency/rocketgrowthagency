@@ -60,6 +60,11 @@ try {
   const t = await MO.trackingOf({ clientId: "c1", month: MONTH, rec: { row: {} }, now: NOW, d: { supa } });
   const v = M.trackingView(t);
   if (!t.read || !t.ga || t.ga.through !== "2026-11-02" || v.label !== "Working · data through Nov 2") fail(`1 RGA's live data (events through Nov 2, forms last Oct 14) must read Working: ${JSON.stringify(t.ga)} → ${v.label}`);
+  // the producer must COUNT contact-page visits and form starts in the last 7 days of the pulled data (a /contact row with views, no form start)
+  { const rows2 = [{ kind: "event", event_name: "video_play", date: "2026-11-02", events: 12, page: "/" }, { kind: "page", date: "2026-11-01", page: "/contact", views: 6, sessions: 5 }, { kind: "page", date: "2026-11-02", page: "/", views: 30, sessions: 20 }];
+    const supa2 = async (q) => q.startsWith("/client_ga4_daily") ? rows2 : q.startsWith("/clients?") ? [{ call_tracking_provider: null }] : [];
+    const tc = await MO.trackingOf({ clientId: "c1", month: MONTH, rec: { row: {} }, now: NOW, d: { supa: supa2 } });
+    if (!tc.ga || tc.ga.contactVisits !== 6 || tc.ga.formStarts !== 0 || M.trackingView(tc).label !== "Check it") fail(`1 the producer must count contact-page visits (6 views, no form start = Check it): ${JSON.stringify(tc.ga)}`); }
   const t2 = await MO.trackingOf({ clientId: "c1", month: MONTH, rec: { row: {} }, now: NOW, d: { supa: async (q) => { throw new Error("down"); } } });
   if (t2.read !== false) fail("1 a failed Analytics read is read:false");
   const src = strip(read("shared/monthly-monthly.js"));
@@ -103,6 +108,8 @@ try {
   p = await MQ.clientPending({ clientId: "c1", month: QMONTH, deps: f });
   if (p.changes.length !== 3 || !p.changes.some((c) => c.kind === "hours" && c.value && c.value.date === "2026-12-24") || !p.changes.some((c) => c.kind === "attribute" && c.label === "Online appointments")) fail(`2 the sent changes reach the client's cards: ${JSON.stringify(p.changes)}`);
   if (/m2\.|m1\./.test(JSON.stringify(p))) fail("2 the client's cards must carry no internal ids");
+  { const off = await MQ.clientPending({ clientId: "c1", month: QMONTH, deps: { ...f, monthNumber: async () => 2 } });
+    if (off.changes.length || off.win) fail("2 changes already sent to the client must still not show as yes cards outside a quarter month"); }
   // answers
   r = await ans(f, "profile", "hours:2026-12-25", "yes"); if (!r.ok || f.store[PROFILE].profile_changes.find((c) => c.key === "hours:2026-12-25").state !== "approved") fail("2 yes approves the change (read back)");
   r = await ans(f, "profile", "hours:2026-12-24", "change", ""); if (r.ok) fail("2 'Change them' without saying what hours is refused");
@@ -116,6 +123,16 @@ try {
   // the existing write path: a closed day and a custom-hours day are built on what Google shows now (the weekly hours ride along)
   const so = GPR.specialFromAnswer({ holidays: [], oneOffs: [{ from: "2026-12-25", label: "Christmas Day" }], specialOpen: [{ date: "2026-12-24", open: "09:00", close: "13:00" }] }, new Date(NOW));
   if (!so.some((x) => x.closed && x.startDate.day === 25) || !so.some((x) => x.closed === false && x.openTime.hours === 9 && x.closeTime.hours === 13 && x.startDate.day === 24)) fail(`3 closed and custom special hours are both sent: ${JSON.stringify(so)}`);
+  // a holiday on custom hours counts only when Google SHOWS that day open with those times (read back); a Google that drops it is not "on_google"
+  for (const [keeps, want] of [[true, "on_google"], [false, "with_rga"]]) {
+    let sh = { specialHourPeriods: [] }, rh = null;
+    const fetchG = async (url, init = {}) => { const ok = (j) => ({ ok: true, status: 200, json: async () => j });
+      if (init.method === "PATCH") { const b = JSON.parse(init.body); if (b.regularHours) rh = b.regularHours; if (b.specialHours) sh = { specialHourPeriods: b.specialHours.specialHourPeriods.filter((x) => keeps || x.closed) }; return ok({}); }
+      return ok({ regularHours: rh, specialHours: sh }); };
+    const val = { days: { mon: { open: "09:00", close: "17:00" } }, holidays: [], oneOffs: [], specialOpen: [{ date: "2026-12-24", open: "09:00", close: "13:00" }] };
+    const res = await GPR.applyForStep(GPR.STEP.HOURS, val, { fetch: fetchG, token: "t", loc: "locations/1", now: NOW });
+    if (res.state !== want) fail(`3 custom holiday hours ${keeps ? "Google kept" : "Google dropped"} must read ${want}, got ${res.state}`);
+  }
   // the win story
   const g = fake(); r = await act(g, "win_draft", {});
   p = await MQ.clientPending({ clientId: "c1", month: QMONTH, deps: g });
@@ -140,7 +157,7 @@ try {
   for (const w of ['Add "', "to your Google profile?", "Holiday hours for", "Can we share this story?", "Yes, add it", "Yes, these are right", "Change them", "Yes, share it", ">No<"]) if (cards && !cards.includes(w)) fail(`2 the yes cards must say "${w}"`);
   if (cards && /m2\.|m1\.|profile_changes|\.key\b.*head/.test(cards.replace(/data-qy-keys/g, ""))) fail("2 the yes cards must carry no internal ids in client words");
   if (cards && /—/.test(cards)) fail("2 no em dash in client-facing text");
-  if (!/portal-quarter-answer/.test(po) || !/kind: "pending"/.test(po)) fail("2 the portal must call portal-quarter-answer (pending + answers)");
+  if (!/\/\.netlify\/functions\/portal-quarter-answer["'`]/.test(po) || !/kind: "pending"/.test(po)) fail("2 the portal must call portal-quarter-answer (pending + answers)");
   if (!/paintQuarterYes\(clientId, host\)/.test(po)) fail("2 the yes cards must be painted in For your approval (loadApprovals)");
   const ad = strip(read("admin/admin.js"));
   for (const w of ["Holiday hours", "data-qrt-hday", "data-qrt-hmode", "Send to the client", "usHolidays"]) if (!ad.includes(w)) fail(`3 the admin Suggest a change must have ${w}`);

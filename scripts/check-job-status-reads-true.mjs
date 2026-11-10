@@ -134,7 +134,8 @@ eq("client card: can't tell is null, never true", ctm(null, { tableReady: false 
 // ── (6) the card ────────────────────────────────────────────────────────────────────────────────────────────────────
 const js = fs.readFileSync(`${SITE}/admin/admin.js`, "utf8");
 const lift = (name) => { const at = js.indexOf(`function ${name}(`); if (at < 0) { console.error(`⚠️  INDETERMINATE — ${name} moved out of admin.js`); process.exit(2); } const open = js.indexOf("{\n", at); let i = open, d = 0, q = null;
-  for (; i < js.length; i++) { const c = js[i]; if (q) { if (c === "\\") i++; else if (c === q) { if (q === "`" ) q = null; else q = null; } continue; } if (c === '"' || c === "'" ) { q = c; continue; } if (c === "`") { i = skipTpl(i); continue; } if (c === "{") d++; else if (c === "}") { d--; if (d === 0) break; } }
+  for (; i < js.length; i++) { const c = js[i]; if (q) { if (c === "\\") i++; else if (c === q) { if (q === "`" ) q = null; else q = null; } continue; } if (c === "/" && js[i + 1] === "/" && js[i - 1] !== ":") { i = js.indexOf("\n", i); if (i < 0) break; continue; }   // a // comment may hold an apostrophe ("client's") that is not a string
+    if (c === '"' || c === "'" ) { q = c; continue; } if (c === "`") { i = skipTpl(i); continue; } if (c === "{") d++; else if (c === "}") { d--; if (d === 0) break; } }
   return js.slice(at, i + 1); };
 function skipTpl(i) { for (i++; i < js.length; i++) { const c = js[i]; if (c === "\\") { i++; continue; } if (c === "`") return i; if (c === "$" && js[i + 1] === "{") { let d = 1; i += 2; for (; i < js.length && d; i++) { const k = js[i]; if (k === "`") i = skipTpl(i); else if (k === "{") d++; else if (k === "}") d--; } i--; } } return i; }
 const box = { escapeHtml: (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])), escapeAttribute: (s) => String(s ?? "") };
