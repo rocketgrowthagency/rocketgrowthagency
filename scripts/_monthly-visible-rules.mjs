@@ -152,7 +152,7 @@ export function januaryRowFailures(rows) {
     if (/none recorded/i.test(c)) F.push(`${tag}: still says "none recorded" (the old quiet-month wording)`);
     if (/Check it/i.test(c) && !/No events from Analytics for 7 days|reached the contact page/i.test(c)) F.push(`${tag}: says "Check it" with no evidence of broken tracking (no events for 7+ days, or contact-page visits with no form start)`);
     if (/Working/i.test(c) && !/data through [A-Z][a-z]{2} \d{1,2}/i.test(c)) F.push(`${tag}: says Working without saying how fresh the data is ("data through <date>")`);
-    if (/Working/i.test(c) && /Check it/i.test(c)) F.push(`${tag}: says Working and Check it at once`);
+    if (/\bWorking\b/.test(c) && /Check it/.test(c))   /* 11-9: the status words are capitalized; the card's own 'It never says working' is an explanation */ F.push(`${tag}: says Working and Check it at once`);
   }
   const l = by.get("m2.exec.local_pr");
   if (l) {
