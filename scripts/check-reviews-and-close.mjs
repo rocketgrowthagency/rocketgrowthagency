@@ -114,7 +114,7 @@ if (/still open/i.test(rep.text) && !/carries into month 2/i.test(rep.text)) fai
   const clean = ME.buildMonth1Email({ rep: { ...rep, items: { done: [], carried: [] } }, client: {}, now: NOW9 }).lines.join("\n");
   if (/\bundefined\b|NaN/.test(txt + clean)) fail("email: undefined or NaN reached the letter");
   // coming next: client words, no internal reason, no name; the five directory steps are one line
-  if (!/^COMING NEXT$/m.test(txt) || !/^- A new photo and a Google post each week, and more review asks$/m.test(txt) || !/^- Business photos: whenever you're ready to share them$/m.test(txt)) fail("email: 'Coming next' lacks the weekly line or the photos line");
+  if (!/^COMING NEXT$/m.test(txt) || !/^- About 4 Google posts a month that you approve, more review asks, and new photos whenever you have them$/m.test(txt) || /a Google post each week/i.test(txt) || !/^- Business photos: whenever you're ready to share them$/m.test(txt)) fail("email: 'Coming next' lacks the weekly line or the photos line");
   if ((txt.match(/^- Listings on directories \(Yelp, Bing, Apple Maps and others\): scheduled for a later month$/gm) || []).length !== 1 || /Yelp profile|Bing Places|citations?\b/i.test(txt.replace(/Listings on directories[^\n]*/, ""))) fail("email: the directory steps aren't one collapsed line");
   if (/photographer|sign-ups wait|Nobody has time|Chris said|Chris:/.test(txt) || /skipped by rga/i.test(txt)) fail("email: an internal skip reason or a person's name reached the client");
   if (!/: later$/m.test(txt)) fail("email: a carried item isn't '<client words>: later'");
@@ -174,6 +174,19 @@ if (!/\|You gave us your hours\|/.test(h5) || !/\|Finished by you\|/.test(h5)) f
 if (!/\|Finished with RGA\|/.test(h3) || /finished \||not recorded|undefined|NaN|Invalid/i.test(h3)) fail(`fallback: a missing date is invented, or reads "not recorded" (${h3})`);
 if (!/fillBlankDoneRows\(listEl, numbered\);/.test(P) || !/if \(\(c\.textContent \|\| ""\)\.replace\(\/\\s\+\/g, " "\)\.trim\(\)\.length >= 25\) continue;/.test(P)) fail("fallback: the list no longer fills blank done rows (measured like the walk)");
 // month1_email_v1 (11-9 review): the portal's report view never shows RGA's skip reasons or who skipped; it reads "Coming next"
+// 11-10: no step reaches the client's letter in ORDER words ("Check your social profiles", "Ask your 5 most recent customers…: 1 of 5").
+// Every Month 1 step the letter can list (not NOT_WORK) whose label is an instruction has its own past-tense clientFeed, and a step that can be
+// carried half-done has a clientCarry noun phrase. And "a Google post each week" (false: posts follow the client's choice) is never produced.
+{ const PB = JSON.parse(fs.readFileSync(path.join(SITE, "data/playbooks/playbooks.json"), "utf8"));
+  const walk = (o, out = []) => { if (Array.isArray(o)) o.forEach((v) => walk(v, out)); else if (o && typeof o === "object") { if (typeof o.id === "string" && /^m1\./.test(o.id)) out.push(o); Object.values(o).forEach((v) => walk(v, out)); } return out; };
+  const NOT_WORK = /^m1\.(close|kickoff|handoff|audit|report|call|access)\./, ORDER = /^(Check|Ask|Decide|Confirm|Add|Lock|Fill|Write|Match|Build|Fix|Verify|Optimize|Claim|Publish|Set up|Measure|Ensure)\b/;
+  const bad = walk(PB).filter((x) => !NOT_WORK.test(x.id) && !x.clientFeed && ORDER.test(String(x.clientLabel || x.title || "")));
+  if (bad.length) fail(`letter: ${bad.length} step(s) would read as an order to the client (no clientFeed): ${bad.map((x) => x.id).join(", ")}`);
+  const f5 = walk(PB).find((x) => x.id === "m1.review.first_5");
+  if (!f5 || !f5.clientCarry) fail("letter: the half-done review asks line has no clientCarry, so it reads 'Ask your 5…: 1 of 5 asked'");
+  for (const f of ["netlify/functions/_month1-report.js", "netlify/functions/_month1-email.js", "netlify/functions/_monthly-report-email.js"])
+    if (/a Google post each week/i.test(fs.readFileSync(path.join(SITE, f), "utf8"))) fail(`${f}: still promises "a Google post each week"`);
+}
 { const PJ = fs.readFileSync(path.join(SITE, "shared/client-monthly.js"), "utf8");
   if (!/s\.key === "open" \|\| s\.key === "skipped"\) continue;/.test(PJ) || !/title: "Coming next"/.test(PJ)) fail("portal report: 'Skipped by RGA' with our internal reasons is back in the client's view (the letter turns open and skipped into one Coming next, in client words)"); }
 // month1_email_v1 (11-9 review): the email matches the approved mockup's layout: three number tiles side by side, round check badges, blue "+ N more"

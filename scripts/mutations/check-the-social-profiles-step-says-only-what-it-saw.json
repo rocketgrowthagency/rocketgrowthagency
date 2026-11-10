@@ -163,7 +163,7 @@
  [
   "the portal says you don't have one",
   "portal",
-  "\"No profiles linked from your website \u00b7 do you have any?\"",
+  "\"No profiles linked from your website · do you have any?\"",
   "\"You don't have any profiles\"",
   1
  ],
@@ -226,8 +226,8 @@
  [
   "the step waits on Google",
   "playbooksjson",
-  "\"id\": \"m1.brand.social_profiles\",\n      \"title\": \"Confirm their social profiles\",\n      \"type\": \"manual\",\n      \"dependsOn\": [],",
-  "\"id\": \"m1.brand.social_profiles\",\n      \"title\": \"Confirm their social profiles\",\n      \"type\": \"manual\",\n      \"dependsOn\": [\"m1.gbp.verify\"],",
+  "\"id\": \"m1.brand.social_profiles\",\n      \"clientFeed\": \"Confirmed your social media profiles\",\n      \"title\": \"Confirm their social profiles\",\n      \"type\": \"manual\",\n      \"dependsOn\": [],",
+  "\"id\": \"m1.brand.social_profiles\",\n      \"clientFeed\": \"Confirmed your social media profiles\",\n      \"title\": \"Confirm their social profiles\",\n      \"type\": \"manual\",\n      \"dependsOn\": [\"m1.gbp.verify\"],",
   1
  ],
  [
