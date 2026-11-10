@@ -16,7 +16,7 @@ export function visibleRowFailures(rows) {
       if (orange(r.markerCls)) F.push(`${tag}: a waiting runs-itself row draws the orange marker`);
     }
     const m = /·\s*([A-Z][a-z]{2} \d{1,2})\s*$/.exec(r.pill || "");
-    if (m && !(r.cardText || "").toLowerCase().includes(m[1].toLowerCase()))   /* 11-9: the card shows "READS DEC 2" (CSS capitals) */ F.push(`${tag}: the chip date "${m[1]}" is not on the row's own card (the card says a different date or none)`);
+    if (m && !(r.cardText || "").replace(/[\s\u00a0\u202f]+/g, " ").toLowerCase().includes(m[1].replace(/[\s\u00a0\u202f]+/g, " ").toLowerCase()))   /* 11-9: the card shows "READS DEC 2" (CSS capitals) */ F.push(`${tag}: the chip date "${m[1]}" is not on the row's own card (the card says a different date or none)`);
     if (r.moreCount && !r.moreInside) F.push(`${tag}: its "More" is drawn outside the row's body (loose between the cards)`);
     if (r.id === "m2.start.open_month" && !/[A-Z][a-z]{2} \d{1,2}/.test(r.cardText || "")) F.push(`${tag}: the Open the month card names no date`);
   }
