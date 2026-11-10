@@ -9,7 +9,7 @@ const VIEWS = (process.argv[3] || "dashboard,approve,approvals,reports,ongoing")
 const { chromium } = await import("playwright");
 const b = await chromium.launch({ headless: true });
 for (const [tag, vp] of [["desk", { width: 1200, height: 1000 }], ["phone", { width: 400, height: 860 }]]) {
-  const g = await (await fetch(`${SUPA}/auth/v1/admin/generate_link`, { method: "POST", headers: { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ type: "magiclink", email: WALK_CLIENTS.main.email, options: { redirect_to: PORTAL } }) })).json();
+  const g = await (await fetch(`${SUPA}/auth/v1/admin/generate_link`, { method: "POST", headers: { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ type: "magiclink", email: WALK_CLIENTS[process.env.WALK || "main"].email, options: { redirect_to: PORTAL } }) })).json();
   const ctx = await b.newContext({ viewport: vp });
   await ctx.route("**/*", (r) => { const q = r.request(); const d = classify(q.url(), q.method(), q.postData(), { supabaseHost: new URL(SUPA).host }); if (!d.allow) { console.log("BLOCKED", q.method(), q.url().replace(/[?].*/,"").slice(0,120)); } if (!d.allow) return d.stub ? r.fulfill({ status: 204, body: "" }) : r.abort(); return r.fallback(); });
   const page = await ctx.newPage();
