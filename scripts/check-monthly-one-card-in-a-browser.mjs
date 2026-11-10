@@ -55,6 +55,8 @@ try {
   await page.evaluate(() => document.querySelectorAll("#monthlyChecklistHost .ob-phase:not(.cm-q-folded):not(.open) [data-ob-phase-toggle]").forEach((x) => x.click()));
   await new Promise((r) => setTimeout(r, 800));
 
+  // 11-9: some cards fill their dates from a second read after the rows appear (step 21 read 'Reading…' first); judge the settled page
+  await new Promise((r) => setTimeout(r, 4000));
   const rows = await page.evaluate(() => {
     const Once = (globalThis.rgaMonthlyOnce || {}).SELF || [], Q = (globalThis.rgaMonthlyQuarter || {}).SELF || [], C = (globalThis.rgaMonthlyClose || {}).SELF || [];
     const SELF = new Set([...Once, ...Q, ...C]);
