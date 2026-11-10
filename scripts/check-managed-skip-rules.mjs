@@ -70,7 +70,7 @@ try {
       if (!a || !a.sheet || a.sheet.shown || !a.sheet.inCard) fail(`${L}: the sheet isn't drawn hidden inside the card ${JSON.stringify(a && a.sheet)}`);
       await press(h, "m1.call.close", "[data-fw-open]");
       a = await look(h, "m1.call.close");
-      const W = { h3: "Ask RGA to skip the close-out call?", lis: ["RGA decides and answers here, by the next business day.", "If RGA agrees, this step closes and your Month 1 report stays in Reports. Month 2 isn't held up."], btns: ["Ask RGA", "Keep the call"] };
+      const W = { h3: "Ask RGA to skip the Month 1 review?", lis: ["RGA decides and answers here, by the next business day.", "If RGA agrees, this step closes and your Month 1 report stays in Reports. Month 2 isn't held up."], btns: ["Ask RGA", "Keep the call"] };
       if (!a.sheet || !a.sheet.shown || a.sheet.h3 !== W.h3 || a.sheet.lis.join("|") !== W.lis.join("|") || a.sheet.btns.join("|") !== W.btns.join("|") || !/^Anything RGA should know\? \(optional\)/.test(a.sheet.fld) || a.sheet.ph !== "e.g. I'm on jobs all week") fail(`${L}: the sheet isn't the approved one ${JSON.stringify(a.sheet)}`);
       await h.page.evaluate((R) => { const t = document.querySelector(`${R} [data-fw-note-in]`); if (t) t.value = "I'm on jobs all week"; }, ROW("m1.call.close"));
       const busy = await h.page.evaluate((R) => new Promise((res) => { const b = document.querySelector(`${R} [data-fw-finish]`); b.click(); setTimeout(() => res(b.classList.contains("is-busy") || b.getAttribute("aria-busy") === "true"), 15); }), ROW("m1.call.close"));
@@ -91,7 +91,7 @@ try {
     try {
       await openRow(h2, "m1.call.close");
       const a = await look(h2, "m1.call.close");
-      if (!a || a.pills.join("|") !== "Skipped" || /is-done/.test(a.disc) || a.band !== "No close-out call · RGA agreed" || a.side !== "Nov 6" || !/\boff\b/.test(a.cardCls) || !a.text.includes("Your Month 1 report · in Reports") || !a.text.includes("Read it ›") || a.asks.join("|") !== "Book a call after all")
+      if (!a || a.pills.join("|") !== "Skipped" || /is-done/.test(a.disc) || a.band !== "No Month 1 review · RGA agreed" || a.side !== "Nov 6" || !/\boff\b/.test(a.cardCls) || !a.text.includes("Your Month 1 report · in Reports") || !a.text.includes("Read it ›") || a.asks.join("|") !== "Book a call after all")
         fail(`managed step 7 agreed: not the approved state ${JSON.stringify(a && { p: a.pills, d: a.disc, b: a.band, s: a.side, asks: a.asks })}`);
     } finally { await h2.close(); }
   }
@@ -241,7 +241,7 @@ try {
       const ctx = { escapeHtml: (x) => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"), state: { flowM1State: { tasks: { "m1.access.website": { status: "done", client_input: { via: "none" }, client_input_at: NOV5 } } } } };
       vm.createContext(ctx); vm.runInContext(`${parts.join("\n")}\nthis.A = { skipAskLines, skipAdminLine, mergeTaskState };`, ctx);
       const l63 = ctx.A.skipAskLines({ status: "pending", skip_request: { at: NOV5, note: "I'm on jobs all week" } }, "m1.call.close");
-      if (!l63.includes("Client asked to skip the close-out call · Nov 5 · &quot;I'm on jobs all week&quot; · reply by Nov 6") || !l63.includes("Agree: press Skip (as today)")) fail(`admin 63's lines aren't the approved ones («${l63}»)`);
+      if (!l63.includes("Client asked to skip the Month 1 review · Nov 5 · &quot;I'm on jobs all week&quot; · reply by Nov 6") || !l63.includes("Agree: press Skip (as today)")) fail(`admin 63's lines aren't the approved ones («${l63}»)`);
       const l26 = ctx.A.skipAskLines({ status: "pending" }, "m1.tracking.form_setup");
       if (!l26.includes("No website form to count · the client told us they don't have a website yet · Nov 5. Close the step with Skip.")) fail(`admin 26 doesn't show the no-website line («${l26}»)`);
       const m26 = ctx.A.skipAdminLine("m2.call.monthly", { status: "skipped", skipped_by: "client", skipped_at: DEC7 });

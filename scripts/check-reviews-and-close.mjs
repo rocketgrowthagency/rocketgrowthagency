@@ -152,7 +152,7 @@ if (/still open/i.test(rep.text) && !/carries into month 2/i.test(rep.text)) fai
 if (!/title: end \? `Opens about \$\{/.test(P) || !/Anything still open carries into Month 2; nothing waits for it/.test(P)) fail("step 15: the portal still says the call waits until everything is done");
 const BK = read("netlify/functions/portal-book-kickoff.js");
 if (!/const rp = recs\[0\]\?\.data\?\.tasks\?\.\["m1\.report\.month1"\];\s*if \(!rp \|\| rp\.status !== "done"\) \{\s*return jsonRes\(409,/.test(BK)) fail("step 15: a close-out time can be booked before the Month 1 report is ready (report first)");
-if (!/No close-out call yet: skip this row to start Month 2/.test(ADM)) fail("step 15: admin doesn't say to skip the call after day 35");
+if (!/No Month 1 review yet: skip this row to start Month 2/.test(ADM)) fail("step 15: admin doesn't say to skip the call after day 35");
 // ── the done-record fallback, RUN
 const lift = (n) => { const at = P.search(new RegExp(`\\nfunction ${n}\\(`)); if (at < 0) { console.error(`⚠️  ${n} moved`); process.exit(2); } let d = 0; for (let i = P.indexOf("{", P.indexOf(")", at)); i < P.length; i++) { if (P[i] === "{") d++; else if (P[i] === "}") { d--; if (!d) return P.slice(at + 1, i + 1); } } };
 // 🔄 done_without_record_v2 (approved 10-26): the fallback IS the no-record done card (doneNoRecordHtml), run for real with the

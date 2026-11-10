@@ -159,7 +159,7 @@ if (r.status !== 200) fail(`D · confirming a close-out failed (${r.status} ${r.
   const ev = g.find((c) => c.method === "POST");
   if (!ev) fail("D · no new calendar event was created for the close-out");
   else {
-    if (!/close-out/i.test(ev.body.summary || "")) fail(`D · the close-out event is titled "${ev.body.summary}"`);
+    if (!/Month 1 review/i.test(ev.body.summary || "")) fail(`D · the close-out event is titled "${ev.body.summary}"`);
     if (!String(ev.body.conferenceData?.createRequest?.requestId || "").startsWith(PURPOSES.m1_close.requestPrefix)) fail("D · the close-out's Meet request id is the kickoff's");
     if (ev.body.transparency !== "opaque") fail("D · the close-out event does not hold the time (transparency)");
   } }

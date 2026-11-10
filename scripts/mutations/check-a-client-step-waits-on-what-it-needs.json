@@ -44,8 +44,8 @@
  [
   "the projection publishes the graph",
   "clientstepsjson",
-  "\"clientStepNo\": 16,\n      \"managedStepNo\": 7,\n      \"managedRole\": \"step\",\n      \"managedLabel\": \"Month 1 close-out call\",\n      \"clientPhase\": 4,\n      \"waitsOnRga\": true,",
-  "\"clientStepNo\": 16,\n      \"managedStepNo\": 7,\n      \"managedRole\": \"step\",\n      \"managedLabel\": \"Month 1 close-out call\",\n      \"clientPhase\": 4,\n      \"waitsOnRga\": [\"m1.report.month1\"],",
+  "\"clientStepNo\": 16,\n      \"managedStepNo\": 7,\n      \"managedRole\": \"step\",\n      \"managedLabel\": \"Month 1 review\",\n      \"clientPhase\": 4,\n      \"waitsOnRga\": true,",
+  "\"clientStepNo\": 16,\n      \"managedStepNo\": 7,\n      \"managedRole\": \"step\",\n      \"managedLabel\": \"Month 1 review\",\n      \"clientPhase\": 4,\n      \"waitsOnRga\": [\"m1.report.month1\"],",
   1
  ],
  [

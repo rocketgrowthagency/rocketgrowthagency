@@ -71,7 +71,7 @@ function checkTree(root, label) {
   const isGs = (portal.match(/const isGs = \(r\) => [^\n]*/) || [""])[0];
   if (!isGs || /CLOSE|call\.close|PHOTOS|REVIEWS|VIDEOS/.test(isGs)) fail("Getting started must hold only the kickoff, website access and the Google details check (the close-out call, photos, reviews and videos are not Setup)");
   if (!/step = \{ \.\.\.r\.step, clientOptional: true, m1w: true \}/.test(portal)) fail("Month 1 work rows are not optional (review asks would still be required)");
-  if (!/Month 1 work \(review asks, photos, videos, the close-out call\) is optional/.test(rd("netlify/functions/_open-moves.js") || "")) fail("To do still lists Month 1 work as the client's move (only Getting started blocks)");
+  if (!/Month 1 work \(review asks, photos, videos, the Month 1 review\) is optional/.test(rd("netlify/functions/_open-moves.js") || "")) fail("To do still lists Month 1 work as the client's move (only Getting started blocks)");
   if (!/End of Month 1/.test(portal) || !/draw\(SPL\.CLOSE\)/.test(portal)) fail("the close-out call is not under End of Month 1 in the Month 1 card");
 
   // ── 5 · BUG 2: the videos ──
@@ -228,7 +228,7 @@ async function checkBrowser(root, label) {
   p = await draw("managed");
   if (LOCKED.test(p.setup + p.ongoing)) fail("the Locked card draws in Setup for a managed client whose Getting started is done");
   if (!/GETTING STARTED/i.test(p.setup) || !/Setup complete/.test(p.setup) || !/3 of 3|Setup complete/.test(p.setup)) fail("Setup does not show Getting started complete");
-  if (/close-out/i.test(p.setup)) fail("the close-out call is in Setup");
+  if (/close-out|Month 1 review/i.test(p.setup)) fail("the close-out call is in Setup");
   if (/Provide 20\+ business photos|Ask your 5 most recent/.test(p.setup)) fail("Month 1 work rows are in Setup");
   for (const w of ["MONTH 1", "YOUR PART THIS MONTH", "RGA'S WORK THIS MONTH", "END OF MONTH 1"]) if (!p.ongoing.toUpperCase().includes(w)) fail(`the Month 1 card lacks "${w}"`);
   if (!/Get your first reviews/.test(p.ongoing) || !/0 so far/.test(p.ongoing) || /more reviews/i.test(p.ongoing)) fail("0 reviews on Google: the Month 1 card does not read 'Get your first reviews · 0 so far'");
@@ -237,7 +237,7 @@ async function checkBrowser(root, label) {
   if (!/couldn't read your channel/.test(p.ongoing)) fail("an unreadable YouTube channel does not say 'couldn't read'");
   if (!/Your YouTube channel/.test(p.ongoing)) fail("RGA's channel setup is not under RGA's work");
   if (!/Track calls from your website\?/.test(p.ongoing) || !/Yes, track calls/.test(p.ongoing) || !/No thanks/.test(p.ongoing)) fail("call tracking is not an optional choice card (Yes, track calls / No thanks)");
-  if (!/End of Month 1[\s\S]*Month 1 close-out call/i.test(p.ongoing)) fail("the close-out call is not under End of Month 1");
+  if (!/End of Month 1[\s\S]*Month 1 review/i.test(p.ongoing)) fail("the close-out call is not under End of Month 1");
   if (!/Not now/.test(p.ongoing) || !/No jobs yet/.test(p.ongoing)) fail("the review asks have no 'Not now' / 'No jobs yet'");
   await done(p);
   // B · every step skipped

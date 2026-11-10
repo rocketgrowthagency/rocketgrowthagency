@@ -842,7 +842,7 @@
  [
   "a numbered client step has no entry",
   "seeclient",
-  "  \"m1.call.close\": \"The close-out call card\",\n",
+  "  \"m1.call.close\": \"The Month 1 review card\",\n",
   "",
   1
  ],

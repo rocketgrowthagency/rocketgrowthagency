@@ -28,7 +28,7 @@ import { execFileSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
-const WEBSITE = '/Users/chris/RGA/Rocket Growth Agency Website VS Code';
+const WEBSITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || '/Users/chris/RGA/Rocket Growth Agency Website VS Code';
 // 🅿️ --draft (Chris, 2026-10-02): "just updating the PDF for now… at end of session ill let you know
 // when to update all on admin". Prints from parked/playbook.js to the Desktop ONLY — the website repo
 // (admin, admin Docs, the version archive) is not touched, so another session's deploys cannot ship it.

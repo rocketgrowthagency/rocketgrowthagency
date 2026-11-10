@@ -423,7 +423,7 @@ try {
     net.route = async (url, init) => { if (url.includes("client_onboarding_records")) return res(200, [{ id: "r", data: { tasks: { [ID.REPORT]: { status: "done" }, [ID.CLOSE]: { status: "skipped", skip_reason: "client declined the call", skipped_at: iso(NOW) } } } }]); if (url.includes("client_monthly_records") && (init.method || "GET") === "POST") { madeMonthly = true; return res(201, [{ id: "m1" }]); } if (url.includes("client_monthly_records") && madeMonthly) return res(200, [{ id: "m1", data: { tasks: {} } }]); return res(200, []); };   // monthly_v1: the one creator reads the month back, so the fake keeps what it was given
     let madeMonthly = false;
     const hr = await FX.stepRunners.handoff({ client: { ...RGA } });
-    if (!/Close-out call: client declined the call/.test(hr.summary) || !(hr.outcome_data.carry && hr.outcome_data.carry.skipped.length === 1) || !hr.outcome_data.month2) fail(`64 runner: the skipped step isn't named with its reason, or Month 2 isn't created (${hr.summary})`);
+    if (!/Month 1 review: client declined the call/.test(hr.summary) || !(hr.outcome_data.carry && hr.outcome_data.carry.skipped.length === 1) || !hr.outcome_data.month2) fail(`64 runner: the skipped step isn't named with its reason, or Month 2 isn't created (${hr.summary})`);
     // 64 runs itself once 62 is settled and 63 is settled; never before
     const ts = (o) => ({ "m1.call.close": { status: "done" }, ...o });
     if (S.dueNow(M1, ts({ [ID.REPORT]: { status: "pending" } }), NOW).some((x) => x.step === ID.HANDOFF)) fail("64: it runs before 62 is settled");
@@ -459,7 +459,7 @@ try {
     if (!imp) fail("wiring: admin.js doesn't import shared/steps-57-64.js");
     const av = (idx.match(/admin\/admin\.js\?v=([0-9a-z]+)/) || [])[1], cv = (idx.match(/admin\/admin\.css\?v=([0-9a-z]+)/) || [])[1];
     if (!av || av < "20261109d" || !cv || cv < "20261109c") fail(`wiring: the cache keys weren't bumped (admin.js ${av}, admin.css ${cv})`);
-    if (!/step-lock\.js\?v=20261109d/.test(A) || !/step-lock\.js\?v=20261109d/.test(read("portal/portal.js")) || !((read("portal/index.html").match(/portal\.js\?v=([0-9a-z]+)/) || [])[1] >= "20261109d")) fail("wiring: step-lock.js changed but its import keys (admin, portal) weren't bumped");
+    if (!/step-lock\.js\?v=(2026110[9-9][d-z]|20261[12][0-9a-z]+)/.test(A) || !/step-lock\.js\?v=(2026110[9-9][d-z]|20261[12][0-9a-z]+)/.test(read("portal/portal.js")) || !((read("portal/index.html").match(/portal\.js\?v=([0-9a-z]+)/) || [])[1] >= "20261109d")) fail("wiring: step-lock.js changed but its import keys (admin, portal) weren't bumped");
   }
   // the skip control routes to the one function; client rows too
   if (!/data-task-status"\) === "skipped" && uniS\(\)\) \{ uniSkipPress\(/.test(A)) fail("skip UI: a client row's Skip doesn't go to the one Skip");

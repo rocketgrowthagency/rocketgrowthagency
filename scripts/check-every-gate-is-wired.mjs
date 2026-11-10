@@ -456,6 +456,9 @@ const NOT_PREFLIGHT = {
   'check-citations-52-55.mjs': 'the WEBSITE repo\'s admin steps 52-55 (citations_52_55_v1, 11-9), fakes only (database, Google profile, pages, SerpAPI, model); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-steps-57-64.mjs': 'the WEBSITE repo\'s admin steps 57-64 (steps_57_64_v1, 11-9), fakes + vm only (database, search, Google, model, admin card lifts); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-setup-vs-month1.mjs': 'the WEBSITE repo\'s Getting started / Month 1 split (setup_vs_month1_v1, 11-10): shared/setup-split.js fixtures, the open-moves rules, the skip endpoint and the real portal drawn in headless chrome on our fake database; run by daily-health-check.sh; it reads no video pipeline output.',
+  'check-call-to-client.mjs': 'the WEBSITE repo\'s call-to-client build (call_to_client_v1 + call2_console_v1, 11-10) on fakes only (database, Google, Airtable); run by daily-health-check.sh; it sends nothing and reads no video pipeline output.',
+  'check-master-schedule.mjs': 'the WEBSITE repo\'s master schedule (master_schedule_v1 v5, 11-10) on fakes only; run by daily-health-check.sh; it reads no video pipeline output.',
+  'check-call-names.mjs': 'the WEBSITE repo\'s six call names (call_names_v1, 11-10), a static scan; run by daily-health-check.sh; it reads no video pipeline output.',
   'check-portal-has-no-em-dash.mjs': 'static scan of the WEBSITE repo\'s client portal source for an em dash in client-visible text (11-10); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-the-morning-run.mjs': 'the WEBSITE repo\'s morning run (steps_57_64_v1, 11-9), fakes only (database, runners, search count); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-the-months-are-kept.mjs': 'the WEBSITE repo\'s months (monthly_v1, 11-9), fakes only (a database behind a fake fetch); run by daily-health-check.sh; it reads no video pipeline output.',
@@ -769,6 +772,12 @@ console.log(`  ✓ every gate that reads the site can be pointed at a copy, so i
       "runs every one of its 18 checks twice with FAKES ONLY (axios replaced, account.json a fixture): on this repo (all must pass) and on the pre-change commit (--against, f8f26ed1 by default), where at least 10 MUST fail, else it exits 2 INDETERMINATE; proven on 11-10 (16 of 17 fail on f8f26ed1; the 17th is the existing SERPAPI-HOLD guard that must keep holding).",
     "check-setup-vs-month1.mjs":
       "runs its source and fixture checks plus the real portal drawn in chromium on the website at the build's before state (LIVE_BEFORE, default 7f615889), where 8+ must fail or it exits 2 INDETERMINATE; --against=<revision> runs it on any revision (it exits 1 there when the old pieces are present: the Locked card on every onboarding task, a videos step Done from RGA's channel, review asks required, the close-out call in Setup); exits 2 with no browser.",
+    "check-call-to-client.mjs":
+      "runs its source rules and fixtures (reminders, the cap, the one-press start, the FAQ) on the website and then on the build's before state (LIVE_BEFORE, default 6c340245), where 10+ must fail or it exits 2 INDETERMINATE; --against=<revision> runs it on any revision.",
+    "check-master-schedule.mjs":
+      "runs its source rules, zone fixtures and a fake-database double booking (call card and client pick on one slot) on the website and then on the build's before state (LIVE_BEFORE, default 6c340245), where 8+ must fail or it exits 2 INDETERMINATE; --against=<revision> runs it on any revision.",
+    "check-call-names.mjs":
+      "scans every client- and admin-visible code line for close-out and a bare Call 1 / Call 2 and checks the six names, on the website and then on the build's before state (LIVE_BEFORE, default 6c340245), where 6+ must fail or it exits 2 INDETERMINATE; --against=<revision> runs it on any revision.",
     "check-portal-has-no-em-dash.mjs":
       "scans the website source with its own tokenizer (strings, template text, ${} expressions, comments, regex literals) and proves itself on 18 fixtures it must get right, then MUST find 100+ em dashes in the website at the build's before state (--against, 87c6fdbe by default; 153 there on 11-10), else it exits 2 INDETERMINATE; a copy of portal.js with one em dash put back is the mutation and it exits 1.",
     "check-client-monthly-in-a-browser.mjs":
