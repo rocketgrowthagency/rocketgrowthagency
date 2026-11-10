@@ -67,7 +67,7 @@ try {
         statusCls: stat ? stat.className : "", markerCls: num && getComputedStyle(num).backgroundColor === orangeRgb ? "active" : "", cardText: card ? card.innerText : "",
         moreCount: mores.length, moreInside: mores.every((m) => m.closest(".ob-step") === el && !!m.closest(".ob-body")),
         who: ((el.querySelector(".ob-kind") || {}).innerText || "").trim(), sub: ((el.querySelector(".ob-row .ob-why, .ob-row .ob-sub, .ob-title small") || {}).innerText || ""), num: Number(((num || {}).innerText || "").trim()) || null,
-        month: ((document.querySelector(".cm-chip[aria-pressed=true]") || {}).getAttribute("data-cm-month")) || null };
+        month: (document.querySelector(".cm-chip[aria-pressed=true]")?.getAttribute("data-cm-month")) || null };   /* no chip pressed (an unnumbered month) is null, never a crash */
       return { id, pill: pill.trim(), self: SELF.has(id), vis,
         cards: el.querySelectorAll(`[data-uni-card="${id}"]`).length,
         det: el.querySelectorAll(".ob-det").length, ovr: el.querySelectorAll(".ob-ovr").length,
@@ -120,7 +120,8 @@ try {
           buttons: b.querySelectorAll("button:not(.cm-q-fold), a, input").length, notFor: rows.some((r) => /not for /i.test((r.querySelector(".cm-q-tag") || {}).innerText || "")) }; });
       fails.push(...previewFailures({ ...pv, pill: pv.pill.replace(/\s+/g, " "), applies: true, notFor: true }));   // applies/notFor: the not-for tag is proven by the fixtures; here the page must not fail the rest
       if (open.items !== 7) fails.push(`Every quarter: the preview lists ${open.items} steps, not 7`);
-      await q.click();
+      await page.click(".cm-q-folded [data-cm-qprev]");   /* 11-9: a re-render can detach the old handle */
+      await new Promise((r) => setTimeout(r, 500));
       const hid = await page.evaluate(() => document.querySelector(".cm-q-folded [data-cm-qprev-body]").hasAttribute("hidden"));
       if (!hid) fails.push("Every quarter: clicking again did not fold it");
     }
