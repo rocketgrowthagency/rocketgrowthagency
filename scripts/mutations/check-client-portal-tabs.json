@@ -114,7 +114,7 @@
  [
   "the campaign words are back",
   "portal",
-  "return `<div class=\"pm-cs pm-tabcs\">${csCard({ tone: \"off\", head: \"Your first report comes after your first full month\", body: csNote(\"We email you the moment it's ready.\") })}</div>`;",
+  "return `<div class=\"pm-cs pm-tabcs\">${csCard({ tone: \"off\", head: \"Your first report comes after your first full month\", body: csNote(\"RGA checks it, then sends it to you. Every report stays under Reports.\") })}</div>`;",
   "return `<div class=\"pm-cs pm-tabcs\">${csCard({ tone: \"off\", head: \"Your first report comes after your first full month\", body: csNote(\"once your campaign goes live\") })}</div>`;",
   1
  ],

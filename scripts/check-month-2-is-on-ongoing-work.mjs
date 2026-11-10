@@ -66,7 +66,7 @@ if (!/if \(!isSetupPhase && month2StepsHtml\) return `<div class="pm-og">\$\{fee
   fail("after setup, Ongoing work isn't the Month-2 list (it drops 3 of the 4 monthly jobs)");
 if (!/lr\("Your numbers", [^\n]*"Every 3 months"\)/.test(ow)) fail("during setup, Ongoing work no longer previews the monthly jobs (\"Starts after setup\")");
 if (!/buildActionItemsHtml\(client\.id \|\| row\.client_id, onboarding, monthlyRecords, oauth, contracts, photos, customerLists, \{ month2Only: true \}\)/.test(pcode)) fail("nothing builds the Month-2 list for Ongoing work");
-if (!/buildOngoingWorkHtml\(\{ isSetupPhase, customerListHtml, photoUploadHtml, customerLists, month2StepsHtml(, clientId: client\.id \|\| row\.client_id)?(, tasks: onboarding\?\.data\?\.tasks \|\| \{\})?(, focusHtml: ogFocusHtml\(currentMonthly\))?(, between: betweenMonthsNow)?(, monthlyRecords)?(, onboardingData: onboarding[^)]*)? \}\)/.test(pcode)) fail("Ongoing work isn't handed the Month-2 list");
+if (!/buildOngoingWorkHtml\(\{ isSetupPhase, customerListHtml, photoUploadHtml, customerLists, month2StepsHtml(, clientId: client\.id \|\| row\.client_id)?(, tasks: onboarding\?\.data\?\.tasks \|\| \{\})?(, focusHtml: ogFocusHtml\(currentMonthly\))?(, between: betweenMonthsNow)?(, monthly: monthlyNow)?(, monthlyRecords)?(, onboardingData: onboarding[^)]*)? \}\)/.test(pcode)) fail("Ongoing work isn't handed the Month-2 list");
 
 // ── 2 · Setup is Month 1, and its stage 5 / 6 layouts don't repeat the two forms ──
 if (!/const actionItemsHtml = buildActionItemsHtml\([^)]*\{ month1Only: true, domSuffix: "-setup" \}\);/.test(pcode)) fail("Setup still lists Month-2 steps at stage 6 (each step must have one home)");
@@ -88,7 +88,7 @@ if (!/: month2Only && \(step\.clientForm === "photo_upload" \|\| step\.clientFor
 // 🔄 10-26 (steps_6_20_clean_v1, step 18): the plan card ("5 new photos this month", the count this month), then the upload
 if (!/: month2Only && step\.clientForm === "photo_upload"\s*\? `\$\{pcCard\(\{ tone: "you", icon: DC_ICON\.pho, head: "New photos for your profile"[\s\S]{0,300}\$\{photosOnGoogleThisMonth\} on Google this month[\s\S]{0,200}\$\{buildPhotoUploadHtml\(/.test(pcode)) fail("step 15's card doesn't hold the photo upload and its counted progress");
 if (!/: month2Only && step\.clientForm === "customer_list" \? buildCustomerListHtml\(clientId, customerLists \|\| \[\]\)/.test(pcode)) fail("step 16's card doesn't hold the customer list");
-if (!/listEl\.innerHTML = month2Only\s*\? \(numbered\.length \? (\(pmManaged\(\) \? ogManagedListHtml\(numbered, rowHtml\) : )?numbered\.map\(rowHtml\)\.join\(""\)/.test(pcode)) fail("the Month-2 list isn't bare (no pointers, legend or group titles on Ongoing work)");
+if (!/listEl\.innerHTML = month2Only\s*\? \(numbered\.length \? (\(pmManaged\(\) \? (\(monthNow \? ogMonthListHtml\(numbered, rowHtml, monthNow\) : ogManagedListHtml\(numbered, rowHtml\)\)|ogManagedListHtml\(numbered, rowHtml\)) : )?numbered\.map\(rowHtml\)\.join\(""\)/.test(pcode)) fail("the Month-2 list isn't bare (no pointers, legend or group titles on Ongoing work)");
 
 // ── 5 · one list owns the headline ──
 if (!/if \(month2Only \|\| !m2ListOnPage\) _nextStepInputs = /.test(pcode)) fail("two lists on one page race for \"Your next step\" (the Month-2 list must own it)");

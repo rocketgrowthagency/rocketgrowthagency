@@ -71,8 +71,31 @@ function sourceFailures(S) {
   // the data finding
   need(/async function reconcileMonths\(/.test(om) && /reconcileMonths/.test(om.slice(om.indexOf("module.exports"))), "reconcileMonths exists and is exported");
   need(/reconcileMonths\(/.test(mo), "the morning run reconciles the month rows");
+  // ── client_monthly_cycle_v1 (the owner 11-10): the monthly month is ONE month card; the separate cards, the win-story form and the step numbers are gone from it (managed only) ──
+  need(/function ogMonthHtml\(/.test(p) && /function ogMonthRows\(/.test(p) && /function ogMonthListHtml\(/.test(p), "the month card (ogMonthHtml) and its producer filter (ogMonthRows, ogMonthListHtml)");
+  need(/monthChips\(/.test(p) && /_ogMonthNow\.set\(/.test(p), "the portal asks whether the managed client is in a monthly month (monthChips) before the list is built");
+  { const a = p.indexOf("if (inMonth) return"), b = p.indexOf("if (!isSetupPhase && month2StepsHtml) return"); need(a > 0 && b > 0 && a < b, "the month card is drawn BEFORE the old stack of Month-2 step cards in ogManagedHtml"); }
+  need(/num: monthNow \? null/.test(p), "no step number on a monthly card (num is null in a monthly month)");
+  { const i = p.indexOf("function ogMonthRows("), body = i >= 0 ? p.slice(i, p.indexOf("\n}", i)) : "";
+    need(/keep = new Set\(\[OG_IDS\.photos, OG_IDS\.call\]\)/.test(body), "the monthly month keeps only the photos row and the call's booking");
+    need(/if \(q\) \{ keep\.add\(OG_IDS\.numbers\); keep\.add\(OG_IDS\.video\); \}/.test(body), "the quarter's numbers and video are drawn only in a quarter month");
+    gone(/OG_IDS\.story/.test(body), "the monthly win-story form is kept in the monthly month (ogMonthRows names OG_IDS.story)");
+    gone(/OG_IDS\.list\b/.test(body), "the old weekly list row is kept beside the month card's own list card"); }
+  need((p.match(/ogMonthly\(c\.clientId\)/g) || []).length >= 2, "the call card draws no win-story line in a monthly month");
+  need(/way\.monthly/.test(p) && /your customer list/.test(p) && /Open your customer list/.test(p), 'the reviews card says "from your customer list" (no step number) in a monthly month');
+  gone(/We email you the moment it's ready/.test(p), '"We email you the moment it\'s ready" (a report never sends itself)');
+  need(/In progress \\u00b7 RGA checks it and sends it early/.test(p), 'Reports: the month in progress says "In progress, RGA checks it and sends it early <next>"');
+  need(/monthlyAction/.test(p) && /betweenNextStep\(\{ month:/.test(p), "the Dashboard's next step reads this month's open client steps (betweenNextStep, one rule)");
+  need(/monthlyNow \? thisMonthHtml\(/.test(p) && /function thisMonthHtml\(/.test(p), 'the Dashboard shows a "This month" card in a monthly month (not "What to expect")');
+  need(/function monthlyKpisHtml\(/.test(p) && /monthTiles\(/.test(p) && /rankTileOf\(/.test(p), "the monthly tiles name their period (monthlyKpisHtml, monthTiles, rankTileOf)");
+  need(/_ogMonthNow\.has\(client\.id\) \? "Not measured yet\. RGA's tracking check reads this\."/.test(p), '"Live once your campaign starts" is never shown to a client in a monthly month');
+  need(/rgaWork\(/.test(p) && /monthCard\(/.test(p) && /pastMonthCard\(/.test(p), "RGA's work this month and the past months are read from the shared month functions");
+  need(/data-og-mchip/.test(p) && /data-og-call-open/.test(p), "the month chips open a month; the call line opens its booking");
+  { const sh = strip(S.shared); need(/function rgaWork\(/.test(sh) && /function monthCard\(/.test(sh) && /function monthTiles\(/.test(sh) && /function rankTileOf\(/.test(sh) && /function thisMonthCard\(/.test(sh) && /function monthNextStep\(/.test(sh), "shared/client-monthly.js has the month functions");
+    need(/Sections\.idsFor\(/.test(sh) && /Weekly\.postsView\(/.test(sh), "RGA's work uses the admin Monthly's own rules (idsFor, postsView), not its own list"); }
+  need(/monthly-sections\.js\?v=/.test(S.portal || "") && /monthly-weekly\.js\?v=/.test(S.portal || "") && /monthly-monthly\.js\?v=/.test(S.portal || ""), "portal.js imports the admin Monthly's shared rules");
   // cache busters
-  { const m = /portal\.js\?v=(\d{8}[a-z]?)/.exec(S.index || ""), c = /portal\.css\?v=(\d{8}[a-z]?)/.exec(S.index || ""); need(m && m[1] >= "20261110a", "portal.js ?v= is 20261110a or later"); need(c && c[1] >= "20261110a", "portal.css ?v= is 20261110a or later"); }
+  { const m = /portal\.js\?v=(\d{8}[a-z]?)/.exec(S.index || ""), c = /portal\.css\?v=(\d{8}[a-z]?)/.exec(S.index || ""); need(m && m[1] >= "20261110e", "portal.js ?v= is 20261110e or later"); need(c && c[1] >= "20261110e", "portal.css ?v= is 20261110e or later"); }
   need(/client-monthly\.js\?v=/.test(S.portal || ""), "portal.js imports shared/client-monthly.js");
   return out;
 }
@@ -87,7 +110,11 @@ const LIVE_BEFORE = {
     ? \`<div class="sub">Checked \${d} — not in the top 20 yet</div>\`
     const nextLines = (lines) => { return []; };
     Every change to your business, kept permanently —
-    \`<b>\${n}</b> of these are still too recent to judge.\``,
+    \`<b>\${n}</b> of these are still too recent to judge.\`
+    csNote("We email you the moment it's ready.")
+    if (!isSetupPhase && month2StepsHtml) return x; const numbered = items.map((it) => ({ ...it, num: pmNo(it.step) ?? null }));
+    const row = ogLr(OG_IDS.video, "A video this quarter", "x", "Every 3 months") + ogLr(OG_IDS.call, "Monthly check-in call", "x", "Every month"); const story = "Share one customer win story";
+    emptyExp: "Live once your campaign starts."`,
   report: "const workLines = work.length ? work.map((w) => `${w.fewer || w.title}${w.at ? ` (${day(w.at)})` : \"\"}`) : []; const period = capAt ? (winDays ? `the ${winDays} days before ${day(capAt)}` : `as measured ${day(capAt)}`) : \"\"; return `${s.clientLabel || s.title}${counted}`;",
   reports: "exports.handler = async () => { if (!(await OM.hasReportsTable(d.supa))) return json(200, { ok: true, table: false, reports: [] }); };",
   openMonth: "module.exports = { openMonth, closeMonth };", morning: "const om = await OM.openMonth(d.supa, c.id, monthKey, {});", index: '<script type="module" src="/portal/portal.js?v=20261109o"></script><link href="/portal/portal.css?v=20261109b">',
@@ -103,11 +130,26 @@ const AFTER = {
     const periodSub = \`the full month arrives about\`; const n = \` · next scan about\`;
     function whatToExpectHtml() { return currentMonthOf(t); }
     function reportsByMonthHtml() { return \`data-mr-upcoming\`; } const f = "month1_letter"; function month1LetterHtml() {}
-    Every change to your business, kept permanently: ... \${Number(n) === 1 ? "is" : "are"} still too recent`,
+    Every change to your business, kept permanently: ... \${Number(n) === 1 ? "is" : "are"} still too recent
+    import "/shared/monthly-sections.js?v=20261110e"; import "/shared/monthly-weekly.js?v=20261110e"; import "/shared/monthly-monthly.js?v=20261110e";
+    const _ogMonthNow = new Map(); const monthlyNow = monthChips(t); _ogMonthNow.set(a, monthlyNow);
+    function ogMonthRows(numbered, m) { const q = globalThis.rgaClientMonthly.isQuarterMonth(m.cur.number), keep = new Set([OG_IDS.photos, OG_IDS.call]);
+      if (q) { keep.add(OG_IDS.numbers); keep.add(OG_IDS.video); }
+      return numbered.filter((r) => keep.has(r.step.id)); }
+    function ogMonthListHtml() {} function ogMonthHtml() { return rgaWork(x) + monthCard(x) + pastMonthCard(x) + \`data-og-mchip data-og-call-open\`; }
+    function ogManagedHtml() { if (inMonth) return x; if (!isSetupPhase && month2StepsHtml) return y; }
+    const numbered = items.map((it) => ({ ...it, num: monthNow ? null : pmNo(it.step) ?? null }));
+    const a2 = ogMonthly(c.clientId) ? "" : story; const b2 = ogMonthly(c.clientId) ? "" : storyLi;
+    const way = { monthly: inMonth }; const at = way.monthly ? "your customer list" : "step"; const bt = "Open your customer list";
+    const rp = \`In progress \\u00b7 RGA checks it and sends it early \${next}\`;
+    const monthlyAction = x ? CMo.betweenNextStep({ month: m.cur }) : null;
+    const dash = monthlyNow ? thisMonthHtml(a, b, c) : whatToExpectHtml(o); function thisMonthHtml() {}
+    function monthlyKpisHtml() { return CM.monthTiles({ rank: CM.rankTileOf(r) }); }
+    const e1 = _ogMonthNow.has(client.id) ? "Not measured yet. RGA's tracking check reads this." : "Live once your campaign starts.";`,
   report: "const workLines = work.length ? emailItems(work, []).done.map((w) => w.text) : []; const period = winDays ? `in the ${winDays} days before ${day(capAt)}` : \"\"; return `${carriedWords(s)}${counted}`;",
   reports: "if (body.month1_letter === true) { const letter = CM.month1Letter(rep, pb, tasks); }",
-  openMonth: "async function reconcileMonths() {} module.exports = { reconcileMonths };", morning: "await OM.reconcileMonths(d.supa, c.id, {});", index: '<script type="module" src="/portal/portal.js?v=20261110a"></script><link href="/portal/portal.css?v=20261110a">',
-  shared: "x",
+  openMonth: "async function reconcileMonths() {} module.exports = { reconcileMonths };", morning: "await OM.reconcileMonths(d.supa, c.id, {});", index: '<script type="module" src="/portal/portal.js?v=20261110e"></script><link href="/portal/portal.css?v=20261110e">',
+  shared: "function rgaWork() { Sections.idsFor(); Weekly.postsView(); } function monthCard() {} function monthTiles() {} function rankTileOf() {} function thisMonthCard() {} function monthNextStep() {}",
 };
 {
   const before = sourceFailures(LIVE_BEFORE); if (before.length < 8) fail(`the checker is toothless: LIVE_BEFORE (today's strings) must fail it many ways, it failed ${before.length}`);
@@ -305,6 +347,169 @@ try {
   // the morning run calls it for a monthly client (source) and a failure is reported, never thrown away
   const mo = strip(REAL.morning); if (!/out\.errors\.push\(`\$\{c\.id\}\/months/.test(mo)) fail("5 a failed reconcile must be reported in the morning run's errors");
 } catch (e) { fail(`5 threw: ${e.message}`); }
+
+
+// 6 · client_monthly_cycle_v1 (the owner 11-10): the month card, RGA's work, the next step, the tiles. For EVERY client, not RGA: each case is a different kickoff day, timezone, posts choice, tracking setup, skipped step or unread record.
+try {
+  const SEC = req("../../shared/monthly-sections.js");
+  const dayMs = (iso) => Date.parse(iso);
+  const cur = (number, month) => ({ number, month, monthName: CM.monthName(month) });
+  const txt = (x) => JSON.stringify(x);
+  const noStepWords = (what, x) => { const t = txt(x); if (/\bstep \d+\b/i.test(t)) fail(`6 ${what}: reads a "step N" (${(/\bstep \d+\b/i.exec(t) || [])[0]})`); if (/—/.test(t)) fail(`6 ${what}: has an em dash`); if (/Live once your campaign starts/.test(t)) fail(`6 ${what}: says "Live once your campaign starts"`); if (/We email you the moment/.test(t)) fail(`6 ${what}: says a report sends itself`); };
+  const inProgress = { "m2.exec.gbp_posts": { status: "in_progress", posts_wanted: 4, post_queue: [{ week: 1, status: "live" }] }, "m2.exec.review_responses": { status: "in_progress" }, "m2.snap.grid_scan": { status: "in_progress" } };
+  const rec = (tasks, extra) => ({ reporting_month: "2026-12-01", data: { tasks, ...(extra || {}) } });
+
+  // 6a · the months: a kickoff on the 1st and a mid-month kickoff, an Eastern-time client, a skipped Month 1 report, the first monthly month
+  const A = CM.monthChips(sent("2026-10-28T20:00:00Z"), dayMs("2026-11-05T12:00:00Z"));   // kickoff on the 1st: Month 1 done Oct 28, November is Month 2
+  if (!A || A.cur.number !== 2 || A.cur.month !== "2026-11-01" || A.chips.length !== 2 || !/^Month 1 · done Oct 28$/.test(A.chips[0].label) || A.chips[1].label !== "Month 2 · November") fail(`6a a kickoff on the 1st: chips ${txt(A && A.chips)}`);
+  const B = CM.monthChips(sent("2026-11-09T20:19:16Z"), dayMs("2026-12-08T12:00:00Z"));    // mid-month kickoff: report Nov 9, December is Month 2
+  if (!B || B.cur.number !== 2 || B.cur.month !== "2026-12-01" || B.chips.map((c) => c.label).join("|") !== "Month 1 · done Nov 9|Month 2 · December") fail(`6a a mid-month kickoff: ${txt(B && B.chips)}`);
+  if (CM.monthChips(sent("2026-11-09T20:19:16Z"), dayMs("2026-11-20T12:00:00Z"))) fail("6a between months (Dec has not started) must not be a monthly month");
+  if (CM.monthChips({}, dayMs("2026-12-08T12:00:00Z"))) fail("6a Month 1 not done must not be a monthly month");
+  const E = CM.monthChips(sent("2026-11-30T22:30:00-05:00"), dayMs("2027-01-02T12:00:00Z"));   // an Eastern-time client: 10:30 PM ET Nov 30 is Dec 1 UTC, the server's month key, so January is Month 2
+  if (!E || E.cur.month !== "2027-01-01" || E.cur.number !== 2) fail(`6a an Eastern-time client: ${txt(E && E.cur)}`);
+  const E2 = CM.monthChips(sent("2026-11-09T15:00:00-05:00"), dayMs("2027-01-01T04:30:00Z"));   // Dec 31 11:30 PM ET is already Jan 1 in the month key: Month 3 (January), a quarter month
+  if (!E2 || E2.cur.month !== "2027-01-01" || E2.cur.number !== 3) fail(`6a Dec 31 11:30 PM ET is January in the month key: ${txt(E2 && E2.cur)}`);
+  const S = CM.monthChips(skipped("2026-11-09T20:00:00Z"), dayMs("2026-12-08T12:00:00Z"));
+  if (!S || S.cur.number !== 2 || !/done Nov 9/.test(S.chips[0].label)) fail(`6a a skipped Month 1 report is the same state: ${txt(S && S.chips)}`);
+  if (CM.rangeWords("2026-12-01", dayMs("2026-12-08T12:00:00Z")) !== "Dec 1 to Dec 31 · day 8") fail(`6a range: ${CM.rangeWords("2026-12-01", dayMs("2026-12-08T12:00:00Z"))}`);
+  if (CM.rangeWords("2027-02-01", dayMs("2027-02-10T12:00:00Z")) !== "Feb 1 to Feb 28 · day 10") fail(`6a a short month ends on its own last day: ${CM.rangeWords("2027-02-01", dayMs("2027-02-10T12:00:00Z"))}`);
+
+  // 6b · quarter months: This quarter in 3, 6, 9, 12 and only there; one "Coming up" line in the month before each, and not in a quarter month
+  let m0 = "2026-12-01";
+  for (let n = 2; n <= 13; n++, m0 = CM.addMonths(m0, 1)) {
+    const card = CM.monthCard({ cur: cur(n, m0), nowMs: dayMs(m0.slice(0, 8) + "10T12:00:00Z"), record: rec({}), postsWanted: 4, callTracking: true, listOpen: false });
+    const q = n % 3 === 0;
+    if (!!card.quarter !== q) fail(`6b Month ${n}: This quarter is ${card.quarter ? "shown" : "missing"}`);
+    if (CM.isQuarterMonth(n) !== SEC.showsQuarter(n)) fail(`6b Month ${n}: the client's quarter rule differs from the admin's (rgaMonthly.showsQuarter)`);
+    const wantComing = !q && (n + 1) % 3 === 0;
+    if (!!card.coming !== wantComing) fail(`6b Month ${n}: the "Coming up" line is ${card.coming ? "shown" : "missing"} (next month is ${(n + 1) % 3 === 0 ? "" : "not "}a quarter month)`);
+    if (card.coming && !new RegExp(`^${CM.monthName(CM.addMonths(m0, 1))} is a quarter month$`).test(card.coming.title)) fail(`6b Month ${n}: Coming up reads "${card.coming.title}"`);
+    if (card.quarter && !card.quarter.rows.some((r) => r.kind === "numbers") || card.quarter && !card.quarter.rows.some((r) => r.kind === "video")) fail(`6b Month ${n}: This quarter lacks the numbers or the video`);
+    if (/win story|Share one customer/i.test(txt(card))) fail(`6b Month ${n}: the month card still offers the monthly win-story form`);
+    noStepWords(`Month ${n} card`, card);
+  }
+
+  // 6c · posts_wanted null / 0 / 1 / 2 / 4: the number is the client's choice, never a fixed 4; a green line only when the admin step is done
+  for (const n of [null, 0, 1, 2, 4]) {
+    const r = CM.rgaWork({ cur: cur(2, "2026-12-01"), nowMs: dayMs("2026-12-08T12:00:00Z"), record: rec({ "m2.exec.gbp_posts": { status: "in_progress", ...(n === null ? {} : { posts_wanted: n }), post_queue: n === 0 || n === null ? [] : [{ week: 1, status: "live" }] } }), postsWanted: n, callTracking: true });
+    const p = r.rows.find((x) => x.key === "posts");
+    if (!p) { fail(`6c posts_wanted ${n}: no posts line`); continue; }
+    if (n === 0) { if (p.title !== "No Google posts" || p.counted || p.side !== "your choice") fail(`6c posts_wanted 0: ${txt(p)}`); }
+    else {
+      const total = n === null ? 4 : n, live = n === null ? 0 : 1;
+      if (p.side !== `${live} of ${total} live`) fail(`6c posts_wanted ${n}: side "${p.side}", wanted "${live} of ${total} live"`);
+      if (p.mark === "ok") fail(`6c posts_wanted ${n}: green while the step is still in progress`);
+      if (p.bar !== Math.round(live / total * 100)) fail(`6c posts_wanted ${n}: bar ${p.bar}`);
+      if (n === null && !/recommended number/.test(p.small)) fail(`6c posts_wanted unset: must say it is the recommended number: "${p.small}"`);
+      if (n === 4 && !/About 4 a month, your choice/.test(p.small)) fail(`6c posts_wanted 4: "${p.small}"`);
+      if (n === 2 && !/2 a month, your choice/.test(p.small)) fail(`6c posts_wanted 2: "${p.small}"`);
+    }
+  }
+  { const r = CM.rgaWork({ cur: cur(2, "2026-12-01"), nowMs: dayMs("2026-12-20T12:00:00Z"), record: rec({ "m2.exec.gbp_posts": { status: "done", posts_wanted: 2, post_queue: [{ week: 1, status: "live" }, { week: 3, status: "live" }] } }), postsWanted: 2, callTracking: true });
+    const p = r.rows.find((x) => x.key === "posts"); if (!p || p.mark !== "ok" || p.side !== "2 of 2 live" || !p.done) fail(`6c a settled posts step reads ${txt(p)}`); }
+
+  // 6d · RGA's work reads the admin record: green only when settled, skipped/declined never listed, hidden by the admin's own rule, unread says so and is never done
+  { const base = { cur: cur(2, "2026-12-01"), nowMs: dayMs("2026-12-08T12:00:00Z"), postsWanted: 4, callTracking: true };
+    const all = CM.rgaWork({ ...base, record: rec({}) });
+    const want = ["posts", "replies", "scan", "site", "watch", "focus", "tracking", "competitors", "listings"];
+    if (all.rows.map((r) => r.key).join(",") !== want.join(",")) fail(`6d the lines are ${all.rows.map((r) => r.key).join(",")}, wanted ${want.join(",")}`);
+    for (const id of CM.WORK_ORDER) if (!SEC.idsFor(2, { callTracking: true }).includes(id)) fail(`6d ${id} is a client line but not a step the admin Monthly counts in Month 2`);
+    if (all.rows.some((r) => r.mark === "ok" || r.done) || all.done !== 0) fail("6d nothing is settled, yet a line is green");
+    const sk = CM.rgaWork({ ...base, record: rec({ "m2.exec.profile_watch": { status: "skipped" }, "m2.exec.listing_upkeep": { status: "declined" } }) });
+    if (sk.rows.some((r) => r.key === "watch" || r.key === "listings") || sk.total !== all.total - 2) fail(`6d a skipped or declined step is still listed (${sk.rows.map((r) => r.key)} / total ${sk.total})`);
+    const dn = CM.rgaWork({ ...base, record: rec({ "m2.exec.profile_watch": { status: "done", completed_at: "2026-12-02T10:00:00Z" }, "m2.exec.tracking_check": { status: "done", completed_at: "2026-12-07T10:00:00Z", monthly_once: { settled_at: "2026-12-07T10:00:00Z", label: "Working · data through Dec 7" } } }) });
+    const w = dn.rows.find((r) => r.key === "watch"), t = dn.rows.find((r) => r.key === "tracking");
+    if (!w || w.mark !== "ok" || !t || t.mark !== "ok" || t.side !== "data through Dec 7" || dn.done !== 2) fail(`6d settled lines: ${txt([w, t, dn.done])}`);
+    // a line that is "done" in a past month is read-only and only lists what was done
+    const past = CM.pastMonthCard({ cur: cur(2, "2026-12-01"), record: rec({ "m2.exec.profile_watch": { status: "done", completed_at: "2026-12-02T10:00:00Z" }, "m2.exec.site_audit_recurring": { status: "in_progress" } }), callTracking: true, postsWanted: 4 });
+    if (past.work.rows.length !== 1 || past.work.rows[0].key !== "watch" || past.report.go !== "reports" || !/Your December report/.test(past.report.title)) fail(`6d a past month must list only what was done and link its report: ${txt(past)}`);
+    // an unread record: every line says so, none is done, no count of "done"
+    for (const [what, r] of [["null record", null], ["a record with no tasks", { data: {} }], ["tasks is not an object", { data: { tasks: "x" } }]]) {
+      const u = CM.rgaWork({ ...base, record: r });
+      if (!u.unread || u.done !== 0 || u.total !== 0 || u.rows.some((x) => x.mark === "ok" || x.done || x.side !== "couldn't read")) fail(`6d ${what}: ${txt(u)}`);
+      const card = CM.monthCard({ cur: base.cur, nowMs: base.nowMs, record: r, postsWanted: 4, callTracking: true, listOpen: false });
+      if (!card.unread) fail(`6d ${what}: the month card does not know it is unread`);
+    }
+    // no call tracking: the tracking line says forms only, and the lead test is not in the admin's count either
+    const nc = CM.rgaWork({ ...base, callTracking: false, record: rec({}) });
+    if (!/^Form leads are recorded$/.test((nc.rows.find((r) => r.key === "tracking") || {}).small)) fail("6d no call tracking: the tracking line must say form leads only");
+    if (SEC.idsFor(3, { callTracking: false }).includes("m2.exec.mystery_shop")) fail("6d no call tracking: the lead test must not count");
+    noStepWords("RGA's work", [all, dn, nc]);
+  }
+
+  // 6e · what needs the client: the oldest open step first (approve, then the list, then photos); nothing open says so with the next date
+  { const NS = (o) => CM.betweenNextStep({ month: cur(2, "2026-12-01"), nowMs: dayMs("2026-12-08T12:00:00Z"), nextMonthName: "January", ...o });
+    const a1 = NS({ approvePosts: 2, listOpen: true, listTitle: "this week's customer list", listDueMs: dayMs("2026-12-14T12:00:00Z") });
+    if (a1.title !== "Approve 2 Google posts" || !/Your customer list is due Mon, Dec 14\./.test(a1.desc) || a1.goto !== "approve") fail(`6e approve comes first: ${txt(a1)}`);
+    const a2 = NS({ approvePosts: 1 }); if (a2.title !== "Approve 1 Google post") fail(`6e one post: ${a2.title}`);
+    const a3 = NS({ approveReplies: 3 }); if (a3.title !== "Approve 3 review replies") fail(`6e replies: ${a3.title}`);
+    const a4 = NS({ listOpen: true, listTitle: "this week's customer list" }); if (a4.title !== "Send this week's customer list" || a4.goto !== "ongoing") fail(`6e the list is next: ${txt(a4)}`);
+    const a5 = NS({ photosOpen: true }); if (a5.title !== "Add new photos") fail(`6e photos are last: ${a5.title}`);
+    const a6 = NS({ listDueMs: dayMs("2026-12-14T12:00:00Z") }); if (a6.title !== "Nothing needs you right now" || !/Mon, Dec 14/.test(a6.desc)) fail(`6e nothing open: ${txt(a6)}`);
+    const a7 = NS({}); if (a7.title !== "Nothing needs you right now" || !/early January/.test(a7.desc)) fail(`6e nothing open and no list date must name the report date: ${txt(a7)}`);
+    if (/weekly|each week/i.test(txt([a1, a2, a3, a4, a5, a6, a7]).replace(/this week's|these 2 weeks'/g, ""))) fail("6e the next step promises weekly work");
+    noStepWords("next step", [a1, a2, a3, a4, a5, a6, a7]);
+    // approvals are read from the record: drafts RGA sent the client that wait for a yes, never a guess
+    const ap = CM.toApprove(rec({ "m2.exec.gbp_posts": { status: "in_progress", internal_review: { decision: "approved" }, auto_result: { outcome_data: { posts: [{}, {}] } } }, "m2.exec.review_responses": { auto_result: { outcome_data: { reviews: { status: "ok", drafted: 1, drafted_ids: ["r1"] } } }, internal_review: { decision: "approved" } } }));
+    if (ap.posts !== 2 || ap.replies !== 1) fail(`6e toApprove ${txt(ap)}`);
+    const none = CM.toApprove(rec({ "m2.exec.gbp_posts": { internal_review: { decision: "approved" }, approval: { decision: "approved" }, auto_result: { outcome_data: { posts: [{}] } } } }));
+    if (none.posts !== 0) fail("6e a post the client already answered is still counted");
+    if (CM.toApprove(null).posts !== 0 || CM.toApprove({}).replies !== 0) fail("6e an unread record must count 0 to approve, not throw");
+    const c1 = CM.monthCard({ cur: cur(2, "2026-12-01"), nowMs: dayMs("2026-12-08T12:00:00Z"), record: rec({ "m2.exec.gbp_posts": { internal_review: { decision: "approved" }, auto_result: { outcome_data: { posts: [{}, {}] } } } }), postsWanted: 4, callTracking: true, listOpen: true });
+    if (c1.your.needs !== 2 || c1.your.rows[0].kind !== "customers" || !c1.your.rows.some((r) => r.key === "approve-posts" && r.go === "approve") || !c1.your.rows.some((r) => r.kind === "photos")) fail(`6e Your part: ${txt(c1.your)}`);
+    const c0 = CM.monthCard({ cur: cur(2, "2026-12-01"), nowMs: dayMs("2026-12-08T12:00:00Z"), record: rec({}), postsWanted: 0, callTracking: true, listOpen: false });
+    if (c0.your.needs !== 0 || c0.your.rows.some((r) => r.key === "approve-posts")) fail(`6e a client who chose no posts is asked to approve none: ${txt(c0.your)}`);
+    // end of the month: the report sentence is exact; the call only books after the report
+    const rep = c1.end.find((r) => r.key === "report");
+    if (!rep || rep.small !== "RGA checks it and sends it early January. Every report stays under Reports.") fail(`6e the report line: ${txt(rep)}`);
+    if ((c1.end.find((r) => r.key === "call") || {}).canBook) fail("6e the call must not book before the report");
+    const sentRec = rec({ "m2.report.deliver": { status: "done", completed_at: "2026-12-05T10:00:00Z", auto_result: { sent_at: "2026-12-05T10:00:00Z", summary: "Sent the 2026-12 report" } } });
+    const c2 = CM.monthCard({ cur: cur(2, "2026-12-01"), nowMs: dayMs("2026-12-08T12:00:00Z"), record: sentRec, postsWanted: 4, callTracking: true, listOpen: false });
+    if (!(c2.end.find((r) => r.key === "call") || {}).canBook) fail("6e the call must book once the report is sent");
+    if (/Sent the 2026-11 report/.test("") || CM.monthCard({ cur: cur(2, "2026-12-01"), nowMs: dayMs("2026-12-08T12:00:00Z"), record: rec({ "m2.report.deliver": { status: "done", auto_result: { sent_at: "2026-12-05T10:00:00Z", summary: "Sent the 2026-11 report" } } }), postsWanted: 4, callTracking: true, listOpen: false }).end.find((r) => r.key === "report").mark === "ok") fail("6e last month's report being sent must not turn THIS month's report line green");
+  }
+
+  // 6f · the tiles: each names its period; no number is "not measured yet", never 0; the first monthly month has no earlier monthly report to lean on
+  { const T = (o) => CM.monthTiles({ cur: cur(2, "2026-12-01"), nextScan: null, ...o });
+    const cell = (sid, kw, at, ranks, mkt) => ranks.map((r, i) => ({ grid_session_id: sid, keyword: kw, market: mkt || "m", map_rank: r, measured_at: at, grid_index: i }));
+    const rows = [...cell("s1", "plumber", "2026-11-03T12:00:00Z", [20, 14, 12, 18]), ...cell("s2", "plumber", "2026-12-02T12:00:00Z", [10, 12, 14, 20])];
+    const r = CM.rankTileOf(rows);
+    if (!r || r.avg !== 14 || !r.prev || r.prev.avg !== 16) fail(`6f rank like-for-like: ${txt(r)}`);
+    const t1 = T({ rank: r, taps: { value: 3 }, leads: { calls: 1, forms: 1, trackingTask: { status: "done", monthly_once: { label: "Working · data through Dec 7" } } }, reviews: { value: 2 } });
+    if (t1.rank.value !== 14 || !/^Dec 2 scan · same grid as Nov 3 \(16\)$/.test(t1.rank.small)) fail(`6f rank tile: ${txt(t1.rank)}`);
+    if (t1.taps.value !== 3 || t1.taps.small !== "in November · December's arrive about Jan 2") fail(`6f taps name the last complete month and when the next arrives: ${txt(t1.taps)}`);
+    if (t1.leads.value !== 2 || t1.leads.small !== "calls and forms so far in December · data through Dec 7") fail(`6f leads read the tracking step: ${txt(t1.leads)}`);
+    if (t1.reviews.value !== 2 || t1.reviews.small !== "since December 1 · checked today") fail(`6f reviews: ${txt(t1.reviews)}`);
+    // a different grid size or keyword is NEVER compared
+    const r2 = CM.rankTileOf([...cell("s1", "plumber", "2026-11-03T12:00:00Z", [20, 14, 12]), ...cell("s2", "plumber", "2026-12-02T12:00:00Z", [10, 12, 14, 20])]);
+    if (r2.prev) fail("6f a scan with a different number of points was compared");
+    const r3 = CM.rankTileOf([...cell("s1", "drain cleaning", "2026-11-03T12:00:00Z", [20, 14, 12, 18]), ...cell("s2", "plumber", "2026-12-02T12:00:00Z", [10, 12, 14, 20])]);
+    if (r3.prev) fail("6f a scan of another keyword was compared");
+    const r4 = CM.rankTileOf([...cell("s1", "plumber", "2026-11-03T12:00:00Z", [20, 14, 12, 18]), ...cell("s2", "plumber", "2026-12-02T12:00:00Z", [10, 12])]);   // the newest scan stopped early: it is not "the latest scan"
+    if (!r4 || r4.at !== Date.parse("2026-11-03T12:00:00Z")) fail(`6f an incomplete scan was used as the latest: ${txt(r4)}`);
+    const first = CM.rankTileOf(cell("s2", "plumber", "2026-12-02T12:00:00Z", [10, 12, 14, 20]));   // the first monthly month: nothing earlier
+    if (!first || first.prev || !/no earlier scan of the same grid to compare with/.test(T({ rank: first }).rank.small)) fail("6f the first scan must say there is nothing to compare with");
+    // no number: not measured yet, never 0
+    const t0 = T({ rank: null, taps: { value: null }, leads: { calls: null, forms: null, trackingTask: null }, reviews: { value: null } });
+    for (const k of ["rank", "taps", "leads", "reviews"]) { if (t0[k].value !== null) fail(`6f ${k}: no number must be null, it is ${t0[k].value}`); if (!/[Nn]ot measured yet/.test(t0[k].small)) fail(`6f ${k}: no number must say "Not measured yet": "${t0[k].small}"`); }
+    const t00 = T({ rank: null, taps: { value: 0 }, leads: { calls: 0, forms: 0, trackingTask: { status: "done" } }, reviews: { value: 0 } });
+    if (t00.taps.value !== 0 || t00.leads.value !== 0 || t00.reviews.value !== 0) fail("6f a real zero must stay a zero");
+    // no call tracking: forms only, no lead test; a half-read pair is not a total
+    const nc = T({ rank: null, taps: { value: null }, leads: { calls: null, forms: 2, callTracking: false, trackingTask: { status: "done", monthly_once: { label: "Working · data through Dec 7" } } }, reviews: { value: null } });
+    if (nc.leads.value !== 2 || !/^form leads so far in December/.test(nc.leads.small)) fail(`6f no call tracking: ${txt(nc.leads)}`);
+    const half = T({ rank: null, taps: { value: null }, leads: { calls: null, forms: 2, trackingTask: { status: "done" } }, reviews: { value: null } });
+    if (half.leads.value !== null) fail("6f calls were never read but a total was shown");
+    const stopped = T({ rank: null, taps: { value: null }, leads: { calls: 1, forms: 1, trackingTask: { status: "blocked" } }, reviews: { value: null } });
+    if (stopped.leads.value !== null || !/Tracking needs a look/.test(stopped.leads.small)) fail(`6f what stopped must be said: ${txt(stopped.leads)}`);
+    noStepWords("tiles", [t1, t0, t00, nc, half, stopped]);
+    // "This month" replaces "What to expect"
+    const tm = CM.thisMonthCard({ cur: cur(2, "2026-12-01"), work: { done: 5, total: 9, unread: false }, nextMonthName: "January" });
+    if (tm.rows[0].title !== "RGA's work: 5 of 9 done" || tm.rows[0].go !== "ongoing" || !/early January/.test(tm.rows[1].small) || !/never promise|We never promise/i.test(tm.rows[2].title)) fail(`6f This month: ${txt(tm)}`);
+    if (!/couldn't read/.test(CM.thisMonthCard({ cur: cur(2, "2026-12-01"), work: { done: 0, total: 0, unread: true } }).rows[0].title)) fail("6f This month: an unread record must say it couldn't read");
+    noStepWords("This month", tm);
+  }
+} catch (e) { fail(`6 threw: ${e.stack || e.message}`); }
 
 if (F.length) { console.error(`❌ check-client-monthly: ${F.length} problem(s)\n  - ${F.join("\n  - ")}`); process.exit(1); }
 console.log("✅ check-client-monthly: the new pieces are there and the old ones are gone; between months, the next step, the letter and the month rows hold for any kickoff day, a skipped report, any timezone, any posts choice and a client without call tracking.");

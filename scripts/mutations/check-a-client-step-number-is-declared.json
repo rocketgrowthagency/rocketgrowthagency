@@ -2,8 +2,8 @@
  [
   "the index fallback comes back",
   "portal",
-  "  const numbered = (mgd ? mgd.rows : items).map((it) => ({ ...it, num: pmNo(it.step) ?? null }));",
-  "  const numbered = (mgd ? mgd.rows : items).map((it, idx) => ({ ...it, num: pmNo(it.step) ?? idx + 1 }));"
+  "  let numbered = (mgd ? mgd.rows : items).map((it) => ({ ...it, num: monthNow ? null : pmNo(it.step) ?? null }));",
+  "  let numbered = (mgd ? mgd.rows : items).map((it, idx) => ({ ...it, num: monthNow ? null : pmNo(it.step) ?? idx + 1 }));"
  ],
  [
   "two client rows are given the same number",

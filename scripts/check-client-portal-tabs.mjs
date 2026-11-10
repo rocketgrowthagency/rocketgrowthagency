@@ -90,7 +90,7 @@ if (R.month2.oldCards || /Starts after setup/.test(R.month2.text + R.afterNoStep
 if (!has(R.rNone, "Your rank tracking shows here after setup") || /Last check/.test(R.rNone.text) || R.rNone.goto !== "approvals") fail(`no check yet still draws one, or the link doesn't open To do (${R.rNone.text})`);
 if (!has(R.rMiss, "Last check", "Not in the top 20 yet", "Oct 6")) fail(`a check with nothing found isn't said (${R.rMiss.text})`);
 if (!has(R.rHit, "Best rank #3") || /Not in the top 20/.test(R.rHit.text)) fail(`a rank found reads wrong; only the last check counts (${R.rHit.text})`);
-if (!has(R.rep, "Your first report comes after your first full month", "We email you")) fail("Reports during setup isn't the approved card");
+if (!has(R.rep, "Your first report comes after your first full month", "RGA checks it, then sends it to you")) fail("Reports during setup isn't the approved card");
 if (!R.rev.feed) fail("Reviews during setup doesn't read the live reviews");
 for (const [k, o] of Object.entries(R)) if (o.wider) fail(`${k} is wider than a 400px phone`);
 

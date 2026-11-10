@@ -5,6 +5,9 @@
 //   · when the client is between months (Month 1 done, the first monthly month not started): the between-months card is shown, with the posts chooser visible
 //   · none of "Starts after setup", "Emailed on the 5th", "RGA writes 4", an em dash, or admin words (GBP, NAP, GSC, GA4, H1, CTA, schema, silo, "Their YouTube channel") appears
 //   · the Dashboard's next step AGREES with Ongoing work (the customer list open there = "Send ... customer list" here; nothing open = "Nothing needs you right now")
+//   · client_monthly_cycle_v1 (11-10): the Eastern-time monthly walk client is answered with FIXTURE reads (Month 1 sent, a monthly record, the mode; GET responses rewritten, writes still blocked) and read in four variants:
+//     Month 2, Month 3 (a quarter month), an unreadable record, and the self-serve portal (its cards must still be drawn). Each asserts the month card, RGA's work, no win-story form, no "step N", no em dash,
+//     no "We email you the moment", no "Live once your campaign starts", and no sideways scroll on the phone.
 //   · Reports is one card per month, the Month 1 letter opens and reads in client words, and the page does not scroll sideways on a phone
 // The server half (monthly-reports month1_letter) is answered here by THIS repo's handler against the real database (GET only), because the live function is not deployed yet.
 //   node --env-file=.env scripts/check-client-monthly-in-a-browser.mjs        (SITE_DIR=<website checkout> to point at a worktree)
@@ -49,7 +52,7 @@ const { chromium } = await import("playwright");
 let browser;
 try { browser = await chromium.launch({ headless: true }); } catch (e) { console.error("INDETERMINATE: no browser: " + e.message); process.exit(2); }
 const local = { "/portal/portal.js": "portal/portal.js", "/portal/portal.css": "portal/portal.css", "/portal/index.html": "portal/index.html", "/shared/client-monthly.js": "shared/client-monthly.js", "/shared/step-lock.js": "shared/step-lock.js", "/shared/portal-mode.js": "shared/portal-mode.js",
-  "/shared/monthly-start.js": "shared/monthly-start.js", "/shared/setup-fewer.js": "shared/setup-fewer.js", "/data/playbooks/client-steps.json": "data/playbooks/client-steps.json" };
+  "/shared/monthly-start.js": "shared/monthly-start.js", "/shared/monthly-sections.js": "shared/monthly-sections.js", "/shared/monthly-weekly.js": "shared/monthly-weekly.js", "/shared/monthly-monthly.js": "shared/monthly-monthly.js", "/shared/setup-fewer.js": "shared/setup-fewer.js", "/data/playbooks/client-steps.json": "data/playbooks/client-steps.json" };
 const letterMod = letterHandler();
 let flaky = false;
 
@@ -127,6 +130,136 @@ for (const which of ["main", "month2"]) {
     } catch (e) { flaky = true; console.log(`  (flaky ${which}/${tag}: ${String(e.message).slice(0, 160)})`); try { await page?.context().close(); } catch {} }
   }
 }
+
+// ───────────────────────── client_monthly_cycle_v1: the monthly month, read the way the client reads it ─────────────────────────
+// The Eastern-time monthly walk client (WALK_CLIENTS.month2) has no monthly record and no sent Month 1 report in the database, so there is nothing to read. The gate answers THREE reads for that
+// client with fixture data (Supabase GET responses rewritten in the browser; no write is ever allowed, scripts/acceptance/guard.mjs still blocks them): Month 1's report sent, a monthly record for
+// this month, and the portal mode. Variants: m2 (Month 2, the month before a quarter month), m3 (Month 3, a quarter month, with Month 2 behind it), m2-unread (the month's record cannot be read),
+// self-serve (the same client in the self-serve portal: its cards must still be drawn).
+{
+  const NOWMS = Date.now(), monthKey = (ms) => { const d = new Date(ms); return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`; };
+  const CURM = monthKey(NOWMS), cm = (n) => CM.addMonths(CURM, n), nameOf = (m) => CM.monthName(m), shortOf = (ms) => CM.shortDay(ms);
+  const wc2 = WALK_CLIENTS.month2;
+  const fixtureTasks = (variant) => {
+    const iso = new Date(NOWMS - 2 * 86400000).toISOString(), thru = shortOf(NOWMS - 3 * 86400000);
+    return {
+      "m2.exec.gbp_posts": { status: "in_progress", posts_wanted: 2, post_queue: [{ week: 1, status: "live" }], internal_review: { decision: "approved" }, auto_result: { outcome_data: { posts: [{ headline: "a" }, { headline: "b" }] } } },
+      "m2.snap.grid_scan": { status: "done", completed_at: iso }, "m2.exec.profile_watch": { status: "done", completed_at: iso }, "m2.exec.site_audit_recurring": { status: "skipped" },
+      "m2.exec.tracking_check": { status: "done", completed_at: iso, monthly_once: { settled_at: iso, label: `Working · data through ${thru}` } },
+    };
+  };
+  const monthRow = (month, tasks, plan) => ({ client_id: wc2.id, reporting_month: month, total_leads: null, total_calls: 1, form_leads: 1, closed_jobs: null, avg_revenue_per_job: null, organic_sessions: null, gsc_impressions: null, gsc_clicks: null, citations_live_count: null, ranking_position: null, data: { tasks, plan: plan || null } });
+  const VARIANTS = [
+    { name: "m2", number: 2, sentMonth: cm(-1), view: ["desk", "phone"] },
+    { name: "m3", number: 3, sentMonth: cm(-2), view: ["desk"] },
+    { name: "m2-unread", number: 2, sentMonth: cm(-1), unread: true, view: ["desk"] },
+    { name: "self-serve", number: 2, sentMonth: cm(-1), mode: "self_serve", view: ["desk"] },
+  ];
+  async function patchedGet(route, patch) {
+    const q = route.request();
+    if (q.method() !== "GET") return route.fallback();
+    const resp = await route.fetch(), h = { ...resp.headers() }; delete h["content-length"]; delete h["content-encoding"];
+    let out; try { out = patch(await resp.json()); } catch { return route.fulfill({ response: resp }); }
+    return route.fulfill({ status: resp.status(), headers: h, body: JSON.stringify(out) });
+  }
+  for (const V of VARIANTS) for (const tag of V.view) {
+    if (!wc2 || !wc2.email || !wc2.id) { console.log("  (no month2 walk client: the monthly month is not checked)"); flaky = true; break; }
+    const vp = tag === "desk" ? { width: 1200, height: 1000 } : { width: 400, height: 860 }, label = `month2/${V.name}/${tag}`;
+    let page;
+    console.log(`\n== ${label} (fixture: Month 1 sent ${V.sentMonth.slice(0, 7)}, so ${nameOf(CURM)} is Month ${V.number}${V.unread ? "; this month's record unreadable" : ""}${V.mode ? "; " + V.mode : ""})`);
+    try {
+      const g = await (await fetch(`${SUPA}/auth/v1/admin/generate_link`, { method: "POST", headers: { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ type: "magiclink", email: wc2.email, options: { redirect_to: PORTAL } }) })).json();
+      const ctx = await browser.newContext({ viewport: vp });
+      await ctx.route("**/*", (r) => { const q = r.request(); const d = classify(q.url(), q.method(), q.postData(), { supabaseHost: new URL(SUPA).host }); if (!d.allow) return d.stub ? r.fulfill({ status: 204, body: "" }) : r.abort(); return r.fallback(); });
+      await ctx.route((u) => u.hostname.endsWith("rocketgrowthagency.com") && local[u.pathname] && u.pathname !== "/portal/index.html", (r) => { const p = new URL(r.request().url()).pathname; r.fulfill({ status: 200, contentType: p.endsWith(".css") ? "text/css" : p.endsWith(".json") ? "application/json" : "text/javascript", body: fs.readFileSync(path.join(SITE_DIR, local[p]), "utf8") }); });
+      const sentIso = `${V.sentMonth.slice(0, 7)}-15T15:00:00Z`;
+      await ctx.route((u) => u.host === new URL(SUPA).host && u.pathname === "/rest/v1/client_onboarding_records", (r) => patchedGet(r, (b) => { const fix = (row) => (row && row.client_id === wc2.id ? { ...row, data: { ...(row.data || {}), tasks: { ...((row.data || {}).tasks || {}), "m1.report.month1": { status: "done", completed_at: sentIso, auto_result: { sent_message_id: "fixture", sent_at: sentIso } } } } } : row); return Array.isArray(b) ? b.map(fix) : fix(b); }));
+      await ctx.route((u) => u.host === new URL(SUPA).host && u.pathname === "/rest/v1/client_monthly_records", (r) => patchedGet(r, (b) => {
+        const mine = (Array.isArray(b) ? b : []).filter((x) => x.client_id !== wc2.id || ![CURM, cm(-1)].includes(String(x.reporting_month).slice(0, 10)));
+        const rows = V.unread ? [] : [monthRow(CURM, fixtureTasks(V.name), { focus: "Reviews", tasks: [{ client: "Ask recent customers for a review" }] })];
+        if (V.number === 3) rows.push(monthRow(cm(-1), { "m2.exec.profile_watch": { status: "done", completed_at: new Date(NOWMS - 20 * 86400000).toISOString() }, "m2.snap.grid_scan": { status: "in_progress" } }));
+        return [...rows, ...mine].sort((x, y) => String(y.reporting_month).localeCompare(String(x.reporting_month)));
+      }));
+      await ctx.route((u) => u.host === new URL(SUPA).host && u.pathname === "/rest/v1/clients", (r) => patchedGet(r, (b) => (Array.isArray(b) ? b.map((x) => (x && "portal_mode" in x ? { ...x, portal_mode: V.mode || "managed" } : x)) : b)));
+      page = await ctx.newPage();
+      const errs = []; page.on("pageerror", (e) => errs.push(String(e.message).slice(0, 200)));
+      await page.goto(g.action_link || g.properties?.action_link, { waitUntil: "domcontentloaded", timeout: 60000 });
+      await page.waitForSelector('.portal-nav a[data-view="setup"]', { state: "attached", timeout: 45000 });
+      await page.waitForSelector("#portalLoadingPanel", { state: "hidden", timeout: 45000 });
+      const T = {};
+      let numbered = [];
+      for (const v of ["dashboard", "ongoing", "reports"]) { T[v] = await visible(page, v); if (v === "ongoing") numbered = await page.evaluate(() => [...document.querySelectorAll(".pv-ongoing .pm-step-num")].filter((e) => e.offsetParent && /^\d+$/.test(e.textContent.trim())).map((e) => e.textContent.trim())); await page.screenshot({ path: `${OUT}/month2-${V.name}-${tag}-${v}.png`, fullPage: true }); }
+      if (errs.length) fail(`${label}: the page threw: ${errs[0]}`);
+      const D = T.dashboard, O = T.ongoing, R = T.reports, mo = nameOf(CURM), nx = nameOf(cm(1));
+      const has = (txt, re, what) => { if (!(re instanceof RegExp ? re.test(txt) : ci(txt).includes(ci(re)))) fail(`${label}: ${what}`); };
+      const lacks = (txt, re, what) => { const m = re instanceof RegExp ? re.exec(txt) : (ci(txt).includes(ci(re)) ? [re] : null); if (m) fail(`${label}: ${what} ("${String(m[0]).slice(0, 60)}")`); };
+      for (const v of Object.keys(T)) for (const [re, name] of FORBIDDEN) { const m = re.exec(T[v]); if (m) fail(`${label}/${v}: shows ${name}: "…${T[v].slice(Math.max(0, m.index - 40), m.index + 60).replace(/\s+/g, " ")}…"`); }
+      if (tag === "phone") { const w = await page.evaluate(() => ({ s: document.documentElement.scrollWidth, i: window.innerWidth })); if (w.s > w.i + 2) fail(`${label}: the page scrolls sideways (${w.s} > ${w.i})`); else ok(`${label}: no sideways scroll on the phone`); }
+      if (V.mode === "self_serve") {
+        // the self-serve portal keeps its cards: this build changes MANAGED mode only
+        has(O, /Share one customer win story/i, "the self-serve Ongoing work lost the win-story card");
+        has(O, /Monthly check-in call/i, "the self-serve Ongoing work lost the Monthly check-in call card");
+        has(O, /Your numbers/i, "the self-serve Ongoing work lost the Your numbers card");
+        lacks(O, "RGA's work this month", "the self-serve portal got the managed month card");
+        const n = await page.evaluate(() => document.querySelectorAll("#portalRoot .pm-step-row, .pv-setup .pm-step-row, [id^='action-items-list-'] .pm-step-row").length);
+        if (n < 5) fail(`${label}: the self-serve portal draws only ${n} step cards`); else ok(`${label}: the self-serve portal still draws its cards (${n} step rows; win story, check-in call and numbers are there)`);
+        continue;
+      }
+      // Ongoing work: one month card
+      has(O, `Month 1 · done`, "the Month 1 chip is missing"); has(O, `Month 2 · ${nameOf(V.number === 2 ? CURM : cm(-1))}`, "the Month 2 chip is missing");
+      has(O, `${mo} · Month ${V.number}`, `the month card is not headed "${mo} · Month ${V.number}"`);
+      has(O, `${CM.rangeWords(CURM, NOWMS).split(" \u00b7 ")[0]} \u00b7 day`, "the month's range and day are missing");
+      has(O, "Your part this month", "the group 'Your part this month' is missing");
+      has(O, "RGA's work this month", "the group 'RGA's work this month' is missing");
+      has(O, "End of the month", "the group 'End of the month' is missing");
+      has(O, new RegExp(`Your ${mo} report`), "the end-of-month report line is missing"); has(O, new RegExp(`sends it early ${nx}`), `the report line must say it is sent early ${nx}`);
+      has(O, "Monthly check-in call", "the check-in call is not a line under End of the month");
+      lacks(O, /Share one customer win story|win story form/i, "the monthly win-story form is still drawn");
+      lacks(O, /\bstep \d+\b/i, "step text is still on a monthly card"); lacks(O, /What we watched|Not due this month|Done by RGA this month/i, "an old per-step card is still drawn");
+      if (V.number === 2) lacks(O, /Your numbers \(every 3 months\)|A video this quarter/i, "the quarter's cards are drawn outside a quarter month");
+      lacks(O, /Go to step|Your first ones come from step/i, "the reviews card still names a step");
+      if (numbered.length) fail(`${label}: step numbers are drawn on monthly cards: ${numbered.join(",")}`);
+      if (V.unread) {
+        has(O, "couldn't read", "an unreadable record must say it couldn't read");
+        const greens = await page.evaluate(() => [...document.querySelectorAll(".pv-ongoing [data-og-month] [data-og-mpanel]:not([hidden]) .pm-og-li")].filter((li) => li.querySelector(".pm-og-mk.ok") && /Google posts|Review replies|Map scan|Website health|profile watch|focus|Tracking|Competitors|Listings/i.test(li.innerText)).map((li) => li.innerText.split("\n")[0]));
+        if (greens.length) fail(`${label}: an unreadable record shows done lines: ${greens.join(" | ")}`); else ok(`${label}: an unreadable record says "couldn't read" and shows nothing as done`);
+      } else {
+        has(O, /Google posts\s*\n[^\n]*\n?[^\n]*1 of 2 live/i, "the posts line must read '1 of 2 live' (posts_wanted 2, one live)");
+        has(O, /Map scan/, "RGA's work lacks the map scan line"); has(O, /Google profile watch/, "RGA's work lacks the profile watch line"); has(O, /Tracking still works/, "RGA's work lacks the tracking line");
+        has(O, /data through [A-Z][a-z]{2} \d/, "the tracking line must carry its data-through date");
+        lacks(O, "Website health check", "a step skipped for this client is still listed");
+        has(O, new RegExp(`RGA's work this month\\s*\\n?\\s*\\d+ of \\d+ done`, "i"), "RGA's work this month must say 'N of M done'");
+        has(O, "Google posts to approve", "'Google posts to approve' is missing from Your part"); has(O, /2 posts are drafted/, "the approve line must count the 2 drafted posts"); has(O, /2 needs you|needs you/, "'N needs you' is missing");
+        has(O, /This month's focus/, "This month's focus is missing from RGA's work");
+        if (V.number === 2) has(O, `${nx} is a quarter month`, `Coming up must say ${nx} is a quarter month`); else lacks(O, /is a quarter month/, "a quarter month must not say 'is a quarter month'");
+        if (V.number === 3) {
+          has(O, "This quarter", "a quarter month lacks 'This quarter'"); has(O, /numbers/i, "the quarter's numbers are missing"); has(O, /video/i, "the quarter's video is missing"); has(O, "Anything RGA asks you to OK", "the quarter's yes pointer is missing");
+          // a past month opens read-only, with its report
+          await page.evaluate(() => { document.querySelector('.portal-nav a[data-view="ongoing"]')?.click(); document.querySelector("[data-og-mchip]:not([aria-pressed='true']):not([data-og-mchip='m1'])")?.click(); });
+          await page.waitForTimeout(600);
+          const P = await page.evaluate(() => [...document.querySelectorAll("[data-og-mpanel]")].find((e) => !e.hidden)?.innerText || "");
+          has(P, `What was done in ${nameOf(cm(-1))}`, "a past month does not open"); has(P, new RegExp(`Your ${nameOf(cm(-1))} report`), "a past month has no link to its report"); lacks(P, /Send my list|Who did you finish jobs for/, "a past month is not read-only");
+        } else lacks(O, "This quarter", "'This quarter' is drawn outside a quarter month");
+      }
+      // Dashboard
+      lacks(D, /What to expect/i, "'What to expect' is still on a monthly Dashboard"); has(D, /^\s*This month\s*$/m, "the Dashboard lacks the 'This month' card");
+      has(D, new RegExp(`RGA's work: (\\d+ of \\d+ done|couldn't read)`), "This month lacks 'RGA's work: N of M done'"); has(D, new RegExp(`sends it early ${nx}`), `This month must say the report is sent early ${nx}`); has(D, "We never promise", "This month lacks 'We never promise'");
+      has(D, /YOUR NEXT STEP/i, "the Dashboard has no 'Your next step' card");
+      if (!V.unread) has(D, "Approve 2 Google posts", "the next step must be 'Approve 2 Google posts' (the oldest open client step)");
+      for (const t of ["Avg map rank", "Call-button taps", "Leads tracked", "New reviews"]) has(D, t, `the tile '${t}' is missing`);
+      lacks(D, /Live once your campaign starts/i, "'Live once your campaign starts' on a monthly client");
+      if (!V.unread) has(D, new RegExp(`calls and forms so far in ${mo} · data through [A-Z][a-z]{2} \\d`), "the Leads tile must read the tracking step");
+      if (/CALL-BUTTON TAPS\s*\n\s*\d+/i.test(D) && !new RegExp(`in ${nameOf(cm(-1))}`).test(D.split(/CALL-BUTTON TAPS/i)[1] || "")) fail(`${label}: the Call-button taps tile does not name the last complete month`);
+      if (/LEADS TRACKED\s*\n\s*0\b/i.test(D) && V.unread) fail(`${label}: a leads tile with no record reads 0`);
+      // Reports
+      has(R, new RegExp(`${mo} · Month ${V.number}`), `Reports lacks the ${mo} month card`); has(R, new RegExp(`In progress · RGA checks it and sends it early ${nx}`), "the month in progress must say 'In progress, RGA checks it and sends it early <next>'");
+      lacks(R, /We email you the moment/i, "Reports says a report sends itself");
+      ok(`${label}: checked Ongoing work, Dashboard and Reports`);
+      await ctx.close();
+    } catch (e) { flaky = true; console.log(`  (flaky ${label}: ${String(e.message).slice(0, 160)})`); try { await page?.context().close(); } catch {} }
+  }
+}
+
 await browser.close();
 if (F.length) { console.log(`\n${F.length} FAILURE(S)`); process.exit(1); }
 if (flaky) { console.log("\nFLAKY: a page did not load; nothing was proven wrong. Retry."); process.exit(2); }
