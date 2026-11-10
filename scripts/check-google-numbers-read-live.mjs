@@ -342,6 +342,7 @@ const run = (oauth = OAUTH, from = "2026-09-01", to = "2026-10-31", extra = {}) 
 
 // 11-9: the retry's default timer must stay bound to window ({ setTimeout } detached it: "Illegal invocation" on every portal load)
 { const PJ = fs.readFileSync(SITE + "/portal/portal.js", "utf8");
+  if (!/\.filter\(\(row\) => String\(row\.reporting_month \|\| ""\)\.slice\(0, 10\) <= thisMonth\)/.test(PJ)) fail("portal dashboard reads a month that hasn't started (its tiles say 'Couldn't read Google' for next month's early record)");
   if (/function gliveRead\([^)]*timers = \{ setTimeout \}\)/.test(PJ)) fail("portal gliveRead's default timers detach setTimeout from window (Illegal invocation in the browser)"); }
 if (F.length) { console.error(`❌ check-google-numbers-read-live: ${F.length} problem(s)\n  - ${F.join("\n  - ")}`); process.exit(1); }
 console.log("✅ check-google-numbers-read-live: Google's numbers are read live through one reader (per month, a status per field, 429 retried, bounded, read only); a failure is could_not_read / disconnected / not_kept and never a 0; the 30-day cache is a fast path _gbp-keep decides and a NULL reads live; the door is staff-or-owner and returns no key; the email says so when Google fails and still sends; no screen reads a stored Google column");
