@@ -14,6 +14,7 @@
 //  11 the morning run: monthly replies start on a NEW unanswered review, retry a failed post daily (to 5), never on a failed read; site check once a month
 //  12 wiring: cards in the admin, ?v= keys, no em dash in text a person reads
 // Exit 0 holds · 1 regressed · 2 can't tell
+import { oldChromeFailures } from "./_monthly-no-old-chrome.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
@@ -304,5 +305,7 @@ const vge = (txt, re, min) => { const m = re.exec(txt); return !!m && m[1] >= mi
   if (/—/.test(strip(sec))) fail("12 no em dash in the section 3 card text");
 }
 
+// monthly_fix_v2 (11-9): the OLD pieces must be gone too, not only the new ones present (one card per row, the To do for numbered months, Open the month settled, the quarter preview, the bottom blocks)
+for (const m of oldChromeFailures(SITE)) fail(m);
 if (F.length) { console.error(`🔴 check-monthly-once: ${F.length} problem(s)\n - ${F.join("\n - ")}`); process.exit(1); }
 console.log("✅ check-monthly-once: merges clean (no dangling id), no Run button or hand tick, scans compared like for like, numbers say not measured never 0, new competitor flagged, site health says what it did not check, blog 0 is fine, focus work settles from its tied steps, listing upkeep from the jobs, settle proves before it writes, morning run starts monthly replies on a new review and retries failed posts");

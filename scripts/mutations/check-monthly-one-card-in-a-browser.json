@@ -1,0 +1,58 @@
+[
+ [
+  "the old WE MEASURED block is drawn under a Monthly card again",
+  "adminjs",
+  "const detHtml = monthlyOwn(o) ? \"\" : obDetectionHtml(o, s.task);",
+  "const detHtml = obDetectionHtml(o, s.task);",
+  1
+ ],
+ [
+  "a Monthly row draws the old Draft / Run button again",
+  "adminjs",
+  "const uniNoRowRun = (id) => monthlyOwn(id) ||",
+  "const uniNoRowRun = (id) =>",
+  1
+ ],
+ [
+  "the OVERRIDE row is drawn under a waiting Monthly card again",
+  "adminjs",
+  "${monthlyOwn(o) ? \"\" : `<div class=\"ob-ovr\">",
+  "${false ? \"\" : `<div class=\"ob-ovr\">",
+  1
+ ],
+ [
+  "a second Skip this step is added under a card that has one",
+  "adminjs",
+  "mayOffer && !html.includes(`data-uni-skip=\"${o.flowId}\"`) ?",
+  "mayOffer ?",
+  1
+ ],
+ [
+  "a Monthly row says Active now while it waits on its schedule",
+  "adminjs",
+  "(UNI_OWN_CARD.has(id) || monthlyOwn(id) ||",
+  "(UNI_OWN_CARD.has(id) ||",
+  1
+ ],
+ [
+  "a waiting runs-itself step loses its Runs itself chip",
+  "adminjs",
+  "return runsOn(O.readsOn(sel))",
+  "return { text: \"Active now\", cls: \"active\" }",
+  1
+ ],
+ [
+  "Open the month reads Done from the existence of the state, not its status",
+  "adminjs",
+  "if (id === \"m2.start.open_month\") return task.status === \"done\" ?",
+  "if (id === \"m2.start.open_month\") return task.status === \"done\" || state.flowM2State ?",
+  1
+ ],
+ [
+  "the quarter line is not a button again",
+  "adminjs",
+  "data-cm-qprev=\"${escapeAttribute(sec.key)}\"",
+  "aria-disabled=\"true\"",
+  1
+ ]
+]

@@ -8,6 +8,7 @@
 //   6 a report row is written on a real send (Month 1 and monthly) and never on the test; the portal lists reports newest first and never shows sent_to
 //   7 the removed blocks are gone (no renderer, no handler, no element); the sections cover every month2plus step once; the banner never asks for a manual advance
 // Exit 0 holds · 1 regressed · 2 can't tell
+import { oldChromeFailures } from "./_monthly-no-old-chrome.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -238,6 +239,8 @@ const fresh = (o = {}) => { DB.cur = makeDb({ onboarding: [JSON.parse(JSON.strin
 // 11-9 read-back on RGA: Month 1's chip runs from the kickoff (not the record's creation); a non-quarter month folds "Every quarter" to one line
 { const AM = fs.readFileSync(path.join(SITE, "netlify/functions/admin-months.js"), "utf8"), AJ = fs.readFileSync(path.join(SITE, "admin/admin.js"), "utf8");
   if (!/month1: \{ start: \(ob && ob\.data && ob\.data\.tasks && ob\.data\.tasks\["m1\.kickoff\.call"\]/.test(AM)) fail("Month 1's chip doesn't start at the kickoff");
-  if (!/quarterOn = num != null && M\.showsQuarter\(num\)/.test(AJ) || !/if \(sec\.quarterOnly && !quarterOn\) return foldedQ\(sec, idx\.length\);/.test(AJ) || !/Hidden this month · next in Month \$\{nextQ\}/.test(AJ)) fail("a non-quarter month shows 'Every quarter' as 0 / N instead of one folded line"); }
+  if (!/quarterOn = num != null && M\.showsQuarter\(num\)/.test(AJ) || !/if \(sec\.quarterOnly && !quarterOn\) return foldedQ\(sec, idx\);/.test(AJ) || !/Hidden this month · next in Month \$\{nextQ\}/.test(AJ)) fail("a non-quarter month shows 'Every quarter' as 0 / N instead of one folded line"); }
+// monthly_fix_v2 (11-9): the OLD pieces must be gone too, not only the new ones present (one card per row, the To do for numbered months, Open the month settled, the quarter preview, the bottom blocks)
+for (const m of oldChromeFailures(SITE)) fail(m);
 if (F.length) { console.error(`❌ the months are not kept — ${F.length} problem(s):\n` + F.map((m) => `  - ${m}`).join("\n")); process.exit(1); }
 console.log("✅ the months are kept: numbers, openMonth (idempotent, read back, carry-over), the hand-offs open and close, a closed month refuses writes, works before and after the SQL, reports kept on a real send only, the removed blocks are gone");

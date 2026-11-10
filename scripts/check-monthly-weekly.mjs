@@ -11,6 +11,7 @@
 //   7 Skip this week (stored per week on the month record, read back, Undo) and Skip this step; the closed month refuses
 //   8 titles (admin + playbook + Scraper mirror + client steps) and the wiring (cards, no hand Done, ?v= keys)
 // Exit 0 holds · 1 regressed · 2 can't tell
+import { oldChromeFailures } from "./_monthly-no-old-chrome.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -283,5 +284,7 @@ const vge = (txt, re, min) => { const m = re.exec(txt); return !!m && m[1] >= mi
   if (/—/.test(read("shared/monthly-weekly.js").replace(/^\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, ""))) fail("8 no em dash in text a person reads");
 }
 
+// monthly_fix_v2 (11-9): the OLD pieces must be gone too, not only the new ones present (one card per row, the To do for numbered months, Open the month settled, the quarter preview, the bottom blocks)
+for (const m of oldChromeFailures(SITE)) fail(m);
 if (F.length) { console.error(`🔴 check-monthly-weekly: ${F.length} problem(s)\n - ${F.join("\n - ")}`); process.exit(1); }
 console.log("✅ check-monthly-weekly: week strips from data, asks counted, the automation note fixed, approved replies post and read back (never unapproved, failures retried), posts, photos, skip week / step, titles all hold");

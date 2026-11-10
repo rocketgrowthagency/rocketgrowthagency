@@ -178,7 +178,7 @@ function fnBody(name) {
     }
     if (!missing) pass.push("the active card renders all three bands, and each is still built");
     // 🔴 The instruction list must live INSIDE the fold, or the wall is back above the buttons.
-    const fold = declOf("howHtml").match(/<details class="ob-how"[\s\S]*?<\/details>/);
+    const fold = (declOf("howInner") || declOf("howHtml")).match(/<details class="ob-how"[\s\S]*?<\/details>/);
     if (!fold) {
       fail.push("admin/admin.js — the reference fold is gone; the instructions are back in the open.");
     } else if (!/ob-sop/.test(fold[0])) {

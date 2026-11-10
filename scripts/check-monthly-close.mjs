@@ -12,6 +12,7 @@
 //   8 the hand-off: report sent or skipped -> next month opened -> this month closed; closed = read-only; carry-over named; no Skip on 25
 //   9 wiring: cards in the admin, ?v= keys, the portal opens on the report, no em dash in what a person reads
 // Exit 0 holds · 1 regressed · 2 can't tell
+import { oldChromeFailures } from "./_monthly-no-old-chrome.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
@@ -264,6 +265,7 @@ async function ready(w) { await MCS.freeze({ clientId: "c1", month: MONTH, deps:
 }
 
 // 6 the To do item on the 5th
+let M1_CLOSED = true;
 {
   const w = await ready(builtWorld());
   const data = w.rec.data, mv = (now, sendTask) => MCS.todoFor({ client: "Acme Plumbing", month: MONTH, data: { ...data, tasks: { ...w.rec.tasks, ...(sendTask ? { [ID.SEND]: sendTask } : {}) } }, now });
@@ -278,13 +280,19 @@ async function ready(w) { await MCS.freeze({ clientId: "c1", month: MONTH, deps:
   FETCH = async (url) => { const u = String(url); const j = (b) => ({ ok: true, status: 200, json: async () => b, text: async () => JSON.stringify(b) });
     if (u.includes("/clients?")) return j([{ id: "c1", business_name: "Acme Plumbing", portal_mode: null }]);
     if (u.includes("/client_monthly_records")) return j([{ client_id: "c1", reporting_month: MONTH, data: { ...data, tasks: w.rec.tasks } }]);
+    if (u.includes("/client_onboarding_records")) return j(M1_CLOSED ? [{ client_id: "c1", data: { tasks: { "m1.handoff.month2": { status: "done", completed_at: "2026-08-20T10:00:00Z" } } } }] : []);   // monthly_fix_v2: only a numbered month has close items
     return j([]); };
+  M1_CLOSED = true;
   try {
     const moves = await OMV.movesForWorkspace({ workspaceId: "w1", now: "2026-12-05T10:00:00.000Z" });
     const mine = moves.find((x) => x.kind === "monthly_report");
     if (!mine || mine.owner !== "rga" || mine.client !== "Acme Plumbing" || mine.late !== false) fail(`6 the To do queue carries the item: ${JSON.stringify(mine)}`);
     const early = await OMV.movesForWorkspace({ workspaceId: "w1", now: "2026-12-04T10:00:00.000Z" });
     if (early.some((x) => x.kind === "monthly_report")) fail("6 the queue shows nothing before the 5th");
+    // monthly_fix_v2 (RGA's Sep/Oct/Nov rows): a month BEFORE the monthly cycle (Month 1 never closed, or the row is older than Month 2) is never chased
+    M1_CLOSED = false;
+    const legacy = await OMV.movesForWorkspace({ workspaceId: "w1", now: "2026-12-20T10:00:00.000Z" });
+    if (legacy.some((x) => x.kind === "monthly_report")) fail("6b an unnumbered (pre-cycle) month put 'Send the report' in the To do");
   } finally { FETCH = async (url) => { throw new Error(`the gate must not touch the network: ${url}`); }; }
 }
 
@@ -371,7 +379,7 @@ async function ready(w) { await MCS.freeze({ clientId: "c1", month: MONTH, deps:
   if (!/Send to \$\{v\.to\}/.test(as)) fail("9 the send button names the address");
   if (!/import "\/shared\/monthly-close\.js\?v=20261109a"/.test(a)) fail("9 the admin imports shared/monthly-close.js");
   if (!/monthly-sections\.js\?v=20261109e/.test(a) || !/steps-57-64\.js\?v=20261109h/.test(a)) fail("9 the changed shared files need new ?v= keys");
-  if (!/admin\.js\?v=20261109s/.test(ih) || !/admin\.css\?v=20261109g/.test(ih)) fail("9 admin.js / admin.css ?v= keys must be bumped (r, g)");
+  if (!/admin\.js\?v=20261109t/.test(ih) || !/admin\.css\?v=20261109h/.test(ih)) fail("9 admin.js / admin.css ?v= keys must be bumped (t, h)");
   if (!/portal\.js\?v=20261109j/.test(ph)) fail("9 portal.js ?v= must be bumped (j)");
   if (!/#report-\\d\{4\}-\\d\{2\}/.test(p) || !/data-mr-month/.test(p) || !/function openMonthlyReport/.test(p)) fail("9 the portal opens the Reports tab on that month's report (#report-YYYY-MM)");
   const band = ["shared/monthly-close.js", "netlify/functions/_monthly-report-email.js"].map((f) => strip(read(f))).join("\n");
@@ -381,5 +389,7 @@ async function ready(w) { await MCS.freeze({ clientId: "c1", month: MONTH, deps:
   if (!/rgaDialog/.test(a) || /sendGmail|gmail/.test(sec)) fail("9 the admin never reaches Gmail itself");
 }
 
+// monthly_fix_v2 (11-9): the OLD pieces must be gone too, not only the new ones present (one card per row, the To do for numbered months, Open the month settled, the quarter preview, the bottom blocks)
+for (const m of oldChromeFailures(SITE)) fail(m);
 if (F.length) { console.error(`❌ ${F.length} problem(s):\n` + F.map((x) => " · " + x).join("\n")); process.exit(1); }
 console.log("✅ check-monthly-close: the five steps, the freeze (not given is never 0, the 30-day rule), the letter from the frozen record that refuses a missing number, the send (named confirm, kept, listed, test to the admin only), nothing automatic, the To do on the 5th, the optional call, and the send/skip -> open -> close hand-off all hold.");

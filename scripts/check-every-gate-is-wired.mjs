@@ -95,6 +95,7 @@ const NOT_PREFLIGHT = {
   'check-the-grid-summary-fits-its-design.mjs': 'admin-UI gate, runs the producer template in a vm and parses it; runs in daily-health-check.sh — a step summary cannot make a video unsafe',
   'check-a-step-output-states-a-time-not-an-age.mjs': 'step-output gate, pure source scan; runs in daily-health-check.sh — the wording of a summary cannot make a video unsafe',
   'check-the-step-card-renders-in-a-browser.mjs': 'admin-UI gate, lifts the renderer into chromium with the real CSS; runs in daily-health-check.sh — a step card cannot make a video unsafe',
+  'check-monthly-one-card-in-a-browser.mjs': 'admin-UI gate, reads the LIVE Monthly tab in chromium (read-only sign-in): run once after each admin deploy with node scripts/check-monthly-one-card-in-a-browser.mjs; it needs the live site so it cannot run pre-flight; a Monthly row cannot make a video unsafe',
   'check-a-step-declares-who-finishes-it.mjs': 'playbook+portal data gate, pure source scan; runs in daily-health-check.sh — a step completion mechanism cannot make a video unsafe',
   'check-a-client-step-number-is-declared.mjs': 'portal data gate, pure source scan; runs in daily-health-check.sh — a step number in the portal cannot make a video unsafe',
   'check-a-locked-row-says-why.mjs': 'admin-UI gate, pure source scan; runs in daily-health-check.sh — a lock reason cannot make a video unsafe',

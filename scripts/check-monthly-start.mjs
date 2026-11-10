@@ -13,6 +13,7 @@
 //   7 the Monthly checklist: every step whose dependencies are settled is open at the same time (Month 1 unchanged: one active); Plan the month waits only on Open the month
 //   8 wiring: the cards, the buttons, the purge key for the Google-quoting reason, the ?v= keys
 // Exit 0 holds · 1 regressed · 2 can't tell
+import { oldChromeFailures } from "./_monthly-no-old-chrome.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
@@ -353,5 +354,7 @@ const vge = (txt, re, min) => { const m = re.exec(txt); return !!m && m[1] >= mi
   if (!/month_open_error/.test(a)) fail("8 the open card must read why the month couldn't open");
 }
 
+// monthly_fix_v2 (11-9): the OLD pieces must be gone too, not only the new ones present (one card per row, the To do for numbered months, Open the month settled, the quarter preview, the bottom blocks)
+for (const m of oldChromeFailures(SITE)) fail(m);
 if (F.length) { console.error(`🔴 check-monthly-start: ${F.length} problem(s)\n - ${F.join("\n - ")}`); process.exit(1); }
 console.log("✅ check-monthly-start: the rule, the tasks, the open-the-month card, Use this plan (read back), the done card, tasks_for_month gone, no model, the portal line and the monthly queue all hold");

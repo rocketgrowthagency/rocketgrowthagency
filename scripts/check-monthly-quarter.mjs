@@ -14,6 +14,7 @@
 //  11 nothing blocks the close; every card skips; no hand tick
 //  12 wiring: cards in the admin, ?v= keys, the doors, no sender, no em dash
 // Exit 0 holds · 1 regressed · 2 can't tell
+import { oldChromeFailures } from "./_monthly-no-old-chrome.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
@@ -175,7 +176,7 @@ const task = (f, id) => f.store[id] || {};
   if (!Q.SELF.includes(ID.OVERLAP)) fail("6 17 runs itself (SELF)");
   const a = strip(read("admin/admin.js"));
   if (!/globalThis\.rgaMonthlyQuarter && globalThis\.rgaMonthlyQuarter\.IDS\.includes\(id\)/.test(a)) fail("6 the admin gives the quarter's rows no Run button");
-  if (!/rgaMonthlyQuarter\.SELF\.includes\(id\)[^;]*Runs itself/.test(a)) fail("6 the row says 'Runs itself'");
+  if (!/rgaMonthlyQuarter\.SELF\.includes\(id\)[^;]*runsOn\(/.test(a)) fail("6 the row says 'Runs itself'");
   const m = read("netlify/functions/_morning-run.js"); if (!/settleQuarter/.test(m)) fail("6 the morning run settles the quarter");
 }
 
@@ -261,7 +262,7 @@ const task = (f, id) => f.store[id] || {};
   const a = read("admin/admin.js"), ih = read("admin/index.html");
   if (!/import "\/shared\/monthly-quarter\.js\?v=20261109a"/.test(a)) fail("12 the admin imports shared/monthly-quarter.js");
   if (!/monthly-sections\.js\?v=20261109e/.test(a)) fail("12 monthly-sections.js ?v= bumped (e)");
-  if (!/admin\.js\?v=20261109s/.test(ih)) fail("12 admin.js ?v= bumped (s)");
+  if (!/admin\.js\?v=20261109t/.test(ih)) fail("12 admin.js ?v= bumped (t)");
   for (const fn of ["qrtOutcomesCardHtml", "qrtLinksCardHtml", "qrtProfileCardHtml", "qrtOverlapCardHtml", "qrtWinCardHtml", "qrtVideoCardHtml", "qrtLeadCardHtml"]) if (!new RegExp(`${fn}\\(\\)`).test(a)) fail(`12 the admin draws ${fn}`);
   const ad = read("netlify/functions/admin-monthly-quarter.js"), po = read("netlify/functions/portal-quarter-answer.js");
   if (!/requireWorkspaceForClient/.test(ad)) fail("12 the admin door is RGA's workspace only");
@@ -275,5 +276,7 @@ const task = (f, id) => f.store[id] || {};
   if (!read("netlify/functions/_monthly-quarter.js").includes("require(\"../../shared/monthly-quarter.js\")")) fail("12 the server reads the same view module as the admin");
 }
 
+// monthly_fix_v2 (11-9): the OLD pieces must be gone too, not only the new ones present (one card per row, the To do for numbered months, Open the month settled, the quarter preview, the bottom blocks)
+for (const m of oldChromeFailures(SITE)) fail(m);
 if (F.length) { console.error(`❌ ${F.length} problem(s):\n` + F.map((x) => " · " + x).join("\n")); process.exit(1); }
 console.log("✅ check-monthly-quarter: seven quarter steps shown only in months 3/6/9/12 (folded otherwise); the link steps merged with no dangling id; 'Not sure' never blocks and is labeled theirs; the finder is capped and once a quarter; a link counts only when seen live; profile changes need the client's yes and are read back; overlap runs itself and names both pages; a story needs the one-tap yes; a video counts only when live; the lead test hides without call tracking; the report gets a short quarter block; nothing blocks the close.");

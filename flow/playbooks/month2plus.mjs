@@ -331,7 +331,7 @@ Lead-handling kills conversion more than rankings do.`,
     instructions: `Read the report on the card, send yourself a test, then send it. It asks once more, naming who it goes to. It is kept and appears in the client's portal under Reports.`,
   },
   {
-    id: "m2.call.monthly", title: "Run monthly call",
+    id: "m2.call.monthly", title: "Monthly call (optional)",
     type: "manual", dependsOn: ["m2.report.deliver"],
     instructions: `Optional. 20-30 min Google Meet; the agenda is drafted from the report. In quarter months (3, 6, 9) it is the quarterly review.
 
