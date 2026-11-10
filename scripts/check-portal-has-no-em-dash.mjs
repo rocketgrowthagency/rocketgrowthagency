@@ -171,5 +171,13 @@ for (const [f, hits] of Object.entries(now)) {
   if (LIST || hits.length) for (const h of hits) { console.log(`${f}:${h.line} [${h.kind}] ${h.text}`); }
   bad += hits.length;
 }
+// 11-10: the client's "About your business" questions come from data/client-facts.json, not portal.js, and the live browser walk found
+// "Once someone says yes — on the phone or by signing up —" there. Every key a client reads is scanned; stored answer values (value,
+// none_value), admin notes (why_admin) and _rules are internal and left alone, so a stored answer keeps matching.
+{ const CF = "data/client-facts.json", READ = new Set(["help", "label", "hint", "summary", "meaning", "placeholder", "ask_on_call", "paragraphs", "call_confirm", "quote_first", "book_deposit", "varies", "question", "text"]);
+  let j; try { j = JSON.parse(fs.readFileSync(`${SITE}/${CF}`, "utf8")); } catch { console.error(`INDETERMINATE: cannot read ${CF}`); process.exit(2); }
+  const walk = (o, k) => { if (Array.isArray(o)) o.forEach((v) => walk(v, k)); else if (o && typeof o === "object") for (const [kk, v] of Object.entries(o)) { if (!kk.startsWith("_")) walk(v, kk); } else if (typeof o === "string" && READ.has(k) && o.includes("\u2014")) { console.log(`${CF} [${k}] ${o.slice(0, 120)}`); bad++; } };
+  walk(j, null);
+}
 if (bad) { console.error(`FAIL: ${bad} em dash(es) in text a client can read (periods, commas, colons or parentheses instead; the en dash for an empty number tile). On ${BEFORE} it found ${beforeN}.`); process.exit(1); }
 console.log(`ok: no em dash in any client-visible text of the portal (the gate finds ${beforeN} on ${BEFORE}; ${SELF.length} scanner fixtures hold).`);
