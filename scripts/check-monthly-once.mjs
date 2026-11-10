@@ -240,15 +240,16 @@ const SESS = [
   const wired = fs.readFileSync(path.join(SITE, "admin/admin.js"), "utf8");
   if (!wired.includes('"/.netlify/functions/admin-gbp-drift"') || !/action: ?|restore/.test(wired)) fail("11 Accept / Put it back must use the existing admin-gbp-drift path");
   const T = O.trackingView;
-  const ok = T({ read: true, forms: { tracked: true, count: 4, lastAt: "2026-11-08" }, calls: { on: true, total: 7 } });
-  if (!/recorded this month: yes$/.test(ok.rows[0].title) || !ok.done) fail(`11 tracking works: ${ok.rows[0].title}`);
-  const bad = T({ read: true, forms: { tracked: true, count: 0, lastAt: "2026-10-27" }, calls: { on: true, total: 3 } });
-  if (bad.done || !/Form leads: none recorded since Oct 27/.test(bad.rows[0].line) || /: yes$/.test(bad.rows[0].title)) fail(`11 a channel that stopped is named with its date: ${bad.rows[0].title} / ${bad.rows[0].line}`);
+  const GA = { through: "2026-11-08", eventsLatest: "2026-11-08", contactVisits: 0, formStarts: 0 };   // monthly_before_january_v1: every read carries how fresh the pulled data is
+  const ok = T({ read: true, forms: { tracked: true, count: 4, lastAt: "2026-11-08" }, calls: { on: true, total: 7 }, ga: GA });
+  if (!/Form leads: 4 recorded this month/.test(ok.rows.map((r) => r.title).join("|")) || !ok.done || !/^Working/.test(ok.label)) fail(`11 tracking works: ${ok.label}`);
+  const bad = T({ read: true, forms: { tracked: true, count: 0, lastAt: "2026-10-27" }, calls: { on: true, total: 3 }, ga: { ...GA, eventsLatest: "2026-10-30" } });
+  if (bad.done || bad.label !== "Check it" || !bad.rows.some((r) => /No events from Analytics for 7 days/.test(r.title) && /Oct 30/.test(r.line))) fail(`11 a stopped Analytics is named with its date: ${bad.label} / ${bad.rows.map((r) => r.title)}`);
   const failed = T({ read: false });
   if (failed.done || /working|: yes/.test(JSON.stringify(failed.rows)) || failed.label !== "Couldn't check") fail("11 a failed read is 'couldn't check', never 'working'");
-  const unk = T({ read: true, forms: { tracked: true, count: 2 }, calls: { on: true, total: null } });
-  if (unk.done || /: yes$/.test(unk.rows[0].title)) fail("11 a call total we could not read is never 'yes'");
-  const empty = T({ read: true, forms: { tracked: false }, calls: { on: false } });
+  const unk = T({ read: true, forms: { tracked: true, count: 2 }, calls: { on: true, total: null }, ga: GA });
+  if (unk.done || unk.label === "Working" || /^Working/.test(unk.label)) fail("11 a call total we could not read is never working");
+  const empty = T({ read: true, forms: { tracked: false }, calls: { on: false }, ga: GA });
   if (empty.done) fail("11 with no tracking found it must not claim it works");
   // the sections list them, runs-itself, numbered after the 25, skippable
   const SEC = req(path.join(SITE, "shared/monthly-sections.js"));
@@ -259,7 +260,7 @@ const SESS = [
   const base = { tasks: {}, data: {}, row: { gsc_clicks: 4, total_calls: 6 }, prevRow: null, prevData: null, ob: { data: {}, tasks: { "m1.gbp.hours_attributes": { status: "done" } } } };
   const dep = baseDeps({ rec: base, nums: { months: {} }, sessions: [], now: d("2026-11-10") });
   const orig = dep.supa;
-  dep.supa = async (q) => q.startsWith("/client_activity") ? [] : q.startsWith("/client_ga4_daily") ? [{ event_name: "generate_lead", date: "2026-11-05", events: 3 }] : q.startsWith("/clients?") ? [{ call_tracking_provider: "callrail" }] : orig(q);
+  dep.supa = async (q) => q.startsWith("/client_activity") ? [] : q.startsWith("/client_ga4_daily") ? [{ kind: "event", event_name: "generate_lead", date: "2026-11-05", events: 3 }] : q.startsWith("/clients?") ? [{ call_tracking_provider: "callrail" }] : orig(q);
   const rs = await MO.settle({ clientId: "c1", month: MONTH, deps: dep });
   if (!rs.settled.includes(O.ID.WATCH) || !rs.settled.includes(O.ID.TRACKING)) fail(`11 the watch and tracking settle from their own reads: ${JSON.stringify(rs.settled)}`);
   const dead = baseDeps({ rec: base, nums: { months: {} }, sessions: [], now: d("2026-11-10") });

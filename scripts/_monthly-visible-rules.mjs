@@ -21,6 +21,7 @@ export function visibleRowFailures(rows) {
     if (r.id === "m2.start.open_month" && !/[A-Z][a-z]{2} \d{1,2}/.test(r.cardText || "")) F.push(`${tag}: the Open the month card names no date`);
   }
   F.push(...auditRowFailures(rows));
+  F.push(...januaryRowFailures(rows));
   return F;
 }
 
@@ -135,5 +136,49 @@ export function visibleRulesSelfTest() {
     if (!re.test(before)) F.push(`visible-rules: the tightened rule does NOT fire on the live-before state: ${what}`);
   if (after.length) F.push(`visible-rules: the rules fire on the fixed state: ${after.join(" | ")}`);
   F.push(...auditSelfTest());
+  F.push(...januarySelfTest());
+  return F;
+}
+
+// ───────────────────────── monthly_before_january_v1 (approved 11-9 ~8 PM) ─────────────────────────
+// What the owner saw: "Check it: form leads none since Oct 14" on a quiet month (tracking was fine), links that count as live because an ask was sent, a Suggest a change that
+// refuses holiday hours. Each rule fires only on the row it names, and the live browser gate feeds it the real cards.
+export function januaryRowFailures(rows) {
+  const F = [], by = new Map(rows.map((r) => [r.id, r]));
+  const txt = (r) => String(r.cardText || "").replace(/[\s\u00a0\u202f]+/g, " ");
+  const t = by.get("m2.exec.tracking_check");
+  if (t) {
+    const c = txt(t), tag = `m2.exec.tracking_check [${t.pill}]`;
+    if (/none recorded/i.test(c)) F.push(`${tag}: still says "none recorded" (the old quiet-month wording)`);
+    if (/Check it/i.test(c) && !/No events from Analytics for 7 days|reached the contact page/i.test(c)) F.push(`${tag}: says "Check it" with no evidence of broken tracking (no events for 7+ days, or contact-page visits with no form start)`);
+    if (/Working/i.test(c) && !/data through [A-Z][a-z]{2} \d{1,2}/i.test(c)) F.push(`${tag}: says Working without saying how fresh the data is ("data through <date>")`);
+    if (/Working/i.test(c) && /Check it/i.test(c)) F.push(`${tag}: says Working and Check it at once`);
+  }
+  const l = by.get("m2.exec.local_pr");
+  if (l) {
+    const c = txt(l), tag = "m2.exec.local_pr";
+    if (/Link seen live|Asked, waiting/i.test(c)) F.push(`${tag}: still uses the old 'Link seen live' / 'Asked, waiting' wording`);
+    if (/Live \u00B7/.test(c) && !/the page names the business and links to its website/i.test(c)) F.push(`${tag}: says Live without saying the page names the business and links to its website`);
+    if (/Asked [A-Z][a-z]{2} \d{1,2}/.test(c) && !/read again weekly/i.test(c)) F.push(`${tag}: an asked place does not say it is read again weekly`);
+  }
+  const p = by.get("m2.exec.gbp_attributes_refresh");
+  if (p) {
+    const c = txt(p), tag = "m2.exec.gbp_attributes_refresh";
+    if (/Suggest a change/i.test(c) && !/Holiday hours/i.test(c)) F.push(`${tag}: Suggest a change has no Holiday hours kind`);
+    if (/Send for approval/i.test(c)) F.push(`${tag}: still says 'Send for approval' (it is 'Send to the client')`);
+  }
+  return F;
+}
+const JB = (id, cardText) => ({ id, tagSelf: true, pill: "Runs itself", rowCls: "ob-step queued", statusCls: "ob-status queued", markerCls: "queued", cardText, moreCount: 0, moreInside: true });
+const JAN_BEFORE = [JB("m2.exec.tracking_check", "Working\nCheck it\nForm leads: none recorded since Oct 14. If the business had calls or forms, check the tracking."), JB("m2.exec.local_pr", "Link seen live\nAsked, waiting"),
+  JB("m2.exec.gbp_attributes_refresh", "Suggest a change\nAttribute key (leave empty for the hours)\nSend for approval")];
+const JAN_AFTER = [JB("m2.exec.tracking_check", "Working \u00B7 data through Nov 2\nNo form was started or sent since Oct 14\nAnalytics data is pulled weekly."),
+  JB("m2.exec.local_pr", "Live \u00B7 the page names the business and links to its website \u00B7 read Jan 12\nAsked Jan 5 \u00B7 no link on the page yet \u00B7 read again weekly"),
+  JB("m2.exec.gbp_attributes_refresh", "Suggest a change\nAttribute Holiday hours\nSend to the client")];
+export function januarySelfTest() {
+  const F = [], before = januaryRowFailures(JAN_BEFORE).join("\n"), after = januaryRowFailures(JAN_AFTER);
+  for (const [re, what] of [[/none recorded/, "the old quiet-month wording"], [/Check it" with no evidence/, "Check it without evidence"], [/how fresh the data is/, "no freshness on a Working card"], [/old 'Link seen live'/, "the old links wording"], [/no Holiday hours kind/, "no holiday hours kind"], [/Send for approval/, "the old send button"]])
+    if (!re.test(before)) F.push(`january-rules: the new rule does NOT fire on today's state: ${what}`);
+  if (after.length) F.push(`january-rules: the rules fire on the fixed state: ${after.join(" | ")}`);
   return F;
 }

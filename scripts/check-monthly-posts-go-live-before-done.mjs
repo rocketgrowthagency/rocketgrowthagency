@@ -101,7 +101,7 @@ const run = (w, o = {}) => gp.runForClient({ supa: w.supa, clientId: "c1", fetch
 const src = (p) => fs.readFileSync(`${SITE}/${p}`, "utf8");
 const pd = src("netlify/functions/portal-deliverables.js"), fe = src("netlify/functions/flow-execute.js"), admin = src("admin/admin.js"), toml = src("netlify.toml");
 if (!/key === "m2\.exec\.gbp_posts" && decision === "approved"[\s\S]{0,700}?gp\.renderPosts\(posts\) === draftFrom\(tasks\[key\]\)[\s\S]{0,300}?approved_posts = posts[\s\S]{0,200}?post_queue = gp\.queueFrom/.test(pd)) fail("approval doesn't freeze the exact posts the client saw into the queue");
-if (!/"m2\.exec\.gbp_posts": async[\s\S]{0,2600}?parsePosts\(raw\)[\s\S]{0,600}?outcome_data: \{ draft, posts,/.test(fe)) fail("the runner no longer stores the posts as data with the client's draft");
+if (!/"m2\.exec\.gbp_posts": async[\s\S]{0,4200}?parsePosts\(raw\)[\s\S]{0,600}?outcome_data: \{ draft, posts,/.test(fe)) fail("the runner no longer stores the posts as data with the client's draft");
 if (!/t\?\.approval\?\.decision === "approved" && Array\.isArray\(t\.post_queue\)/.test(fe)) fail("the runner can redraft under an approval");
 if (!/"m2\.exec\.gbp_posts": \{\s*proof: \(d, m2\) =>[^\n]*every\(\(x\) => x\.status === "live"\)/.test(admin)) fail("Monthly posts' Done isn't guarded by every post being live");
 if (!/\[functions\."gbp-posts-sweep"\]\s*\n\s*schedule = /.test(toml)) fail("nothing runs the weekly posting (gbp-posts-sweep has no schedule)");

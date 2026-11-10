@@ -343,10 +343,10 @@
   1
  ],
  [
-  "a channel with no leads this month reads as working",
+  "a call total we could not read reads as working",
   "monthlyonce",
-  "const ok = !unknown.length && !none.length;",
-  "const ok = !unknown.length;",
+  "const unknown = chans.filter((z) => z.n == null);",
+  "const unknown = [];",
   1
  ],
  [

@@ -51,8 +51,8 @@
  [
   "the posts total ignores what the client chose",
   "monthlyweekly",
-  "const M = wanted != null && wanted >= 1 && wanted <= 4 ? wanted : q.length || drafts.length || 4",
-  "const M = 4",
+  "const none = wanted === 0, M = none ? 0 : wanted != null && wanted >= 1 && wanted <= 4 ? wanted : q.length || drafts.length || 4,",
+  "const none = wanted === 0, M = 4,",
   1
  ],
  [

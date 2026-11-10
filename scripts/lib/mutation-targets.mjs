@@ -543,4 +543,6 @@ export const FILES = {
   weeklyreadfn: "netlify/functions/admin-monthly-weekly.js",
   monthlyplanread: "netlify/functions/_monthly-plan.js",
   adminjs: "admin/admin.js",
+  portalquarteranswer: "netlify/functions/portal-quarter-answer.js",
+  postswantedfn: "netlify/functions/portal-posts-wanted.js",   // monthly_before_january_v1: the client's posts-per-month choice
 };

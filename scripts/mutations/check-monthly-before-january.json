@@ -1,0 +1,240 @@
+[
+ [
+  "Check it on a quiet month (no evidence needed)",
+  "monthlyonce",
+  "const dead = !!(g && g.through && (!g.eventsLatest || daysBetween(g.eventsLatest, g.through) >= 7));",
+  "const dead = !!(g && g.through);",
+  1
+ ],
+ [
+  "events stopped 7 days is no longer Check it",
+  "monthlyonce",
+  "daysBetween(g.eventsLatest, g.through) >= 7",
+  "daysBetween(g.eventsLatest, g.through) >= 70",
+  1
+ ],
+ [
+  "contact-page visits with no form start are ignored",
+  "monthlyonce",
+  "const contactNoForm = !!(g && Number(g.contactVisits) > 0 && !Number(g.formStarts));",
+  "const contactNoForm = false;",
+  1
+ ],
+ [
+  "Working without saying how fresh the data is",
+  "monthlyonce",
+  "\"Working\" + (through ? ` · data through ${day(through)}` : \"\")",
+  "\"Working\"",
+  1
+ ],
+ [
+  "a failed read becomes working",
+  "monthlyonce",
+  "tone: \"wait\", label: \"Couldn't check\", when: \"runs itself\", title, done: false, rows: [row(\"off\", \"Couldn't read Google Analytics\"",
+  "tone: \"ok\", label: \"Working\", when: \"runs itself\", title, done: false, rows: [row(\"off\", \"Couldn't read Google Analytics\"",
+  1
+ ],
+ [
+  "no forms since the last send is a Check it again",
+  "monthlyonce",
+  "rows.push(row(\"off\", `No form was started or sent since",
+  "rows.push(row(\"you\", `Check it: no form was started or sent since",
+  1
+ ],
+ [
+  "the producer drops the freshness date",
+  "monthlyoncesrv",
+  "const through = last(rows.filter((r) => r && r.date))",
+  "const through = null",
+  1
+ ],
+ [
+  "the producer ignores contact-page visits",
+  "monthlyoncesrv",
+  "r.kind === \"page\" && inWin(r) && CONTACT_PATH.test(String(r.page || \"\"))",
+  "false",
+  1
+ ],
+ [
+  "a profile change is shown to the client before it is sent",
+  "monthlyquartersrv",
+  "(taskOf(pr && pr.tasks, Q.ID.PROFILE).profile_changes || []).filter((c) => c && c.state === \"sent\")",
+  "(taskOf(pr && pr.tasks, Q.ID.PROFILE).profile_changes || []).filter((c) => c)",
+  1
+ ],
+ [
+  "Change them without saying what hours",
+  "monthlyquartersrv",
+  "if (answer === \"change\" && !clip(note, 300)) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "a yes cards show in a non-quarter month",
+  "monthlyquartersrv",
+  "if (!MS.showsQuarter(number)) return { ok: true, changes: [], win: null };",
+  "",
+  1
+ ],
+ [
+  "holiday hours with no day are accepted",
+  "monthlyquartersrv",
+  "if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date) || !mode)",
+  "if (false)",
+  1
+ ],
+ [
+  "custom hours closing before opening are accepted",
+  "monthlyquartersrv",
+  "String(v.close) > String(v.open)",
+  "true",
+  1
+ ],
+ [
+  "a custom holiday is never sent to Google",
+  "gbpprofile",
+  "...open];\n}",
+  "];\n}",
+  1
+ ],
+ [
+  "a custom holiday is not read back",
+  "gbpprofile",
+  "if (openMiss.length) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "the pending read loses the signed-in client door",
+  "portalquarteranswer",
+  "const gate = deps && deps.gate ? deps.gate : await requirePortalOwner(event, clientId);",
+  "const gate = {};",
+  1
+ ],
+ [
+  "the yes cards no longer call portal-quarter-answer",
+  "portal",
+  "/.netlify/functions/portal-quarter-answer",
+  "/.netlify/functions/portal-quarter-answerx",
+  1
+ ],
+ [
+  "the holiday card loses Change them",
+  "portal",
+  "Change them</button>",
+  "Edit</button>",
+  1
+ ],
+ [
+  "the win story card loses its question",
+  "portal",
+  "Can we share this story?",
+  "Share?",
+  1
+ ],
+ [
+  "a posts choice of 3 is accepted",
+  "postswantedfn",
+  "const STEP = \"m2.exec.gbp_posts\", ALLOWED = [0, 1, 2, 4];",
+  "const STEP = \"m2.exec.gbp_posts\", ALLOWED = [0, 1, 2, 3, 4];",
+  1
+ ],
+ [
+  "a posts choice is claimed saved without a read back",
+  "postswantedfn",
+  "if (!got || got.posts_wanted !== wanted)",
+  "if (false)",
+  1
+ ],
+ [
+  "the drafting ignores the choice",
+  "gbpposts",
+  "if (n !== undefined && n !== null && n !== \"\" && [0, 1, 2, 4].includes(Number(n))) return Number(n);",
+  "",
+  1
+ ],
+ [
+  "nothing chosen reads as none",
+  "gbpposts",
+  "  return 4;\n}",
+  "  return 0;\n}",
+  1
+ ],
+ [
+  "the drafting asks for 4 whatever was chosen",
+  "flowexec",
+  "${wantedN} Google Business Profile post${wantedN === 1 ? \"\" : \"s\"} for one month",
+  "4 Google Business Profile posts for one month",
+  1
+ ],
+ [
+  "a client who chose none still gets drafts",
+  "flowexec",
+  "if (wantedN === 0) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "RGA's card forgets the choice",
+  "monthlyweekly",
+  "title: none ? \"None this month, the client's choice\" : `${wanted} a month, the client's choice`",
+  "title: \"Posts\"",
+  1
+ ],
+ [
+  "a page that links but does not name the business is live",
+  "monthlyquartersrv",
+  "const ok = d.pageNames(pg.html, name) && linksToSite(pg.html, site);",
+  "const ok = linksToSite(pg.html, site);",
+  1
+ ],
+ [
+  "a page that names the business but has no link is live",
+  "monthlyquartersrv",
+  "const ok = d.pageNames(pg.html, name) && linksToSite(pg.html, site);",
+  "const ok = d.pageNames(pg.html, name);",
+  1
+ ],
+ [
+  "a page that would not open reads as no link",
+  "monthlyquartersrv",
+  "if (!pg || pg.status !== 200) { out.failed++; continue; }",
+  "if (!pg || pg.status !== 200) { out.failed++; results[host] = { read_at: isoNow(d) }; continue; }",
+  1
+ ],
+ [
+  "a page is read every day instead of weekly",
+  "monthlyquartersrv",
+  "now - Date.parse(p.read_at) < WEEK - 3600000",
+  "false",
+  1
+ ],
+ [
+  "a link to another host counts",
+  "monthlyquartersrv",
+  "u.hostname.replace(/^www\\./, \"\").toLowerCase() === host",
+  "true",
+  1
+ ],
+ [
+  "an ask that was never sent is read",
+  "monthlyquartersrv",
+  "p && p.state === \"asked\" && p.url",
+  "p && p.url",
+  1
+ ],
+ [
+  "the morning run does not read the pages",
+  "monthlyquartersrv",
+  "out.links = await linksRead({ clientId, month, deps: d });",
+  "",
+  1
+ ],
+ [
+  "live without the weekly wording",
+  "monthlyquarter",
+  "Live · the page names the business and links to its website",
+  "Live",
+  1
+ ]
+]
