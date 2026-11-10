@@ -70,7 +70,8 @@ export function previewFailures(p) {
   const F = [];
   if (!/^Starts [A-Z][a-z]{2} \d{1,2} \u00B7 Month \d+$/.test((p.pill || "").trim())) F.push('Every quarter: the header pill is not "Starts <date> · Month N"');
   if (!/Preview only/i.test(p.text || "") || !/Months 3, 6, 9 and 12/.test(p.text || "")) F.push('Every quarter: the "Preview only" band is missing');
-  if (JSON.stringify(p.nums || []) !== JSON.stringify([14, 15, 16, 17, 18, 19, 20])) F.push(`Every quarter: the preview rows are numbered ${JSON.stringify(p.nums)}, not 14 to 20`);
+  // mature_account_health_v1 (11-10): the quarter also holds 31 Quarterly letter, 32 Grow the plan, 33 AI search check (appended numbers)
+  if (JSON.stringify(p.nums || []) !== JSON.stringify([14, 15, 16, 17, 18, 19, 20, 31, 32, 33])) F.push(`Every quarter: the preview rows are numbered ${JSON.stringify(p.nums)}, not 14 to 20 then 31 to 33`);
   if (/\(quarterly\)/i.test((p.titles || []).join(" ") + " " + (p.text || ""))) F.push('Every quarter: a title still carries "(quarterly)"');
   if (p.buttons) F.push("Every quarter: the preview has buttons or Skip (it is read-only)");
   if (p.applies === false && !p.notFor) F.push('Every quarter: the lead-handling test does not apply but the row has no "not for <client>" tag');
@@ -101,7 +102,7 @@ const FIX_AFTER = [
   { id: "m2.plan.rotating_focus", tagSelf: false, pill: "Waiting", rowCls: "ob-step queued", statusCls: "ob-status queued", markerCls: "queued", cardText: "Waiting for the month's suggestion\nSuggestion ready Dec 2.", moreCount: 0, moreInside: true },
 ];
 const PREVIEW_BEFORE = { pill: "Month 3", text: "Starts in Month 3 (January)\nTheir numbers: booked jobs and revenue (quarterly)", nums: [], titles: ["Video (optional)", "Links and local press (quarterly)"], buttons: 0, applies: false, notFor: false };
-const PREVIEW_AFTER = { pill: "Starts Jan 1 \u00B7 Month 3", text: "Preview only. These open in Months 3, 6, 9 and 12. Nothing here can be done or skipped yet.\nResults go into that month's report under \"This quarter\". Fold", nums: [14, 15, 16, 17, 18, 19, 20], titles: ["Video"], buttons: 0, applies: false, notFor: true };
+const PREVIEW_AFTER = { pill: "Starts Jan 1 \u00B7 Month 3", text: "Preview only. These open in Months 3, 6, 9 and 12. Nothing here can be done or skipped yet.\nResults go into that month's report under \"This quarter\". Fold", nums: [14, 15, 16, 17, 18, 19, 20, 31, 32, 33], titles: ["Video"], buttons: 0, applies: false, notFor: true };
 export function auditSelfTest() {
   const F = [], before = [...auditRowFailures(FIX_BEFORE), ...previewFailures(PREVIEW_BEFORE)].join("\n"), after = [...auditRowFailures(FIX_AFTER), ...previewFailures(PREVIEW_AFTER)];
   for (const [re, what] of [[/a day before the month starts/, "the Open the month date before the month"], [/chip says "Active now"/, "Active now on a client's move card"], [/must read "Client's move"\n?/, "Review asks chip"], [/Client's move · optional/, "New photos chip"], [/ranking claim/, "the replies ranking claim"],
