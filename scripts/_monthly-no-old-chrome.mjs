@@ -65,7 +65,7 @@ export function oldChromeFailures(SITE) {
   lacks(mp, "websiteSections", "D: the Website Work block is still inside the Monthly tab");
   lacks(mp, "Optional add-on", "D: an \"Optional add-on\" block is still inside the Monthly tab");
   has(js, "\"monthlynew\", \"websitework\"", "D: websitework is not a known client tab");
-  has(html, "admin.js?v=20261109u", "the admin.js ?v= was not bumped");
+  if (!(((html.match(/admin\.js\?v=([0-9a-z]+)/) || [])[1] || "") >= "20261109u")) F.push("the admin.js ?v= was not bumped");
   F.push(...visibleRulesSelfTest());   // the browser gate's rules fire on the 11-9 live state and stay quiet on the fixed one
   return F;
 }
