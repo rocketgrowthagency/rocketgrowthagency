@@ -83,62 +83,25 @@ const has = (t, w, label) => { if (!String(t || "").toLowerCase().includes(w.toL
 const hasNot = (t, w, label) => { if (String(t || "").toLowerCase().includes(w.toLowerCase())) fail(`${label}: shows "${w}"`); };
 
 try {
-  // ── SETUP, step 5 not done ─────────────────────────────────────────────────────────────────────────────
+  // ── MONTH 1 IS THE FIRST MONTH CARD (setup_vs_month1_v1, 11-10: it replaced "Starts after setup" and the early customer-list row) ──────────────────
   {
     const h = await open("managed");
     try {
-      const t = await settle(h), L = "managed Setup";
-      for (const w of ["From Google, today", "No reviews on Google yet", "Your first ones come from Setup step 5", "1 of 5 customers asked so far", "Go to step 5", "New reviews show here the morning after they're posted.",
-        "Starts after setup", "Month 1 ends about Nov 8", "Your part · your steps",
-        "8This week's customer list Opens once Setup step 5 is done (1 of 5 asked). RGA writes each request; you tap send. Weekly · due Mondays",
-        "9Your numbers Two numbers, about a minute. “Not sure” is a fine answer. Every 3 months", "10New photos When you have them. No monthly quota. Suggested",
-        "11A video this quarter From RGA's script, about 60 seconds on your phone. Every 3 months · optional",
-        "12Monthly check-in call Your report first, then about 20 minutes on Google Meet. Bring one job you're proud of. Every month",
-        "Done by RGA this month", "Google posts RGA writes the number you choose. Nothing posts until you approve. Every month", "Review replies RGA drafts each one. You approve it first. As reviews come in",
-        "What we watched Your Google profile, website, speed and leads, from the checks that really ran. Every month", "Your monthly report RGA checks it and sends it early next month. Every month", "Nothing here needs you yet."]) has(t, w, L);
-      for (const w of ["month just ended", "A customer win story", "A short video", "Your check-in call", "(you chose)", "5 new photos", "Your review requests are how the first ones come in"]) hasNot(t, w, L);
+      const t = await settle(h), L = "managed Month 1";
+      for (const w of ["From Google, today", "No reviews on Google yet", "Your first ones come from your customer list", "1 of 5 customers asked so far", "Open your customer list", "New reviews show here the morning after they're posted.",
+        "Month 1", "Your part this month", "RGA's work this month", "End of Month 1", "Your Month 1 report", "Get your first reviews", "0 so far"]) has(t, w, L);
+      for (const w of ["month just ended", "A customer win story", "Starts after setup", "Setup step 5", "Go to step 5", "(you chose)", "5 new photos", "Your review requests are how the first ones come in", "more reviews"]) hasNot(t, w, L);
       const look = await h.page.evaluate(`(() => { const t = ${TAB}; const rv = t.querySelector('#step-row-og-reviews'); const card = rv && rv.querySelector('.pm-cs-card'); const pill = rv && rv.querySelector('.pm-pill');
-        return { cust: !!t.querySelector('#step-row-og-customers'), cardTone: card && card.className, rowTone: rv && rv.className, pill: pill && pill.className, cards: t.querySelectorAll(':scope > .pm-cs .pm-cs-card').length, nos: [...t.querySelectorAll('.pm-og-lr .no')].map((n) => n.textContent) }; })()`);
-      if (look.cust) fail(`${L}: step 8's customer list is drawn while Setup step 5 isn't done (it's held)`);
+        return { cust: !!t.querySelector('#step-row-og-customers'), cardTone: card && card.className, rowTone: rv && rv.className, pill: pill && pill.className, card1: t.querySelectorAll('[data-og-month1]').length }; })()`);
+      if (look.cust) fail(`${L}: the weekly customer list is drawn while Month 1 runs (the review asks in the Month 1 card are the first round)`);
       if (!/\boff\b/.test(look.cardTone || "") || /\byou\b/.test(look.cardTone || "") || !/cs-wait/.test(look.rowTone || "")) fail(`${L}: the empty reviews card isn't grey (card ${look.cardTone}, row ${look.rowTone})`);
       if (!/\bdone\b/.test(look.pill || "")) fail(`${L}: "From Google, today" isn't the green pill (${look.pill})`);
-      if (look.cards !== 1) fail(`${L}: "Starts after setup" isn't ONE card (${look.cards})`);
-      if (look.nos.join(",") !== "8,9,10,11,12") fail(`${L}: the step numbers read ${look.nos.join(",")}; approved 8,9,10,11,12 (managed numbering)`);
+      if (look.card1 !== 1) fail(`${L}: Month 1 isn't ONE month card (${look.card1})`);
       await h.page.evaluate(`(() => { const t = ${TAB}; t.querySelector('#step-row-og-reviews [data-portal-goto]')?.click(); })()`); await tick(1200);
-      const went = await h.page.evaluate(() => { const r = document.getElementById("step-row-m1.review.first_5"); return { setup: !!document.querySelector(".pv-setup") && getComputedStyle(document.querySelector(".pv-setup")).display !== "none", row: !!r && r.offsetParent !== null }; });
-      if (!went.setup || !went.row) fail(`${L}: "Go to step 5" doesn't land on Setup step 5 (${JSON.stringify(went)})`);
-      if (h.errs.length) fail(`${L}: page errors ${h.errs.slice(0, 2).join(" · ")}`);
+      const went = await h.page.evaluate(() => { const r = document.getElementById("step-row-m1.review.first_5"); return { ongoing: !!document.querySelector(".pv-ongoing") && getComputedStyle(document.querySelector(".pv-ongoing")).display !== "none", row: !!r && r.offsetParent !== null }; });
+      if (!went.ongoing || !went.row) fail(`${L}: "Open your customer list" doesn't land on the review asks in the Month 1 card (${JSON.stringify(went)})`);
+      if (h.errs.length) fail(`${L}: page errors ${h.errs.slice(0, 2).join(" \u00b7 ")}`);
     } finally { await h.close(); }
-  }
-  // ── SETUP, step 5 done: step 8 opens; its due day is the period's ────────────────────────────────────────
-  {
-    const h = await open("managed", { tasks: baseTasks({ "m1.review.first_5": { status: "done", completed_at: "2026-10-30T12:00:00Z" } }) });
-    try {
-      const t = await settle(h), L = "managed Setup, step 5 done";
-      const r = await rowText(h, "og-customers");
-      if (!r) fail(`${L}: step 8's customer list isn't drawn once Setup step 5 is done`);
-      else { has(r, "due Mon Nov 9", L); hasNot(r, "(you chose)", L); hasNot(r, "due Mon Nov 2", L); has(r, "Nov 2 – Nov 8", L); }
-      hasNot(t, "Opens once Setup step 5 is done", L);
-      has(t, "Your first ones come from step 8", L);
-      // 11-5 walk: "No jobs this week" saved, but this row (on the Ongoing tab, which the Setup redraw never touches) kept asking and its button spun forever
-      await h.page.evaluate(`(() => ${TAB}.querySelector('#step-row-og-customers [data-rc-nojobs]')?.click())()`); await tick(1200);
-      if (!h.cadenceCalls.some((c) => c.action === "no_jobs")) fail(`${L}: "No jobs this week" posted nothing`);
-      const nj = await rowText(h, "og-customers");
-      for (const w of ["No list this week", "No jobs to ask about this week", "Next list due Mon Nov 9. No reminder goes out for this week.", "Add a customer after all"]) has(nj || "", w, `${L} after No jobs`);
-      for (const w of ["Saving", "Who did you finish jobs for?"]) hasNot(nj || "", w, `${L} after No jobs`);
-      // 11-6, the owner's screenshot: "Add a customer after all" opened the form with "Send my list" flush under its card (0px; every card's controls sit 12px under it)
-      await h.page.evaluate(`(() => ${TAB}.querySelector('#step-row-og-customers [data-og-add]')?.click())()`); await tick(400);
-      const gap = await h.page.evaluate(`(() => { const f = ${TAB}.querySelector('#step-row-og-customers .pm-og-addf:not([hidden])'); const a = f && f.querySelector(':scope > .pm-k5-acts'), k = a && a.previousElementSibling;
-        return a && k && a.offsetParent !== null ? Math.round(a.getBoundingClientRect().top - k.getBoundingClientRect().bottom) : null; })()`);
-      if (gap === null) fail(`${L}: "Add a customer after all" didn't open the form with its Send my list`);
-      else if (gap < 12) fail(`${L}: "Send my list" sits ${gap}px under its card after "Add a customer after all" (12px, like every card's controls)`);
-    } finally { await h.close(); }
-  }
-  // a saved cadence says so, with its day
-  {
-    const h = await open("managed", { tasks: baseTasks({ "m1.review.first_5": { status: "done" } }), onboarding: { review_cadence: { value: "weekly", at: "2026-10-28T12:00:00Z" } } });
-    try { const r = await rowText(h, "og-customers"); if (!r || !r.includes("weekly (you chose Oct 28)") || !r.includes("No jobs this week")) fail(`managed Setup: a saved cadence doesn't read "(you chose Oct 28)" (${(r || "").slice(0, 160)})`); }
-    finally { await h.close(); }
   }
   // ── MONTHLY, November ────────────────────────────────────────────────────────────────────────────────────
   const NOV_REC = (tasks = {}) => [{ id: "mr11", client_id: CID, workspace_id: "w1", reporting_month: "2026-11-01", data: { tasks } }];
@@ -175,7 +138,7 @@ try {
       hasNot(t, "again in the first week", L);
       // step 8, due this week
       const r8 = await rowText(h, "m2.exec.review_push");
-      for (const w of ["This week's customer list", "Weekly · Nov 2 – Nov 8", "Who did you finish jobs for?", "due Mon Nov 9 · weekly", "Send my list", "No jobs this week", "Who to ask", "Change how often"]) has(r8 || "", w, `${L} step 8`);
+      for (const w of ["Get your first reviews", "Weekly · Nov 2 – Nov 8", "Who did you finish jobs for?", "due Mon Nov 9 · weekly", "Send my list", "No jobs this week", "Who to ask", "Change how often"]) has(r8 || "", w, `${L} step 8`);
       hasNot(r8 || "", "(you chose)", `${L} step 8`); hasNot(r8 || "", "missed last list", `${L} step 8`);
       // step 10
       const r10 = await rowText(h, "m2.exec.gbp_photos");

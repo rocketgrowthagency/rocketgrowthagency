@@ -18,7 +18,7 @@
  ["Close without replying stops asking first", "admin", "close(\"Close without replying\", true)", "close(\"Close without replying\")", 1],
  ["a replied ask still reads as unanswered", "admin", "const replied = Boolean(a.replied_at && Date.parse(a.replied_at) >= Date.parse(a.at || 0));", "const replied = false;", 1],
  ["Undo shows while the client has asked", "admin", "${callOn || ask ? \"\" : undoBtn}", "${callOn ? \"\" : undoBtn}", 1],
- ["To do says Open step for a client ask", "admin", "confirm_call: \"Confirm the time\", client_request: \"Reply\" };", "confirm_call: \"Confirm the time\" };", 1],
+ ["To do says Open step for a client ask", "admin", "confirm_call: \"Confirm the time\", client_request: \"Reply\", client_question: \"Reply\", client_message: \"Reply\" };", "confirm_call: \"Confirm the time\", client_question: \"Reply\", client_message: \"Reply\" };", 1],
  ["Send reply sends without asking", "admin", "if (!await rgaConfirm(`Send this reply to ${to}?", "if (false && await rgaConfirm(`Send this reply to ${to}?", 1],
  ["the reply doesn't stamp the ask", "replyfn", "[key]: { ...t0[key], replied_at: at, replied_by: gate.email || null, reply: message.slice(0, 280) }", "[key]: { ...t0[key] }", 1],
  ["RGA's Close can't close a flag", "adminunlock", "  if (action !== \"confirm\") delete prev.client_flagged;\n", "", 1],

@@ -81,7 +81,7 @@ for (const which of ["main", "month2"]) {
       await page.waitForSelector('.portal-nav a[data-view="setup"]', { state: "attached", timeout: 45000 });
       await page.waitForSelector("#portalLoadingPanel", { state: "hidden", timeout: 45000 });
       const T = {};
-      for (const v of ["dashboard", "ongoing", "reports"]) {
+      for (const v of ["dashboard", "setup", "ongoing", "reports"]) {   // setup_vs_month1_v1 (11-10): Setup is read too (Getting started, no Locked card)
         T[v] = await visible(page, v);
         if (v === "reports") {   // open the Month 1 letter if there is one
           const sum = page.locator("details[data-m1-letter] summary").first();
@@ -95,7 +95,21 @@ for (const which of ["main", "month2"]) {
       for (const v of Object.keys(T)) for (const [re, name] of FORBIDDEN) { const m = re.exec(T[v]); if (m) fail(`${which}/${tag}/${v}: shows ${name}: "…${T[v].slice(Math.max(0, m.index - 40), m.index + 60).replace(/\s+/g, " ")}…"`); }
       if (tag === "phone") { const w = await page.evaluate(() => ({ s: document.documentElement.scrollWidth, i: window.innerWidth })); if (w.s > w.i + 2) fail(`${which}/phone: the page scrolls sideways (${w.s} > ${w.i})`); }
       if (tag === "desk") {
-        const D = T.dashboard, O = T.ongoing, R = T.reports;
+        const D = T.dashboard, O = T.ongoing, R = T.reports, S = T.setup || "";
+        // ── setup_vs_month1_v1 (approved 11-10): Setup is Getting started (3 steps); Month 1 work is the first month card; no Locked card; first-review wording while Google shows 0 ──
+        {
+          const MANAGED = /GETTING STARTED|Month 1/i.test(S + O);
+          if (/complete Step 4|Locked\s*[:\u2014-]\s*complete|Service phase dashboard|Finish Getting started to unlock/i.test(S + D + O)) fail(`${which}: the Locked card ("complete Step 4 to unlock") is on the page`);
+          if (MANAGED && !st.done) {   // Month 1 is running (the report has not gone out)
+            if (!/Getting started/i.test(S)) fail(`${which}: Setup does not show Getting started`);
+            else if (!/\b3 of 3\b|Setup complete/i.test(S) && /complete|done/i.test(S)) ok(`${which}: Setup shows Getting started`);
+            if (/Provide 20\+ business photos|Ask your 5 most recent|close-out call/i.test(S)) fail(`${which}: Month 1 work or the close-out call is still in Setup`);
+            if (!/YOUR PART THIS MONTH/i.test(O) || !/END OF MONTH 1/i.test(O) || !/RGA'S WORK THIS MONTH/i.test(O)) fail(`${which}: Ongoing work has no Month 1 card (Your part · RGA's work · End of Month 1)`); else ok(`${which}: the Month 1 card is there`);
+            const vid = (O.match(/Record 2 short videos[\s\S]{0,160}/i) || [""])[0];
+            if (/\bDone\b/.test(vid.split(/Not now|Track calls/i)[0] || "")) fail(`${which}: "Record 2 short videos" reads Done (RGA's channel setup must not count as the client's videos)`);
+            if (/No reviews on Google yet/i.test(O) && (!/Get your first reviews/i.test(O) || /more reviews/i.test(O))) fail(`${which}: Google shows 0 reviews but the card does not read "Get your first reviews" (or says "more reviews")`);
+          }
+        }
         if (st.between) {
           const startWords = `Month 2 starts ${CM.shortDay(st.between.startMs)}`, startDay = CM.shortDay(st.between.startMs);
           if (!ci(O).includes(ci(startWords))) fail(`${which}: Ongoing work does not show the between-months card "${startWords}"`); else ok(`${which}: Ongoing work shows "${startWords}"`);

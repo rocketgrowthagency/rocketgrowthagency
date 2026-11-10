@@ -92,7 +92,7 @@ export async function bootPortal(scenario = {}, overrides = {}, siteRoot = SITE)
   const playbookTasks = scenario.tasks || {};
   const fake = {
     tables: {
-      clients: [{ id: CID, business_name: "Acme Plumbing", portal_mode: scenario.mode === "column_missing" ? undefined : scenario.mode ?? null, workspace_id: "w1", client_portal_stage: scenario.stage || "stage_3_foundation", website_url: scenario.website === undefined ? "https://acmeplumbing.test" : scenario.website, primary_contact_name: "Pat Smith", primary_contact_email: "client@example.test", status: "active" }],
+      clients: [{ id: CID, business_name: "Acme Plumbing", portal_mode: scenario.mode === "column_missing" ? undefined : scenario.mode ?? null, workspace_id: "w1", client_portal_stage: scenario.stage || "stage_4_onboarding", website_url: scenario.website === undefined ? "https://acmeplumbing.test" : scenario.website, primary_contact_name: "Pat Smith", primary_contact_email: "client@example.test", status: "active" }],
       client_onboarding_records: [{ id: "r1", workspace_id: "w1", client_id: CID, data: { tasks: playbookTasks, ...(scenario.onboarding || {}) } }],
       client_google_oauth: scenario.oauth === false ? [] : [{ client_id: CID, gbp_account_id: "accounts/1", ga4_property_id: "p1", gsc_site_url: "https://acmeplumbing.test/", connected_at: "2026-11-01T12:00:00Z" }],
       client_photos: [], client_customer_lists: [], client_invoices: [], client_subscriptions: [], client_portal_content: [], client_keyword_rankings: [], client_gbp_snapshots: [], client_monthly_records: [],

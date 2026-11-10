@@ -32,13 +32,14 @@ const BEFORE = process.env.MANAGED_PORTAL_BEFORE_JS || "";   // portal.js as it 
 // for a client who isn't managed is the posts card's reason on its own line (client_step02_managed_access_v1: "Not yetA service page…" was missing
 // its separator for every client): <small> → <small class="pm-cs-why">. Anything else that differs fails.
 const BEFORE_KIT = process.env.MANAGED_PORTAL_BEFORE_KIT || "";
-const LIST = "[id^='action-items-list-'][id$='-setup']";
+const LIST = "[id^='action-items-list-'][id$='-m1']";
 const tick = (ms) => new Promise((r) => setTimeout(r, ms));
 // step 6's managed title is its own (client_step06_videos_v1, 11-4: the pill already says Optional) — read from its one home, the published managedLabel
 const VIDEOS_MANAGED = (() => { try { const s = JSON.parse(fs.readFileSync(`${SITE}/data/playbooks/client-steps.json`, "utf8")).month1.find((x) => x.id === "m1.brand.youtube_setup"); return (s && (s.managedLabel || s.clientLabel)) || "?"; } catch { return "?"; } })();
 // client_step03_business_details_v1 (approved 11-4): managed step 3 is "Check your business details on Google" (its one home: managed-steps.json)
 const STEP3 = "Check your business details on Google";
-const MANAGED_ORDER = ["Book your kickoff call", "Give RGA access to your website", STEP3, "Provide 20+ business photos", "Ask your 5 most recent customers for a review", VIDEOS_MANAGED, "Attend Month 1 close-out call"];
+// setup_vs_month1_v1 (11-10): a managed Setup is Getting started, 3 steps; photos, review asks, videos and the close-out call are Month 1 work in the Month 1 card on Ongoing work
+const MANAGED_ORDER = ["Book your kickoff call", "Give RGA access to your website", STEP3];
 // the posts card's answer (portal-blog-posts → _blog-client-plan.js), pages first: five service pages, then posts
 const PAGES = ["Drain cleaning", "Water heaters", "Leak repair", "Sewer lines", "Gas lines"];
 const BLOG_CARD = (over = {}) => ({ ok: true, setup: true, off: false, card: { state: "pages_first", title: "Your website posts", side: "pages come first", note: "Posts are never sold as a way to rank on Maps and never promise calls.", action: "off", actionLabel: "Say no to posts",
@@ -56,6 +57,8 @@ async function open(scn, mode, over = {}, overrides = {}, extra = {}) {
   catch (e) { if (!/timeout/i.test(String(e && e.message))) throw e; await h.page.goto(`${h.base}/portal/`, { waitUntil: "domcontentloaded", timeout: 90000 }); }
   try { await h.ready(over.ready || LIST + " .pm-step-row", 20000); } catch { throw new HarnessUnavailable(`the Setup list never drew (${h.errs[0] || "no error"})`); }
   await h.page.evaluate(() => document.querySelector(".portal-nav a[data-view=setup]")?.click());
+  // setup_vs_month1_v1 (11-10): Getting started is the Setup tab; the RGA cards and Month 1 work moved to the Month 1 card on Ongoing work. This gate reads and presses both, so show both tabs.
+  await h.page.addStyleTag({ content: ".pv-setup,.pv-ongoing{display:block !important}" });
   await tick(500);
   return h;
 }
@@ -120,13 +123,13 @@ try {
       const rows = await rowsOf(h);
       const titles = rows.map((r) => r.title);
       if (JSON.stringify(titles) !== JSON.stringify(MANAGED_ORDER)) fail(`${scn}: the managed list reads ${JSON.stringify(titles)}, approved ${JSON.stringify(MANAGED_ORDER)}`);
-      if (JSON.stringify(rows.map((r) => r.num)) !== JSON.stringify(["1", "2", "3", "4", "5", "6", "7"]) && !(scn === "allDone" || scn === "noWebsite")) fail(`${scn}: the numbers read ${rows.map((r) => r.num).join(",")}, approved 1–7`);
+      if (JSON.stringify(rows.map((r) => r.num)) !== JSON.stringify(["1", "2", "3"]) && !(scn === "allDone" || scn === "noWebsite")) fail(`${scn}: the numbers read ${rows.map((r) => r.num).join(",")}, approved 1–3`);
       const check = await h.page.evaluate((L) => [...document.querySelectorAll(`${L} > .pm-step-row > .pm-step-row-head .pm-step-title`)].map((e) => e.textContent).filter((t) => /Verify your Google|Check your business on Google|categories|business hours|what's true/i.test(t)), LIST);
       if (check.length) fail(`${scn}: a "check" step is drawn as its own row: ${check.join(" · ")}`);
       await h.page.waitForSelector("[data-mc-blog][data-blog-filled]", { timeout: 8000 }).catch(() => {});
       const grp = await h.page.evaluate(() => [...document.querySelectorAll(".mc-rrow")].map((r) => ({ t: r.querySelector(".mc-rt b")?.textContent, a: r.querySelector(".mc-lk")?.textContent, id: r.getAttribute("data-mc-card") })));
       // client_step02_managed_access_v1: the sixth line, "Website pages and posts", opens to the plan
-      const want = [["m1.strategy.keywords_locations", "See why"], ["m1.gbp.booking_link", "Change"], ["m1.brand.social_profiles", "Not mine"], ["m1.tracking.call_setup", "Turn off"], ["m1.tracking.form_setup", "Turn off"], ["managed.website_posts", "See the plan"]];
+      const want = [["m1.strategy.keywords_locations", "See why"], ["m1.gbp.booking_link", "Change"], ["m1.brand.social_profiles", "Not mine"], ["m1.tracking.form_setup", "Turn off"], ["managed.website_posts", "See the plan"]];
       if (JSON.stringify(grp.map((g) => [g.id, g.a])) !== JSON.stringify(want)) fail(`${scn}: "What RGA is doing" reads ${JSON.stringify(grp.map((g) => [g.id, g.a]))}, approved ${JSON.stringify(want)}`);
       if (!/what rga is doing/i.test((await text(h, ".mc-phase")) || "")) fail(`${scn}: no "What RGA is doing" heading`);
       // step 2 is only the access: the posts card is not drawn in it (it is the sixth line above)
@@ -327,7 +330,7 @@ try {
     // not set up yet: no line; the five others stay
     const ns = await open("plumber", "managed", {}, {}, { fns: { "portal-blog-posts": () => ({ ok: true, setup: false, off: false, card: { state: "not_set_up", rows: [], action: null } }) } });
     try { await ns.page.waitForSelector("[data-mc-blog][data-blog-filled]", { timeout: 8000 }).catch(() => {}); await tick(200);
-      if (await ns.page.evaluate(() => { const b = document.querySelector("[data-mc-blog]"); return !b || !b.hidden || document.querySelectorAll(".mc-rrow").length !== 5; })) fail("posts not set up yet still draws a sixth line");
+      if (await ns.page.evaluate(() => { const b = document.querySelector("[data-mc-blog]"); return !b || !b.hidden || document.querySelectorAll(".mc-rrow").length !== 4; })) fail("posts not set up yet still draws a fifth line");   // setup_vs_month1_v1: call tracking left the group (its own choice card)
     } finally { await ns.close(); }
     // self-serve keeps the card under step 2, with "Change something" on a locked step
     const ss = await open("plumber", "self_serve", { tasks: { "m1.access.website": ACCESS_LOCKED } });
@@ -358,8 +361,9 @@ try {
     const three = open1.filter((i) => i.t.includes(STEP3));
     if (three.length !== 1 || three[0].no !== "3") fail(`To do (managed): step 3 isn't ONE item numbered 3 (${JSON.stringify(open1.map((i) => [i.no, i.t.slice(0, 40)]))})`);
     if (open1.some((i) => /Check your business on Google|categories|business hours|what's true|Verify your Google|keyword plan|call tracking|booking link|social profiles|form/i.test(i.t))) fail(`To do (managed) still lists a step that lives inside step 3 or an RGA card: ${JSON.stringify(open1.map((i) => i.t.slice(0, 50)))}`);
-    if (!open1.some((i) => i.no === "4")) fail("To do (managed): photos aren't numbered 4");
-    if (!/Month 1 · 2 of 7 done/.test(m.head)) fail(`To do (managed): the progress line isn't "2 of 7" (${m.head.replace(/\s+/g, " ").slice(0, 160)})`);
+    // setup_vs_month1_v1: only Getting started blocks, so To do lists the open Getting started steps; photos (Month 1 work) have no number and are not a client move
+    if (open1.some((i) => i.no === "4")) fail("To do (managed): photos still read as step 4 (Month 1 work has no number)");
+    if (!/Month 1 · 2 of 3 done/.test(m.head)) fail(`To do (managed): the progress line isn't "2 of 3" (${m.head.replace(/\s+/g, " ").slice(0, 160)})`);
     if (!/about 20 minutes/.test(m.head)) fail(`To do (managed): the minutes aren't step 3's (from managed.check) plus photos (${m.head.replace(/\s+/g, " ").slice(0, 160)})`);
     const allDone = ["m1.gbp.verify", "m1.gbp.business_facts", "m1.gbp.services_products", "m1.gbp.hours_attributes", "m1.gbp.attributes"].map((id) => ({ id, at: "2026-11-03T12:00:00Z" }));
     const d = await todo("managed", [...allDone, { id: "m1.brand.social_profiles", at: "2026-11-03T12:00:00Z" }], undefined);
@@ -414,7 +418,6 @@ try {
       const want = {
         "m1.gbp.booking_link": { mk: "ok", t: "Booking link on Google · acmeplumbing.test/book-onlineOn Google since Oct 29", sub: "On Google since Oct 29", act: "Change" },
         "m1.brand.social_profiles": { mk: "ok", t: "Social profiles · YouTube, @acmeplumbingThe link opens · checked Nov 4", sub: "The link opens · checked Nov 4", act: "Not mine" },
-        "m1.tracking.call_setup": { mk: "off", t: "Call tracking · Off for nowSkipped Oct 2", sub: "Skipped Oct 2", act: "" },
         "m1.tracking.form_setup": { mk: "ok", t: "Form tracking · Counting your website formNo form sends yet · checked Nov 3", sub: "No form sends yet · checked Nov 3", act: "Turn off" },
       };
       for (const [id, w] of Object.entries(want)) if (JSON.stringify(lines[id]) !== JSON.stringify(w)) fail(`RGA line ${id} reads ${JSON.stringify(lines[id])}, approved ${JSON.stringify(w)}`);

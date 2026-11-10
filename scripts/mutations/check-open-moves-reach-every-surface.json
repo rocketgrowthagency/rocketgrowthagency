@@ -4,7 +4,7 @@
  ["a listing step is dated from before the listing cleared", "openmoves", "    done.push(d.owner_removal && d.owner_removal.status === \"removed\" ? d.owner_removal.at : isFinished(d) ? d.completed_at : null);\n", "\n"],
  ["the Month 1 report is a move before kickoff + 27", "openmoves", "      const nb = r && NOT_BEFORE[rid] ? NOT_BEFORE[rid](tasks) : undefined;", "      const nb = undefined;"],
  ["RGA-only steps reach the client", "openmoves", "    else if (visible.has(m.step_id)) out.push(pick(m, m.step_id, m.kind));", "    else out.push(pick(m, m.step_id, m.kind));"],
- ["Remind me later is ignored", "openmoves", "!s.clientOptional && !rgaCard && !(t.later && t.later.until && Date.parse(t.later.until) > Date.parse(now))", "!s.clientOptional && !rgaCard"],
+ ["Remind me later is ignored", "openmoves", "!s.clientOptional && !rgaCard && !month1Work && !(t.later && t.later.until && Date.parse(t.later.until) > Date.parse(now))", "!s.clientOptional && !rgaCard && !month1Work"],
  ["no start date reads as late", "openmoves", "  m.late = !!due && Date.parse(due) < t;", "  m.late = !due || Date.parse(due) < t;"],
  ["a picked call time is not RGA's to confirm", "openmoves", "if (k && k.status === \"requested\") out.push(", "if (false) out.push("],
  ["the morning email comes when nothing is due", "morningfn", "  if (!late.length && !today.length) return null;\n", "\n"],

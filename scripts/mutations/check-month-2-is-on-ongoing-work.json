@@ -30,14 +30,14 @@
  [
   "Setup lists Month 2 again",
   "portal",
-  "customerLists, { month1Only: true, domSuffix: \"-setup\" });",
-  "customerLists);",
+  "ctx.photos, pmManaged() ? (ctx.customerLists || []) : null, { month1Only: true, ...(pmManaged()",
+  "ctx.photos, pmManaged() ? (ctx.customerLists || []) : null, { ...(pmManaged()",
   1
  ],
  [
   "two lists race for the headline",
   "portal",
-  "if (month2Only || !m2ListOnPage) _nextStepInputs = ",
+  "if ((month2Only || !m2ListOnPage) && opts.group !== \"m1w\") _nextStepInputs = ",
   "_nextStepInputs = ",
   1
  ],

@@ -20,7 +20,7 @@ const puppeteer = (await import("puppeteer")).default;
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 try {
   await h.page.goto(`${h.base}/portal/`, { waitUntil: "domcontentloaded" });
-  await h.ready("[id^='action-items-list-'][id$='-setup'] .pm-step-row", 20000);
+  await h.ready("[id^='action-items-list-'][id$='-m1'] .pm-step-row", 20000);
   await h.page.evaluate(() => document.querySelector(".portal-nav a[data-view=setup]")?.click());
   await new Promise((r) => setTimeout(r, 1500));
   await h.page.evaluate(() => { const r = document.getElementById("step-row-managed.check_found"); if (r && r.classList.contains("is-collapsed")) r.querySelector(".pm-step-row-head").click(); });

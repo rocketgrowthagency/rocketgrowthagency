@@ -68,19 +68,22 @@ try {
   must(Object.values(baseH.message).some((m) => /^Step \d+ — /.test(m.where || "")), "self-serve messages lost their step numbers");
 
   // MANAGED
+  // setup_vs_month1_v1 (11-10): a managed client's numbered steps are Getting started (1 to 3). Month 1 work (photos, review asks, videos, the close-out call) has NO number anywhere the client reads, and does not count in To do's progress.
+  const M1W = new Set(["m1.gbp.photos", "m1.review.first_5", "m1.brand.youtube_setup", "m1.call.close"]);
   const mg = dump(SITE, "managed"), mgH = await dumpHandlers(SITE, "managed");
   const checkWords = `step ${check.managedStepNo}, ${check.clientLabel}`;
   for (const s of steps) {
     const role = s.managedRole;
     const w = mg.firstStepWords[s.id], msg = mgH.message[s.id];
     if (w !== undefined) {
-      if (role === "step" && s.managedStepNo != null) must(w === `Do step ${s.managedStepNo} first.`, `managed "${s.id}": wait words "${w}", managed number ${s.managedStepNo}`);
+      if (role === "step" && s.managedStepNo != null && !M1W.has(s.id)) must(w === `Do step ${s.managedStepNo} first.`, `managed "${s.id}": wait words "${w}", managed number ${s.managedStepNo}`);
+      if (M1W.has(s.id)) must(!/step \d/i.test(w), `managed Month 1 work "${s.id}" prints a step number in its wait words: "${w}"`);
       if (role === "check") must(w === `Do ${checkWords}, first.`, `managed check "${s.id}": wait words "${w}" should point to ${checkWords}`);
       if (role === "card") must(!/\bstep \d/i.test(w), `managed card "${s.id}" printed a number: "${w}"`);
       if (role === "setup") must(w === "Connect Google first.", `managed setup row "${s.id}": "${w}"`);
     }
     if (msg) {
-      if (role === "step") must(msg.where === (s.managedStepNo != null ? `Step ${s.managedStepNo} — ${s.clientLabel}` : `Step: ${s.clientLabel}`), `managed message for ${s.id} says "${msg.where}"`);
+      if (role === "step") must(msg.where === (s.managedStepNo != null && !M1W.has(s.id) ? `Step ${s.managedStepNo} — ${s.clientLabel}` : `Step: ${s.clientLabel}`), `managed message for ${s.id} says "${msg.where}"`);
       if (role === "check") must(msg.where === `Step ${check.managedStepNo} — ${check.clientLabel} · ${s.clientLabel}`, `managed check message for ${s.id} says "${msg.where}"`);
       if (role === "card" || role === "setup") must(msg.where === `Step: ${s.clientLabel}`, `managed ${role} message for ${s.id} says "${msg.where}" (no number)`);
     }
@@ -88,7 +91,7 @@ try {
   for (const [id, names] of Object.entries(mg.moves)) {
     const s = byId[id]; if (!s || !names.length) continue;
     const n = names[0];
-    if (s.managedRole === "step") must(n === `Step ${s.managedStepNo} · ${s.clientLabel}`, `managed move for ${id} named "${n}"`);
+    if (s.managedRole === "step") must(n === (M1W.has(id) ? s.clientLabel : `Step ${s.managedStepNo} · ${s.clientLabel}`), `managed move for ${id} named "${n}"`);
     if (s.managedRole === "check") must(n === `Step ${check.managedStepNo} · ${check.clientLabel} · ${s.clientLabel}`, `managed check move for ${id} named "${n}"`);
     if (s.managedRole === "card") must(n === s.clientLabel, `managed card move for ${id} printed a number: "${n}"`);
   }
@@ -109,7 +112,8 @@ try {
   must(mgMail.length > 0, "no candidate step produced an open email to check");
   for (const [id, mail] of mgMail) {
     const s = byId[id] || {}; const t = mail.markup;
-    if (s.managedRole === "step") must(t.includes(`Step ${s.managedStepNo} in your portal`) || t.includes(`step ${s.managedStepNo} in your portal`) || !s.clientStepNo, `managed open email for ${id} doesn't say step ${s.managedStepNo}`);
+    if (s.managedRole === "step" && M1W.has(id)) must(!/\b[Ss]tep \d/.test(t), `managed open email for Month 1 work ${id} prints a step number`);
+    else if (s.managedRole === "step") must(t.includes(`Step ${s.managedStepNo} in your portal`) || t.includes(`step ${s.managedStepNo} in your portal`) || !s.clientStepNo, `managed open email for ${id} doesn't say step ${s.managedStepNo}`);
     if (s.managedRole === "check") must(t.includes(`Step ${check.managedStepNo}, ${check.clientLabel}`) || t.includes(`step ${check.managedStepNo}, ${check.clientLabel}`), `managed open email for check step ${id} doesn't point to step ${check.managedStepNo}`);
     if (s.managedRole === "card") must(!/\b[Ss]tep \d/.test(t) && !/Open step/.test(t), `managed open email for card ${id} prints a number`);
   }
@@ -139,13 +143,13 @@ try {
   const pg = OM.month1Progress(cs.month1, doneAll, "managed", check), ps = OM.month1Progress(cs.month1, doneAll, null, check);
   const nStep = cs.month1.filter((s) => s.managedRole === "step").length;
   must(mg.day50.done_count === cs.month1.filter((s) => ["step", "check", "card"].includes(s.managedRole)).length && base.day50.done_count === seenAllSs, `Day 50 counts ${mg.day50.done_count} / ${base.day50.done_count} done steps`);
-  must(pg.total === nStep + 1 && pg.done === pg.total, `managed progress counts ${pg.done}/${pg.total}, expected ${nStep + 1} (the steps + step 3)`);
+  must(pg.total === 3 && pg.done === pg.total, `managed progress counts ${pg.done}/${pg.total}, expected 3 (Getting started: kickoff, website access, step 3)`);
   must(pg.done_steps.some((d) => d.id === check.id), "managed progress doesn't list step 3 as done when all five checks are");
   const half = { ...doneAll }; delete half[check.covers[0]];
   must(!OM.month1Progress(cs.month1, half, "managed", check).done_steps.some((d) => d.id === check.id), "managed step 3 counts as done with one of its five rows open");
   must(ps.total === cs.month1.filter((s) => s.clientStepNo != null).length && ps.done === ps.total, "self-serve progress changed");
   must(eq(baseH.openMoves.body.month1, OM.month1Progress(req("../../data/playbooks/playbooks.json").month1, { [req("../../data/playbooks/playbooks.json").month1[0].id]: { status: "done" } }, null, null)), "the open-moves handler's self-serve progress differs from the old rule");
-  must(mgH.openMoves.body.month1.total === nStep + 1, `the managed handler's progress total is ${mgH.openMoves.body.month1.total}`);
+  must(mgH.openMoves.body.month1.total === 3, `the managed handler's progress total is ${mgH.openMoves.body.month1.total} (Getting started is 3)`);
 
   // ═══ 2 · admin: the words and the switch ═══════════════════════════════════════════════════════════════════════
   const adminSrc = fs.readFileSync(path.join(SITE, "admin/admin.js"), "utf8");
@@ -156,7 +160,7 @@ try {
     const run = (mode, step) => new Function("state", "_managedCheck", "globalThis", `${fnText}; return clientStepWhere(${JSON.stringify(step)});`)({ selectedClient: { portal_mode: mode } }, check, { rgaPortalModeWords: W });
     const photo = byId["m1.gbp.photos"], hrs = byId["m1.gbp.hours_attributes"], card = byId["m1.tracking.call_setup"];
     for (const m of [null, "self_serve", undefined]) must(run(m, photo) === `step ${photo.clientStepNo}`, `admin names photos "${run(m, photo)}" for mode ${m}, today's is step ${photo.clientStepNo}`);
-    must(run("managed", photo) === `step ${photo.managedStepNo}`, `admin names photos "${run("managed", photo)}" for a managed client`);
+    must(run("managed", photo) === null, `admin names photos "${run("managed", photo)}" for a managed client (Month 1 work has no number)`);
     must(run("managed", hrs) === checkWords, `admin names the hours step "${run("managed", hrs)}" for a managed client, expected "${checkWords}"`);
     must(run("managed", card) === null, `admin printed "${run("managed", card)}" for a card`);
   }

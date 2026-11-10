@@ -1,5 +1,5 @@
 [
- ["the Foundation stage draws step 5 without the customer lists again", "portal", "ctx.photos, pmManaged() ? (ctx.customerLists || []) : null, { month1Only: true });", "ctx.photos, null, { month1Only: true });", 1],
+ ["the Foundation stage draws step 5 without the customer lists again", "portal", "ctx.photos, pmManaged() ? (ctx.customerLists || []) : null, { month1Only: true,", "ctx.photos, null, { month1Only: true,", 1],
  ["Write the request is pale again for a managed client", "portal", "data-r5-send${says ? \"\" : \" disabled\"}>Write the request</button>", "data-r5-send disabled>Write the request</button>", 1],
  ["the button greys out again once the client types", "portal", "btn.disabled = !full.length && !form.hasAttribute(\"data-r5-says\"); }", "btn.disabled = !full.length; }", 1],
  ["an empty press says something else", "portal", "say(\"bad\", \"Add a first name and a cell number or email.\");", "say(\"bad\", \"Please check the form.\");", 1],

@@ -31,7 +31,7 @@ const KICKOFF = "2026-10-09T16:11:50Z", NOV5 = "2026-11-05T19:00:00Z", CLOCK = "
 const DEC7 = "2026-12-07T18:00:00Z";
 const md = (iso) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-async function open(mode, { tasks = {}, stage = "stage_4_onboarding", clock = CLOCK, waits = [], monthly = [], view = "setup", fns = {} } = {}) {
+async function open(mode, { tasks = {}, stage = "stage_4_onboarding", clock = CLOCK, waits = [], monthly = [], view = null, fns = {} } = {}) {
   const S = SCENARIOS.allDone;
   const all = { ...S.tasks, ...RGA_CARD_TASKS, "m1.kickoff.call": { status: "done", completed_at: KICKOFF, completed_by: "client" }, ...tasks };
   const posted = [];
@@ -40,7 +40,7 @@ async function open(mode, { tasks = {}, stage = "stage_4_onboarding", clock = CL
       "portal-step-choice": (b, url, ctx) => { posted.push(b); return fns["portal-step-choice"] ? fns["portal-step-choice"](b, url, ctx) : { ok: false, error: "no stub" }; } } }, {}, SITE);
   h.posted = posted;
   try { await h.ready("[id^='action-items-list-'] .pm-step-row", 40000); } catch { await h.close(); throw new HarnessUnavailable(`the portal never drew (${h.errs[0] || "no error"})`); }
-  await h.page.evaluate((v) => document.querySelector(`.portal-nav a[data-view=${v}]`)?.click(), view);
+  await h.page.evaluate((v) => document.querySelector(`.portal-nav a[data-view=${v}]`)?.click(), view || (mode === "managed" ? "ongoing" : "setup"));   // setup_vs_month1_v1: a managed client's close-out call is in the Month 1 card on Ongoing work
   await tick(1200);
   return h;
 }
@@ -48,7 +48,7 @@ const vis = `(el) => !!el && !el.closest("[hidden]") && el.offsetParent !== null
 const openRow = async (h, id) => { await h.page.evaluate((R) => { const r = [...document.querySelectorAll(R)].find((x) => x.offsetParent !== null) || document.querySelector(R); if (r && r.classList.contains("is-collapsed")) r.querySelector("[data-step-toggle]")?.click(); }, ROW(id)); await tick(900); };
 const look = (h, id) => h.page.evaluate(`(() => { const V = ${vis}; const r = [...document.querySelectorAll('${ROW(id)}')].find((x) => x.offsetParent !== null); if (!r) return null;
   const cards = [...r.querySelectorAll(".pm-k5-plan")].filter(V), card = cards[0], sh = r.querySelector("[data-fw-sheet]");
-  return { pills: [...r.querySelectorAll(":scope > .pm-step-row-head .pm-pill")].map((p) => p.textContent.trim()), disc: (r.querySelector(".pm-step-num") || {}).className || "",
+  return { pills: [...r.querySelectorAll(":scope > .pm-step-row-head .pm-pill")].map((p) => p.textContent.trim()).filter((t) => t !== "Optional"), disc: (r.querySelector(".pm-step-num") || {}).className || "",
     band: card ? (card.querySelector(".pm-k5-h b") || {}).textContent || "" : "", side: card ? (card.querySelector(".pm-k5-h > span") || {}).textContent || "" : "", cardCls: card ? card.className : "",
     asks: [...r.querySelectorAll(".pm-fw-ask")].filter(V).map((a) => a.innerText.replace(/\\s+/g, " ").trim()),
     sheet: sh ? { shown: V(sh), inCard: !!sh.closest(".pm-k5-plan"), h3: (sh.querySelector("h3") || {}).textContent || "", lis: [...sh.querySelectorAll("li")].map((l) => l.textContent), fld: (sh.querySelector(".pm-fw-fld") || {}).innerText || "", ph: (sh.querySelector("textarea") || {}).placeholder || "", btns: [...sh.querySelectorAll("button")].map((b) => b.textContent.trim()) } : null,

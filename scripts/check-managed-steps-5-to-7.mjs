@@ -59,7 +59,7 @@ async function open(mode, { tasks = baseTasks(), thread = [openLetter], waits = 
       "portal-review-requests": () => requests, "portal-video-clip": (b) => { fnCalls.push(b); return { ok: true, clips: [], needed: 2, skipped: b && b.kind === "skip" }; } } }, overrides, SITE);
   h.videoCalls = fnCalls;
   try { await h.ready("[id^='action-items-list-'] .pm-step-row", 20000); } catch { await h.close(); throw new HarnessUnavailable(`the Setup list never drew (${h.errs[0] || "no error"})`); }
-  await h.page.evaluate(() => document.querySelector(".portal-nav a[data-view=setup]")?.click());
+  await h.page.evaluate((v) => document.querySelector(`.portal-nav a[data-view=${v}]`)?.click(), mode === "managed" ? "ongoing" : "setup");   // setup_vs_month1_v1: for a managed client steps 5-7 are Month 1 work, in the Month 1 card on Ongoing work; self-serve keeps them in Setup
   await tick(1200);
   return h;
 }
@@ -70,7 +70,7 @@ const openRow = (h, id) => h.page.evaluate(`(() => { const l = ${LISTV}; const r
 const rowFacts = (h, id) => h.page.evaluate(`(() => { const l = ${LISTV}; const r = l && l.querySelector('[id="step-row-${id}"]'); if (!r) return null;
   const num = r.querySelector(".pm-step-num"), pill = r.querySelector(".pm-step-pills .pm-pill");
   return { cls: r.className, text: r.innerText.replace(/\\s+/g, " ").trim(), html: r.innerHTML, title: (r.querySelector(".pm-step-title") || {}).textContent,
-    pills: [...r.querySelectorAll(".pm-step-pills .pm-pill")].map((p) => p.textContent.trim()), disc: num && getComputedStyle(num).backgroundColor, discInk: num && getComputedStyle(num).color,
+    pills: [...r.querySelectorAll(".pm-step-pills .pm-pill")].map((p) => p.textContent.trim()).filter((t) => t !== "Optional" || /youtube_setup/.test(r.id)), disc: num && getComputedStyle(num).backgroundColor, discInk: num && getComputedStyle(num).color,
     pillBg: pill && getComputedStyle(pill).backgroundColor, band: (r.querySelector(".pm-k5-h b") || {}).textContent || "", side: (r.querySelector(".pm-k5-h > span") || {}).textContent || "" }; })()`);
 // nothing overlaps or runs out of the row (visible boxes only: a closed <details> has none)
 const layoutBad = (h, id) => h.page.evaluate(`(() => { const l = ${LISTV}; const r = l && l.querySelector('[id="step-row-${id}"]'); if (!r) return ["the row is gone"];
@@ -160,7 +160,7 @@ try {
         if (!r.text.includes(foot)) fail(`managed step 7's foot isn't "${foot}"`);
       }
       // the wording per status (client_setup_status_protocol_v1): no "Waiting on Google" pill on any Setup step
-      const pills = await h.page.evaluate(`(() => [...${LISTV}.querySelectorAll(".pm-step-row-head .pm-pill")].map((p) => p.textContent.trim()))()`);
+      const pills = await h.page.evaluate(`(() => [...${LISTV}.querySelectorAll(".pm-step-row-head .pm-pill")].map((p) => p.textContent.trim()).filter((t) => t !== "Optional"))()`);
       if (pills.some((p) => /waiting on google|waits on google/i.test(p))) fail(`a managed Setup step shows a Google-wait pill: ${pills.join(" · ")}`);
       // nothing overlaps or clips, at the three widths
       for (const w of [375, 768, 1280]) {

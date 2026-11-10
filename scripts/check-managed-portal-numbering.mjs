@@ -67,7 +67,10 @@ let M;
 try { M = createRequire(import.meta.url)(path.join(SITE, "shared/portal-mode.js")); }
 catch (e) { console.error(`⚠️  INDETERMINATE: shared/portal-mode.js won't load: ${String(e.message).slice(0, 100)}`); process.exit(2); }
 const photos = steps.find((s) => s.id === "m1.gbp.photos");
-if (photos && M.stepNo(photos, "managed") !== photos.managedStepNo) fail(`the helper gives photos managed number ${M.stepNo(photos, "managed")}, the step says ${photos.managedStepNo}`);
+// setup_vs_month1_v1 (11-10): Month 1 work has no number in a managed portal (the playbook keeps managedStepNo for admin and the gates); Getting started 1 to 3 keep theirs
+if (photos && M.stepNo(photos, "managed") !== null) fail(`the helper gives photos managed number ${M.stepNo(photos, "managed")}, Month 1 work has none`);
+const kick = steps.find((s) => s.id === "m1.kickoff.call");
+if (kick && M.stepNo(kick, "managed") !== kick.managedStepNo) fail(`the helper gives the kickoff managed number ${M.stepNo(kick, "managed")}, the step says ${kick.managedStepNo}`);
 for (const mode of [null, undefined, "self_serve", "Managed", "bogus"]) if (photos && M.stepNo(photos, mode) !== photos.clientStepNo) fail(`the helper gives photos number ${M.stepNo(photos, mode)} for mode ${JSON.stringify(mode)}, today's is ${photos.clientStepNo}`);
 if (M.modeOf("bogus") !== null || M.modeOf("managed") !== "managed") fail("the helper reads an unknown mode as a mode");
 if (M.label(null) !== "Not chosen" || M.label("bogus") !== "Not chosen") fail("the helper names a mode for a client with none");

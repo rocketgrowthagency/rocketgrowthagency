@@ -113,7 +113,7 @@ if (!/isDone && !askLk(?: && !fwMoved && !ccAgreed && !rgaSkipped)?(?: && \(!og 
   if (!/const ask = !declined && !kick2 && !callOn && !kick4Req \? admAskOf\(s\.task\) : null;/.test(A) || !/\$\{callOn \|\| ask \? "" : undoBtn\}/.test(A)
     || !/if \(ask\) return ask\.replied \? `<span class="ob-status queued is-reads">Client reads it<\/span>` : `<span class="ob-status active is-ask">Reply today<\/span>`;/.test(A)
     || !/\(ask \? `<div class="ob-done-card ob-ask-wrap">\$\{adminAskHtml\(o\.flowId, s\.task, ask\)\}<\/div>` : ""\)/.test(A)) fail("a done row the client asked about still reads Done with Undo, or draws no ask card");
-  if (!/client_request: "Reply" \}/.test(A) || !/focusAskReply\(step\);/.test(A)) fail("To do's button for a client ask isn't \"Reply\" landing in the reply box");
+  if (!/client_request: "Reply"[^}]*\}/.test(A) || !/focusAskReply\(step\);/.test(A)) fail("To do's button for a client ask isn't \"Reply\" landing in the reply box");
   if (!/fetch\("\/\.netlify\/functions\/portal-reply"/.test(A) || !/if \(!await rgaConfirm\(`Send this reply to \$\{to\}\?/.test(A)) fail("Send reply doesn't go through portal-reply, or sends without asking first");
   // Chris 10-27 "?" screenshots: a closed Unlock… sat above Send reply (its hidden form's grid gap), and the opened row 8 line drew the
   // whole card again inside itself (title twice, a box in a box)
