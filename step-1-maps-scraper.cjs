@@ -382,7 +382,7 @@ async function discoverWebsiteViaSearch(_browserUnused, businessName, city, cate
   if (serpKey) {
     for (const q of queries) {
       const url = `https://serpapi.com/search?engine=google&q=${encodeURIComponent(q)}&api_key=${encodeURIComponent(serpKey)}&num=10&hl=en`;
-      const res = await serpapiGetRateAware(url);
+      const res = await serpapiGetRateAware(url, { consumer: 'step1-website-discovery', ref: businessName });
       if (!res) continue;
       const organic = res.data?.organic_results || [];
       const candidates = organic.map((r) => r.link).filter(Boolean);

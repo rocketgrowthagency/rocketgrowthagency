@@ -92,7 +92,7 @@ async function discoverEmail(siteHost, businessName, phone = '', searchTerm = ''
   const candidates = [];
   for (const q of queries) {
     const url = `https://serpapi.com/search?engine=google&q=${encodeURIComponent(q)}&api_key=${encodeURIComponent(SERPAPI_KEY)}&num=10&hl=en`;
-    const res = await serpapiGetRateAware(url); // handles rate-limit + auto-resume
+    const res = await serpapiGetRateAware(url, { consumer: 'discover-no-email-leads', ref: q }); // handles rate-limit + auto-resume
     if (!res) continue; // skip on transient errors
     const snippets = [];
     for (const o of res.data.organic_results || []) {

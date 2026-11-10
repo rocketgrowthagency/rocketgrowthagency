@@ -13,6 +13,7 @@ import csvParser from 'csv-parser';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import slugify from 'slugify';
+import { scoreSignals } from './scripts/lib/verification-signals.mjs';
 
 puppeteer.use(StealthPlugin());
 
@@ -1975,7 +1976,8 @@ async function auditGbp(_, gbpUrl, business) {
         console.log('  [gbp-diag] reviews unverified and no CID on the page URL — no fallback (name matching is unsafe)');
       } else {
         try {
-          const { serpapiGetRateAware } = await import('./lib/serpapi-rate-aware.cjs');
+          const { serpapiRequest } = await import('./lib/serpapi-rate-aware.cjs');
+          const memory = (await import('./lib/serpapi-memory.cjs')).default;
           // 🔴 2026-08-24 — SEARCH-then-FILTER was measured recovering NOTHING. Querying by name and
           // keeping the row whose data_id matched the CID is safe but useless: across a live heal of 8
           // leads it matched 0 times, because the name search simply does not return every listing.
@@ -1984,11 +1986,31 @@ async function auditGbp(_, gbpUrl, business) {
           const sUrl = `https://serpapi.com/search?engine=google_maps&type=place`
             + `&data=${encodeURIComponent(`!4m5!3m4!1s${cid}!8m2`)}`
             + `&api_key=${process.env.SERPAPI_KEY}`;
-          const res = await serpapiGetRateAware(sUrl);
-          const pr = res?.data?.place_results || null;
-          const gotPlace = !!(pr && (pr.title || pr.place_id || pr.data_id));
+          // 11-10: the same CID is never looked up twice inside 30 days (every rebuild attempt used to repeat it, "no place"
+          // included). Only a COMPLETED lookup is cached - a budget/quota stop or an error is retried, never stored.
+          const cachedLookup = memory.getReviews(cid);
+          let pr = null;
+          let lookupDone = false;
+          if (cachedLookup) {
+            pr = cachedLookup.gotPlace ? { title: cachedLookup.title || 'cached', place_id: cid, reviews: cachedLookup.reviews ?? undefined } : null;
+            lookupDone = true;
+            console.log(`  [gbp-diag] reviews-by-CID answered from the 30-day cache (no search spent) CID ${cid}`);
+          } else {
+            const { res, stop } = await serpapiRequest(sUrl, { consumer: 'step25-reviews-by-cid', ref: cid });
+            if (res) {
+              pr = res.data?.place_results || null;
+              lookupDone = true;
+              const placeOk = !!(pr && (pr.title || pr.place_id || pr.data_id));
+              memory.putReviews(cid, { gotPlace: placeOk, reviews: Number(pr?.reviews), title: pr?.title || '' });
+            } else {
+              console.log(`  [gbp-diag] reviews-by-CID not looked up (${stop || 'failed'}) - reviews stay unverified, will be retried (not cached)`);
+            }
+          }
+          const gotPlace = lookupDone && !!(pr && (pr.title || pr.place_id || pr.data_id));
           const n = Number(pr?.reviews);
-          if (gotPlace && Number.isFinite(n)) {
+          if (!lookupDone) {
+            // nothing to conclude: no verdict on this lead's reviews either way
+          } else if (gotPlace && Number.isFinite(n)) {
             findings.reviewCount = n;
             findings.reviewCountSource = 'serpapi-cid-place';
             console.log(`  [gbp-diag] reviews via SerpAPI place-by-CID: ${n} ("${pr.title}", CID ${cid})`);
@@ -2058,95 +2080,10 @@ async function auditGbp(_, gbpUrl, business) {
     // repeat audits of the same lead.
     // Cache: output/.cache/duplicate-listings/<biz-slug>.json
     // Memory: feedback_serpapi_quota_protection.md
-    const enableDup = process.env.STEP25_ENABLE_DUPLICATE_LISTING !== '0'; // default ON
-    if (enableDup && process.env.SERPAPI_KEY && business.name) {
-      // Cache check first (30-day TTL)
-      const slugify = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-      const cacheDir = path.join(process.cwd(), 'output', '.cache', 'duplicate-listings');
-      const cacheKey = `${slugify(business.name)}__${slugify(business.searchTerm || '')}`;
-      const cachePath = path.join(cacheDir, `${cacheKey}.json`);
-      const CACHE_TTL_DAYS = 30;
-      let usedCache = false;
-      try {
-        if (fs.existsSync(cachePath)) {
-          const cached = JSON.parse(fs.readFileSync(cachePath, 'utf-8'));
-          const ageDays = (Date.now() - new Date(cached.checkedAt).getTime()) / (24 * 3600 * 1000);
-          if (ageDays >= 0 && ageDays < CACHE_TTL_DAYS) {
-            findings.duplicateListingCount = cached.duplicateListingCount;
-            findings.duplicateListingCountVerified = true;
-            findings.duplicateListings = cached.duplicateListings || [];
-            usedCache = true;
-            console.log(`  [gbp-diag] duplicateListingCount = ${cached.duplicateListingCount} (cached, age=${ageDays.toFixed(1)}d)`);
-          }
-        }
-      } catch (_) {}
-      if (usedCache) {
-        // Skip SerpAPI block entirely
-      } else try {
-        const { serpapiGetRateAware } = await import('./lib/serpapi-rate-aware.cjs');
-        const q = encodeURIComponent(`"${business.name}"`);
-        const ll = (business.lat && business.lon) ? `&ll=@${business.lat},${business.lon},14z` : '';
-        const sUrl = `https://serpapi.com/search?engine=google_maps&type=search&q=${q}${ll}&api_key=${process.env.SERPAPI_KEY}`;
-        const res = await serpapiGetRateAware(sUrl);
-        if (res && res.data) {
-          const local = Array.isArray(res.data.local_results) ? res.data.local_results : [];
-          // Filter to listings whose normalized business name overlaps strongly
-          // with target, then dedupe by place_id.
-          // 2026-06-12: a REAL duplicate is the SAME business listed twice, not a
-          // similarly-named competitor. Old logic counted any 2-token name overlap,
-          // so "Pipe Doctor Rooter & Plumbing Company" was flagged a duplicate of
-          // "Doctor Pipe | Los Angeles Plumbing Specialist" (reversed words, different
-          // address/phone/Place ID). Now require BOTH: the candidate title contains the
-          // target's ORDERED brand phrase, AND — when phones are available — the same
-          // phone (different phone = different business). step-6 carries a matching
-          // recount guard that corrects cached audits. See feedback_audit_duplicate_listing_same_business.md.
-          const DUP_STOP = new Set(['the','and','for','llc','inc','ltd','co','corp','of','at','your','best','top','our','dba','garage','door','doors','repair','repairs','service','services','company','companies','shop','store','center','centers','solution','solutions','group','team','home','professional','professionals','expert','experts','specialist','specialists','pro','pros','plumbing','plumber','plumbers','hvac','heating','cooling','air','conditioning','comfort','roofing','roofer','roofers','rooter','rooters','locksmith','locksmiths','dentist','dental','auto','automotive','car','cars','painting','painters','cleaning','cleaners','water','landscaping','landscape','lawn','tree','trees','pest','control','exterminator','electric','electrician','electricians','contractor','contractors','construction','remodeling','los','angeles','beverly','hills','santa','monica','city','county','ca']);
-          const brandPhrase = (name) => {
-            const toks = String(name || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
-            const phrase = [];
-            for (const t of toks) { if (t.length < 2 || DUP_STOP.has(t)) { if (phrase.length) break; else continue; } phrase.push(t); }
-            return phrase.join(' ');
-          };
-          const tgtPhrase = brandPhrase(business.name);
-          const tgtPhone = normalizePhone(business.phone || '');
-          const matches = local.filter((r) => {
-            if (!tgtPhrase) return false; // brand too generic to confirm — skip (conservative)
-            const n = String(r.title || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
-            if (!n.includes(tgtPhrase)) return false; // must carry the target's ordered brand phrase
-            // If both phones known, they must match (different phone = different business).
-            const cPhone = normalizePhone(r.phone || '');
-            if (tgtPhone && cPhone && tgtPhone !== cPhone) return false;
-            return true;
-          });
-          const distinctIds = new Set(matches.map((m) => m.place_id).filter(Boolean));
-          findings.duplicateListingCount = Math.max(0, distinctIds.size - 1);
-          findings.duplicateListingCountVerified = true;
-          findings.duplicateListings = matches.slice(0, 5).map((m) => ({
-            title: m.title,
-            address: m.address,
-            phone: m.phone || '',
-            placeId: m.place_id,
-            rating: m.rating,
-            reviews: m.reviews,
-            permanently_closed: !!m.permanently_closed,
-          }));
-          console.log(`  [gbp-diag] duplicateListingCount = ${findings.duplicateListingCount} (${distinctIds.size} total places matching "${business.name}")`);
-          // Write 30-day cache for future runs (saves a SerpAPI call per repeat audit).
-          try {
-            if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
-            fs.writeFileSync(cachePath, JSON.stringify({
-              checkedAt: new Date().toISOString(),
-              businessName: business.name,
-              searchTerm: business.searchTerm,
-              duplicateListingCount: findings.duplicateListingCount,
-              duplicateListings: findings.duplicateListings,
-            }, null, 2));
-          } catch (_) {}
-        }
-      } catch (err) {
-        console.log(`  [gbp-diag] duplicateListingCount lookup failed: ${err.message}`);
-      }
-    }
+    // 11-10: the duplicate-listing check (1 Maps search per lead) NO LONGER runs here. auditGbp runs for every lead, but
+    // only a lead that passes 6/6 gets a video. main() now calls lookupDuplicateListings() once the whole audit is in and
+    // the lead is fully verified (scripts/lib/verification-signals.mjs) - so the free filters run first. A lead that fails
+    // 6/6 builds no video, so its duplicate count was never going to be used. Memory: project_serpapi_budget.md
 
     // Primary GBP category vs search intent — #1 local ranking factor.
     //
@@ -2460,6 +2397,99 @@ async function auditGbp(_, gbpUrl, business) {
   return findings;
 }
 
+// === Duplicate-listing check (moved out of auditGbp 11-10; see the note there) ===
+async function lookupDuplicateListings(business, findings) {
+  const enableDup = process.env.STEP25_ENABLE_DUPLICATE_LISTING !== '0'; // default ON
+  if (enableDup && process.env.SERPAPI_KEY && business.name) {
+    // Cache check first (30-day TTL)
+    const slugify = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    const cacheDir = path.join(process.cwd(), 'output', '.cache', 'duplicate-listings');
+    const cacheKey = `${slugify(business.name)}__${slugify(business.searchTerm || '')}`;
+    const cachePath = path.join(cacheDir, `${cacheKey}.json`);
+    const CACHE_TTL_DAYS = 30;
+    let usedCache = false;
+    try {
+      if (fs.existsSync(cachePath)) {
+        const cached = JSON.parse(fs.readFileSync(cachePath, 'utf-8'));
+        const ageDays = (Date.now() - new Date(cached.checkedAt).getTime()) / (24 * 3600 * 1000);
+        if (ageDays >= 0 && ageDays < CACHE_TTL_DAYS) {
+          findings.duplicateListingCount = cached.duplicateListingCount;
+          findings.duplicateListingCountVerified = true;
+          findings.duplicateListings = cached.duplicateListings || [];
+          usedCache = true;
+          console.log(`  [gbp-diag] duplicateListingCount = ${cached.duplicateListingCount} (cached, age=${ageDays.toFixed(1)}d)`);
+        }
+      }
+    } catch (_) {}
+    if (usedCache) {
+      // Skip SerpAPI block entirely
+    } else try {
+      const { serpapiRequest } = await import('./lib/serpapi-rate-aware.cjs');
+      const q = encodeURIComponent(`"${business.name}"`);
+      const ll = (business.lat && business.lon) ? `&ll=@${business.lat},${business.lon},14z` : '';
+      const sUrl = `https://serpapi.com/search?engine=google_maps&type=search&q=${q}${ll}&api_key=${process.env.SERPAPI_KEY}`;
+      const { res } = await serpapiRequest(sUrl, { consumer: 'step25-duplicate-listing', ref: business.name });
+      if (res && res.data) {
+        const local = Array.isArray(res.data.local_results) ? res.data.local_results : [];
+        // Filter to listings whose normalized business name overlaps strongly
+        // with target, then dedupe by place_id.
+        // 2026-06-12: a REAL duplicate is the SAME business listed twice, not a
+        // similarly-named competitor. Old logic counted any 2-token name overlap,
+        // so "Pipe Doctor Rooter & Plumbing Company" was flagged a duplicate of
+        // "Doctor Pipe | Los Angeles Plumbing Specialist" (reversed words, different
+        // address/phone/Place ID). Now require BOTH: the candidate title contains the
+        // target's ORDERED brand phrase, AND — when phones are available — the same
+        // phone (different phone = different business). step-6 carries a matching
+        // recount guard that corrects cached audits. See feedback_audit_duplicate_listing_same_business.md.
+        const DUP_STOP = new Set(['the','and','for','llc','inc','ltd','co','corp','of','at','your','best','top','our','dba','garage','door','doors','repair','repairs','service','services','company','companies','shop','store','center','centers','solution','solutions','group','team','home','professional','professionals','expert','experts','specialist','specialists','pro','pros','plumbing','plumber','plumbers','hvac','heating','cooling','air','conditioning','comfort','roofing','roofer','roofers','rooter','rooters','locksmith','locksmiths','dentist','dental','auto','automotive','car','cars','painting','painters','cleaning','cleaners','water','landscaping','landscape','lawn','tree','trees','pest','control','exterminator','electric','electrician','electricians','contractor','contractors','construction','remodeling','los','angeles','beverly','hills','santa','monica','city','county','ca']);
+        const brandPhrase = (name) => {
+          const toks = String(name || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+          const phrase = [];
+          for (const t of toks) { if (t.length < 2 || DUP_STOP.has(t)) { if (phrase.length) break; else continue; } phrase.push(t); }
+          return phrase.join(' ');
+        };
+        const tgtPhrase = brandPhrase(business.name);
+        const tgtPhone = normalizePhone(business.phone || '');
+        const matches = local.filter((r) => {
+          if (!tgtPhrase) return false; // brand too generic to confirm — skip (conservative)
+          const n = String(r.title || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+          if (!n.includes(tgtPhrase)) return false; // must carry the target's ordered brand phrase
+          // If both phones known, they must match (different phone = different business).
+          const cPhone = normalizePhone(r.phone || '');
+          if (tgtPhone && cPhone && tgtPhone !== cPhone) return false;
+          return true;
+        });
+        const distinctIds = new Set(matches.map((m) => m.place_id).filter(Boolean));
+        findings.duplicateListingCount = Math.max(0, distinctIds.size - 1);
+        findings.duplicateListingCountVerified = true;
+        findings.duplicateListings = matches.slice(0, 5).map((m) => ({
+          title: m.title,
+          address: m.address,
+          phone: m.phone || '',
+          placeId: m.place_id,
+          rating: m.rating,
+          reviews: m.reviews,
+          permanently_closed: !!m.permanently_closed,
+        }));
+        console.log(`  [gbp-diag] duplicateListingCount = ${findings.duplicateListingCount} (${distinctIds.size} total places matching "${business.name}")`);
+        // Write 30-day cache for future runs (saves a SerpAPI call per repeat audit).
+        try {
+          if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
+          fs.writeFileSync(cachePath, JSON.stringify({
+            checkedAt: new Date().toISOString(),
+            businessName: business.name,
+            searchTerm: business.searchTerm,
+            duplicateListingCount: findings.duplicateListingCount,
+            duplicateListings: findings.duplicateListings,
+          }, null, 2));
+        } catch (_) {}
+      }
+    } catch (err) {
+      console.log(`  [gbp-diag] duplicateListingCount lookup failed: ${err.message}`);
+    }
+  }
+}
+
 async function main() {
   const { inputPath, baseName } = findLatestStep2Csv();
   const rows = await loadCsv(inputPath);
@@ -2558,6 +2588,16 @@ async function main() {
       console.log(`  website: load=${websiteFindings.pageLoadSeconds}s schema=${websiteFindings.hasLocalBusinessSchema} h1cat=${websiteFindings.h1IncludesCategory} h1city=${websiteFindings.h1IncludesCity} c2c=${websiteFindings.hasMobileClickToCall} napMatch=${websiteFindings.websitePhoneMatchesGbp} blocking=${websiteFindings.renderBlockingHeadResources}${websiteFindings.siteLooksParked ? ' PARKED=' + websiteFindings.parkedReason : ''}${websiteFindings.suspectWebsiteMismatch ? ' SUSPECT=' + websiteFindings.websiteSuspectReason : ''}`);
       console.log(`  mobile:  load=${mobileFindings.pageLoadSeconds}s viewport=${mobileFindings.hasViewportMeta} c2cAboveFold=${mobileFindings.clickToCallAboveFold} ctaPx=${mobileFindings.primaryCtaTapTargetPx} weightKb=${mobileFindings.pageWeightKb}`);
       console.log(`  gbp:     photos=${gbpFindings.photoCount} reviews=${gbpFindings.reviewCount} last30=${gbpFindings.reviewsLast30Days} daysSinceReview=${gbpFindings.daysSinceLastReview} responses=${gbpFindings.ownerResponseCount} cat=${gbpFindings.primaryCategory}`);
+
+      // 11-10: duplicate-listing search only for a lead that will really get a video (6/6 verified).
+      {
+        const _sig = scoreSignals({ website: websiteFindings, mobile: mobileFindings, gbp: gbpFindings });
+        if (_sig.fullyVerified) {
+          await lookupDuplicateListings(business, gbpFindings);
+        } else {
+          console.log(`  [dup-check] skipped - ${_sig.verifiedCount}/${_sig.totalSignals} verified, this lead builds no video so the duplicate search is not spent`);
+        }
+      }
 
       audits[slug] = {
         businessName: name,

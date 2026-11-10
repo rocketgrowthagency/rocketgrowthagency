@@ -83,10 +83,10 @@ for (const v of [undefined, "", "0", "true", "yes", "1 "]) {
   await none("count unreadable", { left: async () => null }, THREE, /couldn't read how many searches/);
   await none("count throws", { left: async () => { throw new Error("x"); } }, THREE, /couldn't read how many searches/);
   await none("plan out", { left: async () => 3 }, THREE, /plan is out/);
-  await none("plan out at the reserve", { left: async () => 8 }, THREE, /plan is out/);
+  await none("plan out at the reserve", { left: async () => 4 + BD.RESERVE - 1 }, THREE, /plan is out/);
   await none("no competitors", {}, tasksWith([]), /no competitors are recorded/);
   await none("no competitor snapshot at all", {}, {}, /no competitors are recorded/);
-  const ok9 = []; const r9 = await BD.forStep({ client, tasks: THREE, deps: deps({ left: async () => 9, fetchFn: make(ANSWER, ok9) }) });
+  const ok9 = []; const r9 = await BD.forStep({ client, tasks: THREE, deps: deps({ left: async () => 4 + BD.RESERVE, fetchFn: make(ANSWER, ok9) }) });
   if (ok9.length !== 4 || !r9.found) F("exactly the searches needed plus the reserve must go ahead");
 }
 

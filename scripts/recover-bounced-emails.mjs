@@ -158,8 +158,10 @@ async function serpapiSearchEmails(businessName, city, excludeEmail) {
   const query = `"${businessName}"${city ? ' "' + city + '"' : ""} (contact OR email)`;
   const u = `https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(query)}&api_key=${encodeURIComponent(SERPAPI_KEY)}&num=10`;
   try {
-    const r = await axios.get(u, { timeout: 10000, validateStatus: () => true });
-    if (r.status !== 200) return { emails: [], source: null };
+    // 11-10: through the metered wrapper (reserve + ledger). A stop or an error is "could not look", never "no email".
+    const { serpapiGetRateAware } = (await import("node:module")).createRequire(import.meta.url)("../lib/serpapi-rate-aware.cjs");
+    const r = await serpapiGetRateAware(u, { consumer: "recover-bounced-emails", ref: businessName, timeout: 10000 });
+    if (!r || r.status !== 200) return { emails: [], source: null };
     const txt = JSON.stringify(r.data || {});
     const found = extractEmailsFromHtml(txt).filter((e) => e !== excludeEmail);
     return { emails: found, source: found.length > 0 ? "serpapi" : null };

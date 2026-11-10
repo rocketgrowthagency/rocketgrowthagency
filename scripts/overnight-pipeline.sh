@@ -111,6 +111,14 @@ fi
 # in the repo invoked. SerpApi backs email discovery and the website-search fallback on a 5k/month quota,
 # so a regression in the rate-aware wrapper burns quota silently or drops discovery for a whole night.
 # A test nobody runs is documentation, not a guard.
+echo ">>> pre-flight: serpapi budget gate (search memory, one query, reserve, meter, alerts)" | tee -a "$LOGFILE"
+node scripts/check-serpapi-budget.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -eq 2 ]; then
+  echo "⚠️  serpapi budget gate INDETERMINATE (exit 2) - not stopping the night for a harness fault" | tee -a "$LOGFILE"
+elif [ "${_grc:-1}" -ne 0 ]; then
+  echo "✗ FATAL: serpapi budget gate failed - searches could be wasted or a stop could be read as 'no email'. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 echo ">>> pre-flight: serpapi rate-aware suite" | tee -a "$LOGFILE"
 node lib/serpapi-rate-aware.test.cjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
 if [ "${_grc:-1}" -ne 0 ]; then
@@ -516,23 +524,23 @@ if [ "${SKIP_CARD_CHECK:-0}" != "1" ]; then
     exit 1
   fi
 fi
-# 2026-06-02 — SerpAPI quota pre-flight. Locked after 2026-06-01 overnight
-# wasted 10 hours retrying against an exhausted monthly quota. Abort
-# cleanly if remaining is below MIN_SERPAPI_REMAINING (default 100, which
-# covers step-1 scrape + step-2 email fallback for ~55 leads with margin).
-# Set MIN_SERPAPI_REMAINING=0 to bypass.
-MIN_SERPAPI_REMAINING="${MIN_SERPAPI_REMAINING:-100}"
-# Read SERPAPI_KEY from .env if not exported. The script runs under `set -u`
-# so any unset var would crash — use the :- default-empty pattern.
+# 2026-06-02 — SerpAPI quota pre-flight. Locked after 2026-06-01 overnight wasted 10 hours retrying against an exhausted
+# monthly quota.
+# 🔴 11-10 REWRITE (Nov 7-9 aborted here on 0 searches left and the morning report said "No dead window"):
+#   • the old flat "need >= 100" is now "remaining >= the client RESERVE (250)" - the reserve is for paying-client work
+#     (map scans, listing checks, the free-audit form) and the pipeline never spends below it;
+#   • above the reserve a night is NEVER stopped. If the month cannot cover the remaining nights, or 80% is used, an ALERT
+#     is raised (reports/alerts + macOS notification + SKIPPED-NIGHTS.log) and the night goes on;
+#   • below the reserve it stops, raises a same-night alert, and any lead that needed a search is "not searched", never "no email";
+#   • no bypass: the old MIN_SERPAPI_REMAINING=0 switch is gone (it let a night spend client money).
+# The check is the free account.json endpoint; it also saves the snapshot the wrapper enforces. scripts/serpapi-budget.mjs.
 SERPAPI_KEY_LOCAL="${SERPAPI_KEY:-$(grep -E '^SERPAPI_KEY=' .env 2>/dev/null | head -1 | cut -d= -f2-)}"
-if [ -n "${SERPAPI_KEY_LOCAL:-}" ] && [ "$MIN_SERPAPI_REMAINING" -gt 0 ]; then
-  echo ">>> pre-flight: SerpAPI quota check (need ≥${MIN_SERPAPI_REMAINING} remaining)" | tee -a "$LOGFILE"
-  REMAINING=$(curl -s --max-time 10 "https://serpapi.com/account?api_key=${SERPAPI_KEY_LOCAL}" \
-    | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('total_searches_left', 0))" 2>/dev/null || echo 0)
-  echo "    SerpAPI total_searches_left = $REMAINING" | tee -a "$LOGFILE"
-  if [ "$REMAINING" -lt "$MIN_SERPAPI_REMAINING" ]; then
-    echo "✗ FATAL: SerpAPI quota below threshold (${REMAINING} < ${MIN_SERPAPI_REMAINING}). Monthly quota likely exhausted." | tee -a "$LOGFILE"
-    echo "    Wait for billing cycle reset OR upgrade plan OR set MIN_SERPAPI_REMAINING=0 to bypass." | tee -a "$LOGFILE"
+if [ -n "${SERPAPI_KEY_LOCAL:-}" ]; then
+  echo ">>> pre-flight: SerpAPI budget (need remaining >= the client reserve)" | tee -a "$LOGFILE"
+  node scripts/serpapi-budget.mjs preflight 2>&1 | tee -a "$LOGFILE"; _sbrc=${PIPESTATUS[0]}
+  if [ "${_sbrc:-0}" -eq 3 ]; then
+    echo "✗ FATAL: SerpAPI quota too low - fewer searches left than the client reserve. Tonight's search is NOT run; leads that needed a search stay 'not searched' (never 'no email')." | tee -a "$LOGFILE"
+    echo "    Fix: upgrade/top up the plan at serpapi.com/dashboard, or wait for the monthly reset. An alert was raised." | tee -a "$LOGFILE"
     exit 1
   fi
 fi
@@ -599,6 +607,43 @@ CACHE_TTL_MIN=${CACHE_TTL_MIN:-720}  # 720 min = 12 hr
 CACHED_S1=$(find "output/Step 1" -name "*${SLUG}*-\[step-1\].csv" -not -name "*-only-*" -mmin "-${CACHE_TTL_MIN}" 2>/dev/null | head -1)
 CACHED_S2=$(find "output/Step 2" -name "*${SLUG}*-\[step-2\].csv" -not -name "*-only-*" -mmin "-${CACHE_TTL_MIN}" 2>/dev/null | head -1)
 SKIP_SCRAPE=""
+SKIP_STEP1=""
+# 🔴 11-10 REBUILDS NEVER RE-RUN STEPS 1-2. October's 47 runs covered only 23 distinct searches: a lead that failed re-queued
+# its WHOLE search, and 12 hours later the cache expired, so the Maps scrape and the paid email web-search ran again for every
+# no-email lead (about 3,500 searches). If ANY earlier scrape of this search is on disk (any age), its step-1/step-2 CSVs are
+# reused: a re-picked search only has leads to REBUILD, and the 6/6 rule re-reads ONE lead's audit (step 2.5), not the search.
+# The one exception: leads a budget/quota stop left "not searched" - step 2 alone is re-run on the saved step 1 for those.
+_newest_csv() { # $1 = dir, $2 = suffix ([step-1]/[step-2]) -> newest non-per-lead master CSV with a header and >=1 row
+  local f
+  while IFS= read -r f; do
+    [ -n "$f" ] && [ "$(awk 'END{print NR}' "$f" 2>/dev/null)" -gt 1 ] && { echo "$f"; return; }
+  done < <(find "$1" -maxdepth 1 -name "*_${SLUG}-\[${2}\].csv" -not -name "*-only-*" -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null)
+}
+_count_not_searched() { # CSV -> number of rows whose Email Search Status is 'not-searched'
+  python3 - "$1" <<'EOPY' 2>/dev/null || echo 0
+import csv, sys
+try:
+    rows = list(csv.DictReader(open(sys.argv[1], newline='')))
+    print(sum(1 for r in rows if (r.get('Email Search Status') or '').strip() == 'not-searched'))
+except Exception:
+    print(0)
+EOPY
+}
+if [ -z "$CACHED_S1" ] || [ -z "$CACHED_S2" ]; then
+  _OLD_S1=$(_newest_csv "output/Step 1" "step-1")
+  if [ -n "$_OLD_S1" ]; then
+    _OLD_S2=$(_newest_csv "output/Step 2" "step-2")
+    _NS=0; [ -n "$_OLD_S2" ] && _NS=$(_count_not_searched "$_OLD_S2")
+    _NS=$(printf '%s' "${_NS:-0}" | tr -dc '0-9'); _NS=${_NS:-0}
+    if [ -n "$_OLD_S2" ] && [ "$_NS" -eq 0 ]; then
+      CACHED_S1="$_OLD_S1"; CACHED_S2="$_OLD_S2"
+      echo ">>> REBUILD REUSE - this search was scraped before; reusing its saved Step 1 + Step 2 (no Maps scrape, no email web-search spent)" | tee -a "$LOGFILE"
+    else
+      LATEST_S1="$_OLD_S1"; SKIP_STEP1=1
+      echo ">>> REBUILD REUSE - saved Step 1 reused (no Maps scrape); Step 2 re-run for ${_NS} lead(s) a budget stop left NOT SEARCHED (everyone else is answered from the search memory)" | tee -a "$LOGFILE"
+    fi
+  fi
+fi
 if [ -n "$CACHED_S1" ] && [ -n "$CACHED_S2" ]; then
   echo ">>> CACHE HIT — using cached Step 1 + Step 2 CSVs (<${CACHE_TTL_MIN}min old)" | tee -a "$LOGFILE"
   echo "    Step-1: $CACHED_S1" | tee -a "$LOGFILE"
@@ -614,7 +659,7 @@ fi
 # feedback_overnight_autonomous_workflow.md (locked 2026-05-21 after Chris
 # caught us running in test mode and producing only 4 videos overnight).
 # To run smaller batch for testing: TARGET_UNIQUE_PLACES=5 ./overnight-pipeline.sh ...
-if [ -z "$SKIP_SCRAPE" ]; then
+if [ -z "$SKIP_SCRAPE" ] && [ -z "$SKIP_STEP1" ]; then
   echo ">>> step-1 scrape (production — full default ~55 leads)" | tee -a "$LOGFILE"
   SEARCH_QUERY="$SEARCH_QUERY" node step-1-maps-scraper.cjs --skip-freshness 2>&1 | tee -a "$LOGFILE"
 
@@ -651,6 +696,8 @@ if [ -z "$SKIP_SCRAPE" ]; then
   # CHIROPRACTOR from a different search, and reported "1 scraped, 1 completed". A whole night, silently.
   SEARCH_SLUG=$(echo "$SEARCH_QUERY" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-//; s/-$//')
   MASTER_S2="output/Step 2/${DATE_STAMP}_${SEARCH_SLUG}-[step-2].csv"
+  # Step 2 names its output after the Step 1 file it read - a reused (older) Step 1 gives an older-dated Step 2.
+  [ -n "$SKIP_STEP1" ] && MASTER_S2="output/Step 2/$(basename "$LATEST_S1" | sed 's/\[step-1\]/[step-2]/')"
   if [ -f "$MASTER_S2" ]; then
     LATEST_S2="$MASTER_S2"
   else
@@ -666,6 +713,14 @@ if [ -z "$SKIP_SCRAPE" ]; then
   fi
 fi
 echo "Step-2 CSV: $LATEST_S2" | tee -a "$LOGFILE"
+# 🔴 11-10 A budget/quota stop leaves leads "not searched" - never "no email". Tell the log plainly, and put the search back on the
+# rebuild queue so the next night asks only those leads (the 90-day search memory answers everyone already searched).
+_NS_NOW=$(_count_not_searched "$LATEST_S2"); _NS_NOW=$(printf '%s' "${_NS_NOW:-0}" | tr -dc '0-9'); _NS_NOW=${_NS_NOW:-0}
+if [ "$_NS_NOW" -gt 0 ]; then
+  echo ">>> ${_NS_NOW} lead(s) in this search are NOT SEARCHED for an email (SerpAPI budget/quota stop) - that is not 'no email'. Re-queued for the next night." | tee -a "$LOGFILE"
+  mkdir -p output; touch output/pending-rebuild-searches.txt
+  grep -qxF "$SEARCH_QUERY" output/pending-rebuild-searches.txt 2>/dev/null || printf '%s\n' "$SEARCH_QUERY" >> output/pending-rebuild-searches.txt
+fi
 
 # === For each emailable lead, run individual chain ===
 DEPLOYED_URLS=()

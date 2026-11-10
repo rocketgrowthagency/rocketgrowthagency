@@ -89,6 +89,22 @@ const skipped = recs.length - eligible.length;
 console.log(`[parole] parked leads: ${recs.length}  → eligible: ${eligible.length}${skipped ? `  (skipped ${skipped}: dead or no search term)` : ''}`);
 if (!eligible.length) { console.log('[parole] nothing to parole.'); process.exit(0); }
 
+// 11-10: a parole re-queues rebuilds, and a rebuild can spend searches (about 2 a lead before the caches warm). Under the
+// client reserve nothing is paroled and the epoch is NOT recorded, so the same leads are tried on a later night.
+// Leads already proven unbuildable (output/unbuildable-leads.tsv) are never paroled: they cannot succeed.
+if (APPLY) {
+  try {
+    const bad = new Set(fs.readFileSync(path.join(ROOT, 'output', 'unbuildable-leads.tsv'), 'utf8').split('\n').map((l) => l.split('\t')[0]).filter(Boolean));
+    for (let i = eligible.length - 1; i >= 0; i--) if (bad.has(eligible[i].fields['Vid Slug'])) { console.log(`  [parole] skip ${eligible[i].fields['Vid Slug']} - proven unbuildable`); eligible.splice(i, 1); }
+  } catch { /* no ledger of unbuildable leads yet */ }
+  if (!eligible.length) { console.log('[parole] nothing left to parole.'); process.exit(0); }
+  try {
+    execFileSync('node', [path.join(ROOT, 'scripts', 'serpapi-budget.mjs'), 'gate', '--need', String(eligible.length * 2)], { cwd: ROOT, stdio: 'inherit' });
+  } catch (e) {
+    if (e && e.status === 3) { console.log('[parole] DEFERRED - the SerpAPI budget would go under the client reserve. Nothing paroled, epoch not recorded; it is tried again on a later night.'); process.exit(0); }
+  }
+}
+
 for (const r of eligible) {
   const why = String(r.fields['Skip Reasons'] || r.fields['Email Status'] || '').slice(0, 60);
   console.log(`  ${APPLY ? 'parole' : '[DRY] parole'} ${String(r.fields['Vid Slug'] || r.fields['Business Name']).slice(0, 40).padEnd(40)} was: ${why}`);

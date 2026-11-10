@@ -114,6 +114,12 @@ while [ "$round" -lt "$MAX_ROUNDS" ]; do
   if [ "${#SLUGS[@]}" -eq 0 ]; then
     say ">>> round ${round}: nothing left under the attempt cap — backlog drained or exhausted. Done."; break; fi
 
+  # 🔴 11-10 THE RESERVE: a rebuild re-reads each lead's audit, so it can spend searches (about 2 a lead before the caches warm).
+  # Below the client reserve nothing is spent, and NO attempt is counted - a held round must never burn a lead's tries.
+  # (The output/SERPAPI-HOLD check above stays: it is the owner's hard hold.)
+  node scripts/serpapi-budget.mjs gate --need $(( ${#SLUGS[@]} * 2 )) 2>&1 | tee -a "$LOG"; _gate_rc=${PIPESTATUS[0]}
+  if [ "${_gate_rc:-0}" -eq 3 ]; then
+    say ">>> round ${round}: SerpAPI budget would go under the client reserve - not rebuilding tonight, no attempt counted."; break; fi
   say ">>> round ${round}: rebuilding ${#SLUGS[@]} lead(s) — ${SLUGS[*]}"
   for s in "${SLUGS[@]}"; do bump_attempt "$s"; done
 

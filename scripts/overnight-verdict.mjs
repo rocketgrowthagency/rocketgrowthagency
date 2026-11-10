@@ -89,9 +89,11 @@ const BLOCKERS = [
   { re: /OpenAI OUT OF CREDITS|OpenAI balance\/quota exceeded/i,
     what: 'OpenAI is out of credits — no voiceover can be generated',
     fix : 'Add funds: https://platform.openai.com/settings/organization/billing' },
-  { re: /SerpAPI quota (exhausted|too low)|SerpAPI.*below the floor/i,
-    what: 'SerpAPI search quota is exhausted — no new leads can be scraped',
-    fix : 'Top up SerpApi (5k/mo plan): https://serpapi.com/dashboard' },
+  // 11-10: also matches the pre-flight's own words ("SerpAPI quota below threshold" / "quota too low - fewer searches left than
+  // the client reserve") and the wrapper's stop - Nov 7-9 aborted on "below threshold" and this list did not match it.
+  { re: /SerpAPI quota (exhausted|too low|below threshold)|SerpAPI.*below the floor|MONTHLY QUOTA EXHAUSTED|SERPAPI: Tonight's run STOPPED/i,
+    what: 'SerpAPI search quota is exhausted or under the client reserve - no new leads can be scraped',
+    fix : 'Top up / upgrade SerpApi (Developer 5k/mo): https://serpapi.com/dashboard' },
   { re: /CIRCUIT BREAKER TRIPPED/i,
     what: 'The circuit breaker stopped the run — something systemic broke',
     fix : 'Diagnose the cause, then: node scripts/parole-permafails.mjs --apply' },

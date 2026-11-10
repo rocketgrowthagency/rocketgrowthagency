@@ -242,9 +242,10 @@ const secretsIn = (v) => { const s = JSON.stringify(v); return Object.values(FAK
   ok(Object.keys(S.readLedger(w.records.rga).windows).length === 0, "(6) a refused scan counted as a try");
   w = mk({ account: null }); r = await run(w, T_CT_10);
   ok(r.sent.length === 0 && r.out.problems.length === 1, "(6) an unreadable provider account must refuse, not guess");
-  w = mk({ account: { total_searches_left: 124 } }); r = await run(w, T_CT_10);
+  ok(S.RESERVE_SEARCHES >= 1, "(6) a reserve is kept back at all (the shared floor, _serpapi-reserve.js, must be a positive number)");
+  w = mk({ account: { total_searches_left: S.RESERVE_SEARCHES + 25 - 1 } }); r = await run(w, T_CT_10);
   ok(r.sent.length === 0, "(6) a count that leaves less than the reserve after the scan must refuse");
-  w = mk({ account: { total_searches_left: 125 } }); r = await run(w, T_CT_10);
+  w = mk({ account: { total_searches_left: S.RESERVE_SEARCHES + 25 } }); r = await run(w, T_CT_10);
   ok(r.sent.length === 1, "(6) a count that covers the scan and the reserve must run");
   // dispatch refused: failed try recorded, problem said
   w = mk(); r = await run(w, T_CT_10, { dispatchResult: { ok: false, status: 502 } });

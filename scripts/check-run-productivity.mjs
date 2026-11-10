@@ -41,11 +41,14 @@ const HEAL = ARGS.includes('--heal');
 // two files. toISOString() is UTC and would be the WRONG day from 17:00 local onward — the exact bug
 // that blinded pipeline-status.mjs for every overnight window it ever ran in.
 const localStamp = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-const now = new Date();
+// PRODUCTIVITY_NOW / PRODUCTIVITY_LOG_DIR exist so scripts/check-serpapi-budget.mjs can feed it a fixture night without touching
+// the real nightly logs. They are never set by cron.
+const now = process.env.PRODUCTIVITY_NOW ? new Date(process.env.PRODUCTIVITY_NOW) : new Date();
+const LOG_DIR = process.env.PRODUCTIVITY_LOG_DIR || '/tmp';
 const DATES = [localStamp(new Date(now.getTime() - 86400000)), localStamp(now)];
 // 🔴 Same blindness as pipeline-status.mjs — the runner writes overnight-local-<date>.log.
 // See that file's note: /tmp/overnight-pipeline-*.log has never existed.
-const LOGS = DATES.flatMap((d) => [`/tmp/overnight-local-${d}.log`, `/tmp/overnight-pipeline-${d}.log`])
+const LOGS = DATES.flatMap((d) => [`${LOG_DIR}/overnight-local-${d}.log`, `${LOG_DIR}/overnight-pipeline-${d}.log`])
   .filter((p) => fs.existsSync(p));
 
 if (!LOGS.length) {
@@ -65,6 +68,10 @@ for (const lp of LOGS) {
     const st = line.match(/^Started:\s*(\d{2}:\d{2})/);
     if (st) { cur.started = st[1]; continue; }
     if (/dispatching:/.test(line)) cur.dispatched++;
+    // 🔴 11-10: a search that died at a pre-flight gate ("✗ FATAL: ...") built nothing because it NEVER RAN - that is a dead
+    // night, not a quiet one. Nov 7-9 aborted on an empty SerpAPI quota and this report said "No dead window".
+    const fatal = line.match(/^✗ FATAL:\s*(.+)$/);
+    if (fatal && !cur.aborted) cur.aborted = fatal[1].slice(0, 160);
     // Record WHY a search might legitimately produce nothing, so an explained zero is not an alarm.
     if (/OPENAI OUT OF CREDITS mid-run/.test(line)) cur.skips.push('openai-guard');
     if (/cross-search duplicate\(s\) detected/.test(line)) cur.skips.push('dedup');
@@ -146,13 +153,16 @@ for (const s of nightly) {
   else streak = [];
 }
 const deadWindow = dead && dead.length >= 2 ? dead : null;
+// A pre-flight abort is a dead night, said plainly. Searches that aborted AND dispatched nothing never ran.
+const aborted = nightly.filter((s) => s.aborted && s.dispatched === 0);
+const deadNight = aborted.length > 0 && nightly.every((s) => s.dispatched === 0);
 
 const totalBuilt = tonight.length;
 const totalDispatched = nightly.reduce((a, s) => a + s.dispatched, 0);
 
 if (JSON_OUT) {
-  console.log(JSON.stringify({ totalBuilt, totalDispatched, searches: nightly.map((s) => ({ name: s.name, started: s.started, dispatched: s.dispatched, built: s.built })), findings, deadWindow: deadWindow?.map((s) => s.name) || null }, null, 2));
-  process.exit(deadWindow ? 1 : 0);
+  console.log(JSON.stringify({ totalBuilt, totalDispatched, searches: nightly.map((s) => ({ name: s.name, started: s.started, dispatched: s.dispatched, built: s.built })), findings, deadWindow: deadWindow?.map((s) => s.name) || null, deadNight, aborted: aborted.map((s) => ({ name: s.name, reason: s.aborted })) }, null, 2));
+  process.exit(deadWindow || deadNight ? 1 : 0);
 }
 
 console.log('===== RUN PRODUCTIVITY =====');
@@ -184,6 +194,13 @@ if (deadWindow) {
     console.log(`\n   CAUSE : UNKNOWN — not in the fault catalogue.`);
     console.log(`   PACKET: ${pkt}`);
   }
+} else if (deadNight) {
+  console.log(`\n🔴 DEAD NIGHT - the run stopped at a pre-flight check and built NOTHING. It did not run tonight:`);
+  for (const s of aborted) console.log(`     • ${s.started}  ${s.name}  -  ${s.aborted}`);
+  console.log(`   This is a dead night, not a quiet one. Fix the cause named above; a search that never ran is NOT "nothing new to build".`);
+} else if (aborted.length) {
+  console.log(`\n⚠️  ${aborted.length} search(es) stopped at a pre-flight check and never ran:`);
+  for (const s of aborted) console.log(`     • ${s.started}  ${s.name}  -  ${s.aborted}`);
 } else if (findings.length) {
   console.log(`\n⚠️  ${findings.length} search(es) dispatched work and built nothing (isolated, not a dead window).`);
 } else {
@@ -224,4 +241,4 @@ if (HEAL) {
   }
 }
 
-process.exit(deadWindow ? 1 : 0);
+process.exit(deadWindow || deadNight ? 1 : 0);

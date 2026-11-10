@@ -80,8 +80,8 @@ const item = (o) => ({ id: "cc_x", kind: "proposal", field: "phone", from: "(310
   if (!R({ need: 0 })) F("nothing recorded must refuse");
   if (!R({ prior: { change_at: change.at, at: new Date(NOW - 3600e3).toISOString() } })) F("a second search inside a day must refuse");
   if (R({ prior: { change_at: change.at, at: new Date(NOW - 2 * 86400000).toISOString() } }) !== null) F("a search two days later may go ahead");
-  if (R({ left: 7 }) !== null) F("exactly enough searches plus the reserve must go ahead");
-  if (!R({ left: 6 })) F("one short of the reserve must refuse");
+  if (R({ left: 2 + RB.RESERVE }) !== null) F("exactly enough searches plus the reserve must go ahead");
+  if (!R({ left: 2 + RB.RESERVE - 1 })) F("one short of the reserve must refuse");
 }
 
 // ── the searches ──

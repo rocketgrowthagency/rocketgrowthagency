@@ -149,10 +149,11 @@ const cl = (id, extra = {}) => ({ id, business_name: id, source: null, ...extra 
 {
   const T = { "m1.gbp.business_facts": { status: "done" }, "m1.gbp.optimize_categories": { status: "done" }, "m1.gbp.photos": { status: "done" }, "m1.audit.social": { status: "done" }, "m1.gbp.hours_attributes": { status: "done" }, "m1.gbp.verify": { status: "done" } };
   const mk = (n, left, env, tasks = T) => world({ clients: Array.from({ length: n }, (_, i) => cl("c" + i)), records: Array.from({ length: n }, (_, i) => rec("c" + i, tasks)), left, env: env || {} });
-  let w = mk(1, 12); let o = await M.runMorning({ deps: w.deps });
+  const RES = req("./_citation-build.js").SEARCH_RESERVE; // the shared floor, whatever it is (11-10: _serpapi-reserve.js)
+  let w = mk(1, RES + 2); let o = await M.runMorning({ deps: w.deps });
   if (w.log.starts.includes("c0/m1.platform.mentions")) fail("5: 12 left (2 above the reserve) cannot pay for 4 searches");
   if (!w.log.starts.includes("c0/m1.gbp.knowledge_panel")) fail("5: 2 above the reserve can still pay for step 57's 1 search");
-  w = mk(1, 10); o = await M.runMorning({ deps: w.deps });
+  w = mk(1, RES); o = await M.runMorning({ deps: w.deps });
   if (w.log.starts.includes("c0/m1.platform.mentions") || w.log.starts.includes("c0/m1.gbp.knowledge_panel") || o.searches) fail("5: at the reserve nothing spends");
   if (!w.log.starts.includes("c0/m1.platform.yelp") && !w.log.starts.includes("c0/m1.review.response") && !w.log.starts.includes("c0/m1.cit.industry_specific")) fail("5: free steps still start at the reserve");
   w = mk(1, 500, { CITATION_LIVE_SEARCH: "0" }); o = await M.runMorning({ deps: w.deps });
@@ -165,7 +166,7 @@ const cl = (id, extra = {}) => ({ id, business_name: id, source: null, ...extra 
   if (o.searches > M.RUN_SEARCH_CAP) fail(`5: the morning spent ${o.searches} searches, over its cap of ${M.RUN_SEARCH_CAP}`);
   if (!o.searches) fail("5: with a full budget the paid steps should start");
   if (w.log.searchCalls !== 1) fail(`5: the count is read once per run, not ${w.log.searchCalls}`);
-  w = mk(3, 18); o = await M.runMorning({ deps: w.deps });
+  w = mk(3, RES + 8); o = await M.runMorning({ deps: w.deps });
   if (o.searches > 8) fail(`5: 18 left holds only 8 searches above the reserve, spent ${o.searches}`);
   w = mk(1, 500, {}, { "m1.audit.kpi_baseline": { status: "done" } }); await M.runMorning({ deps: w.deps });
   if (w.log.searchCalls) fail("5: nobody due a paid step, yet the count was read");
