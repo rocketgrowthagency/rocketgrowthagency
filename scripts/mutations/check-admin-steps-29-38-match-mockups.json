@@ -72,7 +72,7 @@
  [
   "a client's Google step gets Done again",
   "admin",
-  "const inner = (rowHasDone || ZC_NO_HAND_DONE.has(o.flowId) ? \"\" : btn(\"done\", \"Done\"))",
+  "const inner = (rowHasDone || ZC_NO_HAND_DONE.has(o.flowId) || uniS()?.noHandDone?.(o.flowId) ? \"\" : btn(\"done\", \"Done\"))",
   "const inner = (rowHasDone ? \"\" : btn(\"done\", \"Done\"))",
   1
  ],
@@ -177,7 +177,7 @@
  [
   "35/36: Skip back in the header",
   "admin",
-  "(ZC_CLIENT_ASK[o.flowId] && task?.client_input == null && st !== \"skipped\" ? \"\" : btn(\"skipped\", \"Skip\"))",
+  "(ZC_CLIENT_ASK[o.flowId] && task?.client_input == null && st !== \"skipped\" || o.flowId === \"m1.brand.youtube_setup\" ? \"\" : btn(\"skipped\", \"Skip\"))",
   "btn(\"skipped\", \"Skip\")",
   1
  ],

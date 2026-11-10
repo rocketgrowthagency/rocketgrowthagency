@@ -51,8 +51,8 @@
  [
   "a self-settling step offers Undo again",
   "admin",
-  "const undoBtn = o.selfSettles || wcRunsItself(o.flowId) || globalThis.rgaCitationProgress?.isStep(o.flowId) ? \"\"",
-  "const undoBtn = false ? \"\"",
+  "const undoBtn = monthlyOwn(o) || o.selfSettles ||",
+  "const undoBtn = monthlyOwn(o) ||",
   1
  ],
  [

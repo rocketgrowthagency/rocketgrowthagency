@@ -212,7 +212,7 @@
  [
   "the Monthly row has no post card",
   "admin",
-  "    : id === \"m2.exec.blog_posts\" ? blogMonthlyAdminHtml(t)\n",
+  "    : id === \"m2.exec.blog_posts\" ? oncBlogCardHtml(t)\n",
   "",
   1
  ],

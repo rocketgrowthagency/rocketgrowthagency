@@ -266,8 +266,8 @@
  [
   "Mark step complete is back on the step",
   "admin",
-  "const doneBtn = zcWaits || siteStep || o.flowId === GL_STEP || globalThis.rgaCitationProgress?.isStep(o.flowId) ? \"\" :",
-  "const doneBtn = zcWaits || siteStep || globalThis.rgaCitationProgress?.isStep(o.flowId) ? \"\" :"
+  "const doneBtn = zcWaits || siteStep || o.flowId === GL_STEP || globalThis.rgaCitationProgress?.isStep(o.flowId) || uniS()?.noHandDone?.(o.flowId) ?",
+  "const doneBtn = zcWaits || siteStep || globalThis.rgaCitationProgress?.isStep(o.flowId) ?"
  ],
  [
   "the done row has no card",

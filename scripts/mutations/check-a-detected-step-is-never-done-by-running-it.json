@@ -75,8 +75,8 @@
  [
   "a runner with no Google location returns no outcome again (recorded done)",
   "exec",
-  "return { summary: \"No GBP location linked\", outcome: \"indeterminate\" }",
-  "return { summary: \"No GBP location linked\" }"
+  "return { summary: \"No gbp_location_id linked. Re-run OAuth.\", outcome: \"indeterminate\" };",
+  "return { summary: \"No gbp_location_id linked. Re-run OAuth.\" };"
  ],
  [
   "a draft completes the step again",

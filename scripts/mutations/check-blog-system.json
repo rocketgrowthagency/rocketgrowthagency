@@ -471,8 +471,8 @@
  [
   "the Monthly blog row says a fixed number",
   "playbooksjson",
-  "\"title\": \"Publish up to 2 blog posts\"",
-  "\"title\": \"Publish 2 blog posts\"",
+  "\"title\": \"Blog posts (up to 2)\"",
+  "\"title\": \"Blog posts (2)\"",
   1
  ],
  [

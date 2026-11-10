@@ -58,8 +58,8 @@
  [
   "step 55 Done is unguarded",
   "admin",
-  "    proof: (d) => (d?.tasks?.[\"m1.brand.youtube_setup\"]?.clips || []).filter((c) => c && (c.path || c.url)).length >= 2,",
-  "    proof: (d) => true,",
+  "proof: (d) => !!d?.tasks?.[\"m1.brand.youtube_setup\"]?.channel_pasted || d?.tasks?.[\"m1.brand.youtube_setup\"]?.yt_read?.state === \"matches\",",
+  "proof: (d) => true,",
   1
  ]
 ]

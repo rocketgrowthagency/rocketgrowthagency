@@ -9,8 +9,8 @@
  [
   "the server's month is the local one",
   "steprecord",
-  "  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, \"0\")}-01`;\n}\n\n/**\n * The record that holds",
-  "  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, \"0\")}-01`;\n}\n\n/**\n * The record that holds",
+  "  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, \"0\")}-01`;\n}",
+  "  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, \"0\")}-01`;\n}",
   1
  ],
  [
@@ -114,7 +114,7 @@
  [
   "admin deliverables reads any month",
   "admindeliv",
-  "${monthly ? `&reporting_month=eq.${currentReportingMonth()}` : \"\"}",
+  "${monthly ? `&reporting_month=eq.${reportingMonth}` : \"\"}",
   "",
   1
  ]

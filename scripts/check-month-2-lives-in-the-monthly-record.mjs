@@ -222,7 +222,7 @@ if (!/listEl\._rerender = \(freshOnboarding, freshMonthly(, freshLists)?(, fresh
 
 // ── 6 · the deliverables endpoints read this month's record ──
 const ad = code("netlify/functions/admin-deliverables.js");
-if (!/client_id=eq\.\$\{clientId\}\$\{monthly \? `&reporting_month=eq\.\$\{currentReportingMonth\(\)\}` : ""\}/.test(ad)) fail("admin-deliverables reads whichever monthly record comes back first, not this month's");
+if (!/client_id=eq\.\$\{clientId\}\$\{monthly \? `&reporting_month=eq\.\$\{reportingMonth\}` : ""\}/.test(ad)) fail("admin-deliverables reads whichever monthly record comes back first, not this month's");
 const pd = code("netlify/functions/portal-deliverables.js");
 if (!/const month = require\("\.\/_step-record"\)\.currentReportingMonth\(\);/.test(pd)) fail("portal-deliverables picks this month by its own clock, not the one UTC key");
 

@@ -1,27 +1,177 @@
 [
- ["the runner writes the second text again", "flowexec", "const KEYS = [\"sms_1\"];", "const KEYS = [\"sms_1\", \"sms_2\"];", 1],
- ["the runner stops storing the message as data", "flowexec", "messages: { sms_1: m.sms_1.trim() } } };", "messages: {} } };", 1],
- ["the runner stops checking the review rules", "flowexec", "reviewMessageProblems(m[k], { needsLink: true })", "[]", 1],
- ["Rewrite can no longer reach the runner", "flowexec", "exports.reviewSystemRun = EXECUTORS", "exports.reviewSystemRunX = EXECUTORS", 1],
- ["save skips the review rules", "reviewmsg", "const problems = reviewMessageProblems(text);\n    if (problems.length) return json(422", "const problems = [];\n    if (problems.length) return json(422", 1],
- ["check skips the review rules", "reviewmsg", "problems: reviewMessageProblems(toStored(body.text)) });", "problems: [] });", 1],
- ["save no longer reads the write back", "reviewmsg", "back.outcome_data.messages.sms_1 !== text", "false", 1],
- ["a skipped step accepts a saved message", "reviewmsg", "if (prev.status === \"skipped\") return json(409", "if (false) return json(409", 1],
- ["readable placeholders are stored as typed", "reviewmsg", ".replace(/\\{\\s*first[ _]name\\s*\\}\\}?/gi, \"{{first_name}}\")", "", 1],
- ["59 shows the raw draft again", "admin", "const resultBlock = o.flowId === \"m1.review.system\" ? \"\" : stepOutputHtml(", "const resultBlock = stepOutputHtml(", 1],
- ["59 offers Run again", "admin", "return flowId === \"m1.review.system\" || flowId === \"m1.review.first_5\" ||", "return flowId === \"m1.review.first_5\" ||", 1],
- ["60 offers Run again", "admin", "|| flowId === \"m1.review.first_5\" || (flowId === \"m1.call.close\"", "|| (flowId === \"m1.call.close\"", 1],
- ["a skipped 63 offers Run again", "admin", "(flowId === \"m1.call.close\" && !!task && task.status === \"skipped\")", "false", 1],
- ["60 brings back 'their word, not something we verified'", "admin", "        : o.flowId === \"m1.review.first_5\" ? \"\"\n        : byClient && gp", "        : byClient && gp", 1],
- ["60 brings back 'We measured' on a done step", "admin", "${o.flowId === \"m1.review.first_5\" ? \"\" : obDetectionHtml(o, s.task)}", "${obDetectionHtml(o, s.task)}", 1],
- ["59 shows 'Now set to' twice", "admin", "|| o.flowId === \"m1.review.system\" ? \"\" : stepSettingHtml", "? \"\" : stepSettingHtml", 1],
- ["a skipped 63 keeps the row's Undo beside the card's", "admin", "|| (o.flowId === \"m1.call.close\" && s.task?.status === \"skipped\") ? \"\"", "? \"\"", 1],
- ["the noun is pluralized by appending s again", "admin", "return m ? `${m[1]}s ${m[2]}` : `${t}s`; }\n/** 59 has no Run again", "return `${t}s`; }\n/** 59 has no Run again", 1],
- ["the portal says customer askeds", "portal", "return m ? `${m[1]}s ${m[2]}` : `${t}s`; }", "return `${t}s`; }", 1],
- ["the Month 1 report says customer askeds", "month1report", "return m ? `${m[1]}s ${m[2]}` : `${t}s`; }", "return `${t}s`; }", 1],
- ["60 loses its Check again", "admin", "data-ob-recheck=\"m1.review.first_5\">${d && d.at", "data-x=\"m1.review.first_5\">${d && d.at", 1],
- ["60 forgets the client finished with fewer", "admin", "Monthly started\" : \"The client finished with fewer\", `", "Monthly started\" : \"The client finished\", `", 1],
- ["63 drops what still happens", "admin", "and the monthly check-in call is still offered.\";", "\";", 1],
- ["63 loses its Undo", "admin", "data-onboard-reset=\"m1.call.close\" data-onboard-scope=\"${escapeAttribute(scope || \"month1\")}\">Undo", "data-x=\"m1.call.close\">Undo", 1],
- ["a skipped 59 stops saying the asks use the plain message", "admin", "uses the plain built-in message, so the customer asks still work.", "uses nothing.", 1]
+ [
+  "the runner writes the second text again",
+  "flowexec",
+  "const KEYS = [\"sms_1\"];",
+  "const KEYS = [\"sms_1\", \"sms_2\"];",
+  1
+ ],
+ [
+  "the runner stops storing the message as data",
+  "flowexec",
+  "messages: { sms_1: m.sms_1.trim() } } };",
+  "messages: {} } };",
+  1
+ ],
+ [
+  "the runner stops checking the review rules",
+  "flowexec",
+  "reviewMessageProblems(m[k], { needsLink: true })",
+  "[]",
+  1
+ ],
+ [
+  "Rewrite can no longer reach the runner",
+  "flowexec",
+  "exports.reviewSystemRun = EXECUTORS",
+  "exports.reviewSystemRunX = EXECUTORS",
+  1
+ ],
+ [
+  "save skips the review rules",
+  "reviewmsg",
+  "const problems = reviewMessageProblems(text);\n    if (problems.length) return json(422",
+  "const problems = [];\n    if (problems.length) return json(422",
+  1
+ ],
+ [
+  "check skips the review rules",
+  "reviewmsg",
+  "problems: reviewMessageProblems(toStored(body.text)) });",
+  "problems: [] });",
+  1
+ ],
+ [
+  "save no longer reads the write back",
+  "reviewmsg",
+  "back.outcome_data.messages.sms_1 !== text",
+  "false",
+  1
+ ],
+ [
+  "a skipped step accepts a saved message",
+  "reviewmsg",
+  "if (prev.status === \"skipped\") return json(409",
+  "if (false) return json(409",
+  1
+ ],
+ [
+  "readable placeholders are stored as typed",
+  "reviewmsg",
+  ".replace(/\\{\\s*first[ _]name\\s*\\}\\}?/gi, \"{{first_name}}\")",
+  "",
+  1
+ ],
+ [
+  "59 shows the raw draft again",
+  "admin",
+  "const resultBlock = o.flowId === \"m1.platform.bing_apple\" || o.flowId === \"m1.review.system\" ? \"\" : stepOutputHtml(result, s.task, o);",
+  "const resultBlock = o.flowId === \"m1.platform.bing_apple\" ? \"\" : stepOutputHtml(result, s.task, o);",
+  1
+ ],
+ [
+  "59 offers Run again",
+  "admin",
+  "return flowId === \"m1.review.system\" || flowId === \"m1.review.first_5\" ||",
+  "return flowId === \"m1.review.first_5\" ||",
+  1
+ ],
+ [
+  "60 offers Run again",
+  "admin",
+  "|| flowId === \"m1.review.first_5\" || (flowId === \"m1.call.close\"",
+  "|| (flowId === \"m1.call.close\"",
+  1
+ ],
+ [
+  "a skipped 63 offers Run again",
+  "admin",
+  "(flowId === \"m1.call.close\" && !!task && task.status === \"skipped\")",
+  "false",
+  1
+ ],
+ [
+  "60 brings back 'their word, not something we verified'",
+  "admin",
+  "        : o.flowId === \"m1.review.first_5\" ? \"\"\n        : byClient && gp",
+  "        : byClient && gp",
+  1
+ ],
+ [
+  "60 brings back 'We measured' on a done step",
+  "admin",
+  "${o.flowId === \"m1.review.first_5\" ? \"\" : obDetectionHtml(o, s.task)}",
+  "${obDetectionHtml(o, s.task)}",
+  1
+ ],
+ [
+  "59 shows 'Now set to' twice",
+  "admin",
+  "|| o.flowId === \"m1.review.system\" ? \"\" : stepSettingHtml",
+  "? \"\" : stepSettingHtml",
+  1
+ ],
+ [
+  "a skipped 63 keeps the row's Undo beside the card's",
+  "admin",
+  "|| (o.flowId === \"m1.call.close\" && s.task?.status === \"skipped\") ? \"\"",
+  "? \"\"",
+  1
+ ],
+ [
+  "the noun is pluralized by appending s again",
+  "admin",
+  "return m ? `${m[1]}s ${m[2]}` : `${t}s`; }\n/** 59 has no Run again",
+  "return `${t}s`; }\n/** 59 has no Run again",
+  1
+ ],
+ [
+  "the portal says customer askeds",
+  "portal",
+  "return m ? `${m[1]}s ${m[2]}` : `${t}s`; }",
+  "return `${t}s`; }",
+  1
+ ],
+ [
+  "the Month 1 report says customer askeds",
+  "month1report",
+  "return m ? `${m[1]}s ${m[2]}` : `${t}s`; }",
+  "return `${t}s`; }",
+  1
+ ],
+ [
+  "60 loses its Check again",
+  "admin",
+  "data-ob-recheck=\"m1.review.first_5\">${d && d.at",
+  "data-x=\"m1.review.first_5\">${d && d.at",
+  1
+ ],
+ [
+  "60 forgets the client finished with fewer",
+  "admin",
+  "Monthly started\" : \"The client finished with fewer\", `",
+  "Monthly started\" : \"The client finished\", `",
+  1
+ ],
+ [
+  "63 drops what still happens",
+  "admin",
+  "and the monthly check-in call is still offered.\";",
+  "\";",
+  1
+ ],
+ [
+  "63 loses its Undo",
+  "admin",
+  "data-onboard-reset=\"m1.call.close\" data-onboard-scope=\"${escapeAttribute(scope || \"month1\")}\">Undo",
+  "data-x=\"m1.call.close\">Undo",
+  1
+ ],
+ [
+  "a skipped 59 stops saying the asks use the plain message",
+  "admin",
+  "uses the plain built-in message, so the customer asks still work.",
+  "uses nothing.",
+  1
+ ]
 ]

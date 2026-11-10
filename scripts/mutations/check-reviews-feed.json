@@ -164,8 +164,8 @@
  [
   "the card isn't on Ongoing work after setup",
   "portal",
-  "  if (!isSetupPhase && month2StepsHtml) return `<div class=\"pm-og\">${feed}${ogHost(\"replies\")}${month2StepsHtml}${ogHost(\"posts\")}${ogHost(\"value\")}</div>`;",
-  "  if (!isSetupPhase && month2StepsHtml) return `<div class=\"pm-og\">${ogHost(\"replies\")}${month2StepsHtml}${ogHost(\"posts\")}${ogHost(\"value\")}</div>`;"
+  "  if (!isSetupPhase && month2StepsHtml) return `<div class=\"pm-og\">${feed}${focusHtml}${ogHost(\"replies\")}${month2StepsHtml}${ogHost(\"posts\")}${ogHost(\"value\")}</div>`;",
+  "  if (!isSetupPhase && month2StepsHtml) return `<div class=\"pm-og\">${focusHtml}${ogHost(\"replies\")}${month2StepsHtml}${ogHost(\"posts\")}${ogHost(\"value\")}</div>`;"
  ],
  [
   "the card never loads",

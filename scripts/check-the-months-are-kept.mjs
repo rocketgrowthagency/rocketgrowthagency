@@ -242,5 +242,29 @@ const fresh = (o = {}) => { DB.cur = makeDb({ onboarding: [JSON.parse(JSON.strin
   if (!/quarterOn = num != null && M\.showsQuarter\(num\)/.test(AJ) || !/if \(sec\.quarterOnly && !quarterOn\) return foldedQ\(sec, idx\);/.test(AJ) || !/Hidden this month · next in Month \$\{nextQ\}/.test(AJ)) fail("a non-quarter month shows 'Every quarter' as 0 / N instead of one folded line"); }
 // monthly_fix_v2 (11-9): the OLD pieces must be gone too, not only the new ones present (one card per row, the To do for numbered months, Open the month settled, the quarter preview, the bottom blocks)
 for (const m of oldChromeFailures(SITE)) fail(m);
+// monthly_correctness_v1 (11-9 audit): an ADMIN press means the business's month (Pacific), the count leaves out hidden steps, the call agenda and Send for approval follow the SELECTED month
+{ const SR = req("./_step-record.js"), OMx = req("./_open-month.js"), AMx = req("./admin-months.js"), SECx = req("../../shared/monthly-sections.js");
+  const pt = (iso) => OMx.adminReportingMonth(new Date(iso));
+  if (pt("2026-12-01T07:30:00Z") !== "2026-11-01") fail("fix1 a press at 2026-11-30 23:30 PT (Dec 1 07:30 UTC) must still mean November, not December");
+  if (pt("2026-12-01T08:30:00Z") !== "2026-12-01") fail("fix1 a press at 2026-12-01 00:30 PT must mean December");
+  if (pt("2026-11-15T12:00:00Z") !== "2026-11-01" || pt("2027-01-01T07:59:00Z") !== "2026-12-01") fail("fix1 mid-month and the year turn must read in Pacific time");
+  if (SR.currentReportingMonth(new Date("2026-12-01T07:30:00Z")) !== "2026-12-01") fail("fix1 the morning run keeps its UTC month");
+  for (const f of ["admin-monthly-close", "admin-monthly-once", "admin-monthly-quarter", "admin-monthly-weekly", "admin-months"]) if (/OM\.currentReportingMonth\(/.test(read(`netlify/functions/${f}.js`))) fail(`fix1 ${f} must decide "this month" with adminReportingMonth`);
+  // fix 2: the lead-handling test (no call tracking) and quarter steps outside quarter months are not counted
+  const ids6 = SECx.idsFor(6), ids6n = SECx.idsFor(6, { callTracking: false }), ids2 = SECx.idsFor(2, { callTracking: false });
+  if (ids6n.includes("m2.exec.mystery_shop") || ids6n.length !== ids6.length - 1 || !SECx.idsFor(6, { callTracking: true }).includes("m2.exec.mystery_shop") || !SECx.idsFor(6, { callTracking: null }).includes("m2.exec.mystery_shop")) fail("fix2 idsFor must drop the lead-handling test only on a positive no-call-tracking read");
+  if (ids2.some((i) => SECx.SECTIONS[3].ids.includes(i))) fail("fix2 a non-quarter month must not count quarterly steps");
+  const row = { reporting_month: "2026-12-01", month_number: 3, data: { tasks: { "m2.exec.mystery_shop": { status: "pending" } } } };
+  const bm = (ct) => AMx.buildMonths({ rows: [row], cols: true, closedAt: "2026-11-09T00:00:00Z", now: Date.parse("2026-12-05T00:00:00Z"), reports: [], callTracking: ct })[0];
+  if (bm(false).total !== bm(true).total - 1) fail("fix2 the server's total must leave out the hidden lead-handling test");
+  if (!/idsFor\(row \? row\.number : null, \{ callTracking:/.test(read("admin/admin.js"))) fail("fix2 the admin header count must use the same rule as the server");
+  // fix 3: the call agenda reads the month being closed
+  const fe = read("netlify/functions/flow-execute.js"), cm = fe.slice(fe.indexOf('"m2.call.monthly": async'), fe.indexOf('"m2.win_story.capture"'));
+  if (/new Date\(\)\.getFullYear\(\)|d\.getFullYear\(\)/.test(cm) || !/month: monthArg/.test(cm) || !/reporting_month=eq\.\$\{month\}/.test(cm)) fail("fix3 m2.call.monthly must read the month param, never the calendar month");
+  // fix 4: Send for approval on a monthly step uses the selected month
+  const ad = read("netlify/functions/admin-deliverables.js");
+  if (/currentReportingMonth\(\)/.test(ad) || !/body\.month/.test(ad)) fail("fix4 admin-deliverables must take the month param");
+  if (!/internal_decision: "approved", monthly: true, month: selectedMonthKey\(\)/.test(read("admin/admin.js"))) fail("fix4 Send for approval must send the selected month");
+}
 if (F.length) { console.error(`❌ the months are not kept — ${F.length} problem(s):\n` + F.map((m) => `  - ${m}`).join("\n")); process.exit(1); }
 console.log("✅ the months are kept: numbers, openMonth (idempotent, read back, carry-over), the hand-offs open and close, a closed month refuses writes, works before and after the SQL, reports kept on a real send only, the removed blocks are gone");

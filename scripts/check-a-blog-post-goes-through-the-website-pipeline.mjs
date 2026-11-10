@@ -274,8 +274,8 @@ if (x.s !== 200 || T(M).site_change || (T(M).site_change_log || []).length !== 1
 const A = fs.readFileSync(path.join(SITE, "admin/admin.js"), "utf8");
 const card = A.slice(A.indexOf("function blogLoopHtml"), A.indexOf("function formTrackingAdminHtml"));
 if (!/0 is fine/.test(card) || !/siteChangeAdminHtml\(key/.test(card)) fail("the blog card doesn't hand the post to the pipeline's own card, or lost that 0 is fine");
-if (/"m1\.web\.blog_seed" \? blogCheckAdminHtml\(t\)[\s\S]{0,120}isSiteChangeStep/.test(A) === false) fail("step 47 reaches the plain website card before its blog check");
-if (!/"m2\.exec\.blog_posts" \? blogMonthlyAdminHtml\(t\)/.test(A)) fail("the Monthly row doesn't draw the post");
+if (/"m1\.web\.blog_seed" \? blogCheckAdminHtml\(t\)[\s\S]{0,2500}isSiteChangeStep/.test(A) === false) fail("step 47 reaches the plain website card before its blog check");
+if (!/"m2\.exec\.blog_posts" \? oncBlogCardHtml\(t\)/.test(A)) fail("the Monthly row doesn't draw the post");
 if (!/\.\.\.\(def\.post \? \{ material: v\.material/.test(A)) fail("editing a post's lines loses the material it used");
 const OW = A.slice(A.indexOf("async function blogOwnPublish"), A.indexOf("function syncBlogCard"));
 if (!/own_publish/.test(OW) || !/open_pr/.test(OW) || !/merge_pr/.test(OW) || !/throw new Error/.test(OW)) fail("the own-blog press doesn't stop at the first stop that refuses");

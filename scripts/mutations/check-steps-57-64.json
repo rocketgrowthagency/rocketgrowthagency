@@ -191,7 +191,7 @@
  [
   "the hand-off steps are skippable",
   "steps5764",
-  "const NO_SKIP = [ID.HANDOFF, ID.HANDOFF2];",
+  "const NO_SKIP = [ID.HANDOFF, ID.HANDOFF2, ID.OPEN_MONTH];",
   "const NO_SKIP = [];",
   1
  ],
@@ -275,8 +275,8 @@
  [
   "61 with no reviews isn't done by itself",
   "flowexec",
-  "outcome: \"verified\", completed: true, done_by: \"checks\", outcome_data: { ...(prevTask.outcome_data || {}), reviews: rv } };",
-  "outcome: \"verified\", completed: false, done_by: \"checks\", outcome_data: { ...(prevTask.outcome_data || {}), reviews: rv } };",
+  "if (!rv.open) return { summary: RS.summaryFor(rv, day), outcome: \"verified\", completed: true,",
+  "if (!rv.open) return { summary: RS.summaryFor(rv, day), outcome: \"verified\", completed: false,",
   1
  ],
  [
@@ -289,8 +289,8 @@
  [
   "61 stores a review's words",
   "flowexec",
-  "outcome_data: { unanswered: unanswered.length, reviews: stored } };",
-  "outcome_data: { unanswered: unanswered.length, reviews: stored, words: list } };",
+  "outcome_data: { unanswered: unanswered.length, reviews: stored, ...rpx } };",
+  "outcome_data: { unanswered: unanswered.length, reviews: stored, words: list, ...rpx } };",
   1
  ],
  [

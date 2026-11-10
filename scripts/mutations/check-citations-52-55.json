@@ -120,7 +120,7 @@
  ],
  [
   "not for this business needs no reason",
-  "citbuild",
+  "stepskip",
   "if (s.length < 3) return { error:",
   "if (s.length < 0) return { error:",
   1
@@ -148,7 +148,7 @@
  ],
  [
   "undo on a skip isn't exact",
-  "citbuild",
+  "stepskip",
   "next = { ...t, status: p.status || \"pending\", completed_at: p.completed_at || null",
   "next = { ...t, status: \"pending\", completed_at: null",
   1
@@ -338,8 +338,8 @@
  [
   "a hand Mark step complete returns on 52 to 55",
   "admin",
-  "o.flowId === GL_STEP || globalThis.rgaCitationProgress?.isStep(o.flowId) ? \"\" :",
-  "o.flowId === GL_STEP ? \"\" :",
+  "const doneBtn = zcWaits || siteStep || o.flowId === GL_STEP || globalThis.rgaCitationProgress?.isStep(o.flowId) || uniS()?.noHandDone?.(o.flowId) ?",
+  "const doneBtn = zcWaits || siteStep || o.flowId === GL_STEP ?",
   1
  ],
  [

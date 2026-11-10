@@ -168,7 +168,7 @@ const ACSS5 = () => fs.readFileSync(`${process.env.APPROVAL_ARCHIVE_SITE_DIR || 
 }
 
 // ── admin: steps 35 + 36 — the client's move ───────────────────────────────────────────────────
-if (!/\(ZC_CLIENT_ASK\[o\.flowId\] && task\?\.client_input == null && st !== "skipped" \? "" : btn\("skipped", "Skip"\)\)/.test(AJS)) fail("steps 35/36: Skip is still a header button (the mockup puts it in the card as a quiet link)");
+if (!/\(ZC_CLIENT_ASK\[o\.flowId\] && task\?\.client_input == null && st !== "skipped"(?: \|\| o\.flowId === "m1\.brand\.youtube_setup")? \? "" : btn\("skipped", "Skip"\)\)/.test(AJS)) fail("steps 35/36: Skip is still a header button (the mockup puts it in the card as a quiet link)");
 if (!/const ZC_NO_HAND_DONE = new Set\(\["m1\.gbp\.attributes", "m1\.gbp\.booking_link", "m1\.gbp\.photos"\]\)/.test(AJS) || !/const inner = \(rowHasDone \|\| ZC_NO_HAND_DONE\.has\(o\.flowId\) (\|\| uniS\(\)\?\.noHandDone\?\.\(o\.flowId\) )?\? "" : btn\("done", "Done"\)\)/.test(AJS)) fail("steps 35/36/38: RGA can still tick a client's Google step Done");
 { const p2 = ["ZC_CLIENT_ASK", "zcClientAskHtml", "bk36Card"].map((n) => lift(AJS, n));
   if (p2.some((x) => !x)) { console.error("⚠️  INDETERMINATE — the client's-move card moved"); process.exit(2); }
@@ -189,7 +189,7 @@ if (!/const ZC_NO_HAND_DONE = new Set\(\["m1\.gbp\.attributes", "m1\.gbp\.bookin
 // 🔴 Remind the client… on a QUEUED row (35 · 36 · 38 aren't the active step) did NOTHING: the nudge handler reads state.waitCtx, which only
 // the active branch filled (found 10-29 by clicking it in a write-blocked browser). Every branch that can draw the card registers it, and
 // the handler never returns silently.
-if (!/const qActions = `\$\{qRerun\}\$\{clientOverride\(o, s\.task\)\}`;[\s\S]{0,400}?\(state\.waitCtx = state\.waitCtx \|\| \{\}\)\[o\.flowId\] = \{ o, task: s\.task \};/.test(AJS)) fail("Remind the client… on a queued row does nothing (the queued branch doesn't register the step)");
+if (!/const qActions = monthlyOwn\(o\) \? "" : `\$\{qRerun\}\$\{clientOverride\(o, s\.task\)\}`;[\s\S]{0,400}?\(state\.waitCtx = state\.waitCtx \|\| \{\}\)\[o\.flowId\] = \{ o, task: s\.task \};/.test(AJS)) fail("Remind the client… on a queued row does nothing (the queued branch doesn't register the step)");
 if (!/function zcPhotosRowHtml\(o, s, marker, badge, resultBlock, extra = \{\}\) \{\n  \(state\.waitCtx = state\.waitCtx \|\| \{\}\)\[o\.flowId\] = \{ o, task: s\.task \};/.test(AJS)) fail("step 38: the photos card doesn't register itself for Remind the client…");
 if (/if \(!ctx \|\| !c\) return;/.test(AJS)) fail("the Remind handler returns silently when it can't find the step: the button looks like it did something");
 if (!/function gNotSavedHtml\(flowId(?:, o)?\) \{\s*if \(ZC_CLIENT_ASK\[flowId\]\) \{/.test(AJS)) fail("steps 35/36 still draw the old 'Not saved yet' card");
