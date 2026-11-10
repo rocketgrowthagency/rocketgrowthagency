@@ -399,24 +399,18 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
     const ch = g.chan("Reviews", "x", [["Total reviews", null, "review_count"], ["New", null, "new_reviews"]], { row: { _google: { review_count: "disconnected", new_reviews: "disconnected" } } });
     ok(ch.includes(esc(WORDS.disconnected)) && !/<b class="num">0<\/b>/.test(ch), "(10) the report's channel box shows a Google number it couldn't read as 0"); }
   { const rp = reportJs; ok(/num\(current\.review_count\) === 0 && GL\(\)\.status\(current, "review_count"\) === "ok"/.test(rp), "(10) the report tells a client whose review count Google didn't give to 'get the first reviews'"); }
-  { const sm = SRC["send-monthly-report.js"], m1 = read("netlify/functions/_month1-report.js"), mat = read("netlify/functions/_mature.js");
+  { const sm = SRC["send-monthly-report.js"], m1 = read("netlify/functions/_month1-report.js"), mat = read("shared/monthly-health.js");
     ok(/const googleWords = \(m\) =>/.test(sm) && /const present = METRICS\.filter\(\(m\) => \(current\[m\.key\] != null && current\[m\.key\] !== ""\) \|\| googleWords\(m\)\)/.test(sm), "(10) the monthly email could show a Google number it couldn't read as 0, or leave the row out without saying why");
     ok(/if \(x === null \|\| y === null\) continue;/.test(m1 || "") && /googleWhy/.test(m1 || ""), "(10) the Month 1 report could show a Google figure it couldn't read as 0, or not say why it can't compare");
-    ok(/if \(a === null \|\| b === null \|\| !t\) return null;/.test(mat || "") && /GOOGLE_KPIS/.test(mat || ""), "(10) the KPI alert could read an unread Google number as a drop, or call it fine without saying it wasn't checked"); }
+    ok(/if \(num\(a\) == null \|\| num\(b\) == null \|\| num\(c\) == null\) return null;/.test(mat || ""), "(10) the churn-risk decline rule (shared/monthly-health.js, frozen whole months only) could read an unread number as a drop, or call it fine without saying it could not be checked"); }
   { const M1 = load("_month1-report.js"); const r = M1.buildMonth1Report({ client: { business_name: "X" }, months: [{ reporting_month: "2026-06-01", gbp_calls: null, gbp_impressions: null, gsc_clicks: 40, gsc_impressions: 900, _google: { gbp_calls: "could_not_read", gbp_impressions: "could_not_read" } }, { reporting_month: "2026-07-01", gbp_calls: null, gbp_impressions: null, gsc_clicks: 55, gsc_impressions: 1200, _google: { gbp_calls: "could_not_read", gbp_impressions: "could_not_read" } }], kickoffAt: "2026-07-05", now: at("2026-08-20"), playbook: [], tasks: {} });
     ok(!r.comparisons.some((c) => /Google profile|Call-button|Website clicks from/.test(c.label)) && r.text.includes(WORDS.could_not_read) && !/Call-button taps[^\n]*: 0\b/.test(r.text), "(10) the Month 1 report compares a Google figure it couldn't read, or doesn't say why it can't"); }
-  // the KPI alert's live reading: the shape _mature-deps.js hands to _mature.js must be the shape the REAL reader returns (a reader that never existed once made every alert "couldn't check")
-  { const Dp = load("_mature-deps.js"), Mt = load("_mature.js"), LV = load("_google-live.js");
-    const rows3 = [{ reporting_month: "2026-10-01" }, { reporting_month: "2026-09-01" }, { reporting_month: "2026-08-01" }];
-    const fakeDb = async () => [{ gbp_location_id: "locations/1", refresh_token: "x" }];
-    const fakeLive = { readGoogleLive: async () => ({ months: Object.fromEntries(["2026-08-01", "2026-09-01", "2026-10-01"].map((m, i) => [m, { values: { calls: [100, 70, 50][i], review_count: 50 }, status: { calls: "ok", review_count: "ok" } }])) }) };
-    const g = await Dp.readGoogleLive("c1", rows3, { supa: fakeDb, live: fakeLive });
-    ok(Array.isArray(g.gbp_calls) && g.gbp_calls.length === 3 && g.gbp_calls[0].value === 50 && g.gbp_calls[2].value === 100 && g.gbp_calls.every((x) => x.status === "ok"), "(10) the KPI alert's live reading isn't the shape the reader returns (newest first, three of {value,status})");
-    ok(Mt.kpiBreaches({}, { gbp_metrics: { drop: 20 } }, [{}, {}, {}], g).length === 1, "(10) a real two-month drop in Google calls doesn't fire the KPI alert");
-    const failing = { readGoogleLive: (a) => LV.readGoogleLive({ ...a, deps: { fetchFn: async () => { throw new Error("net"); }, sleep: async () => {}, budgetMs: 50 } }) };
-    const g2 = await Dp.readGoogleLive("c1", rows3, { supa: fakeDb, live: failing });
-    ok(Mt.kpiBreaches({}, { gbp_metrics: { drop: 20 } }, [{}, {}, {}], g2).length === 0 && Mt.kpiUnchecked({}, { gbp_metrics: { drop: 20 } }, g2).length === 1, "(10) a failed Google read fires the KPI alert, or isn't reported as 'couldn't check'"); }
-  { const Mat = load("_mature.js"); ok(Mat.breaches({ drop: 20 }, 10, null) === null && Mat.breaches({ drop: 20 }, null, 10) === null && Mat.breaches({ points: 1 }, 5, null) === null, "(10) the KPI alert reads a cleared number as a drop"); }
+  // mature_account_health_v1 (11-10): the KPI alert no longer reads Google LIVE at all. Churn risk (Monthly 28) reads the FROZEN whole months only (shared/monthly-health.js), so there is no live reader to shape-check:
+  // the old _mature-deps.js readGoogleLive (a live Google read on every Monthly render) is GONE, and a number that was not kept or not given is unknown, never a drop and never fine.
+  { const H = load("../../shared/monthly-health.js"), srcs = ["netlify/functions/_mature-deps.js", "netlify/functions/_mature.js", "netlify/functions/_monthly-health.js"].map((f) => read(f));
+    ok(srcs.every((s) => !/readGoogleLive|googleLive|google-live/.test(s)), "(10) the churn rule reads Google live again (it must read the frozen whole months only)");
+    ok(H.declinedRunning([50, 70, 100]) === true && H.declinedRunning([null, 70, 100]) === null && H.declinedRunning([50, null, 100]) === null && H.declinedRunning([50, 70, null]) === null && H.declinedRunning([100, 70, 50]) === false, "(10) a cleared or missing number is read as a drop, or as fine, in the churn-risk decline rule");
+    ok(H.declinedRunning([2, 3, 4]) === false, "(10) a tiny base (3 down to 2) is read as a decline"); }
 
   // the admin Data row reads the new target from real numbers
   { const A = load("admin-data-keep.js");

@@ -65,6 +65,11 @@ function settledByMorningRun() {
   // 3 · Freeze the month's numbers: the morning run calls closeMorning, which freezes and marks MC.ID.FREEZE done
   const mc = rd('netlify/functions/_monthly-close.js'), C = idMap(rd('shared/monthly-close.js'));
   if (/closeMorning\(/.test(morning) && /async function closeMorning\(/.test(mc) && /tasks\[MC\.ID\.FREEZE\] = \{[^}]*status: "done"/.test(mc) && C.FREEZE) out.add(C.FREEZE);
+  // 4 · mature_account_health_v1 (11-10): Account health. The morning run calls settleHealth -> MH.settle, which settles 28 (churn) and 29 (upsell) from their own views; closeMorning
+  //     calls buildLetter -> MH.settleLetter, which builds and marks 31 (the quarterly letter) done. Derived from the code: the chain must be intact and the settler must name the step.
+  const mh = rd('netlify/functions/_monthly-health.js'), HID = idMap(rd('shared/monthly-health.js'));
+  if (/settleHealth/.test(morning) && /async function settle\(/.test(mh)) { const body = mh.slice(mh.indexOf('async function settle(')); for (const k of ['CHURN', 'UPSELL']) if (HID[k] && new RegExp(`H\\.ID\\.${k}[\\s\\S]{0,400}?status: "done"`).test(body)) out.add(HID[k]); }
+  if (/buildLetter/.test(mc) && /d\.buildLetter/.test(mc) && /async function settleLetter\(/.test(mh) && /tasks\[H\.ID\.LETTER\] = \{[^}]*status: "done"/.test(mh) && HID.LETTER) out.add(HID.LETTER);
   return out;
 }
 const MORNING = settledByMorningRun();

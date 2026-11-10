@@ -1,99 +1,162 @@
 [
  [
-  "the review opens with fewer than 3 months",
-  "maturefn",
-  "  if (months.length < 3 && !qr) put(\"m6.strategy.quarterly_review\"",
-  "  if (false) put(\"m6.strategy.quarterly_review\"",
+  "a letter is built with a frozen number missing",
+  "healthfn",
+  "if (!chk.ok) return { state: \"waiting\", why: chk.why };",
+  "if (false) return { state: \"waiting\", why: chk.why };",
   1
  ],
  [
-  "a review is marked sent when the email failed",
-  "maturefn",
-  "      if (!sent || !sent.ok) return { ok: false, error: `The email didn't send",
-  "      if (false) return { ok: false, error: `The email didn't send",
+  "building the quarterly letter emails the client",
+  "healthfn",
+  "rec.data = { ...(rec.data || {}), quarter_letter: b.letter };",
+  "rec.data = { ...(rec.data || {}), quarter_letter: b.letter }; await d.sendMail({ client, to: \"x@y.test\", subject: \"s\", html: \"\", text: \"\" });",
   1
  ],
  [
-  "Send twice emails twice",
-  "maturefn",
-  "      if (r.status === \"sent\") return { ok: true, message: \"Already sent.\" };",
+  "the letter is built twice",
+  "healthfn",
+  "if (rec.data && rec.data.quarter_letter) return { state: \"already\" };",
   "",
   1
  ],
  [
-  "a tracked keyword is proposed again",
-  "maturefn",
-  ".filter((k) => k && !tracked.includes(k)))].slice(0, 3);",
-  ".filter((k) => k))].slice(0, 3);",
-  1
- ],
- [
-  "the 2-keyword cap is gone",
-  "maturefn",
-  "        if (extra.length > 2) return",
-  "        if (false) return",
-  1
- ],
- [
-  "storefronts get a service area",
-  "maturefn",
-  "  const byArea = [\"service_area\", \"multi_location\"].includes(String(ctx.client?.geography_model || \"\"));",
-  "  const byArea = true;",
-  1
- ],
- [
-  "one bad month is an alert",
-  "maturefn",
-  "    if (breaches(t, v0, v1) === true && breaches(t, v1, v2) === true) {",
-  "    if (breaches(t, v0, v1) === true) {",
-  1
- ],
- [
-  "a missing value reads as no breach",
-  "maturefn",
-  "  if (a === null || b === null || !t) return null;",
-  "  if (a === null || b === null || !t) return false;",
-  1
- ],
- [
-  "telling the client emails them",
-  "maturefn",
-  "        await deps.activity(\"rga_note_to_client\", { summary: note, visible_to_client: true, about: found.map((b) => b.key) });",
-  "        await deps.sendEmail({ to: c.primary_contact_email, subject: note });",
-  1
- ],
- [
-  "a page that doesn't load is live",
-  "maturefn",
-  "      if (!(await deps.urlLive(u.toString()))) return",
-  "      if (false) return",
-  1
- ],
- [
-  "a case study without permission",
-  "maturefn",
-  "      if (cs.data?.permission !== \"yes\") return { ok: false, error: \"Not without the client's permission.\" };",
+  "a tracked search is proposed again",
+  "healthfn",
+  "!tracked.map((x) => String(x).toLowerCase()).includes(k) && ",
   "",
   1
  ],
  [
-  "upsell without 3 straight months",
-  "maturefn",
-  "  const top3 = months.length >= 3 && months.slice(0, 3).every(",
-  "  const top3 = months.length >= 3 && months.slice(0, 3).some(",
+  "an area is proposed with no measured edge",
+  "healthfn",
+  "if (!data.frontier) return { ok: false, error: \"There is no measured edge",
+  "if (false) return { ok: false, error: \"There is no measured edge",
+  1
+ ],
+ [
+  "a 21st service area is proposed",
+  "healthfn",
+  "if (Array.isArray(have) && have.length >= 20)",
+  "if (false)",
+  1
+ ],
+ [
+  "an area already listed is proposed again",
+  "healthfn",
+  "if (Array.isArray(have) && have.some((a)",
+  "if (false && have.some((a)",
+  1
+ ],
+ [
+  "a proposal drops its evidence",
+  "healthfn",
+  "why: `They already rank 4 to 10 to the ${data.frontier.sector}`",
+  "why: \"\"",
+  1
+ ],
+ [
+  "a referral ask goes with no good moment",
+  "healthfn",
+  "if (!S.ready) return { ok: false, error: \"There is no good moment",
+  "if (false) return { ok: false, error: \"There is no good moment",
+  1
+ ],
+ [
+  "noting a churn flag emails the client",
+  "healthfn",
+  "if (action === \"churn_note\") { if (!text) return { ok: false, error: \"Write what you did.\" };",
+  "if (action === \"churn_note\") { if (!text) return { ok: false, error: \"Write what you did.\" }; await d.sendMail({ client: await d.client(clientId), to: \"x@y.test\", subject: \"s\", html: \"\", text: \"\" });",
+  1
+ ],
+ [
+  "a flagged churn step settles before anyone noted what they did",
+  "healthfn",
+  "want = flagged && !noted ? \"pending\" : \"done\"",
+  "want = \"done\"",
+  1
+ ],
+ [
+  "one bad month is a decline",
+  "healthshared",
+  "return drop(a, b) && drop(b, c);",
+  "return drop(a, b);",
+  1
+ ],
+ [
+  "a missing value reads as no decline",
+  "healthshared",
+  "if (num(a) == null || num(b) == null || num(c) == null) return null;",
+  "if (num(a) == null || num(b) == null || num(c) == null) return false;",
   1
  ],
  [
   "one churn signal raises the flag",
-  "maturefn",
-  "  else if (signals.length < 2) {",
-  "  else if (signals.length < 1) {",
+  "healthshared",
+  "const FLAG_AT = 2;",
+  "const FLAG_AT = 1;",
   1
  ],
  [
-  "admin acts for a non-Mature client",
-  "adminmature",
-  "    if (!mature && String(body.action || \"\") !== \"send_referral\") return json(409, { ok: false, error: \"This client isn't at the Mature stage.\" });",
+  "an unrecorded login reads as recent visits",
+  "healthshared",
+  "unknown.push({ key: \"login\", title: \"Portal sign-ins are not recorded\", line: \"No sign-in has been logged for this client. That is not treated as recent, and not as a signal.\" });",
+  "checked.push({ key: \"login\", title: \"Signed in to the portal recently\", line: \"\" });",
+  1
+ ],
+ [
+  "the churn read stops counting an at-risk call",
+  "healthshared",
+  "if (co === \"at_risk\" || co === \"churned\")",
+  "if (co === \"churned\")",
+  1
+ ],
+ [
+  "a notice to leave does not close churn risk",
+  "healthshared",
+  "if (S.notice) return { tone: \"off\", label: \"Notice given\"",
+  "if (false) return { tone: \"off\", label: \"Notice given\"",
+  1
+ ],
+ [
+  "upsell without 3 whole months",
+  "healthshared",
+  "const TOP_MONTHS = 3;",
+  "const TOP_MONTHS = 1;",
+  1
+ ],
+ [
+  "a referral ask opens on a falling number",
+  "healthshared",
+  "if (tr.reportSent && improving.length)",
+  "if (tr.reportSent)",
+  1
+ ],
+ [
+  "a referral ask opens on an unsent report",
+  "healthshared",
+  "if (tr.reportSent && improving.length)",
+  "if (improving.length)",
+  1
+ ],
+ [
+  "the service-area copy claims a rank effect",
+  "healthshared",
+  "\"Up to 2 new searches to track, or a new area to serve\"",
+  "\"A new area boosts your rank\"",
+  1
+ ],
+ [
+  "expansion is offered with a weak home area",
+  "maturefn",
+  "if (fr.homeSolv < HOME_SOLV_MIN * 100) return { state: \"home_first\"",
+  "if (false) return { state: \"home_first\"",
+  1
+ ],
+ [
+  "an all-green grid proposes an area",
+  "maturefn",
+  "if (fr.allGreen) return { state: \"all_green\" };",
   "",
   1
  ],
@@ -102,83 +165,6 @@
   "portalmature",
   "&kind=eq.quarterly_review&status=eq.sent&select=",
   "&kind=eq.quarterly_review&select=",
-  1
- ],
- [
-  "the admin shows Mature to every client",
-  "admin",
-  "  if (c.client_portal_stage !== \"stage_6_mature\") { host.innerHTML = \"\"; return; }",
-  "  if (false) { host.innerHTML = \"\"; return; }",
-  1
- ],
- [
-  "an unrecorded login reads as recent visits",
-  "maturefn",
-  "Number.isFinite(ll) ? (now.getTime() - ll > 21 * DAY ? null : `Portal visited ${fmtDay(ctx.lastLoginAt)}`) : \"Portal visits not recorded\",",
-  "\"Recent portal visits\",",
-  1
- ],
- [
-  "expansion is offered with a weak home area",
-  "maturefn",
-  "  else if (fr.homeSolv < HOME_SOLV_MIN * 100) put(ID3,",
-  "  else if (false) put(ID3,",
-  1
- ],
- [
-  "an all-green grid proposes an area",
-  "maturefn",
-  "  else if (fr.allGreen) put(ID3,",
-  "  else if (false) put(ID3,",
-  1
- ],
- [
-  "a 21st service area is proposed",
-  "maturefn",
-  "  else if (areasNow && areasNow.length >= 20) put(ID3,",
-  "  else if (false) put(ID3,",
-  1
- ],
- [
-  "the service-area copy claims a rank effect",
-  "maturefn",
-  "Google doesn't rank on that setting; the verified location sets rank.",
-  "it will help you rank higher there.",
-  1
- ],
- [
-  "a proposal drops its evidence",
-  "maturefn",
-  "      if (!fr || !fr.best) return { ok: false, error: \"There's no measured edge to propose from — run a grid scan first.\" };",
-  "",
-  1
- ],
- [
-  "a city page is drafted without proof",
-  "maturefn",
-  "      if (kind === \"area\" && !proof.length) return { ok: false, error: \"A city page needs one real job, review or photo from there first.\" };",
-  "",
-  1
- ],
- [
-  "an office claim passes the checks",
-  "maturefn",
-  "    if (new RegExp(`(office|located|based|headquartered|visit us|our location|our shop|our store)[^.]{0,40}\\\\b${esc}\\\\b`, \"i\").test(t)) problems.push(`it implies an office in ${place}`);",
-  "",
-  1
- ],
- [
-  "review-star markup passes the live check",
-  "maturefn",
-  "  if (opt.html && /\"@type\"\\s*:\\s*\"(AggregateRating|Review)\"/.test(opt.html)) problems.push(\"it marks up its own reviews as stars (Google doesn't allow that)\");",
-  "",
-  1
- ],
- [
-  "more than 5 pages in flight",
-  "maturefn",
-  "    for (const x of todo.slice(0, 5)) {",
-  "    for (const x of todo) {",
   1
  ],
  [
@@ -231,21 +217,24 @@
   1
  ],
  [
-  "the churn read stops counting an at-risk call",
-  "maturefn",
-  "if (lastCall && lastCall.key === \"at_risk\") signals.push",
-  "if (false) signals.push"
+  "the 2-search cap is gone",
+  "healthshared",
+  "const room = Math.max(0, GROW_CAP - (num(x.tracked) || 0)",
+  "const room = 5; Math.max(0, GROW_CAP - (num(x.tracked) || 0)",
+  1
  ],
  [
-  "a referral ask opens with no first result",
-  "maturefn",
-  "|| !!first;",
-  "|| true;"
+  "the referral ask forgets it already went this quarter",
+  "healthfn",
+  "const s = taskOf(r.data && r.data.tasks, H.ID.REFERRAL).referral_sent; if (s && s.at)",
+  "const s = taskOf(r.data && r.data.tasks, H.ID.REFERRAL).referral_sent; if (false)",
+  1
  ],
  [
-  "zero new reviews read as a result",
-  "maturefn",
-  "if (gained > 0) return { kind: \"reviews\"",
-  "if (gained >= 0) return { kind: \"reviews\""
+  "the running month is read as a result",
+  "healthfn",
+  "const ranks = [1, 2, 3].map((i) => { const m = H.addMonths(month, -i), r = before.find((y) => monthOf(y) === m);",
+  "const ranks = [0, 1, 2].map((i) => { const m = H.addMonths(month, -i), r = (rows || []).find((y) => monthOf(y) === m);",
+  1
  ]
 ]

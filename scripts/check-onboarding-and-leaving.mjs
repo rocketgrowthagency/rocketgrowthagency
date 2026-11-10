@@ -142,8 +142,8 @@ const tz = "America/New_York", told = Date.parse("2026-11-02T15:00:00Z");   // a
   if (C.outcomePatch("churned", "churned").call_outcome !== null) fail("pressing the chosen word again doesn't clear it");
   const L = C.latestCallOutcome([{ reporting_month: "2026-09-01", data: { tasks: { "m2.call.monthly": { call_outcome: "retained" } } } }, { reporting_month: "2026-10-01", data: { tasks: { "m2.call.monthly": { call_outcome: "at_risk" } } } }, { reporting_month: "2026-11-01", data: { tasks: {} } }]);
   if (!L || L.key !== "at_risk" || L.month !== "2026-10-01") fail("the latest NOTED outcome isn't read (a month with none must be skipped, not read as retained)");
-  const M = load("./_mature.js");
-  if (M.CALL_OUTCOME_KEYS.join() !== C.CALL_OUTCOMES.map((o) => o.key).join()) fail("the Mature read and the control disagree on the outcome words");
+  const M = load("./_monthly-health.js");
+  if (M.CALL_OUTCOME_KEYS.join() !== C.CALL_OUTCOMES.map((o) => o.key).join()) fail("the Account health read (churn risk) and the control disagree on the outcome words");
   const ad = read("admin/admin.js");
   if (!/updateFlowTask\(client, "month2plus", "m2\.call\.monthly", patch\)/.test(ad)) fail("the outcome control doesn't save on the monthly call step");
   if (!/data-ob-outcome/.test(ad)) fail("the outcome control isn't drawn");

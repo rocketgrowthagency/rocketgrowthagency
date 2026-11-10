@@ -64,9 +64,9 @@
  ],
  [
   "the old head comes back",
-  "maturefn",
-  "small: card.small, head: card.head, body: card.body, done: true",
-  "small: card.small, head: `Named in ${1} of ${3} AI answers`, body: card.body, done: true",
+  "healthfn",
+  "let aiCard = null;",
+  "let aiCard = null; const oldHead = `Named in ${1} of ${3} AI answers`;",
   1
  ],
  [

@@ -70,12 +70,10 @@ if (!/buildOngoingWorkHtml\(\{ isSetupPhase, customerListHtml, photoUploadHtml, 
 
 // ── 2 · Setup is Month 1, and its stage 5 / 6 layouts don't repeat the two forms ──
 if (!/const actionItemsHtml = buildActionItemsHtml\([^)]*\{ month1Only: true, domSuffix: "-setup" \}\);/.test(pcode)) fail("Setup still lists Month-2 steps at stage 6 (each step must have one home)");
-const st5 = /if \(stage === "stage_5_monthly" \|\| stage === "stage_4_monthly"\) \{[\s\S]{0,400}?\n {2}\}/.exec(pcode)?.[0] || "";
-if (!st5) fail("the stage-5 Setup layout is gone (re-read this gate)");
-else if (/customerListHtml|photoUploadHtml/.test(st5)) fail("stage-5 Setup still carries the customer list / photo upload (they live in their Ongoing cards)");
-const st6 = /return stageBanner \+ ctx\.actionItemsHtml \+ `<div class="portal-detail-grid">[^\n]*/.exec(pcode)?.[0] || "";
-if (!st6) fail("the stage-6 Setup layout is gone (re-read this gate)");
-else if (/customerListHtml|photoUploadHtml/.test(st6)) fail("stage-6 Setup still carries the customer list / photo upload");
+const st5 = /if \(stage === "stage_5_monthly" \|\| stage === "stage_4_monthly" \|\| stage === "stage_6_mature" \|\| stage === "stage_5_mature"\) \{[\s\S]{0,400}?\n {2}\}/.exec(pcode)?.[0] || "";
+if (!st5) fail("the stage-5 AND stage-6 Setup layout is gone (re-read this gate): mature_account_health_v1 (11-10) made stage 6 the same finished-client dashboard as stage 5");
+else if (/customerListHtml|photoUploadHtml/.test(st5)) fail("stage-5/6 Setup still carries the customer list / photo upload (they live in their Ongoing cards)");
+if (/return stageBanner \+ ctx\.actionItemsHtml \+ `<div class="portal-detail-grid">/.test(pcode)) fail("stage 6 draws the setup-era dashboard again (mature_account_health_v1: one dashboard for stage 5 and 6)");
 if (!/const m1 = month2Only \? \[\] : playbook\.month1\.filter\(TODO\)/.test(pcode)) fail("the Month-2 list also draws Month-1 rows");
 if (!/\.sort\(\(a, b\) => ongoingRank\(a\.id\) - ongoingRank\(b\.id\)\)/.test(pcode)) fail("the Month-2 rows aren't in the approved card order");
 

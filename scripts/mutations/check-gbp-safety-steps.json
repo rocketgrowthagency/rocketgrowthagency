@@ -652,9 +652,9 @@
  ],
  [
   "the KPI alert says calls",
-  "maturefn",
-  "label: \"Call-button taps on Google\"",
-  "label: \"Calls from Google\"",
+  "healthshared",
+  "{ key: \"calls\", label: \"Call taps\", google: true }",
+  "{ key: \"calls\", label: \"Calls from Google\", google: true }",
   1
  ],
  [

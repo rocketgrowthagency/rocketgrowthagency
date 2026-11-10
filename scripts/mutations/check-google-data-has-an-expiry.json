@@ -67,9 +67,9 @@
  ],
  [
   "a new Business Profile writer is added to a file nobody classified",
-  "maturefn",
-  "const gbpKeep = require(\"./_gbp-keep\");",
-  "const gbpKeep = require(\"./_gbp-keep\"); const NEW_HOST = \"https://mybusiness.googleapis.com/v4/\";"
+  "healthfn",
+  "const enc = encodeURIComponent;",
+  "const enc = encodeURIComponent; const NEW_HOST = \"https://mybusiness.googleapis.com/v4/\";"
  ],
  [
   "the saved Brain analysis is no longer on the JSON-key list",

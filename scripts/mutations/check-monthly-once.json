@@ -352,7 +352,7 @@
  [
   "the two new steps are not appended after the 25",
   "monthlysections",
-  "const APPENDED = [\"m2.exec.profile_watch\", \"m2.exec.tracking_check\"];",
+  "const APPENDED = [\"m2.exec.profile_watch\", \"m2.exec.tracking_check\", \"m2.health.churn_risk\", \"m2.health.upsell\", \"m2.health.referral_ask\", \"m2.quarter.letter\", \"m2.quarter.grow_plan\", \"m2.quarter.ai_check\"];",
   "const APPENDED = [];",
   1
  ],

@@ -1,0 +1,114 @@
+[
+ [
+  "the referral send skips the confirmed address",
+  "healthfn",
+  "if (clip(b.confirmedTo, 160).toLowerCase() !== S.email.toLowerCase()) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "Send me a test goes to the client",
+  "healthfn",
+  "const to = clip(b.adminEmail, 160);",
+  "const to = S.email;",
+  1
+ ],
+ [
+  "a failed send is recorded as asked",
+  "healthfn",
+  "if (!sent || !sent.ok) return { ok: false, error: `The email didn't send${sent && sent.error ? ` (${sent.error})` : \"\"}. Nothing was recorded.` };",
+  "",
+  1
+ ],
+ [
+  "a letter is built in a month that is not a quarter month",
+  "healthfn",
+  "if (!MS.showsQuarter(number) || number == null) return { state: \"not_quarter\" };",
+  "",
+  1
+ ],
+ [
+  "the morning run overrides a skipped churn step",
+  "healthfn",
+  "if ([\"skipped\", \"declined\"].includes(ct.status)) out.churn = \"skipped\";",
+  "if (false) out.churn = \"skipped\";",
+  1
+ ],
+ [
+  "Account health opens in Month 3",
+  "monthlysections",
+  "const HEALTH_FROM = 4;",
+  "const HEALTH_FROM = 3;",
+  1
+ ],
+ [
+  "a step falls out of the appended numbering",
+  "monthlysections",
+  "\"m2.quarter.grow_plan\", \"m2.quarter.ai_check\"];",
+  "\"m2.quarter.grow_plan\"];",
+  1
+ ],
+ [
+  "a closed month shows today's facts",
+  "healthshared",
+  "if (x.closed && t.status !== \"skipped\") {\n      const h = t.health || null;",
+  "if (false) {\n      const h = t.health || null;",
+  1
+ ],
+ [
+  "the report does not carry the quarterly letter",
+  "monthlyreportemail",
+  "const letter = MH.letterBlock(x.quarterLetter, { withoutGoogle: wg });",
+  "const letter = null;",
+  1
+ ],
+ [
+  "the Google-free copy keeps the letter's Google rows",
+  "healthshared",
+  "...(wg ? [] : (L.google_rows || []))",
+  "...(L.google_rows || [])",
+  1
+ ],
+ [
+  "the Mature checklist comes back",
+  "admin",
+  "function renderMonthlyChecklist() {",
+  "function renderMatureChecklist() {}\nfunction renderMonthlyChecklist() {",
+  1
+ ],
+ [
+  "stage 6 is an Advance target again",
+  "admin",
+  "return nextDef && nextDef.labelOnly ? null : nextDef;",
+  "return nextDef;",
+  1
+ ],
+ [
+  "the quarterly letter loses its expiry",
+  "gbpkeep",
+  "path: \"quarter_letter.google_rows\"",
+  "path: \"quarter_letter.nothing\"",
+  1
+ ],
+ [
+  "an unsent-report ask: the churn decline compares months that do not end at last month",
+  "healthshared",
+  "const fz = x.expectMonth &&",
+  "const fz = false &&",
+  1
+ ],
+ [
+  "a storefront card offers areas",
+  "healthshared",
+  "const byArea = String(x.business || \"\") === \"service_area\";",
+  "const byArea = true;",
+  1
+ ],
+ [
+  "the client's yes adds a third extra search",
+  "healthfn",
+  "if (have >= H.GROW_CAP) return",
+  "if (false) return",
+  1
+ ]
+]

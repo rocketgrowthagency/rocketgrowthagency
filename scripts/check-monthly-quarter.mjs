@@ -62,7 +62,8 @@ const task = (f, id) => f.store[id] || {};
 // 1 the steps
 {
   const sec = SEC.SECTIONS.find((s) => s.key === "m2s-quarter"), ids = PB.month2plus.map((s) => s.id);
-  if (JSON.stringify(sec.ids) !== JSON.stringify(Q.IDS)) fail(`1 the "Every quarter" section must list the seven steps in order: ${sec.ids.join(", ")}`);
+  // mature_account_health_v1 (11-10): three steps were ADDED to every quarter (31 letter, 32 grow the plan, 33 AI search check, shared/monthly-health.js). The seven stay first, in order, untouched.
+  if (JSON.stringify(sec.ids.slice(0, Q.IDS.length)) !== JSON.stringify(Q.IDS) || sec.ids.length !== Q.IDS.length + 3) fail(`1 the "Every quarter" section must list the seven steps in order, then the three added ones: ${sec.ids.join(", ")}`);
   if (Q.IDS.length !== 7) fail("1 section 4 has seven steps");
   for (const id of Q.IDS) if (ids.filter((x) => x === id).length !== 1) fail(`1 ${id} must be in the playbook exactly once`);
   for (const [gone, kept] of Object.entries(Q.RETIRED)) {

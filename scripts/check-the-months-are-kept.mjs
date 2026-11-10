@@ -226,8 +226,8 @@ const fresh = (o = {}) => { DB.cur = makeDb({ onboarding: [JSON.parse(JSON.strin
   if (!/m1\.audit\.kpi_baseline/.test(js.slice(js.indexOf("function renderV2BrainSources")))) fail("7 the sources strip must be repointed to m1.audit.kpi_baseline");
   const ids = S.SECTIONS.flatMap((s) => s.ids);
   if (ids.length !== PB.length || PB.some((s) => ids.filter((i) => i === s.id).length !== 1)) fail("7 every month2plus step must be in exactly one section");
-  if (S.SECTIONS.map((s) => s.name).join("|") !== "Start of month|Every week|Once a month|Every quarter|Close the month") fail("7 the five sections, in order");
-  if (S.showsQuarter(2) || S.showsQuarter(4) || !S.showsQuarter(3) || !S.showsQuarter(6) || S.idsFor(2).length !== ids.length - S.SECTIONS[3].ids.length) fail("7 the quarter section shows only in months 3, 6, 9 and the count follows");
+  if (S.SECTIONS.map((s) => s.name).join("|") !== "Start of month|Every week|Once a month|Every quarter|Account health|Close the month") fail("7 the six sections, in order (Account health was added 11-10, mature_account_health_v1)");
+  if (S.showsQuarter(2) || S.showsQuarter(4) || !S.showsQuarter(3) || !S.showsQuarter(6) || S.idsFor(2).length !== ids.length - S.SECTIONS[3].ids.length - S.SECTIONS[4].ids.length || S.idsFor(4).length !== ids.length - S.SECTIONS[3].ids.length || !S.showsHealth(4) || S.showsHealth(3) || S.showsHealth(null)) fail("7 the quarter section shows only in months 3, 6, 9 and the count follows");
   if (/Advance the client to the monthly cycle|Advance the client to Monthly when you are ready/.test(js)) fail("7 the banner must not ask for a manual advance");
   const mr = fresh({ clients: [{ id: CID, workspace_id: "w", client_portal_stage: "stage_5_monthly", source: null }] });
   const d = { ...MORN.defaultDeps(), supa: mr.supa, now: () => Date.parse("2026-12-02T10:00:00Z"), playbook: () => JSON.parse(read("data/playbooks/playbooks.json")).month1, searchesLeft: async () => 0, record: async () => {}, start: async () => {}, readYoutube: async () => {}, env: {} };

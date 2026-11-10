@@ -553,9 +553,9 @@
  ],
  [
   "the KPI alert reads a cleared number as a drop",
-  "maturefn",
-  "if (a === null || b === null || !t) return null;",
-  "if (!t) return null;"
+  "healthshared",
+  "if (num(a) == null || num(b) == null || num(c) == null) return null;",
+  "if (num(a) == null) return null;"
  ],
  [
   "the admin Data row stops reading the monthly counts",
@@ -818,13 +818,7 @@
  [
   "the Google-free copy of the sent report keeps Google's figures",
   "monthlyclosesrv",
-  "deps: d, withoutGoogle: true })",
-  "deps: d, withoutGoogle: false })"
- ],
- [
-  "the KPI alert reads a month list the reader doesn't return",
-  "maturedeps",
-  "const byMonth = (got && got.months) || {};",
-  "const byMonth = (got && got.rows) || {};"
+  "deps: d, withoutGoogle: true, letter: rec.data.quarter_letter || null })",
+  "deps: d, withoutGoogle: false, letter: rec.data.quarter_letter || null })"
  ]
 ]

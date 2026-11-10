@@ -15,7 +15,7 @@ const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket G
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`INDETERMINATE: cannot read ${r}`); process.exit(2); } };
 const req = createRequire(import.meta.url);
 const A = req(`${SITE}/netlify/functions/_ai-check.js`);
-const mature = read("netlify/functions/_mature.js"), adm = read("admin/admin.js"), pb = JSON.parse(read("data/playbooks/playbooks.json"));
+const mature = read("netlify/functions/_monthly-health.js"), adm = read("admin/admin.js"), pb = JSON.parse(read("data/playbooks/playbooks.json"));
 const F = []; const fail = (m) => F.push(m);
 const fmt = (iso) => (iso ? "Nov 12, 2026" : "");
 const BAD = /\b(\d+\s+of\s+\d+|score|scored|ranking|ranked|rank(?!\w)|trend|invisible|visibility (up|down|score)|position of|#\d)\b/i;
@@ -65,8 +65,8 @@ if (/—/.test(all)) fail("an em dash in the new card copy");
 // the client never sees it
 for (const f of ["netlify/functions/portal-mature.js", "portal/portal.js", "portal/report/report.js"]) if (/ai_visibility|_ai-check|wrong_facts/.test(read(f))) fail(`${f} reads the AI hand check: a finding is for RGA, never an alert to the client`);
 // wiring
-if (!/require\("\.\/_ai-check"\)/.test(mature) || /Named in \$\{/.test(mature)) fail("_mature.js still builds the old Named in N of M head, or lost the new card");
-if (!/ai_form:/.test(mature) || !/aiCheckFormHtml\(s\.id, i, a\.ai_form\)/.test(adm) || !/aiCheckFormValue\(aiEl\)/.test(adm)) fail("the admin form for the check is not wired");
+if (!/require\("\.\/_ai-check"\)/.test(mature) || /Named in \$\{/.test(mature)) fail("_monthly-health.js (33 AI search check) still builds the old Named in N of M head, or lost the new card");
+if (!/aiForm/.test(mature) || !/aiCheckFormHtml\(Hh\.ID\.AI, 0, d\.aiForm\)/.test(adm) || !/aiCheckFormValue\(f\)/.test(adm)) fail("the admin form for the check (Monthly 33) is not wired");
 if (!/Pick an answer for every tool/.test(adm)) fail("the admin form lets a tool stay blank");
 // 4. the mentions step
 const st = (pb.month1 || []).find((s) => s.id === "m1.platform.mentions");

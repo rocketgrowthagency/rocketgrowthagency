@@ -270,7 +270,7 @@ ok(/caTile\("Call-button taps", cur\.gbp_calls/.test(por) && /<div class="lbl">C
 ok(/call-button taps on Google<\/b>/.test(por), "the portal's summary sentence says calls");
 ok(!/>Calls from Google<|"Calls from Google"|calls from Google<\/b>/.test(por), "the portal still says Calls from Google");
 ok(/tile\("Call-button taps", cur\.gbp_calls/.test(adm) && !/"Calls \(GBP\)"/.test(adm), "admin's tile doesn't say Call-button taps");
-ok(!/label: "Calls from Google"/.test(read("netlify/functions/_mature.js")), "the KPI alert label still says calls");
+ok(!/label: "Calls from Google"/.test(read("shared/monthly-health.js")), "the KPI alert label still says calls");
 ok(!/ringing from search/.test(por), "the tile still says a tap is the phone ringing");
 ok(!/\bspam\b/i.test(gsBlock), "spam reporting got built: it waits until a client exists");
 

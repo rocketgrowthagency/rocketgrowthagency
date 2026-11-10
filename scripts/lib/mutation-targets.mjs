@@ -380,7 +380,6 @@ export const FILES = {
   benchfn: "netlify/functions/vertical-benchmark-lookup.js",
   formintake: "netlify/functions/form-intake.js",
   fgaintake: "netlify/functions/fga-intake.js",
-  adminmature: "netlify/functions/admin-mature.js",
   portalmature: "netlify/functions/portal-mature.js",
   videoclipfn: "netlify/functions/portal-video-clip.js",
   clientvideossql: "docs/supabase/RGA_CLIENT_VIDEOS_BUCKET_2026-10-19.sql",
@@ -537,6 +536,9 @@ export const FILES = {
   monthlyclose: "shared/monthly-close.js",   // monthly_s5_close_v1: the five close-the-month cards
   monthlyclosesrv: "netlify/functions/_monthly-close.js",   // monthly_s5_close_v1: freeze, build, send, hand-off
   monthlyquarter: "shared/monthly-quarter.js",   // monthly_s4_quarterly_v1: the seven every-quarter cards
+  healthfn: "netlify/functions/_monthly-health.js",   // mature_account_health_v1 (11-10): Account health 28-30 and the added quarter steps 31-33, reads and presses
+  healthshared: "shared/monthly-health.js",   // mature_account_health_v1: the rules (churn, upsell, referral, letter, grow, AI check)
+  healthadminfn: "netlify/functions/admin-monthly-health.js",   // mature_account_health_v1: RGA's endpoint
   monthlyquartersrv: "netlify/functions/_monthly-quarter.js",   // monthly_s4_quarterly_v1: reads, settle, presses, the client answers
   monthlyclosefn: "netlify/functions/admin-monthly-close.js",   // monthly_s5_close_v1: the only door that sends a monthly report
   monthlyreportemail: "netlify/functions/_monthly-report-email.js",   // monthly_s5_close_v1: the report letter

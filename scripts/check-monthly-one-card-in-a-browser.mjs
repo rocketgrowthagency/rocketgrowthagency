@@ -121,7 +121,7 @@ try {
         return { pill: (f.querySelector(".ob-ph-cnt") || {}).innerText || "", text: b.innerText, nums: rows.map((r) => Number((r.querySelector(".cm-q-n") || {}).innerText)), titles: rows.map((r) => (r.querySelector("b") || {}).innerText || ""),
           buttons: b.querySelectorAll("button:not(.cm-q-fold), a, input").length, notFor: rows.some((r) => /not for /i.test((r.querySelector(".cm-q-tag") || {}).innerText || "")) }; });
       fails.push(...previewFailures({ ...pv, pill: pv.pill.replace(/\s+/g, " "), applies: true, notFor: true }));   // applies/notFor: the not-for tag is proven by the fixtures; here the page must not fail the rest
-      if (open.items !== 7) fails.push(`Every quarter: the preview lists ${open.items} steps, not 7`);
+      if (open.items !== 10) fails.push(`Every quarter: the preview lists ${open.items} steps, not 10 (the seven, then 31 Quarterly letter, 32 Grow the plan, 33 AI search check: mature_account_health_v1, 11-10)`);
       await page.click(".cm-q-folded [data-cm-qprev]");   /* 11-9: a re-render can detach the old handle */
       await new Promise((r) => setTimeout(r, 500));
       const hid = await page.evaluate(() => document.querySelector(".cm-q-folded [data-cm-qprev-body]").hasAttribute("hidden"));
@@ -129,8 +129,19 @@ try {
     }
   }
 
+  // mature_account_health_v1 (11-10): THE OLD MATURE CHECKLIST MUST NOT BE DRAWN, in any state of the client. The old host, its title, its "Tell the client" button, its early referral card and its
+  // step numbers 1-14 are gone from the page; Account health is a section of the Monthly (28-30), or one folded line saying it starts with Month 4 -- never a second list under the Monthly.
+  const mature = await page.evaluate(() => { const p = document.getElementById("panel-monthlynew"); const t = p ? p.innerText : "";
+    return { host: !!document.getElementById("matureChecklistHost"), list: !!document.querySelector("#panel-monthlynew .mat-list, #panel-monthlynew .mat-card, #panel-monthlynew [data-mature-act], #panel-monthlynew [data-mature-reload]"),
+      title: /Mature checklist|Mature [—-] growth|Ask for a referral\s*\n?\s*A first result is in|Tell the client/i.test(t),
+      healthRows: [...document.querySelectorAll('#monthlyChecklistHost .ob-step[data-ob-step^="m2.health."]')].length,
+      healthSection: !!document.querySelector('#monthlyChecklistHost [data-ob-phase="m2s-health"]'), healthFolded: !!document.querySelector('#monthlyChecklistHost [data-cm-health-folded]') }; });
+  if (mature.host || mature.list || mature.title) fails.push("the old Mature checklist is still drawn on the Monthly tab (host, list, 'Tell the client' or the early referral card)");
+  if (!mature.healthSection) fails.push("Account health is not a section of the Monthly (m2s-health)");
+  if (mature.healthSection && !mature.healthFolded && mature.healthRows !== 3) fails.push(`Account health draws ${mature.healthRows} of its 3 rows`);
+
   // the bottom blocks
-  const panel = await page.evaluate(() => { const p = document.getElementById("panel-monthlynew"); return { t: p ? p.textContent : "" }; });
+  const panel =await page.evaluate(() => { const p = document.getElementById("panel-monthlynew"); return { t: p ? p.textContent : "" }; });
   if (/Twilio/i.test(panel.t)) fails.push('Monthly tab still mentions "Twilio"');
   if (/Optional add-on|Save Website Work|id="websiteSections"/.test(panel.t) || await page.evaluate(() => !!document.querySelector("#panel-monthlynew #websiteSections"))) fails.push("Website Work is still inside the Monthly tab");
   const ww = await page.evaluate(() => ({ tab: !!document.querySelector('.admin-side-tab[data-tab="websitework"]'), body: !!document.querySelector("#panel-websitework #websiteSections") }));
