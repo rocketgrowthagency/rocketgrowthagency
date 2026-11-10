@@ -13,4 +13,11 @@ try {
   await page.goto("https://www.rocketgrowthagency.com/admin/?view=dashboard", { waitUntil: "networkidle2", timeout: 60000 }); await new Promise((r) => setTimeout(r, 9000));
   await page.screenshot({ path: `${out}/admin-dashboard.png`, fullPage: true });
   console.log(await page.evaluate(() => [...document.querySelectorAll(".admin-main > *")].filter((e) => !e.hidden && e.offsetHeight > 0).map((e) => `${e.id || e.className} · ${e.offsetHeight}px · ${(e.innerText || "").replace(/\s+/g, " ").slice(0, 160)}`).join("\n")));
+  // To do, then RGA's Website Work tab (where the Blog card lives now)
+  await page.goto("https://www.rocketgrowthagency.com/admin/?view=todo", { waitUntil: "networkidle2", timeout: 60000 }); await new Promise((r) => setTimeout(r, 9000));
+  await page.screenshot({ path: `${out}/admin-todo.png`, fullPage: true });
+  console.log("TODO blog band:", await page.evaluate(() => [...document.querySelectorAll(".mv-bh")].map((e) => e.innerText).join(" | ")));
+  await page.goto("https://www.rocketgrowthagency.com/admin/?view=client&id=ae817a9c-60a2-4cc9-a196-0582b7b7e7c3&tab=websitework", { waitUntil: "networkidle2", timeout: 60000 }); await new Promise((r) => setTimeout(r, 12000));
+  await page.screenshot({ path: `${out}/admin-websitework.png` });
+  console.log("WEBSITE WORK:", await page.evaluate(() => { const b = document.getElementById("blogCard"); return b && !b.hidden && b.offsetHeight ? `blog card shown · ${b.offsetHeight}px · ${b.innerText.replace(/\s+/g, " ").slice(0, 120)}` : "blog card NOT shown"; }));
 } finally { await browser.close(); }

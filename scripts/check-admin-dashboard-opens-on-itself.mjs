@@ -31,7 +31,9 @@ function check({ A, IDX, FN }) {
   // one home for the presses
   need(/function blogMoves\(d\)/.test(A) && /const you = blogMoves\(d\)\.length;/.test(A), "the card's 'N things waiting' doesn't count blogMoves");
   need(/const blog = BL\.clientId \? blogMoves\(BL\.data\) : \[\];/.test(A) && /blog\.map\(mvBlogRowHtml\)/.test(A), "To do doesn't list the blog's presses");
-  need(/const blogM = BL\.clientId \? blogMoves\(BL\.data\) : \[\];\s*\n\s*if \(blogM\.length\) todo\.push\(\{ n: blogM\.length,[^\n]*"Moves in To do"[^\n]*nav: "openTodoButton" \}\);/.test(A), "the Dashboard has no 'Moves in To do' line counted from blogMoves");
+  need(/const blogM = BL\.clientId \? blogMoves\(BL\.data\) : \[\];/.test(A) && /if \(blogM\.length\) todo\.push\(\{ n: blogM\.length,[^\n]*"Moves in To do"[^\n]*nav: "openTodoButton" \}\);/.test(A), "the Dashboard has no 'Moves in To do' line counted from blogMoves");
+  // one short line, never the list itself (the first live look repeated "approve or decline 12 posts…" five times)
+  need(!/s: blogM\.map\(/.test(A), "the Dashboard line lists every blog press instead of one grouped line");
   need(/const looks = shLooks\(\);\s*\n\s*if \(looks\) todo\.push\(\{[^\n]*nav: "openSystemHealthButton" \}\);/.test(A), "the Dashboard has no System health line");
   need(/data-mv-blog/.test(A) && /navigateTo\("client", \{ clientId: id, tab: "websitework" \}\);/.test(A), "a blog row's Open doesn't go to the Website Work tab");
   // the two screens redraw when the blog or System health arrives
