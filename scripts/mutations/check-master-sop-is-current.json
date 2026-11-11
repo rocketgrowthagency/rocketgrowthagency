@@ -1,0 +1,38 @@
+[
+ [
+  "a Month 1 playbook step is renamed and the steps data is not updated",
+  "playbooksjson",
+  "\"id\": \"m1.web.blog_seed\"",
+  "\"id\": \"m1.web.blog_seed_v2\""
+ ],
+ [
+  "a Month 2+ playbook step is renamed and the steps data is not updated",
+  "playbooksjson",
+  "\"id\": \"m2.exec.mystery_shop\"",
+  "\"id\": \"m2.exec.mystery_shopper\""
+ ],
+ [
+  "the managed check step gets a new id",
+  "managedsteps",
+  "\"id\": \"managed.check_found\"",
+  "\"id\": \"managed.check_details\""
+ ],
+ [
+  "an end-of-service line is renamed",
+  "closinglist",
+  "{ key: \"refund\", when: \"end\"",
+  "{ key: \"refunds\", when: \"end\""
+ ],
+ [
+  "a scheduled job is added (renamed) without a checkers entry",
+  "jobmanifest",
+  "job: \"citation-live-check\"",
+  "job: \"citation-live-check-v2\""
+ ],
+ [
+  "the /docs/* edge block is dropped, so the internal SOP would be web-public",
+  "toml",
+  "from = \"/docs/*\"",
+  "from = \"/docs-archive/*\""
+ ]
+]
