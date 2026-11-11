@@ -212,7 +212,8 @@ if (pctx.tm(recs, MONTH)) fail("the portal reads LAST month's record as this mon
 }
 }
 const pcode = code("portal/portal.js");
-if (!/const m2Tasks = thisMonthsRecord\(monthlyRecords\)\?\.data\?\.tasks \|\| \{\};/.test(pcode)) fail("the portal's Month-2 rows don't read this month's record");
+// master map Tier 1 (11-11): "this month" is the CLIENT'S month by the one rule (portalWorkMonth -> shared/month-now.js monthNow workMonth): between months, Month 2's record
+if (!/const m2Tasks = thisMonthsRecord\(monthlyRecords(, portalWorkMonth\(onboarding\))?\)\?\.data\?\.tasks \|\| \{\};/.test(pcode)) fail("the portal's Month-2 rows don't read this month's record (the client's month, portalWorkMonth)");
 if (/\(monthlyRecords \|\| \[\]\)\[0\][\s\S]{0,60}tasks/.test(pcode)) fail("the portal reads Month-2 status from the latest monthly record");
 const settleAt = pcode.indexOf("async function settleStepResult(");
 const handBuilt = [...pcode.matchAll(/tasks: j\.tasks/g)].filter((m) => m.index < settleAt || m.index > settleAt + 1200);

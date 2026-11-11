@@ -380,7 +380,6 @@ export const FILES = {
   benchfn: "netlify/functions/vertical-benchmark-lookup.js",
   formintake: "netlify/functions/form-intake.js",
   fgaintake: "netlify/functions/fga-intake.js",
-  portalmature: "netlify/functions/portal-mature.js",
   videoclipfn: "netlify/functions/portal-video-clip.js",
   clientvideossql: "docs/supabase/RGA_CLIENT_VIDEOS_BUCKET_2026-10-19.sql",
   v2push: "netlify/functions/v2-push-gbp-content.js",
@@ -570,4 +569,7 @@ export const FILES = {
   gbphoursfn: "netlify/functions/backfill-gbp-hours.js",
   placeidsfn: "netlify/functions/backfill-place-ids.js",
   fgaenrich: "netlify/functions/_fga-enrichment.js",
+  // 11-11 master map Tier 1 #4/#5 + decision 6 (check-one-current-month): the ONE month rule and the RGA-only repair
+  monthnow: "shared/month-now.js",
+  repaircurrentmonth: "scripts/repair-one-current-month.mjs",
 };

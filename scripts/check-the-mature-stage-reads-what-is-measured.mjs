@@ -125,12 +125,21 @@ const STRONG_EAST = gridOf((r, c2) => (inner(r, c2) ? 2 : c2 === 4 ? 6 : null));
   const empty = world({ now: NOW, month: cur, number: 5, rows: [row(cur)] }); await MH.settle({ clientId: CID, month: cur, deps: empty.d });
   if (empty.task(cur, H.ID.CHURN).status === "done") fail("every step · churn risk is done with no frozen month behind it");
   const ids = JSON.parse(read("data/playbooks/playbooks.json")).month2plus.map((s) => s.id); for (const id of H.IDS) if (!ids.includes(id)) fail(`every step · ${id} is not a Monthly step`); }
-// ── the stage and the portal: stage 6 is only a label; the portal sees only SENT quarterly reviews; the old records stay readable ──
-const por = read("netlify/functions/portal-mature.js"), sql = read("docs/supabase/RGA_MATURE_RECORDS_2026-10-19.sql");
+// ── the stage and the portal: stage 6 is only a label (it starts by itself at Month 4: check-one-current-month); the old records table is kept ──
+// master map decision 6 (11-11): the portal's quarterly-review card read client_mature_records through portal-mature, a table NOTHING writes since 11-10 (0 rows for
+// every client when read 11-11). The quarterly letter rides inside that month's report (Reports by month shows it). The reader and the endpoint are removed at the
+// producer; the rule now is that they stay gone (a card that waits on a source that never fills is a dead end).
+const portalSrc = read("portal/portal.js"), guardSrc = read("shared/preview-guard.js"), sql = read("docs/supabase/RGA_MATURE_RECORDS_2026-10-19.sql");
 if (fs.existsSync(`${SITE}/netlify/functions/admin-mature.js`)) fail("the old Mature endpoint (admin-mature) is still deployed");
-if (!/kind=eq\.quarterly_review&status=eq\.sent/.test(por) || !/const auth = await requirePortalOwnerOrWorkspace\(event, clientId\);\s*if \(auth\.error\) return auth\.error;/.test(por)) fail("portal-mature can show a DRAFT review, or isn't gated to the client + their RGA workspace (sent historical reviews stay readable)");
-// 10-20 (walk): admin renders the client's portal AS ITSELF: an owner-only read 403s on admin's Onboarding tab
-if (/requirePortalOwner\(event, clientId\)/.test(por)) fail("portal-mature is owner-only again: admin's view of the client's portal gets a 403");
+// The website build that removes it (one current month, 11-11) may not be merged yet: until portal.js stops loading the reviews, the OLD rules still hold on the old endpoint.
+const removed = !/loadMatureReviews\(\);/.test(portalSrc);
+if (removed) {
+  if (fs.existsSync(`${SITE}/netlify/functions/portal-mature.js`)) fail("portal-mature is back: it reads client_mature_records, which nothing writes");
+  if (/\/\.netlify\/functions\/portal-mature|data-mature-reviews/.test(portalSrc) || /"portal-mature"/.test(guardSrc)) fail("the portal reads the old quarterly reviews again (client_mature_records is never written; the quarterly letter rides inside that month's report)");
+} else {
+  const por = read("netlify/functions/portal-mature.js");
+  if (!/kind=eq\.quarterly_review&status=eq\.sent/.test(por) || !/const auth = await requirePortalOwnerOrWorkspace\(event, clientId\);\s*if \(auth\.error\) return auth\.error;/.test(por)) fail("portal-mature can show a DRAFT review, or isn't gated to the client + their RGA workspace");
+}
 if (!/unique \(client_id, kind, period\)/.test(sql) || !/enable row level security/.test(sql)) fail("the Mature records table lost its one-row-per-period key or its RLS (nothing is deleted)");
 const admin = read("admin/admin.js");
 if (/key: "stage_6_mature",\s+num: 6[^}]*labelOnly: true/.test(admin) === false) fail("stage 6 is an Advance target again (it is a label only: 'Full Dashboard')");

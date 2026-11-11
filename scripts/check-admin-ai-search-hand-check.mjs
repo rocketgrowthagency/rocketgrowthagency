@@ -63,7 +63,7 @@ if (!hrs.body.some((l) => /Could not compare, so you decide/.test(l)) || hrs.bod
 const all = [card, withFact, hrs, old].flatMap((c) => [c.small, c.head, ...c.body]).join("\n");
 if (/—/.test(all)) fail("an em dash in the new card copy");
 // the client never sees it
-for (const f of ["netlify/functions/portal-mature.js", "portal/portal.js", "portal/report/report.js"]) if (/ai_visibility|_ai-check|wrong_facts/.test(read(f))) fail(`${f} reads the AI hand check: a finding is for RGA, never an alert to the client`);
+for (const f of ["portal/portal.js", "portal/report/report.js"])   // portal-mature.js was removed 11-11 (it read a table nothing writes) if (/ai_visibility|_ai-check|wrong_facts/.test(read(f))) fail(`${f} reads the AI hand check: a finding is for RGA, never an alert to the client`);
 // wiring
 if (!/require\("\.\/_ai-check"\)/.test(mature) || /Named in \$\{/.test(mature)) fail("_monthly-health.js (33 AI search check) still builds the old Named in N of M head, or lost the new card");
 if (!/aiForm/.test(mature) || !/aiCheckFormHtml\(Hh\.ID\.AI, 0, d\.aiForm\)/.test(adm) || !/aiCheckFormValue\(f\)/.test(adm)) fail("the admin form for the check (Monthly 33) is not wired");

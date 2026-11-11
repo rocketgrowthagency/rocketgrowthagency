@@ -161,10 +161,10 @@
   1
  ],
  [
-  "the portal shows draft reviews",
-  "portalmature",
-  "&kind=eq.quarterly_review&status=eq.sent&select=",
-  "&kind=eq.quarterly_review&select=",
+  "the portal reads the old quarterly reviews again (a source nothing writes)",
+  "portal",
+  "// 🔒 THE OLD QUARTERLY STRATEGY REVIEW CARD IS GONE (master map decision 6, 11-11).",
+  "fetch(`/.netlify/functions/portal-mature?client_id=${encodeURIComponent(\"x\")}`);\n// 🔒 THE OLD QUARTERLY STRATEGY REVIEW CARD IS GONE (master map decision 6, 11-11).",
   1
  ],
  [
@@ -203,17 +203,10 @@
   1
  ],
  [
-  "portal-mature owner-only again (admin 403)",
-  "portalmature",
-  "  const auth = await requirePortalOwnerOrWorkspace(event, clientId);",
-  "  const auth = await requirePortalOwner(event, clientId);",
-  1
- ],
- [
-  "portal-mature ungated",
-  "portalmature",
-  "  if (auth.error) return auth.error;\n",
-  "",
+  "the admin's look lets the old quarterly-review read through again",
+  "previewguard",
+  "    \"portal-vertical-targets\": {",
+  "    \"portal-mature\": { host: \"[data-mature-reviews]\", why: \"the Reports tab\", method: \"GET\" },\n    \"portal-vertical-targets\": {",
   1
  ],
  [

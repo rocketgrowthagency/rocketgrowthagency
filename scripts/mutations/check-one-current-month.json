@@ -1,0 +1,142 @@
+[
+ [
+  "the rule never says between months",
+  "monthnow",
+  "    if (cal < first) return { state: \"between\"",
+  "    if (false) return { state: \"between\"",
+  1
+ ],
+ [
+  "Month 1 ends at the hand-off, not the report's send",
+  "monthnow",
+  "    if (t && t.auto_result && t.auto_result.sent_message_id) {",
+  "    if (false) {",
+  1
+ ],
+ [
+  "Mature starts at Month 5, not the month Account health opens",
+  "monthnow",
+  "mature: number >= matureFrom()",
+  "mature: number >= 5",
+  1
+ ],
+ [
+  "the portal's between months stops being the rule's",
+  "clientmonthly",
+  "    if (n.state !== \"between\") return null;",
+  "    if (n.state !== \"between\" && n.state !== \"month\") return null;",
+  1
+ ],
+ [
+  "_open-month dates Month 1 from the hand-off again",
+  "openmonth",
+  "  const done = Now.month1DoneOf((ob && ob.data && ob.data.tasks) || {});\n  return done ? new Date(done.at).toISOString() : null;",
+  "  const t = ob && ob.data && ob.data.tasks && ob.data.tasks[\"m1.handoff.month2\"];\n  return (t && t.status === \"done\" && t.completed_at) || null;",
+  1
+ ],
+ [
+  "reconcile counts history as work",
+  "openmonth",
+  "      const work = Now.liveWork((r.data && r.data.tasks) || {}).length > 0;",
+  "      const work = Object.keys((r.data && r.data.tasks) || {}).length > 0;",
+  1
+ ],
+ [
+  "what ran between months blocks Month 2's carry-over",
+  "openmonth",
+  ".filter((k) => !Now.RUNS_BETWEEN.includes(k)).length === 0;",
+  ".length === 0;",
+  1
+ ],
+ [
+  "the Mature move is unguarded",
+  "openmonth",
+  "await supa(`/clients?id=eq.${enc(client.id)}&client_portal_stage=eq.stage_5_monthly`, { method: \"PATCH\", headers: { Prefer: \"return=representation\" }, body: JSON.stringify({ client_portal_stage: \"stage_6_mature\" }) });",
+  "await supa(`/clients?id=eq.${enc(client.id)}`, { method: \"PATCH\", headers: { Prefer: \"return=representation\" }, body: JSON.stringify({ client_portal_stage: \"stage_6_mature\" }) });",
+  1
+ ],
+ [
+  "admin-months stops answering month_now",
+  "adminmonths",
+  "month_now: mnOut, ",
+  "",
+  1
+ ],
+ [
+  "_step-record defaults to the calendar month again",
+  "steprecord",
+  "const month = asked || require(\"../../shared/month-now.js\").monthNow((ob && ob.data && ob.data.tasks) || {}, now).workMonth;",
+  "const month = asked || cal;",
+  1
+ ],
+ [
+  "the admin works the month out itself again",
+  "admin",
+  "  if (mn && (mn.state === \"month\" || mn.state === \"between\") && mn.month) return mn.month;\n",
+  "",
+  1
+ ],
+ [
+  "the portal's wait view reads m2.* from the Month 1 record again",
+  "portal",
+  "const m1Tasks = globalThis.rgaMonthNow ? globalThis.rgaMonthNow.month1Tasks(onboarding?.data?.tasks || {}) : (onboarding?.data?.tasks || {});",
+  "const m1Tasks = onboarding?.data?.tasks || {};",
+  1
+ ],
+ [
+  "the morning run picks the calendar month again",
+  "morningrun",
+  "          const monthKey = mn.workMonth;",
+  "          const monthKey = OM.currentReportingMonth(new Date(d.now()));",
+  1
+ ],
+ [
+  "the morning run opens the month in between",
+  "morningrun",
+  "const om = mn.state === \"month\" ? await OM.openMonth(",
+  "const om = mn.state !== \"month1\" ? await OM.openMonth(",
+  1
+ ],
+ [
+  "between months every monthly step runs",
+  "morningrun",
+  "  if (between) { out.between_months",
+  "  if (false) { out.between_months",
+  1
+ ],
+ [
+  "Stage 6 never starts by itself",
+  "morningrun",
+  "if (mn.mature && c.client_portal_stage === \"stage_5_monthly\") {",
+  "if (false) {",
+  1
+ ],
+ [
+  "the hand-off opens the month after today again",
+  "flowexec",
+  "      nextKey = mnH.first || OM.addMonths(OM.currentReportingMonth(nowD), 1);",
+  "      nextKey = OM.addMonths(OM.currentReportingMonth(nowD), 1);",
+  1
+ ],
+ [
+  "code acts on a retired id",
+  "portal",
+  "import \"/shared/month-now.js?v=20261111j\";",
+  "const _qa = \"m1.gbp.qa_seed\";\nimport \"/shared/month-now.js?v=20261111j\";",
+  1
+ ],
+ [
+  "the repair runs on any client",
+  "repaircurrentmonth",
+  "if (!ALLOWED.has(CID)) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "the repair writes without checking the row is unchanged",
+  "repaircurrentmonth",
+  "    const cond = cur.updated_at ? `&updated_at=eq.${enc(cur.updated_at)}` : \"\";",
+  "    const cond = \"\";",
+  1
+ ]
+]
