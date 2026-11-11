@@ -257,6 +257,12 @@ try {
       if (k !== "reviewed:l2:[1] sent:l2:[2] stopped:l2:[1] stopped:l2:[0]") fail(`${L}: the request controls didn't record (posted ${k || "nothing"}; approved reviewed [1], sent [2], stopped [1], and Maria's stop before her reminder is due [0], on list l2)`);
       const toast = await h.page.evaluate(() => document.body.innerText);
       if (!/Marked as reviewed\. No reminder goes to them\./.test(toast) && !/Got it\. Nothing more goes to them\./.test(toast)) fail(`${L}: a recorded mark says nothing`);
+      // 🔒 ongoing_step12_call_v1 decision 2 (11-11: a blind spot, "a late report isn't said" went uncaught): past the 10th, where client_monthly_v1's
+      // "early next month" ends, with October's report still not out, step 12 says the report isn't out and RGA is on it, never "First: your … report"
+      await openRow(h, "m2.call.monthly");
+      const r12 = await rowText(h, "m2.call.monthly");
+      for (const w of ["Your report isn't out yet", "RGA is on it", "The call opens when it's sent."]) has(r12 || "", w, `${L}, step 12 with the report late`);
+      hasNot(r12 || "", "First: your", `${L}, step 12 with the report late`);
       if (h.errs.length) fail(`${L}: page errors ${h.errs.slice(0, 2).join(" · ")}`);
     } finally { await h.close(); }
     // everyone asked: "<name> · reviewed ★ / you said so <day>" and "<name> · asked · reminded <day>" with the day asked on the right

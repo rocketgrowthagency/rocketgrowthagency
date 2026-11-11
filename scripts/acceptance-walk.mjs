@@ -18,7 +18,7 @@
  *  5. Writes <website>/reports/acceptance/<date>/report.md (+ results.json, screenshots) and a copy
  *     at reports/acceptance/latest.md.
  *
- * 🔴 READ-ONLY. It clicks only: .ob-row toggles, phase/rollup fold toggles, [data-view] nav links,
+ * 🔴 READ-ONLY. It clicks only: .ob-row toggles, phase/rollup fold toggles, a past stage's View fold, [data-view] nav links,
  *    and the portal row-head toggle ([data-step-toggle] — UI only, portal.js toggleStepRow). Every
  *    non-GET request is aborted unless guard.mjs lists it as a verified read; each abort is logged
  *    as "blocked write: …".
@@ -96,7 +96,29 @@ const ROW_VIEW = MONTH === 2 ? "ongoing" : "setup";
 const M1 = ((MONTH === 2 ? PLAYBOOK.month2plus : PLAYBOOK.month1) || []).filter((s) => String(s.id).startsWith(PFX));
 if (!M1.length) cantRun(`playbooks.json has no month-${MONTH} steps`);
 const DEF = new Map(M1.map((s) => [s.id, s]));
-const clientFacing = (d) => d && (d.clientStepNo != null);
+// 🔒 THE CLIENT'S PORTAL MODE (client_portal_slim_v1 11-4, setup_vs_month1_v1 11-10). A MANAGED client's portal has its own list: Getting
+// started 1 to 3, the Google checks as rows inside step 3, RGA's work as cards with no number, and Month 1 work (photos, review asks,
+// videos, the Month 1 review) as lines in the Month 1 card on Ongoing work. So for a managed client only a step the managed portal NUMBERS
+// draws its own #step-row in Setup; every other one is said with what it became there, never failed as "no visible row". (11-11: the
+// far-along walk client is managed, and 16 steps failed as missing rows since 11-4.) Read through shared/portal-mode.js, the one rule.
+let MODE = null, PMODE = null;
+try {
+  const r = await fetch(`${SUPA}/rest/v1/clients?id=eq.${encodeURIComponent(arg("client") || WHO.id)}&select=portal_mode`, { headers: { apikey: KEY, Authorization: `Bearer ${KEY}` }, signal: AbortSignal.timeout(20000) });
+  const j = r.ok ? await r.json() : null;
+  if (!Array.isArray(j) || !j.length) cantRun("could not read the walk client's portal mode");
+  const box = { module: { exports: {} } };
+  new Function("module", "globalThis", fs.readFileSync(path.join(WEBSITE, "shared/portal-mode.js"), "utf8"))(box.module, {});
+  PMODE = box.module.exports; MODE = PMODE.modeOf(j[0].portal_mode);
+} catch (e) { cantRun(`could not read the walk client's portal mode: ${String(e.message).slice(0, 120)}`); }
+const MANAGED = !!(PMODE && PMODE.isManaged(MODE));
+const ROLE_SAID = { check: "a row inside managed step 3 (Check what we found)", card: "an RGA card with no number", setup: "part of a Setup step" };
+const clientFacing = (d) => d && (MANAGED ? PMODE.stepNo(d, MODE) != null : d.clientStepNo != null);
+// what a client-facing step became in the managed portal, when it has no row of its own there (null = it should have a row)
+const managedElsewhere = (d) => {
+  if (!MANAGED || !d || d.clientStepNo == null || PMODE.stepNo(d, MODE) != null) return null;
+  if ((PMODE.MONTH1_WORK || []).includes(d.id)) return "Month 1 work: a line in the Month 1 card on Ongoing work, no number (setup_vs_month1_v1)";
+  return ROLE_SAID[PMODE.roleOf(d, MODE)] || `managed role "${PMODE.roleOf(d, MODE)}"`;
+};
 
 // ── site up? ────────────────────────────────────────────────────────────────────────────────────
 for (let i = 1; ; i++) {
@@ -203,7 +225,23 @@ async function adminPass() {
       ids: [...new Set([...ph.querySelectorAll(".ob-step[data-ob-step]")].map((e) => e.dataset.obStep))].filter((id) => id.startsWith(PFX)),
     })), { PHASES, PFX });
     const onPage = new Set(CARDS.flatMap((c) => c.ids));
-    for (const s of M1) if (!onPage.has(s.id)) { const r = R(s.id); r.fail.push(`no admin row for this step on the ${ADMIN_TAB_NAME} tab`); }
+    // 🔒 FOLDED BY DESIGN (monthly_v1 11-9 + mature_account_health_v1 11-10): outside months 3, 6, 9 … "Every quarter" is ONE folded line, and
+    // before Month 4 "Account health" is ONE folded line, so their steps draw no admin row THIS month. Which steps a folded section holds comes
+    // from shared/monthly-sections.js, the one list the admin draws from. A folded step is not a missing row; its portal side is still judged
+    // in agree(): the client must not be asked to act on it this month. (11-11: 14 Month-2 FAILs were these.)
+    let foldedOf = new Map();
+    if (MONTH === 2) {
+      const keys = await page.evaluate(() => [...document.querySelectorAll("#monthlyChecklistHost .ob-phase.cm-q-folded[data-ob-phase]")].map((e) => e.dataset.obPhase));
+      let M = null;
+      try { const box = { module: { exports: {} } }; new Function("module", "globalThis", fs.readFileSync(path.join(WEBSITE, "shared/monthly-sections.js"), "utf8"))(box.module, {}); M = box.module.exports; } catch { M = null; }
+      if (keys.length && !(M && Array.isArray(M.SECTIONS))) cantRun("the Monthly tab folds a section, and shared/monthly-sections.js can't be read to say which steps it holds");
+      for (const sec of (M && M.SECTIONS) || []) if (keys.includes(sec.key)) for (const id of sec.ids) foldedOf.set(id, sec.name);
+    }
+    for (const s of M1) if (!onPage.has(s.id)) {
+      const r = R(s.id);
+      if (foldedOf.has(s.id)) { r.folded = foldedOf.get(s.id); r.notes.push(`folded this month on the ${ADMIN_TAB_NAME} tab ("${r.folded}" is one folded line by design)`); }
+      else r.fail.push(`no admin row for this step on the ${ADMIN_TAB_NAME} tab`);
+    }
 
     const loadB = t.b("page load");
     pageChecks.push({ side: "admin", name: `Admin ${ADMIN_TAB_NAME} tab loads`, fail: [
@@ -440,6 +478,12 @@ async function portalPass() {
       ...loadB.errors.map((e) => `page error on load: ${e}`), ...loadB.fail5xx.map((e) => `function failed on load: ${e}`)],
       warn: loadB.warn4xx.map((e) => `function ${e} on load`) });
 
+    // 🔑 A FINISHED STAGE IS FOLDED ("View ▼" on its green row). Once Month 1 is done the Setup tab shows the four stages folded, and every
+    // step row sits inside stage 4, hidden, so none could be compared (11-11). Opening a past stage is a read-only fold toggle, like a row's.
+    if (ROW_VIEW === "setup") {
+      await page.evaluate(() => document.querySelectorAll("[data-stage-done-toggle]").forEach((b) => { if (/View/.test(b.textContent || "")) b.click(); }));
+      await sleep(600); await t.quiet(600, 8000);
+    }
     // Step rows, in the view they live in (ROW_VIEW)
     const ids = OPT.step ? [OPT.step] : M1.map((s) => s.id);
     for (const id of ids) {
@@ -506,6 +550,8 @@ function portalDoneness(p) {
   const c = ` ${p.pillCls} `;
   if (/ flag /.test(c)) return "flagged";
   if (/ done /.test(c) || p.pill === "Done") return "finished";
+  // 🔒 "Optional" (grey, class "wait off") is the client's choice to make or leave, never a hold (client_step14_videos_v1, setup_vs_month1_v1)
+  if (String(p.pill || "").trim() === "Optional") return "optional";
   if (/ you /.test(c) || p.pill === "Your turn") return "client-turn";
   if (/ wait /.test(c) || /^Waits on\b/.test(p.pill || "")) return "waiting";
   if (/ (rga|auto) /.test(c)) return "open";
@@ -517,8 +563,16 @@ function agree(r) {
   // 🔴 2026-10-13: the new client's first walk compared NONE of its 13 client-facing steps (at stage 3 the portal has no
   // Month-1 rows) and exited 0. A walk that compared nothing is not a pass: for a test client whose stage shows the rows
   // (WALK_CLIENTS[..].portalRowsRequired), a missing row FAILS.
-  if (!r.portal) { if (cf && r.admin) (WHO.portalRowsRequired ? r.fail : r.unknown).push("client-facing step, but no visible portal row to compare"); return; }
-  if (!r.admin) { r.unknown.push("portal row exists but the admin row was not read"); return; }
+  if (!r.portal) {
+    const elsewhere = managedElsewhere(r.def);
+    if (elsewhere && r.admin) { r.notes.push(`managed portal: ${elsewhere}, so no row of its own to compare`); return; }
+    if (cf && r.admin) (WHO.portalRowsRequired ? r.fail : r.unknown).push("client-facing step, but no visible portal row to compare"); return;
+  }
+  if (!r.admin) {
+    // a step the admin folds this month (above) is not the client's move this month either
+    if (r.folded) { const pf = portalDoneness(r.portal); if (pf === "client-turn" || r.portal.isNow) r.fail.push(`the admin folds this step this month ("${r.folded}") but the portal asks the client to act ("${r.portal.pill}"${r.portal.isNow ? ", marked as their next step" : ""})`); else r.notes.push(`the portal doesn't ask the client to act on it this month ("${r.portal.pill || "no pill"}") — agrees with the fold`); return; }
+    r.unknown.push("portal row exists but the admin row was not read"); return;
+  }
   const a = adminDoneness(r.admin), p = portalDoneness(r.portal);
   if (!a || !p) { r.unknown.push(`cannot tell done-ness (admin "${r.admin.pill}", portal "${r.portal.pill}")`); return; }
   if (p === "flagged") { r.unknown.push("client flagged this step — done-ness not compared"); return; }
@@ -536,8 +590,9 @@ function agree(r) {
   // client's pick. So "Your turn" on the client's booking row is the step that unlocks the admin's — not a client
   // asked to do a waiting step. Exempt ONLY while the portal really shows the time picker (a date heading + slots);
   // any other "Your turn" on that row still fails. → project_a_client_step_waits_on_what_it_needs (left out, item 2)
+  // 🔄 11-11: the booking card (plan card design) heads its picker "Pick a time for your kickoff call"; "Choose a date and time" was the old heading
   else if (r.def?.clientForm === "kickoff_booking" && /^(🔒\s*)?Locked\b/i.test(String(r.admin.pill || "").trim())
-    && p === "client-turn" && /choose a date and time/i.test(r.portal.text || "") && /\b\d{1,2}:\d{2}\s?(AM|PM)\b/.test(r.portal.text || ""))
+    && p === "client-turn" && /choose a date and time|pick a time for your kickoff call/i.test(r.portal.text || "") && /\b\d{1,2}:\d{2}\s?(AM|PM)\b/.test(r.portal.text || ""))
     r.notes.push("kickoff: the admin's lock waits for this pick (the time picker is showing) — correct, exempt");
   else if (/^(🔒\s*)?(Locked|Waits on)\b/i.test(String(r.admin.pill || "").trim()) && (p === "client-turn" || r.portal.isNow))
     r.fail.push(`admin says "${r.admin.pill}" but the portal tells the client "${r.portal.pill}"${r.portal.isNow ? " (their next step)" : ""} — the client is asked to do a step that is waiting`);
@@ -545,6 +600,8 @@ function agree(r) {
   // hold — correct only while the admin row says the same ("Client chose later · reminder …"); otherwise it still fails below.
   else if (/^Later · /.test(String(r.portal.pill || "").trim()) && /Client chose later · reminder /.test(r.admin.text || ""))
     r.notes.push("the client chose later (reminder date on both sides) — correct");
+  // an optional step: correct only while the admin says it is optional too
+  else if (p === "optional") { if (/optional/i.test(`${r.admin.pill || ""} ${r.admin.text || ""}`)) r.notes.push("optional on both sides — correct"); else r.fail.push(`the portal says "Optional" but the admin shows "${r.admin.pill}" with no word that it is optional`); }
   // …and the other way: the portal holds the client back on a step the admin has open to work.
   else if (p === "waiting" && !/^(🔒\s*)?(Locked|Waits on)\b/i.test(String(r.admin.pill || "").trim()))
     r.fail.push(`the portal says "${r.portal.pill}" but the admin shows "${r.admin.pill}" — the client is held back on a step that is open`);

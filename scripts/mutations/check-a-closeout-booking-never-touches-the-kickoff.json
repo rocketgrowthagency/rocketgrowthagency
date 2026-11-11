@@ -185,7 +185,7 @@
  [
   "M: the portal sends every call as the close-out",
   "portal",
-  "const ccPurpose = (k) => (String(k).endsWith(\"~m2\") ? \"m2_monthly\" : CLOSE_PURPOSE);",
+  "const ccPurpose = (k) => (String(k).endsWith(\"~m2\") ? \"m2_monthly\" : String(k).endsWith(\"~m3\") ? \"m3_quarterly\" : CLOSE_PURPOSE);",
   "const ccPurpose = (k) => CLOSE_PURPOSE;"
  ],
  [

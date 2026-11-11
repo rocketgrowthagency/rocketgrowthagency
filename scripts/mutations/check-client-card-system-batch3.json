@@ -275,7 +275,7 @@
  [
   "20: picker reason says Month 1",
   "portal",
-  "const why = rec && ccPurpose(clientId) !== \"m2_monthly\" ?",
+  "const why = rec && ccPurpose(clientId) === CLOSE_PURPOSE ?",
   "const why = rec ?",
   1
  ],

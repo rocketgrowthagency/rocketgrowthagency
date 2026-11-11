@@ -235,10 +235,12 @@ try {
   {
     const src = fs.readFileSync(path.join(SITE, "admin/admin.js"), "utf8");
     const fn = (name) => { const i = src.search(new RegExp(`(function ${name}\\(|const ${name} = )`)); if (i < 0) return null; if (src.startsWith("const", i)) return src.slice(i, src.indexOf("\n", i)); let d = 0; for (let k = src.indexOf("{", i); k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}" && --d === 0) return src.slice(i, k + 1); } return null; };
-    const names = ["skipAskOpen", "skipMd", "skipNextBusinessDay", "skipAskLines", "skipAdminLine", "mergeTaskState"], parts = names.map(fn);
+    // 11-11: the skip lines say the call's name through CALL_NAMES (shared/call-names.js, call_names_v1) once admin.js reads it from there
+    const names = [...(/^const CALL_NAMES = /m.test(src) ? ["CALL_NAMES"] : []), "skipAskOpen", "skipMd", "skipNextBusinessDay", "skipAskLines", "skipAdminLine", "mergeTaskState"], parts = names.map(fn);
     if (parts.some((x) => !x)) fail(`admin.js lacks ${names.filter((_, i) => !parts[i]).join(", ")}`);
     else {
-      const ctx = { escapeHtml: (x) => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"), state: { flowM1State: { tasks: { "m1.access.website": { status: "done", client_input: { via: "none" }, client_input_at: NOV5 } } } } };
+      const cnBox = vm.createContext({}); try { vm.runInContext(fs.readFileSync(path.join(SITE, "shared/call-names.js"), "utf8"), cnBox); } catch { /* not on this tree yet */ }
+      const ctx = { rgaCallNames: cnBox.rgaCallNames, escapeHtml: (x) => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"), state: { flowM1State: { tasks: { "m1.access.website": { status: "done", client_input: { via: "none" }, client_input_at: NOV5 } } } } };
       vm.createContext(ctx); vm.runInContext(`${parts.join("\n")}\nthis.A = { skipAskLines, skipAdminLine, mergeTaskState };`, ctx);
       const l63 = ctx.A.skipAskLines({ status: "pending", skip_request: { at: NOV5, note: "I'm on jobs all week" } }, "m1.call.close");
       if (!l63.includes("Client asked to skip the Month 1 review · Nov 5 · &quot;I'm on jobs all week&quot; · reply by Nov 6") || !l63.includes("Agree: press Skip (as today)")) fail(`admin 63's lines aren't the approved ones («${l63}»)`);

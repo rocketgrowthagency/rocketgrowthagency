@@ -3,7 +3,7 @@
  ["the What to do box is back", "portal", "      : step.id === \"m1.call.close\" ? (ownWait || rgaWait || isDone ? \"\" : ccWrap(closeCallHtml(step, taskState, clientId, waitTasks)))", "      : step.id === \"m1.call.close\" ? ccWrap(closeCallHtml(step, taskState, clientId, waitTasks))", 1],
  ["Month 1 ends on a guess", "portal", "const t = k && (k.status === \"done\") ? Date.parse(k.completed_at || \"\") : NaN;", "const t = Date.now();", 1],
  ["a step waiting on RGA is offered as theirs", "portal", "if (!goTo && !rgaFirst && !rgaOwn && !unk) goTo = s;", "if (!goTo) goTo = s;", 1],
- ["admin row 60 says nothing", "admin", "title: \"The Month 1 review opens when these are done\", body: rows", "title: \"Locked\", body: \"\"", 1],
+ ["admin row 60 says nothing", "admin", "opens when these are done", "opens later", 1],
  ["row 60 calls RGA's steps the client's move", "admin", "state: rgaN ? \"rga\" : \"you\", small: rgaN ? \"Your move\" : \"Client's move\"", "state: \"you\", small: \"Client's move\"", 1],
  ["the picker opens while RGA's report is open", "portal", "      : step.id === \"m1.call.close\" ? (ownWait || rgaWait || isDone ? \"\" : ccWrap(closeCallHtml(step, taskState, clientId, waitTasks)))", "      : step.id === \"m1.call.close\" ? (ownWait || isDone ? \"\" : ccWrap(closeCallHtml(step, taskState, clientId, waitTasks)))", 1],
  ["the system close-out lists the done steps too", "portal", "      if (settled(t)) return \"\";\n      const rgaOwn = s.clientDone === \"rga\", rgaFirst", "      const rgaOwn = s.clientDone === \"rga\", rgaFirst", 1],

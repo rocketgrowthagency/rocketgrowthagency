@@ -26,8 +26,8 @@
  [
   "the Month 1 review invite says close-out again",
   "callpurpose",
-  "title: (biz) => `Month 1 review",
-  "title: (biz) => `Month 1 close-out"
+  "title: (biz) => callTitle(\"Month 1 review\", biz),",
+  "title: (biz) => callTitle(\"Month 1 close-out\", biz),"
  ],
  [
   "the Schedule shows a different name for the monthly call",

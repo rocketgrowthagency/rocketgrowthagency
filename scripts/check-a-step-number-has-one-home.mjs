@@ -162,7 +162,21 @@ const REGISTRY = [
   // step 36's settled-with-nothing-sent records (approved step36_booking_rga_does_it_v1, 10-29)
   // 🔑 client: true = the number is the CLIENT portal's (the step's declared clientStepNo), not the admin page's. Admin step 36's
   // "no other booking page" row sends RGA to the client's own step 9 (step36_booking_rga_does_it_v1: "client portal step 9").
+  // 🔑 managedCheck: true = the number is the MANAGED portal's step 3 "Check what we found" (client-steps.json managed.check
+  // .managedStepNo), the step the 7-day go-ahead belongs to (approved client_step03_seven_day_rule_v1, 11-5). The `step3` code
+  // name (file, function, result key) is registered, not renamed: if managed step 3 is ever renumbered, these lines fail here
+  // and the code name has to follow. Needle "step3" (no space) matches only the identifier, never a typed "Step 3".
+  { file: "admin/admin.js",                            needle: "step3-go-ahead",                      managedCheck: true },
+  { file: "netlify/functions/_open-moves.js",          needle: "step3-go-ahead.js",                   managedCheck: true },
+  { file: "netlify/functions/_step3-go-ahead.js",      needle: "step3",                               managedCheck: true },
+  { file: "netlify/functions/gbp-profile-watch.js",    needle: "step3",                               managedCheck: true },
+  { file: "netlify/functions/portal-step3-go-ahead.js", needle: "step3-go-ahead",                     managedCheck: true },
 ];
+let managedCheckNo = null;
+try {
+  const cs = JSON.parse(fs.readFileSync(W + "data/playbooks/client-steps.json", "utf8"));
+  managedCheckNo = cs && cs.managed && cs.managed.check && cs.managed.check.managedStepNo != null ? Number(cs.managed.check.managedStepNo) : null;
+} catch { managedCheckNo = null; }
 // 🔑 The client portal has its OWN sequence on purpose — `clientStepNo` / SETUP_STEP_COPY. A client
 // sees eight steps, not sixty-one, and must never be told "step 26 of 61".
 // → project_admin_portal_data_boundary
@@ -184,6 +198,12 @@ for (const f of files) {
       if (!hits.length) {
         fail.push(`${f}:${i + 1} names "step ${m[1]}" and is not registered — register it against a step id or drop the number: ${l.trim().slice(0, 70)}`);
         return;
+      }
+      if (hits[0].managedCheck) {
+        checked++;
+        if (managedCheckNo == null) fail.push(`${f}:${i + 1} is registered against managed step 3 (client-steps.json managed.check), which has no number any more`);
+        else if (Number(m[1]) !== managedCheckNo) fail.push(`${f}:${i + 1} says "step ${m[1]}" but the managed check step is step ${managedCheckNo} in the managed portal`);
+        continue;
       }
       const want = hits[0].client ? (m1.find((s) => s.id === hits[0].step) || {}).clientStepNo : byId.get(hits[0].step);
       checked++;

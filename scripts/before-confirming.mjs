@@ -70,7 +70,12 @@ const edited = scraperFiles.filter((f) => /^scripts\/check-.*\.mjs$/.test(f)).ma
 const toRun = [...new Set([...touched, ...edited.filter((g) => gates.includes(g))])].sort();
 console.log(`1 · ${toRun.length} gate(s) read what changed:`);
 if (QUIET) console.log(`🔇 database quiet until ${QUIET.until}: gates that read the live database or site are skipped (${QUIET.reason})`);
-for (const g of toRun) (QUIET && readsLive(g)) ? quietSkip(g.replace(/\.mjs$/, "")) : run(g.replace(/\.mjs$/, ""), "node", [`scripts/${g}`]);
+// 🔑 A GATE THAT NEEDS A TARGET IS GIVEN ONE (11-11: check-no-duplicate-google-listing ran here with neither --client nor --all, so it
+// printed its usage and said "can't tell" every night). Its live --all spends one SerpAPI search per client, so that run stays WEEKLY in
+// daily-health-check.sh (the dup-listing-weekly stamp, check-serpapi-budget); here, where a CODE change is being checked, it runs its
+// verdict logic on fixtures (--self-test), which spends nothing and fails if the logic broke.
+const GATE_ARGS = { "check-no-duplicate-google-listing.mjs": ["--self-test"] };
+for (const g of toRun) (QUIET && readsLive(g)) ? quietSkip(g.replace(/\.mjs$/, "")) : run(g.replace(/\.mjs$/, ""), "node", [`scripts/${g}`, ...(GATE_ARGS[g] || [])]);
 // 2 · mutation suites of the gates edited this round (+ the touched gates that have one)
 const suites = [...new Set([...edited, ...touched].map((g) => g.replace(/\.mjs$/, "")).filter((g) => fs.existsSync(`${SCRAPER}/scripts/mutations/${g}.json`)))];
 console.log(`\n2 · ${suites.length} mutation suite(s):`);

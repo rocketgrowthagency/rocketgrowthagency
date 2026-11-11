@@ -195,6 +195,33 @@ if (titles.length >= 40) {
   }
 }
 
+// ── 4. A STEP TITLE THAT IS ALSO A CALL NAME LIVES IN THE CALL-NAMES TABLE (call_names_v1, 11-10) ────────
+// "Month 1 review" is the title of m1.call.close AND the approved name of the call. Its surfaces read it from
+// shared/call-names.js (CALL_NAMES), so check 1 above no longer finds it typed. 🔑 That only holds if the table and
+// the playbook say the same thing, and both portals actually load the table: a rename in one of the two homes fails here.
+{
+  const cn = read("shared/call-names.js", 200);
+  const raw = read("data/playbooks/playbooks.json", 5000);
+  let names = null, pb = null;
+  try { const c = { }; vm.createContext(c); vm.runInContext(cn || "", c, { timeout: 2000 }); names = c.rgaCallNames && c.rgaCallNames.NAMES; } catch (e) { indet.push(`shared/call-names.js would not run (${e.message})`); }
+  try { pb = JSON.parse(raw || "null"); } catch { pb = null; }
+  const CALL_STEPS = { "m1.call.close": "m1_review" };   // a playbook step whose title IS an approved call name
+  if (cn && names && pb) {
+    for (const [id, key] of Object.entries(CALL_STEPS)) {
+      const st = [...(pb.month1 || []), ...(pb.month2plus || [])].find((s) => s.id === id);
+      if (!st) { fail.push(`${id} is gone from the playbook, but the call-names table still pairs it with ${key}`); continue; }
+      if (String(st.title || "").trim() !== String(names[key] || "").trim()) fail.push(`${id}'s title is "${st.title}" but shared/call-names.js names the call "${names[key]}": one name, two homes that disagree`);
+      else pass.push(`${id} — its title is the call name ${key}, and the two homes agree ("${names[key]}")`);
+    }
+    for (const rel of ["admin/admin.js", "portal/portal.js"]) {
+      const code = strip(read(rel, 50000) || "");
+      if (!/import "\/shared\/call-names\.js\?v=[^"]+";/.test(code)) fail.push(`${rel} — does not load shared/call-names.js, so it has no call name to read`);
+      else if (!/const CALL_NAMES = globalThis\.rgaCallNames\.NAMES;/.test(code)) fail.push(`${rel} — loads the call-names table but never reads it (no CALL_NAMES)`);
+      else pass.push(`${rel} — reads the call names from shared/call-names.js`);
+    }
+  } else if (!cn) fail.push("shared/call-names.js is gone, so a call name has nowhere to be read from");
+}
+
 // ── report ──────────────────────────────────────────────────────────────────────────────────────
 for (const p of pass) console.log(`  ✅ ${p}`);
 for (const i of indet) console.log(`  ⚠️  ${i}`);

@@ -83,7 +83,9 @@ async function open(mode, { tasks, photos = [], lists = [], stage = "stage_4_onb
     fns: { "portal-review-requests": (b) => (b && b.scope === "reviews" ? EMPTY_REVIEWS : lists.length ? REQ1 : { ok: true, requests: [], has_review_link: true }), "portal-thread": () => ({ ok: true, messages: [] }), ...fns } }, overrides, SITE);
   h.calls = calls;
   try { await h.ready(ROW(PH), 40000); } catch { await h.close(); throw new HarnessUnavailable(`step 4 never drew (${h.errs[0] || "no error"})`); }
-  await h.page.evaluate(() => document.querySelector(".portal-nav a[data-view=setup]")?.click());
+  // 🔄 setup_vs_month1_v1 (approved 11-10): a MANAGED client's photos and review asks are Month 1 work, drawn in the Month 1 card on Ongoing
+  // work (the same step cards, the same finish-with-fewer rows); self-serve and no mode keep them in Setup. Same re-aim as check-managed-step-4-photos.
+  await h.page.evaluate((m) => document.querySelector(`.portal-nav a[data-view=${m === "managed" ? "ongoing" : "setup"}]`)?.click(), mode);
   await tick(700);
   return h;
 }
@@ -183,7 +185,7 @@ try {
       if (!a || !a.sheet || a.sheet.shown || !a.sheet.inCard) fail(`${L}: the sheet isn't drawn hidden inside the card ${JSON.stringify(a && a.sheet)}`);
       await press(h, PH, "[data-fw-open]");
       a = await look(h, PH);
-      const W4 = { h3: `Are you sure you want to finish this step with ${AM.total} of 20 photos? The rest come with step 10.`, p: "Any photo you add later still counts, here and in step 10, New photos (no monthly quota). RGA is told.",
+      const W4 = { h3: `Are you sure you want to finish this step with ${AM.total} of 20 photos? The rest come with step 10.`, p: "Any photo you add later still counts, here and in step 10, New photos when you have them (no monthly quota). RGA is told.",   // setup_vs_month1_v1 renamed step 10 (managedLabel)
         lis: [], btns: ["Finish", "Keep adding"] };
       if (!a.sheet || !a.sheet.shown || a.sheet.h3 !== W4.h3 || a.sheet.p !== W4.p || a.sheet.lis.join("|") !== W4.lis.join("|") || a.sheet.btns.join("|") !== W4.btns.join("|")) fail(`${L}: the sheet isn't the approved one ${JSON.stringify(a.sheet)}`);
       if (a.tiles) fail(`${L}: the tiles stay while the sheet is open (the sheet takes the card's working part)`);
@@ -235,7 +237,8 @@ try {
       a = await look(h, PH);
       if (!a || a.pills.join("|") !== "Done" || a.band !== `${AM.total} on Google · the rest come with step 10` || a.side !== "finished Nov 5") fail(`${L}: after Finish, step 4 isn't done with fewer ${JSON.stringify(a && { pills: a.pills, band: a.band, side: a.side })}`);
       const toast = await h.page.evaluate(() => document.body.innerText);
-      if (!toast.includes(`Step 4 is done · ${AM.total} photos on Google. RGA is told.`)) fail(`${L}: the finish says nothing (no "Step 4 is done · ${AM.total} photos on Google. RGA is told.")`);
+      // setup_vs_month1_v1: a managed client's photos are Month 1 work with no number, so the toast says "Done", never a number it doesn't have
+      if (!toast.includes(`Done · ${AM.total} photos on Google. RGA is told.`)) fail(`${L}: the finish says nothing (no "Done · ${AM.total} photos on Google. RGA is told.")`);
       // Finish step 5
       await openRow(h, RV); await settled(h, RV); await press(h, RV, "[data-fw-open]"); await press(h, RV, "[data-fw-finish]"); await tick(1500); await settled(h, RV);
       if (posted.length < 2 || posted[1].step_id !== RV) fail(`step 5: Finish didn't post (${JSON.stringify(posted)})`);
@@ -432,9 +435,16 @@ try {
     const OM = req("./_open-moves.js"), PB = req("../../data/playbooks/playbooks.json");
     const base = Object.fromEntries((PB.month1 || []).map((s) => [s.id, { status: "done", completed_at: "2026-10-20T00:00:00Z" }]));
     const dup = req("./_one-listing.js").DUP_STEP; base[dup] = { ...base[dup], outcome_data: { verdict: "clean", duplicates: [] } };   // one Google listing (the photo step waits on it)
-    const mv = (t) => OM.openMoves({ playbooks: PB, data: { tasks: { ...base, ...t } }, now: CLOCK, mode: "managed" }).filter((m) => m.owner === "client" && [PH, RV].includes(m.step_id)).map((m) => m.step_id);
-    const open4 = mv({ [PH]: { status: "pending" }, [RV]: { status: "pending" } });
-    if (!open4.includes(PH) || !open4.includes(RV)) can(`To do doesn't list open steps 4 and 5 for the fixture (${open4.join(",")}): this check can't see a move`);
+    const mv = (t, mode = "managed") => OM.openMoves({ playbooks: PB, data: { tasks: { ...base, ...t } }, now: CLOCK, mode }).filter((m) => m.owner === "client" && [PH, RV].includes(m.step_id)).map((m) => m.step_id);
+    // 🔄 RE-AIMED 11-11 at setup_vs_month1_v1 (approved 11-10): a MANAGED client's photos and review asks are Month 1 work, a line in the
+    // Month 1 card with no number, and To do never lists them, open or finished (only Getting started blocks). That is stronger than this
+    // design's decision 5 ("To do drops a fewer step"), so it is held as: managed lists neither, open or fewer. The self-serve client,
+    // whose steps did not move, still gets them as moves when open, so the reader is proven able to see a move at all.
+    const pend = { [PH]: { status: "pending" }, [RV]: { status: "pending" } };
+    const seen = mv(pend, "self_serve");
+    if (!seen.includes(PH) || !seen.includes(RV)) can(`To do doesn't list open photos / review asks even for a self-serve client (${seen.join(",")}): this check can't see a move`);
+    const open4 = mv(pend);
+    if (open4.length) fail(`To do lists ${open4.join(", ")} as a managed client's move while open: setup_vs_month1_v1 made them Month 1 work, never a To do`);
     const after = mv({ [PH]: fewerT({}, PH, 1, "monthly"), [RV]: fewerT({}, RV, 1, "client") });
     if (after.length) fail(`To do still lists ${after.join(", ")} after it was finished with fewer / moved to Ongoing work`);
   }
@@ -475,7 +485,8 @@ try {
       const kept = A.mergeTaskState(fewerT({}, PH, 13, "client"), { ran_at: NOV5 });
       if (!kept.fewer) fail("an admin write that doesn't move the status drops the fewer note");
       const dlg = A.advanceFewerMove();
-      if (!dlg || dlg.say !== "Client steps 4 and 5 aren't finished (1 of 20 photos on Google, 1 of 5 asked). Advancing moves them to Ongoing work steps 10 and 8.") fail(`the Advance dialog doesn't name the steps it moves («${dlg && dlg.say}»)`);
+      // setup_vs_month1_v1: photos and review asks lost their managed numbers, so the dialog names them by what they are (11-11: it said "steps null and null")
+      if (!dlg || dlg.say !== "The client's Month 1 photos and review asks aren't finished (1 of 20 photos on Google, 1 of 5 asked). Advancing moves them to Ongoing work steps 10 and 8.") fail(`the Advance dialog doesn't name the steps it moves («${dlg && dlg.say}»)`);
       ctx.state.onboardingData.tasks = { [PH]: { status: "done" }, [RV]: { status: "done" } };
       if (A.advanceFewerMove()) fail("the Advance dialog names a move when steps 4 and 5 are finished");
       ctx.mgOn = () => false; ctx.state.onboardingData.tasks = { [PH]: { status: "pending" } };

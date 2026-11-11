@@ -25,7 +25,7 @@ if (!step || !Array.isArray(step.needsFirst) || step.needsFirst.length < 2) { co
 if (!/\$\{ownWait \? \(step\.id === "m1\.call\.close" \? (?:ccWrap\()?closeWaitHtml\(step, waitTasks, rgaWaits, photos, playbook\)\)? : (?:gaByRga \? `[^`]*` : )?ownWaitHtml\(ownFirst\)\) : ""\}/.test(portal)) fail("step 13's wait isn't the full list (it's back to one \"Do step N first\")");
 // 🔄 10-20 (walk): the picker also waits on RGA's part (the report) — ownWait || rgaWait || isDone
 if (!/: step\.id === "m1\.call\.close" \? \(ownWait \|\| rgaWait \|\| isDone \? "" : (?:ccWrap\()?closeCallHtml\(/.test(portal)) fail("step 13 shows a \"What to do\" box under the card while it waits");
-if (!/o\.flowId === "m1\.call\.close" \? \(\(\) => \{[\s\S]{0,2000}title: "The Month 1 review opens when these are done"/.test(admin) || !/r\?\.obj\?\.clientFacing \? "client's move" : "RGA's move"/.test(admin) || !/state: rgaN \? "rga" : "you", small: rgaN \? "Your move" : "Client's move", side: `\$\{rgaN\} yours · \$\{clientN\} the client's`/.test(admin)) fail("admin row 60 doesn't list what the call waits on with whose move");
+if (!/o\.flowId === "m1\.call\.close" \? \(\(\) => \{[\s\S]{0,2000}title: (?:"The Month 1 review|`The \$\{CALL_NAMES\.m1_review\}) opens when these are done["`]/.test(admin) || !/r\?\.obj\?\.clientFacing \? "client's move" : "RGA's move"/.test(admin) || !/state: rgaN \? "rga" : "you", small: rgaN \? "Your move" : "Client's move", side: `\$\{rgaN\} yours · \$\{clientN\} the client's`/.test(admin)) fail("admin row 60 doesn't list what the call waits on with whose move");
 if ((css.match(/^\.pm-cw \{/gm) || []).length !== 1) fail("the waiting list isn't styled once");
 
 // ── 2 · drawn for real ──

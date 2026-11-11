@@ -270,16 +270,22 @@ if (!/const CLOSE_PURPOSE = "m1_close";/.test(portal)) fail("J · the portal's c
 // 🔒 one picker, two calls (ready_to_sell_plan_v1 D5): the key is "<id>" for the close-out, "<id>~m2" for the monthly call
 if (!/kickoff-availability\?client_id=\$\{encodeURIComponent\(ccClient\(clientId\)\)\}&purpose=\$\{ccPurpose\(clientId\)\}/.test(portal)) fail("J · the portal's call card reads the kickoff's availability answer");
 if (!/client_id: ccClient\(clientId\), start: startIso, purpose: ccPurpose\(clientId\)/.test(portal)) fail("J · the portal's call pick is sent as a kickoff pick");
-if (!/const ccPurpose = \(k\) => \(String\(k\)\.endsWith\("~m2"\) \? "m2_monthly" : CLOSE_PURPOSE\);/.test(portal) || !/const key = purpose === "m2_monthly" \? `\$\{clientId\}~m2` : clientId;/.test(portal)) fail("J · the portal can't tell the close-out from the monthly call (one key would serve both)");
+// 11-11 (schedule_system_v6 item 6): the same picker also books the quarterly review, keyed "<id>~m3"; each call keeps its own key
+if (!/const ccPurpose = \(k\) => \(String\(k\)\.endsWith\("~m2"\) \? "m2_monthly" : String\(k\)\.endsWith\("~m3"\) \? "m3_quarterly" : CLOSE_PURPOSE\);/.test(portal) || !/const key = purpose === "m2_monthly" \? `\$\{clientId\}~m2` : purpose === "m3_quarterly" \? `\$\{clientId\}~m3` : clientId;/.test(portal)) fail("J · the portal can't tell the close-out from the monthly call (one key would serve both)");
 if (!/kickoff-requests\?client_id=\$\{encodeURIComponent\(cid\)\}&purpose=\$\{purpose\}/.test(admin) || !/const purpose = host\.getAttribute\("data-purpose"\) \|\| "m1_close"/.test(admin)) fail("J · admin row 60 / monthly row 26 read the kickoff's requests");
 if (!/: closeoutAdminHtml\("m2_monthly"\)/.test(admin)) fail("J · admin's monthly row doesn't show the client's monthly call request");
 if (!((admin.match(/\$\{rowLiveCardsHtml\(o, s\)\}/g) || []).length >= 2 && /id === "m1\.call\.close" \? closeoutAdminHtml\(\)/.test(admin))) fail("J · admin row 60 no longer shows the close-out booking");
 // the NEWEST purpose SQL is the one that says what the database allows (10-19 added the column; 10-20 the monthly call)
-const sqlFile = fs.readdirSync(`${__SITE}/docs/supabase`).filter((f) => /SLOT_HOLD_PURPOSE/.test(f)).sort((a, b) => (a.match(/20\d\d-\d\d-\d\d/) || [""])[0].localeCompare((b.match(/20\d\d-\d\d-\d\d/) || [""])[0])).pop();
+// 🔄 11-11: the constraint is no longer only in a *SLOT_HOLD_PURPOSE* file (call_to_client_v1 added 'walkthrough', SCHEDULE_V6B 'm3_quarterly'),
+// so the newest dated SQL file that (re)defines `check (purpose in (…))` is the one that says what the database allows.
+const sqlFile = fs.readdirSync(`${__SITE}/docs/supabase`).filter((f) => /\.sql$/.test(f) && /20\d\d-\d\d-\d\d/.test(f) && /check \(purpose in \(/.test(read(`docs/supabase/${f}`))).sort((a, b) => (a.match(/20\d\d-\d\d-\d\d/) || [""])[0].localeCompare((b.match(/20\d\d-\d\d-\d\d/) || [""])[0])).pop();
 const sql = sqlFile ? read(`docs/supabase/${sqlFile}`) : "";
 const allowed = (sql.match(/check \(purpose in \(([^)]*)\)\)/) || [])[1];
+// 'walkthrough' is the PROSPECT's audit walkthrough (call_to_client_v1): held in the same ledger by walkthrough-book.js, not a client
+// call, so it is not in PURPOSES. It is expected only while that writer still holds rows under it.
+const extra = /purpose: "walkthrough"/.test(read("netlify/functions/walkthrough-book.js")) ? ["walkthrough"] : [];
 if (!allowed) fail("J · the purpose column's SQL (with its check constraint) is missing");
-else if (JSON.stringify(allowed.split(",").map((x) => x.trim().replace(/'/g, "")).sort()) !== JSON.stringify(Object.keys(PURPOSES).sort())) fail(`J · the database allows (${allowed}) but the code knows ${Object.keys(PURPOSES).join(", ")}`);
+else if (JSON.stringify(allowed.split(",").map((x) => x.trim().replace(/'/g, "")).sort()) !== JSON.stringify([...Object.keys(PURPOSES), ...extra].sort())) fail(`J · the database allows (${allowed}) but the code knows ${[...Object.keys(PURPOSES), ...extra].join(", ")}`);
 
 console.log("── a close-out booking never touches the kickoff ──");
 if (F.length) { console.log(`🔴 FAIL — ${F.length} problem(s):`); for (const m of F) console.log(`   • ${m}`); process.exit(1); }

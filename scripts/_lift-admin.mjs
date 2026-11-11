@@ -107,7 +107,12 @@ export function liftAdmin(wanted, { extraGlobals = {}, maxRounds = 40, file = "a
   // 🔑 A SANDBOX THAT IS MISSING WHAT THE BROWSER HAS DOES NOT TEST THE PRODUCT, IT TESTS THE
   // SANDBOX. Anything standard and side-effect-free belongs here; a caller can still add its own.
   // → feedback_the_harness_i_wrote_to_check_my_work_can_lie · feedback_correct_is_not_the_same_as_happening
+  // 🔑 11-11: admin.js reads the six call names from shared/call-names.js (call_names_v1) at the top (`const CALL_NAMES =
+  // globalThis.rgaCallNames.NAMES`), as the browser has it after the import. The sandbox gets the same object from the same file.
+  let callNames;
+  try { const c = vm.createContext({}); vm.runInContext(fs.readFileSync(`${SITE}/shared/call-names.js`, "utf8"), c); callNames = c.rgaCallNames; } catch { callNames = undefined; }
   const makeCtx = () => vm.createContext({
+    ...(callNames ? { rgaCallNames: callNames } : {}),
     console: { log() {}, warn() {}, error() {} },
     document: undefined,
     URL, URLSearchParams, TextEncoder, TextDecoder,
@@ -137,27 +142,42 @@ function escapeAttribute(s){return escapeHtml(s);}\n`;
   // 🔑 RESOLVE AT EVAL TIME **AND** AT CALL TIME. Evaluating the lifted code only proves it parses;
   // a helper used on one branch is not missed until that branch runs. The first version resolved
   // only eval-time errors and then reported INDETERMINATE the moment a call reached `obDependsOn`.
-  const addDep = (name) => {
+  const addDep = (name, depth = 0) => {
     const dep = liftFunction(src, name) || liftConst(src, name);
     if (!dep) return false;
     parts.unshift(dep);
     included.add(name);
-    ctx = makeCtx();
+    // 🔑 11-11: A CONST'S OWN INITIALISER CAN NEED ANOTHER CONST. OB_PHASES's text now reads the call name (CALL_NAMES, call_names_v1),
+    // so evaluating OB_PHASES alone threw "CALL_NAMES is not defined" and the whole lift was rolled back as "cannot supply OB_PHASES".
+    // The dependency of a dependency is pulled in FIRST (unshift puts it ahead), and one already lifted but declared too late is moved ahead.
+    for (let tries = 0; tries < 8; tries++) {
+      ctx = makeCtx();
+      try { vm.runInContext(`${prelude}${parts.join("\n\n")}\n${expose}`, ctx); return true; }
+      catch (e) {
+        const m = /^(\w+) is not defined/.exec(String(e && e.message)) || /Cannot access '(\w+)' before initialization/.exec(String(e && e.message));
+        if (!m || depth > 6 || m[1] === name) break;
+        const need = m[1];
+        if (included.has(need)) {
+          const at = parts.findIndex((p) => new RegExp(`^(?:async )?(?:function ${need}\\s*\\(|const ${need} = )`).test(p));
+          if (at <= 0) break;
+          parts.unshift(parts.splice(at, 1)[0]);
+          continue;
+        }
+        if (!addDep(need, depth + 1)) break;
+        return true;
+      }
+    }
     // 🔴 A REBUILD THAT THROWS MUST NOT ESCAPE AS A RAW STACK. Pulling in a const whose initialiser
     // calls something the sandbox does not have (a `require`d helper, say) threw straight out of
     // here — past every INDETERMINATE guard — and printed a node stack trace, which reads exactly
     // like the product crashing. Roll the dependency back and report "could not supply it" instead.
     // → feedback_a_gate_that_throws_is_not_a_gate_that_fails
-    try {
-      vm.runInContext(`${prelude}${parts.join("\n\n")}\n${expose}`, ctx);
-    } catch {
-      parts.shift();
-      included.delete(name);
-      ctx = makeCtx();
-      try { vm.runInContext(`${prelude}${parts.join("\n\n")}\n${expose}`, ctx); } catch { /* reported by the caller */ }
-      return false;
-    }
-    return true;
+    const i = parts.indexOf(dep);
+    if (i >= 0) parts.splice(i, 1);
+    included.delete(name);
+    ctx = makeCtx();
+    try { vm.runInContext(`${prelude}${parts.join("\n\n")}\n${expose}`, ctx); } catch { /* reported by the caller */ }
+    return false;
   };
 
   for (let round = 0; round < maxRounds; round++) {

@@ -48,7 +48,34 @@ const admin = rows.map((r) => {
   return { n: r.n, id: r.id, title: clean(r.title) || d.title || r.id, who, client: d.clientStepNo || null, clientLabel: d.clientLabel || null, what: WHAT.admin[r.id] || "", month: d.month || (String(r.id).startsWith("m1.") ? "month1" : "month2plus") };
 });
 const month1 = admin.filter((a) => a.month === "month1");
-const monthly = admin.filter((a) => a.month !== "month1");
+// 🔒 MONTHLY NUMBERS NEVER MOVE (approved monthly_audit_v2 + mature_account_health_v1, shared/monthly-sections.js APPENDED): a step added
+// after the first 25 is numbered 26, 27 … although it sits mid-list, so the page prints 1–13, 26, 27, 21–25. And the "Every quarter"
+// section (outside months 3, 6, 9 …) and "Account health" (before Month 4) are folded, so their steps draw no .ob-step row at all.
+// 🔑 So the sheet lists Monthly BY NUMBER, every step, and a step the page does not draw this month gets its number from the SAME
+// rule the admin numbers with (obMonthlyPageNumbers over shared/monthly-sections.js) — trusted only if that rule reproduces EVERY
+// number the page did print. One disagreement and the sheet is not rebuilt. (11-11: the sheet was 13 steps short and read as out of order.)
+const monthlyRule = (() => {
+  let M;
+  try { const src = fs.readFileSync(`${SITE}/shared/monthly-sections.js`, "utf8"); const box = { module: { exports: {} } }; new Function("module", "globalThis", src)(box.module, {}); M = box.module.exports; }
+  catch { return null; }
+  if (!M || !Array.isArray(M.SECTIONS)) return null;
+  const list = (play.month2plus && (play.month2plus.steps || play.month2plus)) || [], ids = list.map((s) => s.id), app = M.APPENDED || [];
+  const order = []; for (const sec of M.SECTIONS) for (const id of sec.ids) if (ids.includes(id) && !order.includes(id)) order.push(id);
+  for (const id of ids) if (!order.includes(id)) order.push(id);
+  const num = new Map(); let n = 0;
+  order.filter((id) => !app.includes(id)).forEach((id) => num.set(id, ++n));
+  app.forEach((id) => { if (ids.includes(id)) num.set(id, ++n); });
+  const sec = (id) => (M.SECTIONS.find((s) => s.ids.includes(id)) || M.SECTIONS[M.SECTIONS.length - 1]);
+  return { num, sec };
+})();
+const monthlyShown = admin.filter((a) => a.month !== "month1");
+const monthlyBad = [];
+if (!monthlyRule) monthlyBad.push("shared/monthly-sections.js couldn't be read, so a folded Monthly step has no number");
+else for (const a of monthlyShown) if (Number(a.n) !== monthlyRule.num.get(a.id)) monthlyBad.push(`Monthly ${a.id}: the page prints ${a.n}, the numbering rule says ${monthlyRule.num.get(a.id)}`);
+const monthly = monthlyRule ? [...monthlyShown, ...[...monthlyRule.num.keys()].filter((id) => !monthlyShown.some((a) => a.id === id)).map((id) => {
+  const d = defs.get(id) || {};
+  return { n: String(monthlyRule.num.get(id)), id, title: `${d.title || id} (folded this month: ${monthlyRule.sec(id).name})`, who: whoOf(d), client: d.clientStepNo || null, clientLabel: d.clientLabel || null, what: WHAT.admin[id] || "", month: "month2plus" };
+})].sort((a, b) => Number(a.n) - Number(b.n)) : monthlyShown;
 const client = [...defs.values()].filter((d) => d.clientStepNo).sort((a, b) => a.clientStepNo - b.clientStepNo).map((d) => {
   const a = admin.find((x) => x.id === d.id);
   return { n: d.clientStepNo, id: d.id, label: d.clientLabel || d.title, what: WHAT.client[d.id] || "", admin: a ? a.n : null, adminMonth: a ? a.month : null };
@@ -79,6 +106,8 @@ if (month1.length < 40) bad.push(`only ${month1.length} Month 1 rows`);
 if (new Set(nums).size !== nums.length || nums.some((n, i) => Number(n) !== i + 1)) bad.push("the Month 1 numbers don't run 1, 2, 3 in order");
 if (!month1.some((a) => a.id === "m1.gbp.photos")) bad.push("the photo step isn't in the Month 1 rows");
 if (client.length < 10 || client.some((c, i) => c.n !== i + 1)) bad.push("the client numbers don't run 1, 2, 3 in order");
+bad.push(...monthlyBad);
+if (monthly.some((a, i) => Number(a.n) !== i + 1)) bad.push("the Monthly numbers aren't 1 to N, each once");
 { const mn = managedRows.filter((r) => r.n !== "").map((r) => r.n); if (mn.length < 10 || mn.some((n, i) => n !== i + 1)) bad.push("the managed client numbers don't run 1, 2, 3 in order"); }
 if (bad.length) { console.error(`🔴 the step map came out wrong, the old one stays:\n${bad.map((b) => `   · ${b}`).join("\n")}`); process.exit(1); }
 

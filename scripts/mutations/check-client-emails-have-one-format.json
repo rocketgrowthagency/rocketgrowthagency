@@ -58,7 +58,7 @@
  [
   "the document twin loses its sign-off",
   "emaildoc",
-  "  parts.push(\"\", \"Rocket Growth Agency \u00b7 (424) 242-2040\");",
+  "  parts.push(\"\", \"Rocket Growth Agency · (424) 242-2040\");",
   "",
   1
  ],
@@ -77,10 +77,10 @@
   1
  ],
  [
-  "the invite title goes back to \u00d7",
+  "the invite title goes back to ×",
   "callpurpose",
-  "`Kickoff call \u2014 ${biz} and Rocket Growth Agency`",
-  "`Kickoff call \u2014 ${biz} \u00d7 Rocket Growth Agency`",
+  "`${name}: ${b} and Rocket Growth Agency`;",
+  "`${name}: ${b} × Rocket Growth Agency`;",
   1
  ],
  [
@@ -135,7 +135,7 @@
  [
   "the moved date is dropped",
   "letter",
-  "        detail = [date.replace(/^[a-z]/, (c) => c.toUpperCase()), detail].filter(Boolean).join(\" \u00b7 \");",
+  "        detail = [date.replace(/^[a-z]/, (c) => c.toUpperCase()), detail].filter(Boolean).join(\" · \");",
   "        detail = detail;",
   1
  ],

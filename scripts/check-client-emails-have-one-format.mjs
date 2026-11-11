@@ -112,7 +112,11 @@ if (/label: "Pay in your portal"/.test(C.invoice)) fail("the invoice twin says \
 if (!/subject: `Receipt for invoice \$\{ref\} — \$\{amount\}`/.test(C.invoice)) fail("the receipt subject is not \"Receipt for invoice <ref> — <amount>\"");
 if (/geo-grid/.test(C.report)) fail("the monthly report email says \"geo-grid\" — say \"map coverage\"");
 if (/Hi \$\{esc\(first\)\}, \$\{intro\}/.test(C.report) && /const intro = `Here's/.test(C.report)) fail("the monthly report reads \"Hi Pat, Here's\" — lower-case after the comma");
-if (/summary: `Kickoff call — [^`]*×/.test(C.invite) || /title: \(biz\) => `[^`]*×/.test(C.callpurpose)) fail("the calendar invite title uses \"×\" — say \"and\"");
+// 11-11: every call's title is now built by ONE function, callTitle(name, biz) (call_names_v1), so the "×" is looked for inside it too;
+// reading only `title: (biz) => \`…\`` had gone blind the day the titles moved into callTitle.
+{ const ct = (C.callpurpose.match(/function callTitle\([^)]*\)\s*\{[\s\S]*?\n\}/) || [""])[0];
+  if (!ct && !/title: \(biz\) => `/.test(C.callpurpose)) fail("_call-purpose.js builds no call title this gate can read (neither callTitle nor title: (biz) => `…`)");
+  if (/summary: `Kickoff call — [^`]*×/.test(C.invite) || /title: \(biz\) => `[^`]*×/.test(C.callpurpose) || /×/.test(ct)) fail("the calendar invite title uses \"×\" — say \"and\""); }
 if (/\\n\$\{clientShareLink\(clientId\)\}/.test(C.invite)) fail("the calendar invite shows the report ADDRESS — link the words");
 
 // 7. our shorthand never reaches a client: the welcome email's step list is written for them

@@ -58,8 +58,8 @@
  [
   "the managed Month-2 list draws every row (no fold)",
   "portal",
-  "(pmManaged() ? (monthNow ? ogMonthListHtml(numbered, rowHtml, monthNow) : ogManagedListHtml(numbered, rowHtml)) : numbered.map(rowHtml).join(\"\"))",
-  "(pmManaged() ? (monthNow ? ogMonthListHtml(numbered, rowHtml, monthNow) : numbered.map(rowHtml).join(\"\")) : numbered.map(rowHtml).join(\"\"))",
+  "(monthNow ? ogMonthListHtml(numbered, rowHtml, monthNow, clientId, onboarding?.data) : ogManagedListHtml(numbered, rowHtml))",
+  "(monthNow ? ogMonthListHtml(numbered, rowHtml, monthNow, clientId, onboarding?.data) : numbered.map(rowHtml).join(\"\"))",
   1
  ],
  [
