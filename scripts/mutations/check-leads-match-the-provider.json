@@ -1,0 +1,152 @@
+[
+ [
+  "CallRail counts a short answered call as a lead (the provider's 30-second rule dropped)",
+  "callproviders",
+  "counted: !!c.answered && Number(c.duration || 0) >= CONNECTED_SECONDS, firstTime: c.first_call",
+  "counted: !!c.answered, firstTime: c.first_call"
+ ],
+ [
+  "the adapter hands back the caller's whole number instead of the last 4",
+  "callproviders",
+  "last4: LEADS.last4(phone)",
+  "last4: String(phone || \"\")"
+ ],
+ [
+  "a Quo call claims a Google source",
+  "callproviders",
+  "firstTime: null, phone: other, source: null",
+  "firstTime: null, phone: other, source: \"Google My Business\""
+ ],
+ [
+  "CallRail's read stops asking for the call's source",
+  "callproviders",
+  "fields=answered,duration,first_call,source",
+  "fields=answered,duration,first_call"
+ ],
+ [
+  "a lead read twice is counted twice (no dedupe)",
+  "leadsshared",
+  "if (!had) { m.set(r.lead_key, r); continue; }",
+  "if (true) { m.set(r.lead_key + \"#\" + m.size, r); continue; }"
+ ],
+ [
+  "cost per booked job shows with no booked job",
+  "leadsshared",
+  "cost: booked.length >= 1 && price != null && price > 0 ? Math.round(price / booked.length) : null,",
+  "cost: price != null && price > 0 ? Math.round(price / Math.max(1, booked.length)) : null,"
+ ],
+ [
+  "Quo calls are labeled as calls to the Google profile number",
+  "leadsshared",
+  "if (provider.attributed === false) return",
+  "if (false) return"
+ ],
+ [
+  "a failed read stops telling the client which calls aren't read",
+  "leadsshared",
+  "return `Calls ${span} aren't read yet. They'll appear here. Nothing is shown as 0.`;",
+  "return `Calls ${span}: 0.`;"
+ ],
+ [
+  "an uncounted tile draws 0 instead of Not counted yet",
+  "leadsshared",
+  "const NOT_YET = \"Not counted yet\";",
+  "const NOT_YET = \"0\";"
+ ],
+ [
+  "the admin card stops naming the provider's answer on a failed read",
+  "leadsshared",
+  "answered ${r.status}` : \"didn't answer\"}",
+  "failed` : \"failed\"}"
+ ],
+ [
+  "one form that fired two events is counted as two leads (sum, not max)",
+  "leadsfn",
+  "if (!had || n > had.n) best.set(k, { day: r.date, page: r.page, event: r.event_name, n });",
+  "best.set(k, { day: r.date, page: r.page, event: r.event_name, n: n + (had ? had.n : 0) });"
+ ],
+ [
+  "a missing client_leads table is no longer recognized (reads throw before the SQL is run)",
+  "leadsfn",
+  "const isMissingTable = (e) => /PGRST205|PGRST204|42P01|does not exist|schema cache|\\b404\\b/i.test(",
+  "const isMissingTable = (e) => /NEVER-MATCHES-ANYTHING/i.test("
+ ],
+ [
+  "a short answered call (a misdial) is saved as a lead",
+  "leadsfn",
+  ".filter((r) => r && r.lead_key && (L.isCounted(r) || L.isMissed(r)))",
+  ".filter((r) => r && r.lead_key)"
+ ],
+ [
+  "saveCalls passes every field it is handed (a full number could ride along)",
+  "leadsfn",
+  "const pick = (r) => { const o = {}; for (const k of COLS) o[k] = r[k] === undefined ? null : r[k]; return o; };",
+  "const pick = (r) => ({ ...r });"
+ ],
+ [
+  "client_leads is created without row level security",
+  "leadssql",
+  "alter table public.client_leads enable row level security;",
+  "-- row level security comes later"
+ ],
+ [
+  "client_leads keeps anon and authenticated grants",
+  "leadssql",
+  "revoke all on public.client_leads from anon, authenticated;",
+  "-- no revoke"
+ ],
+ [
+  "client_leads gets a column for the caller's full number",
+  "leadssql",
+  "  last4         text check (last4 is null or last4 ~ '^[0-9]{4}$'),",
+  "  last4         text check (last4 is null or last4 ~ '^[0-9]{4}$'),\n  caller_number text,"
+ ],
+ [
+  "portal-leads answers 500 before the SQL is run instead of Not counted yet",
+  "portalleads",
+  "if (!r.ok) return json(r.status || 500, { ok: false, error: r.error });",
+  "if (!r.ok || r.view.table === false) return json(500, { ok: false, error: \"no table\" });"
+ ],
+ [
+  "call-tracking-sync stops saving the lead rows from its read",
+  "ctsync",
+  "saveCalls(supa, { clientId, month, rows: res.rows || [],",
+  "saveCalls(supa, { clientId, month, rowsIgnored: res.rows, rows: [],"
+ ],
+ [
+  "a failed provider read is no longer noted (it would look like silence)",
+  "ctsync",
+  "calls_read: { ok: false, at: new Date().toISOString()",
+  "calls_note: { ok: false, at: new Date().toISOString()"
+ ],
+ [
+  "the monthly report stops printing the Leads and booked jobs section",
+  "monthlyreportemail",
+  "reportSection(x.leads, { builtAt: x.leads.frozen_at })",
+  "reportSection(null, { builtAt: x.leads.frozen_at })"
+ ],
+ [
+  "the report build stops freezing the lead totals",
+  "monthlyclosesrv",
+  "if (d.freezeLeads) { try { leads = await d.freezeLeads(clientId, month); }",
+  "if (false) { try { leads = await d.freezeLeads; }"
+ ],
+ [
+  "the admin Monthly stops drawing the Leads card",
+  "adminjs",
+  "id === \"m2.report.generate\" ? clsBuildCardHtml() + ldsAdminCardHtml()",
+  "id === \"m2.report.generate\" ? clsBuildCardHtml()"
+ ],
+ [
+  "the portal stops importing shared/leads.js",
+  "portal",
+  "import \"/shared/leads.js?v=20261111x\";",
+  "// leads come later"
+ ],
+ [
+  "three failed reads in a row no longer reach System health",
+  "jobmanifest",
+  "const stuck = Number(b.leads_stuck) || 0,",
+  "const stuck = 0, unused = Number(b.leads_stuckX) || 0,"
+ ]
+]

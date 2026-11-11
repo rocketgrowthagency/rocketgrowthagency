@@ -575,4 +575,9 @@ export const FILES = {
   // 11-11 master map Tier 1 #4/#5 + decision 6 (check-one-current-month): the ONE month rule and the RGA-only repair
   monthnow: "shared/month-now.js",
   repaircurrentmonth: "scripts/repair-one-current-month.mjs",
+  // tier3_best_in_class_v1 section 1 (11-11): Leads to booked jobs (check-leads-match-the-provider)
+  leadsshared: "shared/leads.js",
+  leadsfn: "netlify/functions/_leads.js",
+  portalleads: "netlify/functions/portal-leads.js",
+  leadssql: "docs/supabase/CLIENT_LEADS_2026-11-11.sql",
 };

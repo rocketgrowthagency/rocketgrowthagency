@@ -376,6 +376,7 @@ run check-questions-fit-the-trade.mjs "every approved trade is asked questions t
 run check-client-steps-explain-themselves.mjs "no client step offers instructions it does not have"
 run check-we-only-name-tools-we-use.mjs "no client-facing copy names a tool we decided against"
 run check-call-metrics-are-not-conflated.mjs "GBP calls and tracked calls are shown separately"
+run check-leads-match-the-provider.mjs "tier3 item 1 (11-11): the lead rows equal the provider's own count of 30-second calls (CallRail, Quo, CTM, WhatConverts on fakes + this month's rows live), last 4 digits only, no lead twice, a day not read is never 0, cost per booked job only with a booked job, Quo = the business line, client_leads RLS in its SQL; fails on --against=f113d9c5"
 run check-the-monthly-report-reads-true.mjs "the monthly report's numbers and sentences match their inputs, and a tap is never a lead"
 run check-admin-step-text-reads-true.mjs "the admin step text carries no invented number, login ask, old cadence or terminal command, in both sources"
 run check-no-duplicate-call-rows.mjs "one call, one log row, one lead"
