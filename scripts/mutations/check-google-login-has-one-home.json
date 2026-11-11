@@ -229,13 +229,13 @@
 ],
 [
 "a v2 function's words change",
-"gtfetchreviews",
+"respondreview",
 "`Token refresh failed: HTTP ${r.status}`",
 "`Token refresh failed`"
 ],
 [
 "a v2 function refreshes a token still good",
-"gtfetchreviews",
+"respondreview",
 "if (oauth.access_token && exp > Date.now() + 60000) return oauth.access_token;",
 ""
 ],
@@ -259,7 +259,7 @@
 ],
 [
 "a v2 function stops saving",
-"gtfetchreviews",
+"respondreview",
 "body: JSON.stringify({ access_token: data.access_token, access_token_expires_at: expiresAt }),",
 "body: JSON.stringify({}),"
 ],

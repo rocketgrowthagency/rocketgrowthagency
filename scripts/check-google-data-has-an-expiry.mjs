@@ -88,7 +88,11 @@ for (const f of bpFiles) {
   if (kind === "covered") for (const id of rest.split(",")) ok(IDS.has(id), `(1) ${f} says its copies are covered by "${id}", which is not on the delete list`);
   else ok(["none", "open", "lawyer"].includes(kind) && rest.length > 10, `(1) ${f}: the inventory line needs covered:/none:/open: and a reason`);
 }
-for (const f of Object.keys(INVENTORY)) if (!files.includes(f)) F.push(`(1) the inventory names ${f}, which no longer exists`);
+// 🔒 DELETED ON A BRANCH (master map 11-11): proven no caller; until that branch merges the main checkout still has the file, so its
+// inventory line stays and is not "stale" once the file is gone. After `by` a surviving file is RED. Remove the line once it is gone.
+const DELETED = { "v2-fetch-reviews.js": "2026-11-18" };
+for (const f of Object.keys(INVENTORY)) if (!files.includes(f) && !DELETED[f]) F.push(`(1) the inventory names ${f}, which no longer exists`);
+for (const [f, by] of Object.entries(DELETED)) if (files.includes(f) && new Date().toISOString().slice(0, 10) > by) F.push(`(1) ${f} was deleted on a branch 11-11 and is still here after ${by}: merge the deletion`);
 
 // Files that SAVE something derived from Google content without naming a Google host (they read what another job saved). Each id must be on the delete list.
 const SAVED_ELSEWHERE = {

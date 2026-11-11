@@ -89,7 +89,6 @@ export const FILES = {
   gtsendinvoice: "netlify/functions/send-invoice-email.js",
   gtprofile: "netlify/functions/v2-gbp-profile.js",
   gtrediscover: "netlify/functions/v2-gbp-rediscover.js",
-  gtfetchreviews: "netlify/functions/v2-fetch-reviews.js",
   // client_core_change_approval_v1 (10-31): name, address, phone, main category need the client's approval of that exact value
   corechange: "netlify/functions/_core-change.js",
   corechangefn: "netlify/functions/core-change.js",

@@ -251,7 +251,8 @@ if (H && !F.length) {
     if (writes.some((w) => /access_token/.test(w.body))) fail(`${file} must not save a token`);
   }
 
-  const V2 = { "v2-fetch-reviews.js": ["Token refresh: odd", "No refresh token — reconnect Google account."], "v2-push-gbp-content.js": ["Token refresh error: odd", "No refresh token — user must reconnect Google account."], "v2-respond-review.js": ["Token refresh: odd", "No refresh token — reconnect Google account."] };
+  // v2-fetch-reviews.js was deleted 11-11 (master map Tier 1: no caller); the same copy is still run through v2-respond-review below.
+  const V2 = { "v2-push-gbp-content.js": ["Token refresh error: odd", "No refresh token — user must reconnect Google account."], "v2-respond-review.js": ["Token refresh: odd", "No refresh token — reconnect Google account."] };
   for (const [file, [okError, noKey]] of Object.entries(V2)) {
     const get = load(file).__t.getAccessToken;
     if (typeof get !== "function") moved(`getAccessToken in ${file}`);

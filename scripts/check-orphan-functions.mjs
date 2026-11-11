@@ -66,10 +66,17 @@ const EXTERNAL_ENTRY = {
   "track-click.js": "email click redirect — requested by the recipient's browser",
   "unsubscribe-one-click.js": "RFC 8058 one-click unsubscribe — called by the mail client",
   "verify-turnstile.js": "called by the public site's form JS on submit",
-  "ping-test.js": "manual reachability probe",
   "vertical-benchmark-lookup.js": "read endpoint, run by hand: nothing in the admin or portal calls it (audit 10-31; header claims consumers that do not exist). Decide: wire it or remove it",
   "vertical-benchmark-build.js": "build endpoint triggered on demand when a vertical needs refreshing",
 };
+
+// 🔒 DELETED ON A BRANCH (master map 11-11, Tier 1): proven to have no caller and deleted in the website branch that carries the
+// deletion. Until it merges, the main checkout still has the file, so it is excused WHILE IT EXISTS, up to `by`; after that a
+// surviving file is RED (the deletion never landed). Once the file is gone the line is inert: remove it then.
+const DELETED = {
+  "ping-test.js": { by: "2026-11-18", why: "a one-line pong; no code, config, doc or memory names a caller" },
+};
+const TODAY = new Date().toISOString().slice(0, 10);
 
 const SKIP = /^(_|\.)|\.test\.js$/;
 
@@ -108,7 +115,7 @@ for (const dir of HAYSTACK_DIRS) {
   walk(dir);
 }
 
-const orphans = [], excused = [], scheduled = [], external = [];
+const orphans = [], excused = [], scheduled = [], external = [], deleting = [];
 const toml = fs.existsSync(path.join(WEB, "netlify.toml")) ? fs.readFileSync(path.join(WEB, "netlify.toml"), "utf8") : "";
 console.log("── netlify function invocation ──");
 
@@ -124,12 +131,15 @@ for (const f of funcs) {
   if (scheduledInToml || scheduledInFile) { scheduled.push(base); continue; }
   if (EXTERNAL_ENTRY[f]) { external.push(f); continue; }
   if (MANUAL_ONLY[f]) { excused.push(f); continue; }
+  if (DELETED[f] && TODAY <= DELETED[f].by) { deleting.push(f); continue; }
+  if (DELETED[f]) { orphans.push(base); console.log(`  🔴 ${base} was deleted on a branch 11-11 and is still here after ${DELETED[f].by}: merge the deletion`); continue; }
   orphans.push(base);
   console.log(`  🔴 ${base} — built, but nothing references it`);
 }
 
 for (const f of scheduled) console.log(`  🕐 ${f} — scheduled (Netlify cron)`);
 for (const f of external) console.log(`  🌐 ${f.replace(/\.js$/, "")} — external entry: ${EXTERNAL_ENTRY[f]}`);
+for (const f of deleting) console.log(`  ⏳ ${f.replace(/\.js$/, "")} — deleted on a branch, waiting for the merge (until ${DELETED[f].by}): ${DELETED[f].why}`);
 for (const f of excused) console.log(`  ▫️  ${f.replace(/\.js$/, "")} — manual-only: ${MANUAL_ONLY[f].slice(0, 90)}…`);
 
 // An excuse for a file that no longer exists is stale bookkeeping that hides the next real orphan.
@@ -137,8 +147,8 @@ const stale = [...Object.keys(MANUAL_ONLY), ...Object.keys(EXTERNAL_ENTRY)].filt
 for (const f of stale) { orphans.push(f); console.log(`  🔴 MANUAL_ONLY names ${f}, which does not exist — remove the stale excuse`); }
 
 console.log("");
-console.log(`  ${funcs.length} function(s) · ${funcs.length - orphans.length - excused.length - scheduled.length - external.length} invoked in code · ` +
-  `${scheduled.length} scheduled · ${external.length} external · ${excused.length} manual-only · ${orphans.length} orphaned`);
+console.log(`  ${funcs.length} function(s) · ${funcs.length - orphans.length - excused.length - scheduled.length - external.length - deleting.length} invoked in code · ` +
+  `${scheduled.length} scheduled · ${external.length} external · ${excused.length} manual-only · ${deleting.length} awaiting a merged deletion · ${orphans.length} orphaned`);
 if (orphans.length) {
   console.error(`\n🔴 ${orphans.length} orphaned function(s). Wire each one, or add it to MANUAL_ONLY with a reason.`);
   console.error(`   An unused function does not fail — it sits there looking finished while nobody runs it.`);
