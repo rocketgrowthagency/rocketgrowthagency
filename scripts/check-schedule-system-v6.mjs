@@ -377,6 +377,30 @@ async function checkTree(root, label) {
       if (/No reminder email goes out for this call yet/.test(sch)) fail('the panel still says "No reminder email goes out for this call yet"');
       // 6 the quarterly review's purpose needs the database check to allow it: the SQL file says so (the portal picker waits for it)
       if (!/check \([^;]*'m3_quarterly'[^;]*\)/.test(sql) || !/kickoff_slot_holds_purpose_check/.test(sql) || !/'walkthrough'/.test(sql) || !/'m2_monthly'/.test(sql)) fail("SCHEDULE_V6B_2026-11-11.sql does not extend the purpose check with m3_quarterly (and keep the others)");
+      // 7 THE QUARTERLY REVIEW BOOKS (item 6, 11-11): purpose, portal picker + skip, the Schedule's Reschedule / Cancel, the rga_calls kind
+      const pur = rd("netlify/functions/_call-purpose.js"), por = rd("portal/portal.js"), choice = rd("netlify/functions/portal-step-choice.js"), bk = rd("netlify/functions/portal-book-kickoff.js"), inv = rd("netlify/functions/send-kickoff-invite.js"), dlg = rd("admin/schedule-dialogs.js"), rc = rd("netlify/functions/_rga-calls.js");
+      try {
+        const P = loader(root)("./netlify/functions/_call-purpose.js"), q = P.purposeOf("m3_quarterly");
+        if (!q || q.id !== "m3_quarterly") fail("_call-purpose has no m3_quarterly purpose");
+        else {
+          if (q.stamp !== "quarterly_invite" || q.stamp === P.PURPOSES.m2_monthly.stamp) fail("the quarterly review does not keep its own invite field");
+          if (q.title("Beta Roofing") !== "Quarterly review: Beta Roofing and Rocket Growth Agency") fail(`the quarterly review's title is "${q.title("Beta Roofing")}"`);
+          if (/—/.test(q.title("Beta Roofing")) || q.requestPrefix === P.PURPOSES.m2_monthly.requestPrefix) fail("the quarterly review shares or breaks the request id / title rules");
+        }
+        const R = loader(root)("./netlify/functions/_rga-calls.js");
+        if (!R.PURPOSE_OF || R.PURPOSE_OF.quarterly !== "m3_quarterly") fail("a quarterly booking does not get rga_calls kind quarterly (PURPOSE_OF has no quarterly)");
+      } catch (e) { fail(`the quarterly purpose does not load: ${String(e.message).slice(0, 100)}`); }
+      if (!/m3_quarterly: "quarterly"/.test(data)) fail("schedule-data does not show an m3_quarterly hold as a quarterly review");
+      if (!/purpose\.id === "m3_quarterly"\s*\?\s*"30-minute quarterly review\./.test(inv) || /30-minute quarterly review[^"]*—/.test(inv)) fail("the quarterly review's invite has no description of its own");
+      if (!/purpose\.id === "m3_quarterly"[\s\S]{0,700}isQuarterMonth/.test(bk) || !/isManaged/.test(bk.slice(bk.indexOf('purpose.id === "m3_quarterly"')))) fail("portal-book-kickoff lets a quarterly review be booked outside months 3, 6, 9, 12 or by a self-serve client");
+      if (!/skip_quarterly === true/.test(choice) || !/unskip_quarterly/.test(choice) || !/quarterly_skip/.test(choice) || !/isQuarterMonth/.test(choice)) fail("the quarterly review cannot be skipped and un-skipped from the portal");
+      if (!/quarterly: "m3_quarterly"/.test(dlg)) fail("the Schedule cannot Reschedule or Cancel a quarterly review through the client path");
+      if (/quarterly review is moved from the client page/i.test(sch)) fail('the panel still says "A quarterly review is moved from the client page."');
+      if (!/Book your quarterly review/.test(por) || !/closeCallHtml\(null, null, clientId, null, "m3_quarterly"\)/.test(por)) fail("the portal's This quarter group does not offer the quarterly review through the shared picker");
+      if (!/function ogMonthListHtml[\s\S]{0,1400}if \(q\) out \+= ogMGroup\("This quarter"\)[\s\S]{0,500}ogQuarterlyHtml/.test(por)) fail("the quarterly booking is not drawn only in quarter months, inside This quarter");
+      if (!/data-og-qskip="skip"/.test(por) || !/data-og-qskip="undo"/.test(por) || !/is-busy/.test(por.slice(por.indexOf("[data-og-qskip]")))) fail("the quarterly review has no spinning Skip this quarter / Book it after all");
+      if (!/ccPurpose = \(k\) => [^;]*"~m3"[^;]*"m3_quarterly"/.test(por) || !/purpose: ccPurpose\(clientId\)/.test(por)) fail("the quarterly picker does not book through portal-book-kickoff with purpose m3_quarterly");
+      { const text = por.slice(por.indexOf("m3_quarterly: { name")); const seg = text.slice(0, text.indexOf("};")); if (/—/.test(seg)) fail("the quarterly review's client text has an em dash"); }
     });
 
     if (errs.length) fail(`page errors: ${errs.slice(0, 2).join("; ")}`);

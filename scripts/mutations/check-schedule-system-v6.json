@@ -130,5 +130,41 @@
   "schedulev6sql",
   "'walkthrough', 'm3_quarterly'",
   "'walkthrough'"
+ ],
+ [
+  "the quarterly review shares the monthly invite field",
+  "callpurpose",
+  "stamp: \"quarterly_invite\"",
+  "stamp: \"monthly_invite\""
+ ],
+ [
+  "a quarterly booking is filed under the wrong rga_calls kind",
+  "rgacalls",
+  "monthly: \"m2_monthly\", quarterly: \"m3_quarterly\" }",
+  "monthly: \"m2_monthly\" }"
+ ],
+ [
+  "the Schedule cannot move or cancel a quarterly review",
+  "schedulev6dlg",
+  "monthly: \"m2_monthly\", quarterly: \"m3_quarterly\" }",
+  "monthly: \"m2_monthly\" }"
+ ],
+ [
+  "the quarterly review can be booked in any month",
+  "bookkickofffn",
+  "if (!mc || !CM.isQuarterMonth(mc.cur.number)) return jsonRes(409",
+  "if (!mc) return jsonRes(409"
+ ],
+ [
+  "the portal drops the quarterly booking from This quarter",
+  "portal",
+  "+ (clientId ? ogQuarterlyHtml(clientId, m.cur.month, onbData) : \"\")",
+  "+ \"\""
+ ],
+ [
+  "the quarterly skip is gone from the portal",
+  "portal",
+  "<button type=\"button\" class=\"pm-og-ln\" data-og-qskip=\"skip\">Skip this quarter</button>",
+  ""
  ]
 ]
