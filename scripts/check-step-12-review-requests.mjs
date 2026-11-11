@@ -56,7 +56,11 @@ if (oe.intro) fail("the step-open email's intro is written in the SOP again (it 
   if (!/if \(refused\.length\) return json\(409,/.test(ep)) fail("a refused mark isn't refused (409)");
   if (!/Would you leave an honest review on Google\? It takes a minute and really helps: \$\{reviewUrl\}/.test(ep)) fail("the plain request doesn't ask for an honest review");
   if (!/return require\("\.\/_review-policy"\)\.reviewMessageProblems\(msg, \{ needsLink: false \}\)\.length \? null : msg;/.test(ep)) fail("the reminder isn't checked against the review policy");
-  if (!/requestFor\(c, i, l\.id\)\)\)\n {6}\.filter\(\(r\) => r\.name && \(r\.phone \|\| r\.email\)\)/.test(ep)) fail("an email-only customer is dropped from step 13");
+  // master map decision 3 (11-11): step 13's rows are shared/setup-fewer.js firstFive (the 5 most recent), each written by requestFor
+  if (!/const requests = picked\.map\(\(p\) => requestFor\(p\.c, p\.index, p\.list_id\)\);/.test(ep)) fail("step 13's rows are not the first five, each written by requestFor");
+  try { const F5 = createRequire(`${SITE}/shared/x.js`)("./setup-fewer.js");
+    if (F5.firstFive([{ id: "l", created_at: "2026-10-20T00:00:00Z", customers: [{ first_name: "Zoë", email: "zoe@example.ca" }] }]).length !== 1) fail("an email-only customer is dropped from step 13");
+  } catch (e) { fail(`shared/setup-fewer.js firstFive does not load (${String(e.message).slice(0, 80)})`); }
   if (!/requestFor\(c, i, l\.id\)\)\)\n {4}\.filter\(\(r\) => r\.name && \(r\.phone \|\| r\.email\)\)/.test(ep)) fail("an email-only customer is dropped from the weekly list (reviews_card_option_b_v1: the same rows)");
   if (!/const n = all\.filter\(\(c\) => c && c\.marked_sent_by_client\)\.length/.test(rc) || !/return n >= 5/.test(rc.slice(rc.indexOf('"m1.review.first_5": async (clientId)')))) fail("the server's step 12 check counts customers added, not customers asked");
   if (!/if \(s\.id === "m1\.review\.first_5" && customersAsked >= 5\) status = "done";/.test(src)) fail("the portal calls step 12 done before 5 are asked");
@@ -265,7 +269,8 @@ try {
   if (c.head !== "3 of 5 asked" || c.side !== "2 to go") fail(`C: 3 of the first 5 asked doesn't read "3 of 5 asked · 2 to go" (${c.head} · ${c.side})`);
   if (c.slots.join(",") !== "on:1,sent:✓,-:3,sent:✓,rev:★") fail(`C: the circles don't follow the client's marks (asked ✓ · their "reviewed" ★ · next) (${c.slots})`);
   // 🔑 Month 3: 30 more customers came in from the weekly card. Step 13 is still about the FIRST 5 — the endpoint stops at 5.
-  if (!/for \(const l of Array\.isArray\(all\) \? all : \[\]\) \{ if \(n >= 5\) break;/.test(read("netlify/functions/portal-review-requests.js"))) fail("C: step 13 counts every list ever, not its own first 5");
+  // master map decision 3 (11-11): the 5 MOST RECENT customers of the step's own lists (firstFive, cut at the step's completed_at once done)
+  if (!/const picked = firstFive\(all, 5, \{ until: firstFiveUntil\(/.test(read("netlify/functions/portal-review-requests.js"))) fail("C: step 13 counts every list ever, not its own first 5");
   const [rd] = c.ready;
   if (c.ready.length !== 1 || !rd || !/^To Maria · Website redesign \(424\) 555-0142$/.test(rd.to) || !/^Hi Maria, it's Acme\. Thanks again <b>x<\/b>:/.test(rd.bub) || rd.bolds || !/^sms:/.test(rd.act) || rd.sendText !== "Text Maria" || rd.mark !== "I sent it") fail(`C: the next request isn't shown as the text it is ("To Maria", Text Maria + I sent it, its text never HTML) (${JSON.stringify(c.ready)})`);
   const by = (n) => c.R.find((x) => x.who.startsWith(n));

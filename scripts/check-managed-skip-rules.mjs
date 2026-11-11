@@ -125,7 +125,7 @@ try {
     try {
       await openRow(h2, "m2.call.monthly");
       const a = await look(h2, "m2.call.monthly");
-      if (!a || a.pills.join("|") !== "Skipped" || a.band !== "No call this month · your choice" || a.side !== "Dec 7" || !/\boff\b/.test(a.cardCls) || !a.text.includes("Your November report · in Reports") || !a.text.includes("Your story this month") || a.asks.join("|") !== "Book a call after all")
+      if (!a || a.pills.join("|") !== "Skipped" || a.band !== "No call this month · your choice" || a.side !== "Dec 7" || !/\boff\b/.test(a.cardCls) || !a.text.includes("Your November report · in Reports") || !a.text.includes("Your story this quarter") || a.asks.join("|") !== "Book a call after all")
         fail(`managed step 12 skipped: not the approved state ${JSON.stringify(a && { p: a.pills, b: a.band, s: a.side, asks: a.asks, t: a.text.slice(0, 200) })}`);
     } finally { await h2.close(); }
   }

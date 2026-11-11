@@ -149,8 +149,8 @@
  [
   "step 12 counts every list ever",
   "reviewreqfn",
-  "for (const l of Array.isArray(all) ? all : []) { if (n >= 5) break;",
-  "for (const l of Array.isArray(all) ? all : []) {",
+  "const picked = firstFive(all, 5, { until: firstFiveUntil(await stepTask(clientId, \"m1.review.first_5\")) });",
+  "const picked = firstFive(all, 999);",
   1
  ],
  [
@@ -251,9 +251,9 @@
  ],
  [
   "email customers dropped from step 13",
-  "reviewreqfn",
-  "requestFor(c, i, l.id)))\n      .filter((r) => r.name && (r.phone || r.email));",
-  "requestFor(c, i, l.id)))\n      .filter((r) => r.name && r.phone);",
+  "setupfewer",
+  "const askable = (c) => !!c && !!String(c.first_name || \"\").trim() && !!(String(c.phone || \"\").trim() || String(c.email || \"\").trim());",
+  "const askable = (c) => !!c && !!String(c.first_name || \"\").trim() && !!String(c.phone || \"\").trim();",
   1
  ],
  [

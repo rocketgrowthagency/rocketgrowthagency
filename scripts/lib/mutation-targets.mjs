@@ -568,6 +568,10 @@ export const FILES = {
   gbphoursfn: "netlify/functions/backfill-gbp-hours.js",
   placeidsfn: "netlify/functions/backfill-place-ids.js",
   fgaenrich: "netlify/functions/_fga-enrichment.js",
+  // 11-11 master map decisions 1-5 + Tier 1 wording (check-one-wording-per-fact): the ONE call-length setting, the texts promise's server half
+  calllength: "shared/call-length.js",
+  remindermobilefn: "netlify/functions/portal-reminder-mobile.js",
+  setupsplit: "shared/setup-split.js",
   // 11-11 master map Tier 1 #4/#5 + decision 6 (check-one-current-month): the ONE month rule and the RGA-only repair
   monthnow: "shared/month-now.js",
   repaircurrentmonth: "scripts/repair-one-current-month.mjs",

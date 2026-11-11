@@ -304,14 +304,14 @@ let M1_CLOSED = true;
 
 // 7 the call
 {
-  for (const [n, want] of [[3, "Quarterly review"], [6, "Quarterly review"], [9, "Quarterly review"], [12, "Quarterly review"], [2, "Monthly call"], [4, "Monthly call"], [5, "Monthly call"], [1, "Monthly call"], [null, "Monthly call"]]) if (C.callLabel(n) !== want) fail(`7 month ${n} reads "${C.callLabel(n)}", wanted "${want}"`);
+  for (const [n, want] of [[3, "Quarterly review"], [6, "Quarterly review"], [9, "Quarterly review"], [12, "Quarterly review"], [2, "Monthly check-in"], [4, "Monthly check-in"], [5, "Monthly check-in"], [1, "Monthly check-in"], [null, "Monthly check-in"]]) if (C.callLabel(n) !== want) fail(`7 month ${n} reads "${C.callLabel(n)}", wanted "${want}"`);
   const frozen = { at: "2026-12-02T12:00:00Z", status: {}, google: { views: 120, calls: 9, prev_views: 100, prev_calls: 9 }, other: { clicks: 40, prev_clicks: 45 } };
   const before = C.callView({ task: {}, month: MONTH, monthNumber: 3, reportSettled: false, frozen });
   if (before.agenda || before.done || !/Offered once November's report is sent or skipped/.test(before.rows[0].title)) fail("7 the call is offered after the report, not before");
   const after = C.callView({ task: {}, month: MONTH, monthNumber: 3, reportSettled: true, frozen });
   if (after.title !== "Quarterly review" || !after.agenda || !/Quarter in review/.test(after.agenda.lines.join("\n"))) fail("7 a quarter month reads Quarterly review and the agenda has the quarter in review");
   const plain = C.callView({ task: {}, month: MONTH, monthNumber: 4, reportSettled: true, frozen });
-  if (plain.title !== "Monthly call" || /Quarter in review/.test(plain.agenda.lines.join("\n"))) fail("7 an ordinary month is a plain monthly call");
+  if (plain.title !== "Monthly check-in" || /Quarter in review/.test(plain.agenda.lines.join("\n"))) fail("7 an ordinary month is a plain monthly call");
   const ag = plain.agenda.lines.join("\n");
   if (!/Profile views: 120 \(▲ 20 from 100\)/.test(ag) || !/Search clicks: 40/.test(ag) || !/Call taps: 9/.test(ag)) fail("7 the agenda is drafted from the report's numbers");
   const noCall = C.callView({ task: { status: "skipped", skip_reason: "client declined" }, month: MONTH, monthNumber: 4, reportSettled: true, frozen });
@@ -383,7 +383,7 @@ let M1_CLOSED = true;
   if (!/rgaDialog\(\{ kind: "confirm", tone: "outward"[\s\S]{0,200}C\.confirmText\(name, to, month\)/.test(as)) fail("9 Send must ask once more, naming the recipient (outward confirm)");
   if (!/data-cls-send/.test(as) || !/data-cls-test/.test(as) || !/Read the report/.test(as) || !/Send me a test/.test(as)) fail("9 the card carries Read the report, Send to <email> and Send me a test");
   if (!/Send to \$\{v\.to\}/.test(as)) fail("9 the send button names the address");
-  if (!/import "\/shared\/monthly-close\.js\?v=20261109a"/.test(a)) fail("9 the admin imports shared/monthly-close.js");
+  if (!/import "\/shared\/monthly-close\.js\?v=\d{8}\w*"/.test(a)) fail("9 the admin imports shared/monthly-close.js");
   if (!((/monthly-sections\.js\?v=(\w+)/.exec(a) || [])[1] >= "20261109e") || !((/steps-57-64\.js\?v=(\w+)/.exec(a) || [])[1] >= "20261109h")) fail("9 the changed shared files need new ?v= keys");
   if (!(((ih.match(/admin\.js\?v=([0-9a-z]+)/) || [])[1] || "") >= "20261109u") || !(((/admin\.css\?v=(\w+)/.exec(ih) || [])[1] || "") >= "20261109h")) fail("9 admin.js / admin.css ?v= keys must be bumped (u, h)");
   if (!(((/portal\.js\?v=(\w+)/.exec(ph) || [])[1] || "") >= "20261109j")) fail("9 portal.js ?v= must be bumped (j)");

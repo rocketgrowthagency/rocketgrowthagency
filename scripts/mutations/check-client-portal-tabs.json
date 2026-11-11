@@ -23,7 +23,7 @@
  [
   "the win story is dropped",
   "portal",
-  "      + lr(\"A customer win story\", \"One job you're proud of, about 2 minutes.\", \"Every month\")\n",
+  "      + lr(\"A customer win story\", \"One job you're proud of, about 2 minutes.\", \"Every 3 months\")\n",
   "",
   1
  ],
@@ -163,8 +163,8 @@
  [
   "step 19 says a month again",
   "playbook",
-  "One short video a quarter. Your phone is fine",
-  "One short video a month. Your phone is fine",
+  "One video a quarter; pick from two scripts. Your phone is fine",
+  "One video a month; pick from two scripts. Your phone is fine",
   1
  ],
  [

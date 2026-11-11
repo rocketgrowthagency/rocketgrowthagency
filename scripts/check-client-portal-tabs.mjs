@@ -26,7 +26,7 @@ const playbook = JSON.parse(read("data/playbooks/client-steps.json"));
 const steps = []; (function walk(x) { if (Array.isArray(x)) x.forEach(walk); else if (x && typeof x === "object") { if (typeof x.id === "string" && x.id.startsWith("m2.")) steps.push(x); Object.values(x).forEach(walk); } })(playbook);
 const stepOf = (id) => steps.find((s) => s.id === id);
 for (const id of ["m2.snap.business_outcomes", "m2.exec.youtube_video"]) if (!stepOf(id)) { console.error(`⚠️  INDETERMINATE — ${id} isn't in the playbook`); process.exit(2); }
-if (/a month/i.test(String(stepOf("m2.exec.youtube_video").clientInstructions || "").split("\n")[0]) || /One short video a month/.test(read("data/playbooks/playbooks.json"))) fail("step 19's How says a video a month; its label and Skip button say quarter");
+if (/a month/i.test(String(stepOf("m2.exec.youtube_video").clientInstructions || "").split("\n")[0]) || /One (?:short )?video a month/.test(read("data/playbooks/playbooks.json"))) fail("step 19's How says a video a month; its label and Skip button say quarter");
 if (!/quarter/i.test(stepOf("m2.exec.youtube_video").clientLabel || "") || !stepOf("m2.exec.youtube_video").clientOptional) fail("the video isn't quarterly and optional any more: re-read the Ongoing card's words");
 if (!/3 months/i.test(stepOf("m2.snap.business_outcomes").clientLabel || "")) fail("the numbers aren't every 3 months any more: re-read the Ongoing card's words");
 for (const w of ["once your campaign goes live", "Once service begins we track", "Your results appear here once your campaign is live", "You have <strong>0</strong> data points", "reports so far", "View Action Items"]) if (P.includes(w)) fail(`old words are back: "${w}"`);
@@ -60,6 +60,7 @@ try {
   const errs = []; page.on("pageerror", (e) => errs.push(String(e.message || e)));
   await page.setContent(`<!doctype html><html><body style="margin:0"><div id="h" style="padding:0 16px"></div></body></html>`);
   await page.addStyleTag({ content: CSS });
+  await page.addScriptTag({ content: read("shared/call-length.js") });   // master map decision 1 (11-11): the monthly words come from the ONE call-length setting
   await page.addScriptTag({ content: src });
   if (errs.length) { console.error(`⚠️  INDETERMINATE — the lifted cards won't load: ${errs[0]}`); await browser.close(); process.exit(2); }
   R = await page.evaluate(() => {

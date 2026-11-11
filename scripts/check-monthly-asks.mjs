@@ -57,7 +57,7 @@ const y = A["m2.exec.youtube_video"] || {};
 if (!y.clientOptional || !y.clientQuarterly) fail("step 19: the video isn't optional + quarterly");
 const sc = run("m2VideoScriptHtml(__t)", { __t: { summary: "KIT 1\n**TITLE:** Before you call a plumber\nDESCRIPTION: d\nHOOK: Water on the floor?\nSCRIPT: Turn off the valve first.\nCTA: Call\n" } });
 if (!/Before you call a plumber/.test(sc) || !/Turn off the valve first\./.test(sc) || /<p>d<\/p>/.test(sc)) fail("step 19: RGA's script isn't shown right (DESCRIPTION read as the script?)");
-if (!/RGA writes your script first/.test(run("m2VideoScriptHtml(__t)", { __t: {} }))) fail("step 19: with no script yet the card shows an empty box instead of saying RGA writes it first");
+if (!/RGA writes your scripts? first/.test(run("m2VideoScriptHtml(__t)", { __t: {} }))) fail("step 19: with no script yet the card shows an empty box instead of saying RGA writes it first");
 // ── 20
 if ((A["m2.handoff.next_month"]?.dependsOn || []).includes("m2.call.monthly") || /id: "m2\.handoff\.next_month"[^\n]*\n\s*type: "[a-z]+", dependsOn: \[[^\]]*"m2\.call\.monthly"/.test(M2)) fail("step 20: next month waits on the call again");
 if (/We'll book this with you each month/.test(JSON.stringify(A["m2.call.monthly"] || {}))) fail("step 20: the card promises a booking that nothing does");

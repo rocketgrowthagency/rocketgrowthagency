@@ -226,8 +226,8 @@
  [
   "19: no skip",
   "portal",
-  "${ogSkip(step.id, \"Skip this quarter\")}",
-  "",
+  "\"Send my video\")}</button>${ogSkip(step.id, \"Skip this quarter\")}",
+  "\"Send my video\")}</button>",
   1
  ],
  [
@@ -359,8 +359,8 @@
  [
   "win story: no skip",
   "portal",
-  "${ogSkip(step.id, \"Skip this month\")}",
-  "",
+  "\"Send my story\")}</button>${ogSkip(step.id, \"Skip this quarter\")}",
+  "\"Send my story\")}</button>",
   1
  ],
  [

@@ -205,8 +205,8 @@
  [
   "the projection loses a flag",
   "clientstepsjson",
-  "\"This step is done when 20 are on Google.\"\n      ],\n      \"waitsOnListing\": true,\n",
-  "\"This step is done when 20 are on Google.\"\n      ],\n",
+  "\"This step is done at 3 of each kind; 20 is the goal.\"\n      ],\n      \"waitsOnListing\": true,\n",
+  "\"This step is done at 3 of each kind; 20 is the goal.\"\n      ],\n",
   1
  ],
  [

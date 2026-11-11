@@ -1,0 +1,176 @@
+[
+ [
+  "step 12's pill goes back to a typed 20 min",
+  "portal",
+  "return { tone: \"you\", pills: [[\"Your turn\", \"you\"], [globalThis.rgaCallLength.MONTHLY_PILL, \"wait off\"]], html: closeCallHtml(",
+  "return { tone: \"you\", pills: [[\"Your turn\", \"you\"], [\"20 min\", \"wait off\"]], html: closeCallHtml("
+ ],
+ [
+  "the setting's monthly words drop (we hold 30)",
+  "calllength",
+  "const MONTHLY_PHRASE = `about ${TALK_MINUTES.monthly} minutes (we hold ${HOLD_MINUTES})`;",
+  "const MONTHLY_PHRASE = `about ${TALK_MINUTES.monthly} minutes`;"
+ ],
+ [
+  "the slot picker types its own 30 again",
+  "schedulev6slots",
+  "slotMinutes: CL.HOLD_MINUTES,",
+  "slotMinutes: 30,"
+ ],
+ [
+  "the invite types its own end time",
+  "kickinvite",
+  "const end = new Date(CL.endMs(start.getTime()));",
+  "const end = new Date(start.getTime() + 30 * 60 * 1000);"
+ ],
+ [
+  "the monthly invite says 30-minute monthly check-in again",
+  "kickinvite",
+  "? `Monthly check-in, ${CL.MONTHLY_PHRASE}.\\n\\nWe",
+  "? `30-minute monthly check-in.\\n\\nWe"
+ ],
+ [
+  "the monthly hint says about 20 minutes on its own",
+  "clientsteps",
+  "Report first, then a short call on Google Meet: about 20 minutes (we hold 30).",
+  "Report first, then a short call: about 20 minutes on Google Meet."
+ ],
+ [
+  "photos say done when 20 again",
+  "clientsteps",
+  "\"This step is done at 3 of each kind; 20 is the goal.\"",
+  "\"This step is done when 20 are on Google.\""
+ ],
+ [
+  "first reviews say done at 5 again",
+  "clientsteps",
+  "Ask at least 1 customer, aim for 5;",
+  "This step is done when you have asked 5 customers;"
+ ],
+ [
+  "first_5 takes whole lists again",
+  "reviewreqfn",
+  "const picked = firstFive(all, 5, { until: firstFiveUntil(await stepTask(clientId, \"m1.review.first_5\")) });",
+  "const picked = (all || []).flatMap((l) => (l.customers || []).map((c, i) => ({ c, index: i, list_id: l.id, created_at: l.created_at })));"
+ ],
+ [
+  "the first five go oldest first",
+  "setupfewer",
+  "const newestFirst = [...mine].sort((a, b) => String((b && b.created_at) || \"\").localeCompare(String((a && a.created_at) || \"\")));",
+  "const newestFirst = [...mine].sort((a, b) => String((a && a.created_at) || \"\").localeCompare(String((b && b.created_at) || \"\")));"
+ ],
+ [
+  "one list of 8 writes 8 requests",
+  "setupfewer",
+  "for (let i = 0; i < cs.length && out.length < goal; i++)",
+  "for (let i = 0; i < cs.length; i++)"
+ ],
+ [
+  "the win story says a month again",
+  "clientsteps",
+  "One customer story a quarter.",
+  "One customer story a month."
+ ],
+ [
+  "the Ongoing list's win story says Every month",
+  "portal",
+  "+ lr(\"A customer win story\", \"One job you're proud of, about 2 minutes.\", \"Every 3 months\")",
+  "+ lr(\"A customer win story\", \"One job you're proud of, about 2 minutes.\", \"Every month\")"
+ ],
+ [
+  "the win story card asks for this month's job",
+  "portal",
+  "head: \"One job you're proud of this quarter\", side: \"about 2 min\",",
+  "head: \"One job you're proud of this month\", side: \"about 2 min\","
+ ],
+ [
+  "the video hint says we edit it again",
+  "clientsteps",
+  "About 60 seconds on your phone; a raw phone clip is fine.\"",
+  "About 60 seconds on your phone; a raw phone clip is fine, we edit it.\""
+ ],
+ [
+  "the video gets a second length",
+  "clientsteps",
+  "You pick one and film it, about 60 seconds.",
+  "You pick one and film it, sixty to ninety seconds."
+ ],
+ [
+  "the portal says cancelled again",
+  "portal",
+  "title: \"Your kickoff call is canceled\",",
+  "title: \"Your kickoff call is cancelled\","
+ ],
+ [
+  "the invoice email says cancelled again",
+  "invoiceemail",
+  "nothing is canceled and nothing is lost",
+  "nothing is cancelled and nothing is lost"
+ ],
+ [
+  "the texts are promised whether or not texting is on",
+  "portal",
+  "const rmobSub = (st) => (!st.texts_on ?",
+  "const rmobSub = (st) => (false ?"
+ ],
+ [
+  "the Account row promises texts before anything is known",
+  "portal",
+  "<small class=\"rmob-sub\">You get reminder emails before each call.</small>",
+  "<small class=\"rmob-sub\">A text the day before and an hour before each call. Reply STOP anytime.</small>"
+ ],
+ [
+  "the server stops saying whether texting is on",
+  "remindermobilefn",
+  "needs_sql: !!m.needsSql, texts_on: !!textsAvailable().on });",
+  "needs_sql: !!m.needsSql });"
+ ],
+ [
+  "the playbook title says Monthly call again",
+  "playbooksjson",
+  "\"title\": \"Monthly check-in\",",
+  "\"title\": \"Monthly call (optional)\","
+ ],
+ [
+  "the admin card says Monthly call again",
+  "monthlyclose",
+  "const callLabel = (n) => (isQuarter(n) ? \"Quarterly review\" : \"Monthly check-in\");",
+  "const callLabel = (n) => (isQuarter(n) ? \"Quarterly review\" : \"Monthly call\");"
+ ],
+ [
+  "the walkthrough types its own 30",
+  "walkthroughbook",
+  "const SLOT_MIN = require(\"../../shared/call-length.js\").HOLD_MINUTES;",
+  "const SLOT_MIN = 30;"
+ ],
+ [
+  "setup-split types the monthly length itself",
+  "setupsplit",
+  "small: sent ? `Optional, ${callLen().MONTHLY_PHRASE}, after your report.`",
+  "small: sent ? \"Optional, about 20 minutes, after your report.\""
+ ],
+ [
+  "the video card says RGA edits it again",
+  "portal",
+  "const st = csSt(\"rga\", \"RGA posts it\", \"On your YouTube channel and your website.\");",
+  "const st = csSt(\"rga\", \"RGA edits and posts it\", \"On your channel and your Business Profile.\");"
+ ],
+ [
+  "the portal's first-five count goes its own way",
+  "portal",
+  "return F.firstFive(lists || [], REVIEW_GOAL, { until: F.firstFiveUntil((tasks || {})[OG_IDS.first5]) })",
+  "return F.firstFive(lists || [], REVIEW_GOAL)"
+ ],
+ [
+  "admin's kickoff slot drifts from the setting",
+  "adminjs",
+  "const KICKOFF_SLOT_MIN = 30;",
+  "const KICKOFF_SLOT_MIN = 45;"
+ ],
+ [
+  "a done step's five follow the weekly lists",
+  "setupfewer",
+  "const mine = (Array.isArray(lists) ? lists : []).filter((l) => !Number.isFinite(until) || !(Date.parse((l && l.created_at) || \"\") > until));",
+  "const mine = Array.isArray(lists) ? lists : [];"
+ ]
+]

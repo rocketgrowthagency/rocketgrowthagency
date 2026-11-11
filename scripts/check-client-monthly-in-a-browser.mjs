@@ -52,7 +52,7 @@ const { chromium } = await import("playwright");
 let browser;
 try { browser = await chromium.launch({ headless: true }); } catch (e) { console.error("INDETERMINATE: no browser: " + e.message); process.exit(2); }
 const local = { "/portal/portal.js": "portal/portal.js", "/portal/portal.css": "portal/portal.css", "/portal/index.html": "portal/index.html", "/shared/client-monthly.js": "shared/client-monthly.js", "/shared/step-lock.js": "shared/step-lock.js", "/shared/portal-mode.js": "shared/portal-mode.js",
-  "/shared/monthly-start.js": "shared/monthly-start.js", "/shared/monthly-sections.js": "shared/monthly-sections.js", "/shared/monthly-weekly.js": "shared/monthly-weekly.js", "/shared/monthly-monthly.js": "shared/monthly-monthly.js", "/shared/setup-fewer.js": "shared/setup-fewer.js", "/data/playbooks/client-steps.json": "data/playbooks/client-steps.json" };
+  "/shared/monthly-start.js": "shared/monthly-start.js", "/shared/monthly-sections.js": "shared/monthly-sections.js", "/shared/monthly-weekly.js": "shared/monthly-weekly.js", "/shared/monthly-monthly.js": "shared/monthly-monthly.js", "/shared/setup-fewer.js": "shared/setup-fewer.js", "/shared/call-length.js": "shared/call-length.js", "/data/playbooks/client-steps.json": "data/playbooks/client-steps.json" };
 const letterMod = letterHandler();
 let flaky = false;
 

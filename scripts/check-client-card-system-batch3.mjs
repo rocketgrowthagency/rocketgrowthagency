@@ -43,6 +43,7 @@ try {
   const hand = P.slice(a, b);
   for (const code of [line("monthDay"), hand, csBlock(P, hand), fn("portalReportingMonth"), line("sameReportingMonth"), line("photoOnGoogle"), line("laterDay"), line("siteShow"), line("rcRow"), line("REVIEW_GOAL"), line("CADENCE"), line("_reviewCadence"), line("_lastCustomerLists"), line("smsHref"), fn("m2VideoScriptHtml"), fn("reviewSlotsHtml")]) vm.runInContext(code.replace(/^const /gm, "var "), ctx);
   { const rc = /^const r5CardHtml = [\s\S]*?<\/div>`;$/m.exec(P); if (!rc) moved("r5CardHtml"); vm.runInContext(rc[0].replace(/^const /, "var "), ctx); }
+  vm.runInContext(read("shared/call-length.js"), ctx);   // master map decision 1 (11-11): the monthly pill reads the ONE call-length setting
   const ga = P.indexOf("const ogMonth = "), gb = P.indexOf("const GBP_DAY = ", ga); if (ga < 0 || gb < 0) moved("the OG block");
   vm.runInContext(P.slice(ga, gb).replace(/^const /gm, "var "), ctx);
 } catch (e) { console.error(`⚠️  INDETERMINATE — the Ongoing cards don't load (${e.message})`); process.exit(2); }
@@ -225,7 +226,7 @@ const textOf = (h) => h.replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(
   if (!/You sent your video/.test(sent.html) || /RGA received/.test(sent.html) || !/data-step-reopen=/.test(sent.html)) fail("19: \"received\" before RGA has it");
   const t2 = { status: "done", client_input: { value: "https://drive.google.com/x" }, client_input_at: ago(3), rga_confirmed: { at: ago(1) } };
   const got = card(id, { isDone: true, task: t2, locked: STEP_LOCK.stepLock(id, t2, {}) });
-  if (!/RGA received your video/.test(got.html) || !/drive\.google\.com\/x ↗/.test(got.html) || !/RGA edits and posts it/.test(got.html) || /data-step-reopen/.test(got.html) || !got.noAsk) fail("19: received isn't the page's (an object link read wrong, or it can still be changed)");
+  if (!/RGA received your video/.test(got.html) || !/drive\.google\.com\/x ↗/.test(got.html) || !/RGA posts it/.test(got.html) || /data-step-reopen/.test(got.html) || !got.noAsk) fail("19: received isn't the page's (an object link read wrong, or it can still be changed)");
   const nd = card(id, { notDue: "2027-01-01T12:00:00.000Z" });
   if (pills(nd) !== "Optional | Next: Jan 1" || /data-in-submit/.test(nd.html)) fail("19: outside its quarter it still asks");
   const adone = card(id, { notDue: "2027-01-01T12:00:00.000Z", isDone: true, status: "skipped", task: { status: "skipped", skipped_by: "client" } });
@@ -246,7 +247,7 @@ const textOf = (h) => h.replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(
   const w = card(id);
   if (pills(w) !== "Opens when your report is out" || w.tone !== "wait" || !/First: your monthly report/.test(w.html) || !/about [A-Z][a-z]{2} 3/.test(w.html) || /Month 1/.test(w.html) || /pm-lock/.test(w.html)) fail(`20: the wait isn't a card (${pills(w)})`);
   const pk = card(id, { tasks: rep });
-  if (pills(pk) !== "Your turn | 20 min" || pk.tone !== "you" || !/data-closeout-call/.test(pk.html)) fail(`20: report out isn't the picker (${pills(pk)})`);
+  if (pills(pk) !== "Your turn | About 20 min (we hold 30)" || pk.tone !== "you" || !/data-closeout-call/.test(pk.html)) fail(`20: report out isn't the picker (${pills(pk)})`);
   const dn = card(id, { isDone: true, tasks: rep, task: { status: "done", completed_at: ago(1) } });
   if (!/Call held/.test(dn.html) || !/Read [A-Z][a-z]+'s report ›/.test(dn.html) || !/Notes from the call show here when RGA records them\./.test(dn.html) || !dn.noLock || /Change/.test(dn.html)) fail("20: held isn't the page's");
   const dn2 = card(id, { isDone: true, task: { status: "done" } });
@@ -324,14 +325,14 @@ const textOf = (h) => h.replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(
   if (s.clientBucket !== "supply" || s.clientDone !== "client" || (s.clientInput || {}).kind !== "story" || !s.clientNumberless) fail("win story: the step isn't the client's in the playbook");
   if (!/const ONGOING_ORDER = \[[^\]]*"m2\.win_story\.capture"\]/.test(P)) fail("win story: not in the card order");
   const o = card(id);
-  if (pills(o) !== `Your turn | ${run("ogMonth()")}` || !/One job you're proud of this month/.test(textOf(o.html)) || !/about 2 min/.test(o.html)) fail(`win story: the ask isn't the page's (${pills(o)})`);
+  if (pills(o) !== `Your turn | ${run("ogMonth()")}` || !/One job you're proud of this quarter/.test(textOf(o.html)) || !/about 2 min/.test(o.html)) fail(`win story: the ask isn't the page's (${pills(o)})`);
   if (!/data-in-field="job"/.test(o.html) || !/data-in-field="what"/.test(o.html) || !/data-in-story-name/.test(o.html) || !/OK to use their first name/.test(o.html)) fail("win story: the form lost a field");
-  if (!/data-in-kind="story"/.test(o.html) || !/data-in-submit>Send my story/.test(o.html) || !/data-og-skip="m2\.win_story\.capture">Skip this month/.test(o.html)) fail("win story: no Send my story / Skip this month");
+  if (!/data-in-kind="story"/.test(o.html) || !/data-in-submit>Send my story/.test(o.html) || !/data-og-skip="m2\.win_story\.capture">Skip this quarter/.test(o.html)) fail("win story: no Send my story / Skip this month");
   if (!/kind === "story"/.test(P) || !/ok_first_name: !!wrap\.querySelector\("\[data-in-story-name\]"\)\?\.checked/.test(P)) fail("win story: the form sends nothing");
   const dn = card(id, { isDone: true, task: { status: "done", client_input: { job: "x", what: "y" }, client_input_at: ago(1) } });
   if (!/Story received/.test(dn.html) || !/RGA writes it up as a Google post/.test(dn.html) || !/It comes to For your approval\./.test(dn.html)) fail("win story: done isn't the page's");
   const sk = card(id, { isDone: true, status: "skipped", task: { status: "skipped", skipped_by: "client", skipped_at: ago(1) } });
-  if (!/No story this month · your choice/.test(sk.html) || !/Send one after all/.test(sk.html)) fail("win story: skipped isn't said");
+  if (!/No story this quarter · your choice/.test(sk.html) || !/Send one after all/.test(sk.html)) fail("win story: skipped isn't said");
 }
 
 // ── in Chrome: tiles never overlap (2 and 20), nothing pushes a 400px page sideways ──
