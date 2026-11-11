@@ -9,6 +9,7 @@
 //   controls use admin-button / admin-button-secondary and styled selects; the Google banner is the amber warn card with its button; texts-off is a quiet line;
 //   ABSENCE: no old day boxes (.sch-col), no .mod-alt controls, no "Week of", no ISO date text, no unstyled select, no visible date input;
 //   "Showing" only with 2+ staff.
+// (v6, 11-10: Day is the hourly grid, Month shows chips by call name, Go to date is a popover, the panel has Open Meet / Reschedule / Cancel; the old assertions for the list Day and the native picker were retired.)
 // PROVES ITSELF (LIVE_BEFORE): it MUST fail on the website as it was before this build (default ab370a9e) in 10+ places, else exit 2 INDETERMINATE.
 //   node scripts/check-schedule-matches-mockup.mjs [--against=<rev>] [--no-before] [--shot=<png>]
 import http from "node:http";
@@ -31,7 +32,7 @@ const CALLS = [
   call("c8", "intro", "2026-11-12T19:00:00Z", 15, { who: "Delta Lawn" }),
 ];
 const ANSWER = (staff = 1) => ({ ok: true, history: true, historyNote: null, hours: { days: [1, 2, 3, 4, 5], firstHour: 9, lastHour: 16, tz: "America/Los_Angeles" }, staff: Array.from({ length: staff }, (_, i) => ({ id: `s${i}`, name: `Person ${i}` })),
-  rgaTz: "America/Los_Angeles", googleConnected: false, texts: { on: false, why: "Texts are off: Quo key not working" }, calls: CALLS, busy: [{ starts_at: "2026-11-11T17:00:00Z", ends_at: "2026-11-11T17:30:00Z" }, { starts_at: "2026-11-12T17:00:00Z", ends_at: "2026-11-12T17:30:00Z" }],
+  rgaTz: "America/Los_Angeles", googleConnected: false, texts: { on: false, why: "Texts are off: the Quo key works; texting turns on after (424) 242-2040's carrier registration is confirmed" }, calls: CALLS, busy: [{ starts_at: "2026-11-11T17:00:00Z", ends_at: "2026-11-11T17:30:00Z" }, { starts_at: "2026-11-12T17:00:00Z", ends_at: "2026-11-12T17:30:00Z" }],
   alerts: { callNow: [], agreementUnsigned: [] }, today: 2 });
 const MIME = { ".js": "text/javascript", ".css": "text/css", ".html": "text/html", ".json": "application/json" };
 const PAGE = `<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="/admin/admin.css"></head><body class="admin-body" data-admin-view="schedule"><div id="scheduleView"><div id="scheduleHost"></div></div><span id="scheduleNavBadge" hidden></span></body></html>`;
@@ -89,7 +90,7 @@ async function checkTree(root, label) {
         legend: [...document.querySelectorAll(".sch-legend i")].map((i) => getComputedStyle(i).backgroundColor) }; });
     if (!grid) fail("the Week is not an hourly time grid (no [data-sch-grid])");
     else {
-      if (grid.hrs.join(",") !== "9 AM,10 AM,11 AM,12 PM,1 PM,2 PM,3 PM,4 PM") fail(`grid hours are ${grid.hrs.join(",")}, expected the working hours 9 AM to 4 PM`);
+      if (grid.hrs.join(",") !== "8 AM,9 AM,10 AM,11 AM,12 PM,1 PM,2 PM,3 PM,4 PM,5 PM") fail(`grid hours are ${grid.hrs.join(",")}, expected your hours 9 AM to 5 PM plus ONE shaded hour before and after (v6)`);
       if (grid.heads.join(",") !== "Mon 9,Tue 10,Wed 11,Thu 12,Fri 13") fail(`grid columns are ${grid.heads.join(",")}, expected the working days Mon 9 to Fri 13 only`);
       if (!/Kickoff call Acme Plumbing/.test(grid.kickTxt || "")) fail("a block does not show the call name plus the person");
       if (!/Blocked Lunch/.test(grid.blockedTxt || "")) fail("blocked time is not shown as amber Blocked + its note");
@@ -110,37 +111,38 @@ async function checkTree(root, label) {
     const p1 = await panelOf("c5");
     if (!p1) fail("clicking a block opens no panel");
     else {
-      if (!/Audit walkthrough · Nathan's Towing/.test(p1.title) || !/Fri, Nov 13/.test(p1.title) || !/10:00 – 10:30 AM/.test(p1.title)) fail(`panel title is "${p1.title}", expected the call, date and time range`);
-      if (!/\(310\) 555-0101/.test(p1.body)) fail("panel lacks the person's phone");
-      const t = p1.btns.map((b) => b.t).join("|"); if (t !== "Open the console|Call card|Reschedule") fail(`prospect panel buttons are "${t}", expected Open the console | Call card | (Join Meet when there is one) | Reschedule`);
+      if (!/Audit walkthrough · Nathan's Towing/.test(p1.title)) fail(`panel title is "${p1.title}", expected the call name and person`);
+      if (!/Fri, Nov 13/.test(p1.body) || !/10:00 AM PT/.test(p1.body)) fail("panel's When row lacks the date and the Pacific time (v6 section 7)");
+      const t = p1.btns.map((b) => b.t).join("|"); if (t !== "Open the console|Lead in Calls|Reschedule|Cancel") fail(`prospect panel buttons are "${t}", expected Open Meet (when there is one) | Open the console | Lead in Calls | Reschedule | Cancel`);
       if (p1.btns.some((b) => !/admin-button/.test(b.c))) fail("panel buttons do not use the admin button classes");
     }
-    const p1m = await panelOf("c3"); if (p1m && !p1m.btns.some((b) => /^Join Meet/.test(b.t))) fail("a prospect call with a Meet link has no Join Meet button");
+    const p1m = await panelOf("c3"); if (p1m && !p1m.btns.some((b) => /^Open Meet/.test(b.t))) fail("a prospect call with a Meet link has no Open Meet button");
     const p2 = await panelOf("c4");
-    if (p2) { const t = p2.btns.map((b) => b.t).join("|"); if (t !== "Open the console|Client page|Their portal (as they see it)|Join Meet ↗|Reschedule") fail(`client panel buttons are "${t}"`); } else fail("client block opens no panel");
-    // ── Day = list ──
+    if (p2) { const t = p2.btns.map((b) => b.t).join("|"); if (t !== "Open Meet|Client page|Reschedule|Cancel") fail(`client panel buttons are "${t}"`); } else fail("client block opens no panel");
+    // ── Day = the same hourly grid as Week, for one day (v6 section 3) ──
     await J(() => document.querySelector('[data-sch-view="day"]').click()); await page.waitForSelector(".sch-day", { timeout: 3000 }).catch(() => {});
-    const day = await J(() => ({ rows: [...document.querySelectorAll(".sch-day .sch-ev")].map((r) => r.innerText.replace(/\s+/g, " ")), bars: document.querySelectorAll(".sch-day .sch-bar-k").length, tags: document.querySelectorAll(".sch-day .sch-tag").length }));
-    if (!day.rows.length || !day.bars || !day.tags) fail("Day is not the list of rows (time, coloured bar, title, tag)");
-    else { if (!day.rows.some((r) => /2:00 – 2:30 PM.*Audit walkthrough · Relate Dental.*PT.*walkthrough/.test(r))) fail(`Day row lacks time, "Name · person", zone and tag: ${day.rows.join(" // ").slice(0, 200)}`); }
-    // ── Month = counts ──
+    const day = await J(() => ({ grid: !!document.querySelector(".sch-day [data-sch-grid]"), blocks: [...document.querySelectorAll(".sch-day .sch-blk")].map((r) => r.innerText.replace(/\s+/g, " ")), list: document.querySelectorAll(".sch-day .sch-ev").length }));
+    if (!day.grid || day.list) fail("Day is not the hourly grid (v6)");
+    else if (!day.blocks.some((r) => /Audit walkthrough · 2:00 – 2:30 PM Relate Dental/.test(r))) fail(`Day block lacks name, time range and person: ${day.blocks.join(" // ").slice(0, 200)}`);
+    // ── Month = counts by call name ──
     await J(() => document.querySelector('[data-sch-view="month"]').click()); await page.waitForSelector(".sch-month", { timeout: 3000 }).catch(() => {});
-    const mon = await J(() => ({ counts: [...document.querySelectorAll(".sch-count")].map((c) => c.textContent), cell: !!document.querySelector('[data-sch-day="2026-11-10"]') }));
-    if (!mon.counts.includes("2 calls") || !mon.counts.includes("1 call")) fail(`Month cells do not show counts ("N calls"): ${mon.counts.join(",")}`);
+    const mon = await J(() => ({ chips: [...document.querySelectorAll(".sch-chip")].map((c) => c.textContent), cell: !!document.querySelector('[data-sch-day="2026-11-10"]') }));
+    if (!mon.chips.includes("Walkthrough 1") || !mon.chips.includes("Busy 1") || !mon.chips.includes("Kickoff 1")) fail(`Month cells do not show counts by call name: ${mon.chips.join(",")}`);
     await J(() => document.querySelector('[data-sch-day="2026-11-10"]').click()); await page.waitForSelector(".sch-day", { timeout: 3000 }).catch(() => {});
     if (!(await J(() => !!document.querySelector(".sch-day")))) fail("clicking a Month day does not open that day");
-    // ── Go to date: the picker appears only on click ──
+    // ── Go to date: a popover under the button, never the native picker ──
     await J(() => document.querySelector("[data-sch-goto]").click());
-    if (!(await J(() => !!document.querySelector("input.sch-pick")))) fail("Go to date does not open the date picker");
+    if (!(await J(() => !!document.querySelector(".sch-pop")))) fail("Go to date does not open the popover");
+    if (await J(() => !!document.querySelector("input.sch-pick"))) fail("Go to date still uses the hidden native date input");
     // ── controls + banners ──
     await J(() => document.querySelector('[data-sch-view="week"]').click()); await page.waitForSelector("[data-sch-grid]", { timeout: 3000 }).catch(() => {});
     const ctl = await J(() => { const h = document.querySelector("#scheduleHost"); const b = (sel) => { const e = h.querySelector(sel); return e ? e.className : null; };
       const warn = h.querySelector(".sch-warn"); return { block: b("[data-sch-block]"), hours: b("[data-sch-hours]"), grant: warn && (warn.querySelector("[data-kickoff-grant-freebusy]") || {}).className, warnBg: warn && getComputedStyle(warn).backgroundColor,
-        quiet: (h.querySelector(".sch-quiet") || {}).textContent, quietIsBanner: !!h.querySelector(".sch-banner"), showing: !!h.querySelector("[data-sch-owner]"), zone: /Pacific time/.test(h.innerText) }; });
+        quiet: [...h.querySelectorAll(".sch-stat")].map((e) => e.textContent).join(" "), quietIsBanner: !!h.querySelector(".sch-banner"), showing: !!h.querySelector("[data-sch-owner]"), zone: /Pacific time/.test(h.innerText) }; });
     if (!/admin-button(\s|$)/.test(ctl.block || "") || !/admin-button-secondary/.test(ctl.hours || "")) fail(`Block time / Set your hours do not use the admin button classes (${ctl.block} | ${ctl.hours})`);
     if (!/admin-button/.test(ctl.grant || "")) fail("the Google banner's button is not an admin button inside the amber warn card");
     if (!/rgb\(255, 244, 230\)/.test(ctl.warnBg || "")) fail(`the Google banner is not the mockup's amber warn card (${ctl.warnBg})`);
-    if (!/Quo key not working/.test(ctl.quiet || "")) fail('"Texts are off" is not a quiet one-line note');
+    if (!/Texts are off/.test(ctl.quiet || "")) fail('"Texts are off" is not a status line');
     if (ctl.showing) fail('"Showing" appears with one staff row');
     if (!ctl.zone) fail("times do not say Pacific time");
     staff = 2; await boot();

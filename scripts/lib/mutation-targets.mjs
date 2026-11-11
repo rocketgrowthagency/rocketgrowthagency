@@ -472,6 +472,8 @@ export const FILES = {
   gbpkeep: "netlify/functions/_gbp-keep.js",   // pending_and_google_security_v1 Part 2 (10-31): the 30-day rule for Google numbers in the monthly records
   // rank grid park lifted (10-31)
   rankschedule: "netlify/functions/_rank-schedule.js",
+  schedulev6js: "admin/schedule.js",   // schedule_system_v6 (11-10)
+  schedulev6dlg: "admin/schedule-dialogs.js",
   rankvalidate: "netlify/functions/validate-tracked-keyword.js",
   // reviews_additions_v1 (11-01): replies read back live, the asked-to-reviewed funnel
   replylive: "netlify/functions/_reply-live.js",

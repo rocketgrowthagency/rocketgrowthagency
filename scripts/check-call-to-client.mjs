@@ -4,7 +4,7 @@
 //   1  BOOKING FROM THE CALL CARD: the walkthrough is held in the SAME ledger (purpose 'walkthrough', a lead_ref, no client_id), titled "Audit walkthrough: <business> × Rocket Growth Agency",
 //      logs the Airtable outcome "Callback scheduled" with the Next Action Date, and the press is the send (refused without confirm_to naming the recipient; refused with no email).
 //   2  REMINDERS: 24 hours and 1 hour emails for a walkthrough the prospect ACCEPTED and for a booked kickoff; none for a walkthrough with no reply or a decline; none for a cancelled call;
-//      each sent once (claim first); "Call them now" from start + 2 minutes with nobody joined; texts OFF by default with the words "Texts are off: Quo key not working"; scheduled in netlify.toml.
+//      each sent once (claim first); "Call them now" from start + 5 minutes with the console not opened and no outcome (v6); texts OFF by default with the words of the tested key (v6); scheduled in netlify.toml.
 //   3  THE CONSOLE: the beats come from the playbook's call2 section (one source), with the findings, intro-call answers, objection chips, notes, timer, Open Meet, and the outcomes Yes / Not yet / No
 //      each saved in ONE write (walkthrough-outcome). Yes then offers Start as a client.
 //   4  START AS A CLIENT: one press = client record at stage Contract + agreement on the FOUNDING plan (through contract-generate) + the portal invite email; the founding places left come from the real
@@ -77,10 +77,12 @@ async function checkTree(root, label) {
     eq(C.dueEmails({ ...base, rsvp: "accepted" }, new Date("2026-11-13T16:10:00Z")), ["email_1h"], "the 1-hour email goes out in the hour before");
     eq(C.dueEmails({ ...base, rsvp: "accepted", created_at: "2026-11-13T00:00:00Z" }, now), [], "a call booked inside 24 hours skips the 24-hour email");
     eq(C.dueEmails({ ...base, kind: "kickoff", rsvp: null }, now), ["email_24h"], "a booked kickoff is reminded without an RSVP");
-    eq(C.callNowDue({ status: "booked", kind: "walkthrough", starts_at: base.starts_at }, new Date("2026-11-13T17:03:00Z")), true, "Call them now at start + 3 minutes with nobody joined");
-    eq(C.callNowDue({ status: "booked", kind: "walkthrough", starts_at: base.starts_at }, new Date("2026-11-13T17:01:00Z")), false, "no Call them now before start + 2 minutes");
+    eq(C.callNowDue({ status: "booked", kind: "walkthrough", starts_at: base.starts_at }, new Date("2026-11-13T17:06:00Z")), true, "Call them now at start + 6 minutes with nobody there (v6: 5 minutes after the start)");
+    eq(C.callNowDue({ status: "booked", kind: "walkthrough", starts_at: base.starts_at }, new Date("2026-11-13T17:04:00Z")), false, "no Call them now before start + 5 minutes");
     eq(C.callNowDue({ status: "booked", kind: "walkthrough", starts_at: base.starts_at, joined: true }, new Date("2026-11-13T17:05:00Z")), false, "no Call them now once someone joined");
-    const t = C.textsAvailable({}); if (t.on || t.why !== "Texts are off: Quo key not working") fail('texts are not OFF with the words "Texts are off: Quo key not working"');
+    const PEND = "Texts are off: the Quo key works; texting turns on after (424) 242-2040's carrier registration is confirmed";
+    const t = C.textsAvailable({}, "ok"); if (t.on || t.why !== PEND) fail(`texts are not OFF with the words "${PEND}" when the Quo key works`);
+    const t2 = C.textsAvailable({}, "refused"); if (t2.on || t2.why !== "Quo key refused") fail('a refused Quo key does not say "Quo key refused"');
     for (const [kind, o] of [["email_24h", {}], ["email_1h", { forClient: true }]]) {
       const m = C.reminderEmail(base, kind, { business: "Acme", name: "Dana Lee", theirTz: "Pacific/Honolulu", joinLink: "https://meet.google.com/x", ...o });
       if (emoji.test(m.subject + m.markup) || /—/.test(m.subject + m.markup)) fail(`the ${kind} email has an emoji or em dash`);

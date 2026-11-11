@@ -1,0 +1,62 @@
+[
+ [
+  "the hours dialog opens invisibly (no .show)",
+  "schedulev6dlg",
+  "requestAnimationFrame(() => wrap.classList.add(\"show\"));",
+  "void 0;"
+ ],
+ [
+  "Block time reads the laptop zone instead of Pacific",
+  "schedulev6dlg",
+  "const s = pacificInstant(d, f), e = pacificInstant(d, t);",
+  "const s = new Date(`${d}T${f}:00`), e = new Date(`${d}T${t}:00`);"
+ ],
+ [
+  "busy blocks vanish under the filters",
+  "schedulev6js",
+  "const calls = [...visible(), ...busyAsCalls()], by = new Map();",
+  "const calls = [...visible(), ...(S.type || S.who ? [] : busyAsCalls())], by = new Map();"
+ ],
+ [
+  "the empty Day says nothing about the day",
+  "schedulev6js",
+  "<b>Nothing ${isPast(S.date) ? \"was \" : \"\"}booked on ${esc(dayLong(S.date))}.</b>",
+  "<b>Nothing booked.</b>"
+ ],
+ [
+  "the agreement line claims a reminder that never went out",
+  "schedulev6js",
+  "`One reminder email went out ${esc(fmt(a.reminded_at))}` : \"No reminder email has gone out yet\"",
+  "`One reminder email went out ${esc(fmt(a.reminded_at || a.opened_at))}`"
+ ],
+ [
+  "Cancel is not the orange dialog",
+  "schedulev6dlg",
+  "dialog({ tone: \"outward\", title: `Cancel ",
+  "dialog({ tone: \"routine\", title: `Cancel "
+ ],
+ [
+  "a Call them now never turns the badge red",
+  "schedulev6js",
+  "badge.classList.toggle(\"mv-late-badge\", alert);",
+  "badge.classList.toggle(\"mv-late-badge\", false);"
+ ],
+ [
+  "Esc does not close Go to date",
+  "schedulev6js",
+  "if (e.key === \"Escape\" && (S.pop || S.menu))",
+  "if (e.key === \"Escape\" && S.menu)"
+ ],
+ [
+  "the hours save leaves the zone out (the server would reset it)",
+  "schedulev6dlg",
+  "tz: w.querySelector(\"#sdTz\").value, ",
+  ""
+ ],
+ [
+  "Client page and Their portal are the same link",
+  "schedulev6js",
+  "btn(`/portal/report/?client=${cid}`, \"Their portal\", true)",
+  "btn(`/admin/?view=client&id=${cid}&tab=overview`, \"Their portal\", true)"
+ ]
+]
