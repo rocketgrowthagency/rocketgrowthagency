@@ -62,7 +62,8 @@ async function checkTree(root, label) {
   if (cr) {
     if (!/claimReminder/.test(cr)) fail("the reminder sender does not claim before it sends (not idempotent)");
     if (!/sendAsRga/.test(cr)) fail("the reminders do not go through the one Gmail sender");
-    if (/Quo|sms|sendText/i.test(cr.replace(/\/\/.*$/gm, ""))) fail("the reminder sender can text (texts must stay off until Quo works)");
+    // 11-11: texting is LIVE (A2P approved). A text may go only behind the switch; check-reminder-texts holds the rest (claim first, US only, mobile field only).
+    if (/sendText\(/.test(cr) && !/!C\.textsAvailable\(\)\.on/.test(cr)) fail("the reminder sender can text with texting switched off");
   }
   if (!/\[functions\."call-reminders"\]\s*\n\s*schedule\s*=/.test(rd("netlify.toml") || "")) fail("call-reminders is not scheduled in netlify.toml");
   let C = null; try { C = req("./netlify/functions/_call-reminders.js"); } catch (e) { if (rm) fail(`_call-reminders.js does not load: ${e.message.slice(0, 80)}`); }
