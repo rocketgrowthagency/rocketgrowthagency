@@ -227,6 +227,7 @@ say ""
 say "── integrations that vanish silently ──"
 run check-quo-webhooks-live.mjs        "call + SMS webhooks still registered with Quo"
 run check-quo-key-on-the-server.mjs "the LIVE server's QUO_API_KEY works (schedule-data tests it against Quo; 11-10 Netlify held a dead value)"
+run check-reminder-texts.mjs "reminder texts: their clock, STOP line, US numbers only, off unless switched on, claimed before sent (11-11)"
 run check-integration-subscriptions.mjs "third-party subscriptions still active"
 run check-inbound-sms-flowing.mjs      "inbound texts still reaching Airtable"
 

@@ -599,6 +599,7 @@ const NOT_PREFLIGHT = {
   'check-duplicate-identity-leads.mjs': 'live CRM state, not code health; surfaced via operational drift (3e2). Must never block a build — a duplicate lead has nothing to do with tonight\'s videos',
   'check-quo-webhooks-live.mjs': 'third-party subscription state, not code health; surfaced via operational drift (3f1). Must never block a build — a missing Quo webhook has nothing to do with tonight\'s videos',
   'check-quo-key-on-the-server.mjs': 'asks the live schedule-data for its server-side Quo key test; fails on anything but ok (11-10); run by daily-health-check.sh.',
+  'check-reminder-texts.mjs': 'holds the reminder text path in the WEBSITE call-reminders (11-11); run by daily-health-check.sh.',
   'check-inbound-sms-flowing.mjs': 'third-party webhook subscription state, not code health; surfaced via operational drift (3f2). Must never block a build — an unregistered SMS event has nothing to do with tonight\'s videos',
   'check-apps-script-paste-owed.mjs': 'deployment state of a DIFFERENT repo (the website .gs files vs the live Apps Script projects); surfaced via operational drift (3f). Must not block a scraper build — an unpasted auto-reply script has nothing to do with tonight\'s videos',
 };
