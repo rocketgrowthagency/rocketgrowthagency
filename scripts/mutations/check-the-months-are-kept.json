@@ -22,14 +22,14 @@
  ],
  [
   "December is not Month 2",
-  "openmonth",
-  "const n = 2 + monthIndex(reportingMonth) - monthIndex(first);",
-  "const n = 3 + monthIndex(reportingMonth) - monthIndex(first);",
+  "monthnow",
+  "const n = 2 + idx(m) - idx(first);",
+  "const n = 3 + idx(m) - idx(first);",
   1
  ],
  [
   "a month before the cycle gets a number",
-  "openmonth",
+  "monthnow",
   "return n >= 2 ? n : null;",
   "return n;",
   1
@@ -79,8 +79,8 @@
  [
   "the step record ignores the month asked for",
   "steprecord",
-  "? monthArg : currentReportingMonth(now);",
-  "? currentReportingMonth(now) : currentReportingMonth(now);",
+  "const asked = (typeof monthArg === \"string\" && /^\\d{4}-(0[1-9]|1[0-2])-01$/.test(monthArg)) ? monthArg : null;",
+  "const asked = null;",
   1
  ],
  [
@@ -156,8 +156,8 @@
  [
   "the morning run does not open the month",
   "morningrun",
-  "const om = await OM.openMonth(d.supa, c.id,",
-  "const om = await (async () => ({ ok: true }))(d.supa, c.id,",
+  "await OM.openMonth(d.supa, c.id,",
+  "await (async () => ({ ok: true }))(d.supa, c.id,",
   1
  ],
  [
