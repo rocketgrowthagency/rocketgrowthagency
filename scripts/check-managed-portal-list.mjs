@@ -433,6 +433,10 @@ try {
         if (fc.ask !== 'Your question from Sep 15 · "Does an old licence still count?"RGA hasn\'t replied yet') fail(`the unanswered question reads "${fc.ask}"`);
         if (fc.foot !== "These go on your website, your Google listing and replies we send your customers. Change any answer, and we'll ask you to confirm again.") fail(`the closing line reads "${fc.foot}"`);
         if (fc.stakes || fc.outcome || fc.qsShown) fail(`About your business (done) still draws the stakes, the Confirmed block or the full questions (${JSON.stringify(fc)})`);
+        // 11-10 (f2c477ee, approved mockups): a managed client's About your business moves from Getting started to Dashboard > Account
+        // once Getting started is done, so open the tab that holds the card before pressing a row in it, the way a person would
+        await h.page.evaluate(() => { const pv = document.getElementById("factsCard")?.closest(".pv"); const v = pv && [...pv.classList].find((x) => x.startsWith("pv-"))?.slice(3); if (v) document.querySelector(`.portal-nav a[data-view=${v}]`)?.click(); });
+        await tick(400);
         await h.page.click('#factsCard [data-fct-qa="rush_policy"]'); await tick(200);
         const ed = await h.page.evaluate(() => { const b = document.querySelector('[data-fct-qedit="rush_policy"]'); return b && !b.hidden && !!b.querySelector("[data-fq-pick], [data-fq-clear]"); });
         if (!ed) fail("pressing an answer doesn't open that question to change it");
