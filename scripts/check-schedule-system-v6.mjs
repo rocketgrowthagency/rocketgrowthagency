@@ -71,7 +71,10 @@ async function checkTree(root, label) {
     await page.evaluateOnNewDocument((now) => { const RD = Date; globalThis.Date = class extends RD { constructor(...a) { if (a.length) super(...a); else super(now); } static now() { return now; } }; }, NOW);
     const J = (fn, ...a) => page.evaluate(fn, ...a);
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-    const boot = async (a) => { ans = a || answer(); await page.goto(base + "/", { waitUntil: "load" });
+    // 11-11: a 30 s navigation timeout on the LOCAL fixture page failed this gate twice under load (the reruns passed). One retry at 60 s;
+    // a second timeout is INDETERMINATE (exit 2), never "the Schedule is broken" (feedback_a_gate_that_throws_is_not_a_gate_that_fails).
+    const goto = async () => { for (let i = 0; i < 2; i++) { try { return await page.goto(base + "/", { waitUntil: "load", timeout: 60000 }); } catch (e) { if (i || !/timeout/i.test(e.message)) { if (/timeout/i.test(e.message)) { console.log(`INDETERMINATE: the fixture page did not load twice (${e.message.slice(0, 80)})`); process.exit(2); } throw e; } } } };
+    const boot = async (a) => { ans = a || answer(); await goto();
       const ok = await J(async () => { try { const m = await import("/admin/schedule.js"); await m.openSchedule("tok", {}); return true; } catch (e) { return String(e.message); } });
       if (ok !== true) throw new Error(`schedule.js did not boot: ${ok}`); };
     const step = async (name, fn) => { try { await fn(); } catch (e) { fail(`${name}: could not run (${String(e.message).slice(0, 120)})`); } };
