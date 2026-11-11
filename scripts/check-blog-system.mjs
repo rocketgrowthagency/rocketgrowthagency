@@ -474,7 +474,8 @@ const V = (rows, o = {}) => S.weeklyVerdicts({ rows, now: NOW, events: o.events 
   if (!/nothing goes up without their yes/i.test(row && row.instructions || "") || !/reads back live/i.test(row && row.instructions || "")) fail("the Monthly blog row doesn't say the client's yes comes first and it finishes only when it reads back");
   const heavy = (/const HEAVY = new Set\(\[[\s\S]*?\]\);/.exec(FE) || [""])[0];
   if (!/"m2\.exec\.blog_posts"/.test(heavy) || !/"m1\.web\.blog_seed"/.test(heavy)) fail("a blog step that writes a post runs in the foreground and can time out");
-  if (!/"m2\.exec\.blog_posts":\s*\{ level: "manual"/.test(ADMJS)) fail("admin doesn't know the Monthly blog row");
+  // master map Tier 2 (11-11): the Monthly row runs itself on the website autopilot (check-tier2-steps-run-themselves proves the run), so admin labels it "auto"
+  if (!/"m2\.exec\.blog_posts":\s*\{ level: "auto"/.test(ADMJS)) fail("admin doesn't know the Monthly blog row");
 }
 if (F.length) { console.error(`🔴 the blog system regressed — ${F.length}:\n${F.slice(0, 30).map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
 console.log("✅ blog system: 14 link rules each fire on their own case, the real blog has no failing link, verdicts refuse noise, an API error is never 'not indexed', no table = Google is asked nothing, no noindex or publishing in this build, posts and pages clean");

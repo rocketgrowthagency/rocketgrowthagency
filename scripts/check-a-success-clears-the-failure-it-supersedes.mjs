@@ -31,6 +31,12 @@ const F = []; const fail = (m) => F.push(m);
 // How each stored failure is cleared once something succeeds. `clear` must match the file's code; `why` says why a
 // field never persists (response-only, or replaced whole on every run).
 const DECLARED = {
+  // master map Tier 2 (11-11): the first-invoice email that didn't go when a Standard Plan accepted itself. Written ONCE, inside the
+  // `accepted` stamp of the same pass that moved the stage; nothing retries it (the client is past review, so the window is never read again)
+  // and the client_activity row tells RGA to tell them by hand. There is no later success on the window to clear it.
+  "_auto-accept.js": {
+    email_error: { why: "written once inside accepted (the stage has moved, so nothing on the window runs again); the activity row says to tell the client by hand" },
+  },
   // admin_website_steps_autopilot_v1 (11-6): a website step's automatic draft that failed (didn't finish, failed twice, couldn't be saved)
   "_website-autorun.js": {
     // publish_failure_shows_v1 (11-8): a refused snapshot / pull request / merge, scoped to its version (every reader checks publish_failed.v ===

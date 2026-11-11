@@ -580,4 +580,11 @@ export const FILES = {
   leadsfn: "netlify/functions/_leads.js",
   portalleads: "netlify/functions/portal-leads.js",
   leadssql: "docs/supabase/CLIENT_LEADS_2026-11-11.sql",
+  // master map Tier 2 (11-11): the steps that run themselves with RGA keeping a Hold (check-tier2-steps-run-themselves)
+  autoaccept: "shared/auto-accept.js",
+  autoacceptfn: "netlify/functions/_auto-accept.js",
+  autoacceptadmin: "netlify/functions/admin-auto-accept.js",
+  catauto: "netlify/functions/_categories-auto.js",
+  formsettle: "shared/form-settle.js",
+  stepsautopilot: "netlify/functions/steps-autopilot.js",
 };
