@@ -19,6 +19,9 @@ const FIVE = ["_dup-cleared.js", "_monthly-health.js", "notify-step-open.js", "c
 const OPEN = {
   "_citation-trade.js": "reads both phones to recognize a trade for citation matching; it never writes either anywhere",
 };
+// 11-11: these write a client's WEBSITE (headlines, titles) or judge its schema phone; they read the contact phone with no business-phone
+// field in sight, so the fallback pattern above never saw them. A contact phone here could be published, so they must not read it at all.
+const NEVER_CONTACT = ["_headline-cta.js", "_title-meta.js", "admin-deliverables.js"];
 const MSG = [
   ["_dup-cleared.js", "Phone not compared: no business phone on file"],
   ["_ai-check.js", "Business phone not on file · Add it"],
@@ -31,6 +34,11 @@ function checkTree(root, label) {
   const F = [], fail = (m) => F.push(`${label}: ${m}`), rd = reader(root);
   const dir = path.join(root, "netlify/functions");
   if (!fs.existsSync(dir)) { fail("netlify/functions is missing"); return F; }
+  for (const f of NEVER_CONTACT) {
+    const src = rd(`netlify/functions/${f}`);
+    if (!src) { fail(`${f} is missing`); continue; }
+    for (const { l, n } of codeLines(src)) if (/primary_contact_phone/.test(l)) fail(`${f}:${n} reads a contact's phone where the business phone is meant (a website headline, title or schema check)`);
+  }
   for (const f of fs.readdirSync(dir).filter((x) => x.endsWith(".js"))) {
     const src = rd(`netlify/functions/${f}`);
     for (const { l, n } of codeLines(src)) {

@@ -38,7 +38,25 @@
  [
   "account health shows a contact's cell",
   "aicheck",
-  "Business phone not on file · Add it",
+  "Business phone not on file \u00b7 Add it",
   "The record has none to compare"
+ ],
+ [
+  "a headline is fed the contact's phone again",
+  "headlinecta",
+  "phone: client.identity_phone || null,",
+  "phone: client.primary_contact_phone || null,"
+ ],
+ [
+  "a page title is fed the contact's phone again",
+  "titlemeta",
+  "phone: client.identity_phone || null,",
+  "phone: client.primary_contact_phone || null,"
+ ],
+ [
+  "the schema check compares the contact's phone again",
+  "admindeliv",
+  "samePhone(j.telephone, cl.identity_phone)",
+  "samePhone(j.telephone, cl.primary_contact_phone)"
  ]
 ]
