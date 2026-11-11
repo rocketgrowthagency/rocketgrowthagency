@@ -164,6 +164,10 @@ const AFTER = {
   if (process.env.SHOW_BEFORE) console.log(`LIVE_BEFORE fails ${before.length} ways:\n  - ${before.join("\n  - ")}`);
 }
 const REAL = readAt(against);
+// 11-10 (item B): a managed client between months draws the 3 tiles that name their month; the old "so far in <Month>" grid (buildClientAnalyticsHtml) is NOT drawn for them
+if (!against) { const rp = strip(REAL.portal);
+  if (!/pmManaged\(\) && !monthlyNow[\s\S]{0,400}dashboardKpisHtml\([^)]*\{ three: true \}/.test(rp)) fail("B a managed client's Dashboard between months must draw dashboardKpisHtml with three tiles, not the buildClientAnalyticsHtml grid");
+  if (!/pm-kpis3/.test(rp)) fail("B the three-tile row carries its own class"); }
 {
   const f = sourceFailures(REAL);
   if (against) {
