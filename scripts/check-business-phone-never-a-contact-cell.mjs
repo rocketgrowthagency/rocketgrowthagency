@@ -17,7 +17,6 @@ const BEFORE = "df9de9b5";
 const FIVE = ["_dup-cleared.js", "_monthly-health.js", "notify-step-open.js", "call-tracking-provision.js", "_offboarding.js"];
 // Known, NOT yet fixed (outside the five): file -> why. A new fallback anywhere else fails the gate.
 const OPEN = {
-  "portal-deliverables.js": "the Google-listing step shows the contact's phone when no business phone is saved (found 11-11; needs its own fix)",
   "_citation-trade.js": "reads both phones to recognize a trade for citation matching; it never writes either anywhere",
 };
 const MSG = [

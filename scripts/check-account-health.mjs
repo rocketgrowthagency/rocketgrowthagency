@@ -95,7 +95,9 @@ const RULES = [
   ["the only email the new code can send is the referral press (confirmed recipient, staff only)", (f) => { const s = f["netlify/functions/_monthly-health.js"]; if (!s) return "no health module"; const calls = (s.match(/d\.sendMail\(/g) || []).length; return calls < 1 || /settle\b[\s\S]*?d\.sendMail/.test(s.split("async function act(")[0]) || !/confirmedTo/.test(s) ? "an email can go from outside the referral press, or the press does not check the confirmed address" : null; }],
   ["admin endpoint is workspace-gated; the client's answer is portal-owner only", (f) => !/requireWorkspaceForClient/.test(f["netlify/functions/admin-monthly-health.js"]) || !/kind === "grow"/.test(f["netlify/functions/portal-quarter-answer.js"]) ? "the new endpoints lost their gate" : null],
   ["the letter's Google rows have a 30-day expiry", (f) => !/quarter_letter\.google_rows/.test(f["netlify/functions/_gbp-keep.js"]) ? "the quarterly letter's Google figures have no expiry" : null],
-  ["the ?v= keys moved (admin f, portal g)", (f) => !/admin\.js\?v=20261110[f-z]/.test(f["admin/index.html"]) || !/portal\.js\?v=20261110[g-z]/.test(f["portal/index.html"]) ? "admin.js/portal.js ?v= was not bumped" : null],
+  ["the ?v= keys moved (admin f, portal g)", (f) => { // 11-11: a later DATE is also a bump (the old regex only took 20261110f-z, so every later day read "not bumped")
+    const v = (html, file) => ((String(html || "").match(new RegExp(`${file}\\.js\\?v=(\\d{8}[a-z]?)`)) || [])[1] || "");
+    return v(f["admin/index.html"], "admin") < "20261110f" || v(f["portal/index.html"], "portal") < "20261110g" ? "admin.js/portal.js ?v= was not bumped" : null; }],
 ];
 const run = (files) => RULES.map(([name, test]) => ({ name, why: test(files) })).filter((r) => r.why);
 
