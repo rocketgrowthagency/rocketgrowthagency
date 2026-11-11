@@ -38,8 +38,39 @@ const BASE = process.env.AIRTABLE_BASE_ID;
 const TABLE = process.env.AIRTABLE_TABLE_NAME;
 if (!KEY || !BASE || !TABLE) { console.error('✗ Airtable creds missing — refusing to report healthy.'); process.exit(2); }
 
+// ── RULE START ── the website's daily job (netlify/functions/_twin-suppress.js) SUPPRESSES what this finds, by the same rule. The gate
+// scripts/check-twin-suppress-job.mjs runs this block and that file on the same cases and fails if they ever disagree. Keep it pure.
 const DEAD = /dnc|bounce|unsub|closed/i;
 const domain = (w) => String(w || '').toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '').trim();
+// 🔑 11-11: NOT A BUSINESS IDENTITY. facebook.com/joes and facebook.com/bobs are both "facebook.com" once the path is stripped, a
+// shared host (joes.wixsite.com) is skipped with it, and a scraped "website" of gmail.com is two strangers. Matching these would
+// suppress every live lead hosted there the day one opted out. An exact email still matches, gmail or not.
+const PLATFORM_DOMAINS = [
+  "facebook.com", "fb.com", "fb.me", "instagram.com", "linkedin.com", "twitter.com", "x.com", "tiktok.com", "youtube.com", "youtu.be",
+  "pinterest.com", "nextdoor.com", "linktr.ee", "linkin.bio", "beacons.ai",
+  "google.com", "goo.gl", "g.page", "business.site", "blogspot.com",
+  "wixsite.com", "wix.com", "squarespace.com", "weebly.com", "godaddysites.com", "square.site", "wordpress.com", "webflow.io",
+  "myshopify.com", "carrd.co", "jimdosite.com", "site123.me", "strikingly.com", "mystrikingly.com", "vistaprint.com", "duda.co",
+  "yelp.com", "yellowpages.com", "bbb.org", "angi.com", "angieslist.com", "homeadvisor.com", "thumbtack.com", "houzz.com",
+  "porch.com", "mapquest.com", "manta.com", "tripadvisor.com", "groupon.com", "zocdoc.com", "healthgrades.com", "vitals.com",
+  "booksy.com", "vagaro.com", "styleseat.com", "schedulicity.com", "mindbodyonline.com", "fresha.com", "glossgenius.com",
+  "square.com", "squareup.com", "setmore.com", "calendly.com", "acuityscheduling.com", "opentable.com", "doordash.com",
+  "ubereats.com", "grubhub.com", "toasttab.com", "amazon.com", "etsy.com", "apple.com",
+];
+const FREE_EMAIL_DOMAINS = [
+  "gmail.com", "googlemail.com", "yahoo.com", "ymail.com", "rocketmail.com", "hotmail.com", "outlook.com", "live.com", "msn.com",
+  "aol.com", "icloud.com", "me.com", "mac.com", "protonmail.com", "proton.me", "gmx.com", "gmx.net", "mail.com", "zoho.com",
+  "yandex.com", "comcast.net", "att.net", "sbcglobal.net", "verizon.net", "cox.net", "charter.net", "earthlink.net", "bellsouth.net",
+  "frontier.com", "optonline.net", "yahoo.co.uk", "hotmail.co.uk",
+];
+const SKIP_DOMAINS = [...PLATFORM_DOMAINS, ...FREE_EMAIL_DOMAINS];
+const skipDomain = (d) => !d || !d.includes('.') || SKIP_DOMAINS.some((p) => d === p || d.endsWith('.' + p));
+const keysOf = (f) => {
+  const d = domain(f.Website), e = String(f.Email || '').toLowerCase().trim();
+  return [!skipDomain(d) && 'domain:' + d, e && e.includes('@') && 'email:' + e].filter(Boolean);
+};
+const isDead = (x) => x.fields.Suppressed === true || DEAD.test(String(x.fields['Funnel State'] || ''));
+// ── RULE END ──
 
 let all = [], offset;
 try {
@@ -48,7 +79,9 @@ try {
     const r = await fetch(u, { headers: { Authorization: `Bearer ${KEY}` } });
     if (!r.ok) throw new Error(`${r.status}`);
     const d = await r.json();
-    if (d.error) throw new Error(JSON.stringify(d.error).slice(0, 90));
+    // 🔴 11-6: Airtable's monthly limit answers `errors` (PLURAL). → project_airtable_outage_2026_11
+    if (d.error || (Array.isArray(d.errors) && d.errors.length)) throw new Error(JSON.stringify(d.error || d.errors).slice(0, 90));
+    if (!Array.isArray(d.records)) throw new Error('no records list in the answer');
     all = all.concat(d.records); offset = d.offset;
   } while (offset);
 } catch (e) {
@@ -59,16 +92,12 @@ if (!all.length) { console.error('✗ zero leads returned — refusing to judge 
 
 const groups = new Map();
 for (const x of all) {
-  const d = domain(x.fields.Website);
-  const e = String(x.fields.Email || '').toLowerCase().trim();
-  for (const k of [d && 'domain:' + d, e && 'email:' + e]) {
-    if (!k) continue;
+  for (const k of keysOf(x.fields)) {
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(x);
   }
 }
 
-const isDead = (x) => x.fields.Suppressed === true || DEAD.test(String(x.fields['Funnel State'] || ''));
 const risky = new Map();
 for (const [k, v] of groups) {
   if (v.length < 2) continue;

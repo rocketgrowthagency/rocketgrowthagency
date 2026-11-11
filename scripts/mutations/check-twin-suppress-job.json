@@ -1,0 +1,98 @@
+[
+ [
+  "the cap is raised to 500",
+  "twinsuppress",
+  "const CAP = 50;",
+  "const CAP = 500;"
+ ],
+ [
+  "over the cap still writes",
+  "twinsuppress",
+  "if (plan.length > CAP) return",
+  "if (plan.length > CAP * 100) return"
+ ],
+ [
+  "the kill switch is gone",
+  "twinsuppress",
+  "if (String(env.TWIN_SUPPRESS) === \"0\") return",
+  "if (false) return"
+ ],
+ [
+  "the write also marks the lead dead",
+  "twinsuppress",
+  "const fields = { Suppressed: true };",
+  "const fields = { Suppressed: true, Status: \"dead\" };"
+ ],
+ [
+  "the note overwrites the old notes",
+  "twinsuppress",
+  "fields[NOTES] = old ? `${old}\\n${note}` : note;",
+  "fields[NOTES] = note;"
+ ],
+ [
+  "a long note is cut instead of left alone",
+  "twinsuppress",
+  "if (old.length + note.length + 1 <= NOTES_MAX) fields[NOTES]",
+  "fields[NOTES]"
+ ],
+ [
+  "facebook.com counts as an identity again",
+  "twinsuppress",
+  "  \"facebook.com\", \"fb.com\",",
+  "  \"fb.com\","
+ ],
+ [
+  "a subdomain of a platform counts as an identity",
+  "twinsuppress",
+  "SKIP_DOMAINS.some((p) => d === p || d.endsWith(\".\" + p))",
+  "SKIP_DOMAINS.some((p) => d === p)"
+ ],
+ [
+  "the job's dead test drops closed",
+  "twinsuppress",
+  "const DEAD = /dnc|bounce|unsub|closed/i;",
+  "const DEAD = /dnc|bounce|unsub/i;"
+ ],
+ [
+  "the check's dead test drifts from the job's",
+  "dupidentity",
+  "const DEAD = /dnc|bounce|unsub|closed/i;",
+  "const DEAD = /dnc|bounce/i;"
+ ],
+ [
+  "an Airtable refusal on the list is read as no records",
+  "twinsuppress",
+  "      airtableOk(r, d);\n      if (!Array.isArray(d.records)) throw new Error(\"Airtable's answer had no records list\");",
+  "      if (!Array.isArray(d.records)) d.records = [];"
+ ],
+ [
+  "a changed lead is written anyway",
+  "twinsuppress",
+  "if (!f || isDead(f) || !keysOf(f).includes(p.key)) { skipped.push(p.id); continue; }",
+  "if (!f) { skipped.push(p.id); continue; }"
+ ],
+ [
+  "a write is counted without reading it back",
+  "twinsuppress",
+  "(back.get(w.id) && back.get(w.id).Suppressed === true ? suppressed++ : failed.push(w.id))",
+  "suppressed++"
+ ],
+ [
+  "the schedule moves after the summer send",
+  "toml",
+  "[functions.\"lead-twin-suppress\"]\n  schedule = \"0 13 * * *\"",
+  "[functions.\"lead-twin-suppress\"]\n  schedule = \"30 14 * * *\""
+ ],
+ [
+  "the handler that ships is not wrapped",
+  "twinsuppressfn",
+  "exports.handler = require(\"./_job-checkin\").withCheckin(\"lead-twin-suppress\", exports.handler);",
+  "exports.handler = exports.handler;"
+ ],
+ [
+  "System health drops the job's error",
+  "jobmanifest",
+  "    read: (b) => ({ count: b.suppressed || 0, error: b.error || null,",
+  "    read: (b) => ({ count: b.suppressed || 0, error: null,"
+ ]
+]

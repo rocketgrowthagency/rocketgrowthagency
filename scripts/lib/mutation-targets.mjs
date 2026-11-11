@@ -561,4 +561,8 @@ export const FILES = {
   adminjs: "admin/admin.js",
   portalquarteranswer: "netlify/functions/portal-quarter-answer.js",
   postswantedfn: "netlify/functions/portal-posts-wanted.js",   // monthly_before_january_v1: the client's posts-per-month choice
+  // 11-11 opted-out twins: the daily job that suppresses a live lead sharing a website or inbox with an opted-out one, and the check whose rule it is
+  twinsuppress: "netlify/functions/_twin-suppress.js",
+  twinsuppressfn: "netlify/functions/lead-twin-suppress.js",
+  dupidentity: "scraper:scripts/check-duplicate-identity-leads.mjs",
 };
