@@ -1,0 +1,86 @@
+[
+ [
+  "the env can raise the daily cap above Google's 32",
+  "placesbudget",
+  "Math.min(GOOGLE_DAILY_CAP, n)",
+  "Math.max(GOOGLE_DAILY_CAP, n)"
+ ],
+ [
+  "the lead-hours backfill keeps nothing back for client work",
+  "placesbudget",
+  "\"backfill-gbp-hours\": { tier: 4, keep: 26,",
+  "\"backfill-gbp-hours\": { tier: 4, keep: 0,"
+ ],
+ [
+  "a refusal from Google no longer closes the day",
+  "placesbudget",
+  "if (refusal) return { ok: false,",
+  "if (false) return { ok: false,"
+ ],
+ [
+  "RESOURCE_EXHAUSTED is no longer read as a refusal",
+  "placesbudget",
+  "/RESOURCE_EXHAUSTED|Quota exceeded|OVER_QUERY_LIMIT/i",
+  "/OVER_QUERY_LIMIT/i"
+ ],
+ [
+  "an unreadable ledger lets the backfills spend",
+  "placesbudget",
+  "if (read.mode === \"unreadable\" && c.tier >= 4) {",
+  "if (false) {"
+ ],
+ [
+  "the ledger writes to whatever database the environment names (a gate's real .env)",
+  "placesbudget",
+  "const inRuntime = () => process.env.PLACES_LEDGER === \"1\"",
+  "const inRuntime = () => true || process.env.PLACES_LEDGER === \"1\""
+ ],
+ [
+  "the lead-hours backfill ignores the budget's no",
+  "gbphoursfn",
+  "if (!grant.ok) { out.places.stopped = \"budget\";",
+  "if (false) { out.places.stopped = \"budget\";"
+ ],
+ [
+  "the lead-hours backfill reads Google's refusal as an ordinary error",
+  "gbphoursfn",
+  "if (placesBudget.isQuotaRefusal(r.status, d)) {",
+  "if (false) {"
+ ],
+ [
+  "the place-id backfill doesn't record Google's refusal",
+  "placeidsfn",
+  "if (placesBudget.isQuotaRefusal(r.status, j)) {",
+  "if (false) {"
+ ],
+ [
+  "a refused service-area lookup is no longer looked at again",
+  "areacover",
+  "...(stopped ? { retry: \"places\" } : {})",
+  "...({})"
+ ],
+ [
+  "a free audit Google refused still runs its Places checks",
+  "fgaenrich",
+  "if (placesCtx.stop && !verified) {",
+  "if (false) {"
+ ],
+ [
+  "the profile watch's System health row ignores a stopped lookup",
+  "jobmanifest",
+  "b.places_stopped ? `${plural(b.places_stopped, \"service-area lookup\")}",
+  "false ? `${plural(b.places_stopped, \"service-area lookup\")}"
+ ],
+ [
+  "the grid's sub-location loop swallows a refusal again",
+  "dkgridfn",
+  "if (isProviderRefusal(e)) throw e;",
+  "void e;"
+ ],
+ [
+  "the morning health check stops saying a refusal",
+  "dailyhealth",
+  "say \"  🔴 Google REFUSED a Places lookup (its daily limit)",
+  "say \"     daily Places quota reached, resumes tomorrow (its daily limit)"
+ ]
+]

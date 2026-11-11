@@ -23,7 +23,7 @@
  [
   "no answer is taken as covered (fail open)",
   "areacover",
-  "if (!p) { items.push({ name: n, state: \"unknown\", ...(why ? { why } : {}) }); continue; }",
+  "if (!p) { items.push({ name: n, state: \"unknown\", ...(why ? { why } : {}), ...(stopped ? { retry: \"places\" } : {}) }); continue; }",
   "if (!p) { items.push({ name: n, state: \"covered\", by: area[0] }); continue; }",
   1
  ],
@@ -107,8 +107,8 @@
  [
   "a failed lookup forgets Google's reason",
   "areacover",
-  "if (!p) { items.push({ name: n, state: \"unknown\", ...(why ? { why } : {}) }); continue; }",
-  "if (!p) { items.push({ name: n, state: \"unknown\" }); continue; }",
+  "if (!p) { items.push({ name: n, state: \"unknown\", ...(why ? { why } : {}), ...(stopped ? { retry: \"places\" } : {}) }); continue; }",
+  "if (!p) { items.push({ name: n, state: \"unknown\", ...(stopped ? { retry: \"places\" } : {}) }); continue; }",
   1
  ],
  [

@@ -69,10 +69,11 @@ const WATCHED_FREE = /calendar\.googleapis\.com|googleapis\.com\/calendar\/v3|go
  * `stamps` = the field/behaviour that records an attempt so failures do not repeat forever.
  */
 const DECLARED = {
-  "v2-rank-grid-background.js": { perRun: "~25 SearchText (5×5 grid)", scheduled: "monthly via rankings-refresh", stamps: "writes the grid result per scan" },
-  "backfill-gbp-hours.js": { perRun: "1 SearchText per NEW lead", scheduled: "daily", stamps: "GBP Hours Checked (every outcome incl. failure)" },
-  "backfill-place-ids.js": { perRun: "≤4 SearchText per unresolved client", scheduled: "daily retry", stamps: "clients.google_place_id (only touches null rows)" },
-  "_fga-enrichment.js": { perRun: "1 SearchText + 1 PSI per audit", scheduled: "on demand (per FGA submission)", stamps: "fga_report_cache — never re-fetched once cached" },
+  // 🔒 11-11: every SearchText caller asks the shared daily budget first (_places-budget.js; gate check-places-cap-is-said)
+  "v2-rank-grid-background.js": { perRun: "~25 SearchText (5×5 grid) ONLY when SERPAPI_KEY is absent; tier 1 of the Places budget", scheduled: "monthly via rankings-refresh", stamps: "writes the grid result per scan" },
+  "backfill-gbp-hours.js": { perRun: "1 SearchText per NEW lead, at most its budget share (6 a day, tier 4)", scheduled: "daily", stamps: "GBP Hours Checked (every outcome incl. failure)" },
+  "backfill-place-ids.js": { perRun: "≤4 SearchText per unresolved client, within the same tier-4 share", scheduled: "daily retry", stamps: "clients.google_place_id (only touches null rows)" },
+  "_fga-enrichment.js": { perRun: "up to ~10 SearchText (stops at the first refusal) + 1 PSI per audit; budget share 20 a day, tier 3", scheduled: "on demand (per FGA submission)", stamps: "fga_report_cache — never re-fetched once cached" },
   "deep-assess-client.js": { perRun: "0 billed (GSC/GA4/GBP are free tiers)", scheduled: "on demand", stamps: "client_state_snapshots" },
   "refresh-pagespeed-background.js": { perRun: "1 PSI per client", scheduled: "daily", stamps: "client_state_snapshots (surface=pagespeed)" },
   "gbp-apply-change.js": { perRun: "0 billed (Business Information API)", scheduled: "hand-run", stamps: "client_change_log" },

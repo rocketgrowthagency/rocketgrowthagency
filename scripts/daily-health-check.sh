@@ -645,6 +645,7 @@ run check-schedule-system-v6.mjs "every control and popup in the admin Schedule 
 run check-dialog-tone.mjs "admin dialogs wear the right kind: a redirect to Google is INTERNAL, mail and invites THIS REACHES THE CLIENT (11-10 free/busy pill)"
 run check-business-phone-never-a-contact-cell.mjs "business_phone_only_v1 (11-11): the business phone is identity_phone; a contact's cell never stands in for it (duplicate cleanup, account health, step notices, call tracking, end of service)"
 run check-twin-suppress-job.mjs "11-11 opted-out twins: the website's daily lead-twin-suppress (13:00 UTC, before the 7 AM Pacific send) suppresses a live lead sharing a website or inbox with an opted-out one, by check-duplicate-identity-leads' exact rule; set-only, cap 50 (51 = none + an error), platform and free-mail domains skipped, TWIN_SUPPRESS=0 off, a refusal is its System health error; fixtures only"
+run check-places-cap-is-said.mjs "11-11 Places SearchText 32/day (never raised): every caller asks the shared daily budget first (map ranking, then the profile watch, then free audits, then the backfills), and Google's 429 is said and recorded, never read as not found / not ranked / no hours; fixtures only"
 run check-call-names.mjs "call_names_v1 (11-10): the six call names (Intro call, Audit walkthrough, Kickoff call, Month 1 review, Monthly check-in, Quarterly review) everywhere a person reads, no close-out or bare Call 1 / Call 2, internal ids unchanged"
 run check-monthly-close.mjs "monthly_s5_close_v1 (11-9): Close the month: freeze (not given never 0, the 30-day rule), the letter from the frozen record refuses a missing number, send (named confirm, kept, listed in the portal, test to the admin only), NOTHING sends by itself (the 5th builds only), the To do on the 5th, the optional call + Quarterly review, send/skip then open next then close this"
 run check-monthly-once.mjs "monthly_s3_monthly_v1 (11-9): Once a month: the merges (no dangling id), no Run button or hand tick, scans compared like for like, numbers not measured never 0, new competitor flagged, site health says what it did not check, blog 0 is fine, focus work settles from its tied steps, listing upkeep from the jobs, the settle proves before it writes, the morning run starts monthly replies on a new review"
@@ -851,6 +852,10 @@ rm -f "$SKIPPED_LIVE"
 # quota (deliberate spend control), so a single run cannot finish it. Rather than ask Chris to babysit
 # it, run a capped batch each morning — it completes itself and stops the moment quota is hit.
 # Non-fatal by design: a completeness task must never fail the health check.
+# 🔴 11-11: THIS BLOCK SPENT THE WHOLE DAY. limit=400 let the function use ~41 Places lookups by 8:21 AM PT, Google refused every
+# client-facing lookup after it, and this printed "this is expected". The function now asks the shared Places budget first
+# (website netlify/functions/_places-budget.js) and gets only its share (6 a day, LAST in line), so 400 is a ceiling, not a spend.
+# A refusal from Google is SAID here, never "expected" (gate: check-places-cap-is-said).
 say ""
 say "── gbp hours backfill ──"
 if [ -n "${QUO_WEBHOOK_TOKEN:-}" ] || grep -q '^QUO_WEBHOOK_TOKEN' .env 2>/dev/null; then
@@ -858,9 +863,16 @@ if [ -n "${QUO_WEBHOOK_TOKEN:-}" ] || grep -q '^QUO_WEBHOOK_TOKEN' .env 2>/dev/n
   _r=$(curl -s --max-time 200 "https://www.rocketgrowthagency.com/.netlify/functions/backfill-gbp-hours?token=${_t}&limit=400&commit=1" 2>/dev/null)
   _w=$(echo "$_r" | grep -oE '"written": *[0-9]+' | grep -oE '[0-9]+' | head -1)
   _f=$(echo "$_r" | grep -oE '"found": *[0-9]+' | grep -oE '[0-9]+' | head -1)
+  _pstop=$(echo "$_r" | grep -oE '"stopped": *"[a-z]+"' | head -1 | sed -E 's/.*"([a-z]+)"$/\1/')
+  _pwhy=$(echo "$_r" | grep -oE '"reason": *"[^"]*' | head -1 | sed -E 's/^"reason": *"//')
   if [ -n "${_w:-}" ]; then
     say "  ✅ wrote ${_w} lead(s) this run (found ${_f:-0})"
-    echo "$_r" | grep -q 'Quota exceeded' && say "     daily Places quota reached — resumes tomorrow, this is expected"
+    if [ "${_pstop:-}" = "refused" ] || { [ -z "${_pstop:-}" ] && echo "$_r" | grep -q 'Quota exceeded'; }; then
+      say "  🔴 Google REFUSED a Places lookup (its daily limit): ${_pwhy:-Quota exceeded} — client-facing lookups are refused too until midnight Pacific"
+      INDET=$((INDET+1))
+    elif [ "${_pstop:-}" = "budget" ]; then
+      say "     stopped at its share of the daily Places budget; client work keeps the rest (${_pwhy:0:160})"
+    fi
   else
     say "  ⚠️  backfill did not report a count (non-fatal)"
   fi

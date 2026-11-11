@@ -565,4 +565,9 @@ export const FILES = {
   twinsuppress: "netlify/functions/_twin-suppress.js",
   twinsuppressfn: "netlify/functions/lead-twin-suppress.js",
   dupidentity: "scraper:scripts/check-duplicate-identity-leads.mjs",
+  // 11-11 Places SearchText 32/day: the shared daily budget every caller reads first, and the callers whose refusal must be said
+  placesbudget: "netlify/functions/_places-budget.js",
+  gbphoursfn: "netlify/functions/backfill-gbp-hours.js",
+  placeidsfn: "netlify/functions/backfill-place-ids.js",
+  fgaenrich: "netlify/functions/_fga-enrichment.js",
 };

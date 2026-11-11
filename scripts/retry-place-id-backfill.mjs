@@ -64,6 +64,9 @@ for (const r of res.results || []) {
     const reason = String(r.reason || "unknown");
     // 429/quota/5xx are indeterminate, not findings — do not report a business as unresolvable
     // when we simply could not ask (feedback_indeterminate_is_not_a_finding).
+    // 🔒 11-11: the website's shared Places budget held this lookup back so client work keeps the day (r.places === "budget").
+    // Not asked, so not a finding and not "needs a manual place id": it is tried again on a later day.
+    if (r.places === "budget") { quotaBlocked++; console.log(`  ⏸  ${String(r.client).padEnd(24)} held for client work: ${reason.slice(0, 110)}`); continue; }
     if (/429|quota|rate limit|50\d\b/i.test(reason)) {
       quotaBlocked++;
       // 🔑 Google Places quotas reset at MIDNIGHT PACIFIC, not UTC. Saying "tomorrow" at 18:00 PT is

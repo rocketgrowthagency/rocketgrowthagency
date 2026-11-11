@@ -464,6 +464,7 @@ const NOT_PREFLIGHT = {
   'check-business-phone-never-a-contact-cell.mjs': 'static scan of the WEBSITE repo\'s netlify/functions for a contact\'s phone standing in for the business phone, plus the five messages (business_phone_only_v1, 11-11); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-call-names.mjs': 'the WEBSITE repo\'s six call names (call_names_v1, 11-10), a static scan; run by daily-health-check.sh; it reads no video pipeline output.',
   'check-twin-suppress-job.mjs': 'the WEBSITE repo\'s daily lead-twin-suppress job (11-11), static + a fake Airtable only (nothing is read or written for real); run by daily-health-check.sh; it reads no video pipeline output.',
+  'check-places-cap-is-said.mjs': 'the WEBSITE repo\'s Places SearchText callers and their shared daily budget (11-11), static + fakes only (no network, no key, nothing written); run by daily-health-check.sh; the video pipeline calls no Google Cloud API.',
   'check-portal-has-no-em-dash.mjs': 'static scan of the WEBSITE repo\'s client portal source for an em dash in client-visible text (11-10); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-the-morning-run.mjs': 'the WEBSITE repo\'s morning run (steps_57_64_v1, 11-9), fakes only (database, runners, search count); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-the-months-are-kept.mjs': 'the WEBSITE repo\'s months (monthly_v1, 11-9), fakes only (a database behind a fake fetch); run by daily-health-check.sh; it reads no video pipeline output.',
