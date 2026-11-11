@@ -43,7 +43,7 @@ function checkTree(root, label) {
   const wb = rd("netlify/functions/walkthrough-book.js");
   if (wb == null || !/`Audit walkthrough: \$\{business\} × Rocket Growth Agency`/.test(wb)) fail('the walkthrough invite is not titled "Audit walkthrough: <business> × Rocket Growth Agency"');
   const cp = rd("netlify/functions/_call-purpose.js") || "";
-  if (!/title: \(biz\) => `Month 1 review/.test(cp)) fail('the Month 1 review invite title does not use the name');
+  if (!/title: \(biz\) => (`Month 1 review|callTitle\("Month 1 review")/.test(cp)) fail('the Month 1 review invite title does not use the name');
   const sch = rd("admin/schedule.js");
   if (sch == null) fail("admin/schedule.js does not exist"); else for (const n of SIX) if (!sch.includes(`"${n}"`)) fail(`the Schedule does not show "${n}"`);
   // 6: nothing internal renamed
