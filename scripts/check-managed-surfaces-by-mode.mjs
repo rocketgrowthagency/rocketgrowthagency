@@ -123,8 +123,12 @@ try {
   const open = (txt) => ((txt.split(/STILL OPEN[^\n]*\n/i)[1] || "").split(/\n\n/)[0] || "").split("\n").map((l) => l.replace(/^- /, "")).filter(Boolean);
   const skip = /^m1\.(kickoff\.call|call\.close)$/;
   const m1 = cs.month1.filter((s) => !s.clientOptional && !skip.test(s.id));
-  const wantMg = m1.filter((s) => ["step", "check"].includes(s.managedRole)).sort((a, b) => (a.managedStepNo ?? check.managedStepNo) - (b.managedStepNo ?? check.managedStepNo)).map((s) => s.clientLabel);
-  const wantSs = m1.filter((s) => s.clientStepNo != null).sort((a, b) => a.clientStepNo - b.clientStepNo).map((s) => s.clientLabel);
+  // 11-10 (9423486a, the open item "letters read as done work, never orders"): a still-open line is the step's clientCarry when it has one
+  // (a noun phrase: "Review asks to your 5 most recent customers"), else its clientLabel. check-reviews-and-close holds the wording itself.
+  const PB_CARRY = (() => { const out = {}; try { JSON.stringify(JSON.parse(fs.readFileSync(path.join(SITE, "data/playbooks/playbooks.json"), "utf8")), (k, v) => { if (v && typeof v.id === "string" && typeof v.clientCarry === "string") out[v.id] = v.clientCarry; return v; }); } catch { console.error("⚠️  INDETERMINATE: playbooks.json does not read"); process.exit(2); } return out; })();
+  const carried = (s) => (PB_CARRY[s.id] && PB_CARRY[s.id].trim()) || s.clientLabel;
+  const wantMg = m1.filter((s) => ["step", "check"].includes(s.managedRole)).sort((a, b) => (a.managedStepNo ?? check.managedStepNo) - (b.managedStepNo ?? check.managedStepNo)).map(carried);
+  const wantSs = m1.filter((s) => s.clientStepNo != null).sort((a, b) => a.clientStepNo - b.clientStepNo).map(carried);
   must(eq(open(mg.report), wantMg), `managed Month 1 report "still open" lists ${JSON.stringify(open(mg.report))}, expected ${JSON.stringify(wantMg)}`);
   must(eq(open(base.report), wantSs), `self-serve Month 1 report "still open" lists ${JSON.stringify(open(base.report))}, expected ${JSON.stringify(wantSs)}`);
   must(!mg.report.split("\n").some((l) => /^- .*\bstep \d/i.test(l)), "the managed Month 1 report prints a step number");

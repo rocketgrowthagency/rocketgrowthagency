@@ -1,0 +1,44 @@
+[
+ [
+  "the intro call's playbook tab loses its name",
+  "adminpb",
+  "id: \"spine\", tab: \"Intro call (Call 1)\"",
+  "id: \"spine\", tab: \"Call 1\""
+ ],
+ [
+  "the walkthrough's playbook tab loses its name",
+  "adminpb",
+  "id: \"call2\", tab: \"Audit walkthrough (Call 2)\"",
+  "id: \"call2\", tab: \"Call 2\""
+ ],
+ [
+  "the name table drops Quarterly review",
+  "rgacalls",
+  "quarterly: \"Quarterly review\"",
+  "quarterly: \"Quarterly call\""
+ ],
+ [
+  "the walkthrough invite is titled without the name",
+  "walkthroughbook",
+  "const walkthroughTitle = (business) => `Audit walkthrough: ${business} × Rocket Growth Agency`;",
+  "const walkthroughTitle = (business) => `Call 2: ${business} × Rocket Growth Agency`;"
+ ],
+ [
+  "the Month 1 review invite says close-out again",
+  "callpurpose",
+  "title: (biz) => `Month 1 review",
+  "title: (biz) => `Month 1 close-out"
+ ],
+ [
+  "the Schedule shows a different name for the monthly call",
+  "schedulev6js",
+  "[\"monthly\", \"Monthly check-in\", \"#6d4bd8\"]",
+  "[\"monthly\", \"Monthly call\", \"#6d4bd8\"]"
+ ],
+ [
+  "an internal key is renamed with the label",
+  "callpurpose",
+  "  m1_close: {\n    id: \"m1_close\",",
+  "  m1_review: {\n    id: \"m1_review\","
+ ]
+]

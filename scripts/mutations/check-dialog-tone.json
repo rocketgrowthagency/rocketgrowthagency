@@ -1,0 +1,7 @@
+[
+ ["a redirect to Google wears the client pill again", "adminjs", "\\bsend(s|ing)?\\b(?!\\s+you\\s+to\\b)", "\\bsend(s|ing)?\\b"],
+ ["an email no longer reaches the client", "adminjs", "if (/\\bemail(s|ed)?\\b|\\binvit|", "if (/\\bemailz\\b|\\binvit|"],
+ ["a delete is not PERMANENT", "adminjs", "if (danger || /\\bdelete\\b|\\bpermanent|", "if (danger || /\\bpermanent|"],
+ ["a magic link resend is not outward", "adminjs", "|\\bresend\\b|magic link|\\bnotif/i.test(s)) return \"outward\";", "|\\bnotif/i.test(s)) return \"outward\";"],
+ ["the free/busy call site stops stating its tone", "adminjs", "const ok = await rgaDialog({ kind: \"confirm\", tone: \"routine\", message:\n", "const ok = await rgaDialog({ kind: \"confirm\", message:\n"]
+]

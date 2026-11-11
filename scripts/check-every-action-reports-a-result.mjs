@@ -36,6 +36,9 @@ const TARGETS = [
 // Actions whose visible result IS the UI change they cause. Excused BY NAME with a reason — an
 // exemption must be argued, never assumed (same discipline as the pre-flight gate list).
 const UI_ONLY = {
+  "data-todo-wt": "a Calls row in the admin To do (master schedule v6, 11-10): opens the walkthrough console for that call (visible: the console opens either way); its one write, remembering the console was opened so Call them now stops, is best effort by design",
+  "data-og-call-open": "the client month card's call fold (client_monthly_cycle_v1, 11-10): unfolds the call section, hides its own link and scrolls to it (visible); nothing is saved",
+  "data-og-mchip": "the client month card's month chips (client_monthly_cycle_v1, 11-10): shows that month's panel and flips aria-pressed (visible); nothing is saved",
   "data-cm-qprev": "the Monthly tab's \"Every quarter\" preview (monthly_fix_v2, 11-9): opens or folds a read-only preview in place and flips the open class (visible) - nothing is saved",
   "data-mp-task": "the focus-plan card's task tick (monthly plan draft): the checkbox itself visibly ticks or unticks and the choice is held as a draft in the page - nothing is saved until \"Use this plan\", which IS audited",
   "data-dk-refresh": "re-reads the admin Data card and redraws it; changes nothing",

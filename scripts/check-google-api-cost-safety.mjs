@@ -107,6 +107,29 @@ const DECLARED = {
     scheduled: "on demand (every render of the Phase 0 card, plus after send/move/cancel)",
     stamps: "client_onboarding_records.kickoff_invite.rsvp_checked_at — the result is persisted so the admin can render without re-asking Google",
   },
+  // call_to_client_v1 (11-10). Every 10 minutes, but only for booked walkthroughs / kickoffs starting in the next 25 hours that
+  // still have a reminder due: a call with both reminders on record is skipped before Google is asked.
+  "call-reminders.js": {
+    perRun: "≤1 Calendar events.get per booked walkthrough in the next 25 hours with a reminder still due (its RSVP; kickoffs are not read), ≤200 calls a run, + 1 Gmail send per reminder due — FREE (quota, not billed)",
+    scheduled: "every 10 minutes (netlify.toml); CALL_REMINDERS=0 stops it",
+    stamps: "rga_call_reminders (call_id, kind) is claimed BEFORE each send and never retried, so a reminder goes out once; a call with email_24h and email_1h on record is skipped without calling Google",
+  },
+  // call_to_client_v1 + master schedule v6 (11-10): the walkthrough's own invite, its RSVP and the Schedule panel's move / call off
+  "walkthrough-book.js": {
+    perRun: "1 Calendar events.insert (with a Meet link) per press — FREE (quota, not billed)",
+    scheduled: "on demand (an admin presses Send the invite, with confirm_to equal to the recipient shown)",
+    stamps: "kickoff_slot_holds (purpose walkthrough) is taken by its primary key BEFORE Google is called, and the rga_calls row records the event, so a second press on the same time is refused without calling Google",
+  },
+  "walkthrough-rsvp.js": {
+    perRun: "1 Calendar events.get per read of a booked walkthrough's call card — FREE (quota, not billed); a call with no event_id or no rga_calls row is answered without calling Google",
+    scheduled: "on demand (an admin opens a prospect's call card that has a booked walkthrough)",
+    stamps: "none: read-only by design (the booking is the rga_calls row); bounded by how often an admin opens that card, like kickoff-rsvp-check",
+  },
+  "schedule-call-action.js": {
+    perRun: "1 Calendar events.patch (reschedule) or events.delete (call off) per confirmed press — FREE (quota, not billed); slots / console / outcome call no Google API",
+    scheduled: "on demand (an admin confirms the orange Reschedule / Cancel dialog, confirm:true)",
+    stamps: "the old rga_calls row becomes rescheduled / cancelled and the hold is freed, so a second press finds no booked row and calls nothing",
+  },
   "cancel-kickoff-invite.js": {
     perRun: "1 Calendar events.delete per cancellation — FREE (quota, not billed)",
     scheduled: "on demand (a human confirms a destructive dialog)",

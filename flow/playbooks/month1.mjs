@@ -1257,7 +1257,7 @@ Done when every review that was there has a reply seen live on Google. Until the
     instructions: `Builds itself once the step before it is finished and kickoff + 27 days have passed (no Run button). Read the report on this card, then press Send: it asks once more, naming who it goes to. The sent email is the step's proof.`,
   },
   {
-    id: "m1.call.close", title: "Close-out call",
+    id: "m1.call.close", title: "Month 1 review",   // call_names_v1 (11-10): the name changed, the id did not
     type: "manual", dependsOn: ["m1.report.month1"],
     actionLabel: "⚡ Draft this for me",
     instructions: `30-min call. Walk through report, set Month 2 expectations.
@@ -1267,7 +1267,7 @@ Confirm next monthly call date. Month 2 starts on its own under the contract, so
     id: "m1.handoff.month2", title: "Transition to monthly cycle",
     type: "auto", dependsOn: ["m1.call.close"],
     actionLabel: "⚡ Run the hand-off",
-    instructions: `Runs itself once the Month 1 report is sent or skipped and the close-out call is settled (no Run button, and no Skip: it is the move into Month 2 itself). Creates next month's record and reads it back, then lists each Month 1 step still open by name and each skipped one with its reason. Nothing is dropped.`,
+    instructions: `Runs itself once the Month 1 report is sent or skipped and the Month 1 review is settled (no Run button, and no Skip: it is the move into Month 2 itself). Creates next month's record and reads it back, then lists each Month 1 step still open by name and each skipped one with its reason. Nothing is dropped.`,
     async run({ clientId }) {
       const { ensureMonthlyState } = await import("../state.mjs");
       await ensureMonthlyState(clientId);

@@ -58,8 +58,12 @@ if (i === -1) {
 
 // 2 ─ 🔴 EVERY kickoff time routes through it. One missed renderer puts two times on one screen.
 {
-  const zones = [...src.matchAll(/timeZone:\s*([^,\n}]+)/g)].map((m) => m[1].trim());
-  const stray = zones.filter((z) => !/clientReadingZone|^zone\b|^zone0\b|keyOf|"UTC"/.test(z));
+  const lineAt = (i) => src.slice(src.lastIndexOf("\n", i) + 1, src.indexOf("\n", i) === -1 ? src.length : src.indexOf("\n", i));
+  const zones = [...src.matchAll(/timeZone:\s*([^,\n}]+)/g)].map((m) => ({ z: m[1].trim(), line: lineAt(m.index) }));
+  // RGA's OWN zone, the second time beside the client's (approved master schedule 11-10: "both zones in every picker"). Allowed only
+  // on a line that draws it when it DIFFERS from the client's reading zone; RGA's zone as the main time would still be a bypass.
+  const rgaSecond = ({ z, line }) => /^(st\.rgaTz|z)$/.test(z) && /rgaTz/.test(line) && /(!==|===) (zone|clientReadingZone\()/.test(line);
+  const stray = zones.filter((x) => !/clientReadingZone|^zone\b|^zone0\b|keyOf|"UTC"/.test(x.z) && !rgaSecond(x)).map((x) => x.z);
   if (stray.length) {
     fail.push(`${stray.length} timeZone expression(s) bypass clientReadingZone — ${stray.slice(0, 3).join(" · ")}. `
       + "Every kickoff time in the portal must come from the one resolver, or two of them will name different hours on the same page");

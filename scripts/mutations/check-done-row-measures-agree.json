@@ -14,8 +14,8 @@
  [
   "the gate counts the in-card how-to again",
   "donegate",
-  ", details.pm-convo, details.pm-k5-fold\").forEach",
-  ", details.pm-convo\").forEach"
+  ", details.pm-convo, details.pm-k5-fold, [data-blog-plan]\").forEach",
+  ", details.pm-convo, [data-blog-plan]\").forEach"
  ],
  [
   "the how-to is renamed and nobody's list follows",

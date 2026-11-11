@@ -1,30 +1,198 @@
 [
- ["the Foundation stage draws step 5 without the customer lists again", "portal", "ctx.photos, pmManaged() ? (ctx.customerLists || []) : null, { month1Only: true,", "ctx.photos, null, { month1Only: true,", 1],
- ["Write the request is pale again for a managed client", "portal", "data-r5-send${says ? \"\" : \" disabled\"}>Write the request</button>", "data-r5-send disabled>Write the request</button>", 1],
- ["the button greys out again once the client types", "portal", "btn.disabled = !full.length && !form.hasAttribute(\"data-r5-says\"); }", "btn.disabled = !full.length; }", 1],
- ["an empty press says something else", "portal", "say(\"bad\", \"Add a first name and a cell number or email.\");", "say(\"bad\", \"Please check the form.\");", 1],
- ["an empty press leaves the cursor where it was", "portal", "    c?.querySelector(r5Val(c, \"first_name\") ? '[name=\"phone\"]' : '[name=\"first_name\"]')?.focus();\n    return;\n  }\n  if (half) {", "    return;\n  }\n  if (half) {", 1],
- ["the managed row is called Messages again", "portal", "${mgdMail ? \"Emails from RGA\" : \"Messages\"} · ${all.length}", "Messages · ${all.length}", 1],
- ["the step-open email keeps its old subject", "portal", "const isOpened = (m) => m.opened === true ||", "const isOpened = (m) => false &&", 1],
- ["a row with the client's own message is called Emails from RGA", "portal", "const mgdMail = pmManaged() && !talk.length;", "const mgdMail = pmManaged();", 1],
- ["the email's line is cut off on a phone again", "portalcss", ".pm-cs-msgs.pm-cs-mail .s small { white-space:normal; overflow:visible; text-overflow:clip; }", "", 1],
- ["the managed title says (optional) again", "portalmode", "(managed(mode) && step.managedLabel) || step.clientLabel", "step.clientLabel", 1],
- ["the disc stays amber under the blue pill", "portal", "if (cs && st.mgd) { const row = host.closest(\".pm-step-row\");", "if (false) { const row = host.closest(\".pm-step-row\");", 1],
- ["RGA's part says now again", "portal", "csEv(\"<b>RGA writes 2 scripts</b>\", \"in progress\", \"rga\")", "csEv(\"<b>RGA writes 2 scripts</b>\", \"now\", \"rga\")", 1],
- ["the kept channel isn't named", "portal", "<b>RGA publishes</b> · on ${ch ? `YouTube, ${escapeHtml(ch)},` : \"your YouTube channel\"} and your website", "<b>RGA publishes</b> · YouTube and your website", 1],
- ["a client with no channel is shown a blank one", "portal", "const ch = _socialChannel.get(clientId) || null;", "const ch = _socialChannel.get(clientId) || \"@yourbusiness\";", 1],
- ["Skip this posts nothing", "portal", "class=\"pm-vc-skip\" data-video-skip=", "class=\"pm-vc-skip\" data-video-skipped=", 1],
- ["a skip before the scripts keeps showing the writing card", "portal", "if (!st.videos && st.mgd && !(st.skipped && (st.clips || []).length < 2)) {", "if (!st.videos && st.mgd) {", 1],
- ["step 7 counts the report as a step again", "portal", "    if (pmManaged()) {\n      const mine", "    if (false) {\n      const mine", 1],
- ["step 7 drops the client's own steps from the band", "portal", "${report && mine ? ` · ${mine} of your steps left` : \"\"}", "", 1],
- ["step 7's foot loses the kickoff", "portal", ", 30 days from your kickoff on ${escapeHtml(monthDay(kick))}.", ".", 1],
- ["the managed wording reaches a self-serve client", "portal", "  const says = pmManaged();", "  const says = true;", 1],
- ["on a phone step 7's band squeezes its words beside the date", "portalcss", ".pm-cs .pm-k5.pm-cs-hwrap > .pm-cs-card > .pm-k5-h > span { grid-column:2; white-space:normal; }", "", 1],
- ["on a phone step 6's band squeezes its words beside the date", "portal", "}).replace('<div class=\"pm-k5\">', '<div class=\"pm-k5 pm-cs-hwrap\">'); }", "}); }", 1],
- ["the managed kickoff line gets its dash back", "portal", "csNote(\"If you missed it, no problem. Pick another time and we'll send a new invite.\")", "csNote(\"If you missed it, no problem \u2014 pick another time and we'll send a new invite.\")", 1],
- ["11-5: a waits list that didn't load reads as waiting again (step 5: Can't start yet · RGA is on it)", "portal", "return rgaWaits ? rgaWaits.has(step.id) : false;", "return rgaWaits ? rgaWaits.has(step.id) : true;", 1],
- ["11-5: a step we couldn't check draws no neutral card", "portal", "        ${rgaUnknown ? rgaUnknownHtml(clientId) : \"\"}\n", "", 1],
- ["11-5: a step we couldn't check keeps its customer form", "portal", "    const completionCtl = rgaUnknown ? \"\"\n      : listingWait", "    const completionCtl = listingWait", 1],
- ["11-5: Try again, still unanswered, says nothing", "portal", "statusEl.textContent = \"Still couldn't check. Try again in a minute, or message us below.\"; statusEl.hidden = false; }", "statusEl.textContent = \"Still couldn't check. Try again in a minute, or message us below.\"; }", 1],
- ["11-5: Try again never draws the answer it got", "portal", "  for (const el of lists) await el._rerender(el._onboarding, el._monthlyRecords, undefined, undefined, true);\n", "", 1]
+ [
+  "the Month 1 work card draws step 5 without the customer lists again (setup_vs_month1_v1 moved managed step 5 there, 11-10)",
+  "portal",
+  "oauth, contracts, photos, customerLists, { month1Only: true, domSuffix: \"-m1w\", group: \"m1w\"",
+  "oauth, contracts, photos, null, { month1Only: true, domSuffix: \"-m1w\", group: \"m1w\"",
+  1
+ ],
+ [
+  "Write the request is pale again for a managed client",
+  "portal",
+  "data-r5-send${says ? \"\" : \" disabled\"}>Write the request</button>",
+  "data-r5-send disabled>Write the request</button>",
+  1
+ ],
+ [
+  "the button greys out again once the client types",
+  "portal",
+  "btn.disabled = !full.length && !form.hasAttribute(\"data-r5-says\"); }",
+  "btn.disabled = !full.length; }",
+  1
+ ],
+ [
+  "an empty press says something else",
+  "portal",
+  "say(\"bad\", \"Add a first name and a cell number or email.\");",
+  "say(\"bad\", \"Please check the form.\");",
+  1
+ ],
+ [
+  "an empty press leaves the cursor where it was",
+  "portal",
+  "    c?.querySelector(r5Val(c, \"first_name\") ? '[name=\"phone\"]' : '[name=\"first_name\"]')?.focus();\n    return;\n  }\n  if (half) {",
+  "    return;\n  }\n  if (half) {",
+  1
+ ],
+ [
+  "the managed row is called Messages again",
+  "portal",
+  "${mgdMail ? \"Emails from RGA\" : \"Messages\"} · ${all.length}",
+  "Messages · ${all.length}",
+  1
+ ],
+ [
+  "the step-open email keeps its old subject",
+  "portal",
+  "const isOpened = (m) => m.opened === true ||",
+  "const isOpened = (m) => false &&",
+  1
+ ],
+ [
+  "a row with the client's own message is called Emails from RGA",
+  "portal",
+  "const mgdMail = pmManaged() && !talk.length;",
+  "const mgdMail = pmManaged();",
+  1
+ ],
+ [
+  "the email's line is cut off on a phone again",
+  "portalcss",
+  ".pm-cs-msgs.pm-cs-mail .s small { white-space:normal; overflow:visible; text-overflow:clip; }",
+  "",
+  1
+ ],
+ [
+  "the managed title says (optional) again",
+  "portalmode",
+  "(managed(mode) && step.managedLabel) || step.clientLabel",
+  "step.clientLabel",
+  1
+ ],
+ [
+  "the disc stays amber under the blue pill",
+  "portal",
+  "if (cs && st.mgd) { const row = host.closest(\".pm-step-row\");",
+  "if (false) { const row = host.closest(\".pm-step-row\");",
+  1
+ ],
+ [
+  "RGA's part says now again",
+  "portal",
+  "csEv(\"<b>RGA writes 2 scripts</b>\", \"in progress\", \"rga\")",
+  "csEv(\"<b>RGA writes 2 scripts</b>\", \"now\", \"rga\")",
+  1
+ ],
+ [
+  "the kept channel isn't named",
+  "portal",
+  "<b>RGA publishes</b> · on ${ch ? `YouTube, ${escapeHtml(ch)},` : \"your YouTube channel\"} and your website",
+  "<b>RGA publishes</b> · YouTube and your website",
+  1
+ ],
+ [
+  "a client with no channel is shown a blank one",
+  "portal",
+  "const ch = _socialChannel.get(clientId) || null;",
+  "const ch = _socialChannel.get(clientId) || \"@yourbusiness\";",
+  1
+ ],
+ [
+  "Skip this posts nothing",
+  "portal",
+  "class=\"pm-vc-skip\" data-video-skip=",
+  "class=\"pm-vc-skip\" data-video-skipped=",
+  1
+ ],
+ [
+  "a skip before the scripts keeps showing the writing card",
+  "portal",
+  "if (!st.videos && st.mgd && !(st.skipped && (st.clips || []).length < 2)) {",
+  "if (!st.videos && st.mgd) {",
+  1
+ ],
+ [
+  "step 7 counts the report as a step again",
+  "portal",
+  "    if (pmManaged()) {\n      const mine",
+  "    if (false) {\n      const mine",
+  1
+ ],
+ [
+  "step 7 drops the client's own steps from the band",
+  "portal",
+  "${report && mine ? ` · ${mine} of your steps left` : \"\"}",
+  "",
+  1
+ ],
+ [
+  "step 7's foot loses the kickoff",
+  "portal",
+  ", 30 days from your kickoff on ${escapeHtml(monthDay(kick))}.",
+  ".",
+  1
+ ],
+ [
+  "the managed wording reaches a self-serve client",
+  "portal",
+  "  const says = pmManaged();",
+  "  const says = true;",
+  1
+ ],
+ [
+  "on a phone step 7's band squeezes its words beside the date",
+  "portalcss",
+  ".pm-cs .pm-k5.pm-cs-hwrap > .pm-cs-card > .pm-k5-h > span { grid-column:2; white-space:normal; }",
+  "",
+  1
+ ],
+ [
+  "on a phone step 6's band squeezes its words beside the date",
+  "portal",
+  "}).replace('<div class=\"pm-k5\">', '<div class=\"pm-k5 pm-cs-hwrap\">'); }",
+  "}); }",
+  1
+ ],
+ [
+  "the managed kickoff line gets its dash back",
+  "portal",
+  "csNote(\"If you missed it, no problem. Pick another time and we'll send a new invite.\")",
+  "csNote(\"If you missed it, no problem — pick another time and we'll send a new invite.\")",
+  1
+ ],
+ [
+  "11-5: a waits list that didn't load reads as waiting again (step 5: Can't start yet · RGA is on it)",
+  "portal",
+  "return rgaWaits ? rgaWaits.has(step.id) : false;",
+  "return rgaWaits ? rgaWaits.has(step.id) : true;",
+  1
+ ],
+ [
+  "11-5: a step we couldn't check draws no neutral card",
+  "portal",
+  "        ${rgaUnknown ? rgaUnknownHtml(clientId) : \"\"}\n",
+  "",
+  1
+ ],
+ [
+  "11-5: a step we couldn't check keeps its customer form",
+  "portal",
+  "    const completionCtl = rgaUnknown ? \"\"\n      : listingWait",
+  "    const completionCtl = listingWait",
+  1
+ ],
+ [
+  "11-5: Try again, still unanswered, says nothing",
+  "portal",
+  "statusEl.textContent = \"Still couldn't check. Try again in a minute, or message us below.\"; statusEl.hidden = false; }",
+  "statusEl.textContent = \"Still couldn't check. Try again in a minute, or message us below.\"; }",
+  1
+ ],
+ [
+  "11-5: Try again never draws the answer it got",
+  "portal",
+  "  for (const el of lists) await el._rerender(el._onboarding, el._monthlyRecords, undefined, undefined, true);\n",
+  "",
+  1
+ ]
 ]

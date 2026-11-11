@@ -68,7 +68,8 @@ async function open1(c, mode, overrides = {}, extra = {}) {
   const tasks = { ...S.tasks, ...RGA_CARD_TASKS, "m1.gbp.business_facts": done(), "m1.gbp.hours_attributes": done(), "m1.gbp.services_products": done(), "m1.gbp.attributes": done(), "m1.gbp.booking_link": done(), "m1.gbp.photos": c.task };
   const h = await bootPortal({ mode, tasks, now: S.now, verify: S.verify, tables: { client_photos: c.photos.map((p) => ({ ...p, client_id: "11111111-1111-4111-8111-111111111111" })) }, fns: { "portal-thread": () => ({ ok: true, messages: extra.thread || [] }) }, viewport: extra.viewport || 1100 }, overrides, SITE);
   try { await h.ready(`${ROW}`, 40000); } catch { await h.close(); throw new HarnessUnavailable(`step 4 never drew (${h.errs[0] || "no error"})`); }
-  await h.page.evaluate(() => document.querySelector(".portal-nav a[data-view=setup]")?.click());
+  // setup_vs_month1_v1 (approved 11-10): a MANAGED client's photos are Month 1 work, drawn in the Month 1 card on Ongoing work; self-serve keeps them in Setup
+  await h.page.evaluate((m) => document.querySelector(`.portal-nav a[data-view=${m === "managed" ? "ongoing" : "setup"}]`)?.click(), mode);
   await tick(400);
   // open the row if it's folded (the way a person would)
   await h.page.evaluate((R) => { const r = document.querySelector(R); if (r && !r.querySelector(".pm-p10")?.offsetParent) r.querySelector("[data-step-toggle]")?.click(); }, ROW);

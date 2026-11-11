@@ -158,7 +158,10 @@ if (!/subject: "One minute: your booking link on Google"/.test(AJS) || !/Your Go
 let L; try { L = require(`${SITE}/netlify/functions/_letter.js`); } catch (e) { console.error(`⚠️  INDETERMINATE — _letter.js didn't load: ${e.message}`); process.exit(2); }
 if (!fs.existsSync(`${SITE}/shared/letter.js`) || L !== require(`${SITE}/shared/letter.js`)) fail("the server's _letter.js isn't the shared renderer (two copies of the email)");
 if (!/<button type="button" class="rga-modal-x" data-act="x" aria-label="Close">\$\{RGA_MODAL_X\}<\/button>/.test(AJS) || !/wrap\.querySelector\('\[data-act="x"\]'\)\.addEventListener\("click", \(\) => done\(cancelVal\)\);/.test(AJS)) fail("X: admin's dialogs have no X (or it doesn't do what the safe choice does)");
-if (!/id="kfX" aria-label="Close"/.test(AJS) || !/wrap\.querySelector\("#kfX"\)\.addEventListener\("click", close\);/.test(AJS)) fail("X: admin's booking-hours popup has no X");
+// schedule v6 (approved 11-10): the hours popup is openHoursDialog in admin/schedule-dialogs.js, drawn by that file's one dialog shell
+{ const SDJ = read("admin/schedule-dialogs.js"), hd = SDJ.slice(SDJ.indexOf("export async function openHoursDialog("), SDJ.indexOf("export async function openHoursDialog(") + 6000);
+  if (!/const saved = await openHoursDialog\(token\);/.test(AJS) || !/return dialog\(\{ title: "Your hours for every call"/.test(hd)
+    || !/<button type="button" class="rga-modal-x" data-sd="x" aria-label="Close">/.test(SDJ) || !/wrap\.querySelector\('\[data-sd="x"\]'\)\.addEventListener\("click", \(\) => done\(null\)\);/.test(SDJ)) fail("X: admin's booking-hours popup has no X"); }
 if (!/data-pm-x aria-label="Close"/.test(PJS) || !/card\.querySelector\("\[data-pm-x\]"\)\.addEventListener\("click", \(\) => close\(alertOnly \? true : false\)\);/.test(PJS) || !/\.pm-modal-x \{/.test(PCSS)) fail("X: the portal's confirm / alert popups have no X");
 if (!/\.rga-modal-x \{/.test(ACSS)) fail("X: admin's X has no style");
 

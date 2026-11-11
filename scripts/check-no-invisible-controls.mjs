@@ -42,7 +42,9 @@ const SITE = `${__SITE}`;
 // → feedback_dead_check_selector_gap · feedback_a_hardcoded_count_is_a_skipped_query
 function discoverStylesheets(root) {
   const out = [];
-  const SKIP = new Set(['node_modules', '.git', 'vendor', '.netlify', 'dist']);
+  // .claude holds agent worktrees: whole copies of the repo at some other commit, never shipped (11-10 night: a merged build's
+  // leftover worktree kept this red after the fix was in the real admin.css)
+  const SKIP = new Set(['node_modules', '.git', 'vendor', '.netlify', 'dist', '.claude']);
   (function walk(dir) {
     let entries;
     try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }

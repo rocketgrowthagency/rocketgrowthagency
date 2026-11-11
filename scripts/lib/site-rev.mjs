@@ -8,12 +8,15 @@ import { createRequire } from "node:module";
 import { execFileSync } from "node:child_process";
 
 export const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+// The BEFORE revision is history, not the tree under test: read it from a real git repo. A mutation run points SITE at a copy
+// with no .git (run-mutations skips it), so every suite of these gates exited 2 on its unmutated run (found 11-10 night).
+const GIT_SITE = fs.existsSync(path.join(SITE, ".git")) ? SITE : (process.env.WEBSITE_GIT_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code");
 
 /** git archive of the folders the gates read, extracted to a temp dir. A revision that cannot be read exits 2 (INDETERMINATE), never a pass. */
 export function exportRev(rev, tag = "sitegate") {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), `${tag}-`));
   try {
-    const tar = execFileSync("git", ["-C", SITE, "archive", rev, "shared", "netlify/functions", "netlify.toml", "data", "portal", "admin", "docs/supabase", "faq", "pricing", "index.html", "package.json"], { maxBuffer: 512 * 1024 * 1024 });
+    const tar = execFileSync("git", ["-C", GIT_SITE, "archive", rev, "shared", "netlify/functions", "netlify.toml", "data", "portal", "admin", "docs/supabase", "faq", "pricing", "index.html", "package.json"], { maxBuffer: 512 * 1024 * 1024 });
     execFileSync("tar", ["-x", "-C", dir], { input: tar });
   } catch (e) { console.error(`⚠️  INDETERMINATE: can't read revision ${rev} of the website (${String(e.message).slice(0, 120)})`); process.exit(2); }
   try { fs.symlinkSync(path.join(SITE, "node_modules"), path.join(dir, "node_modules")); } catch { /* optional */ }

@@ -57,7 +57,8 @@ if (!/standing\s*=\s*j\.yourRequest && j\.yourRequest\.slot_start/.test(code)) {
     + "is nothing to offer back, and the client cannot see the time they are deciding about.");
 } else pass.push("the picker carries the standing booking, from the response it already has");
 
-if (!/_kickoffCache\.set\([^)]*standing/.test(code)) {
+// 11-10: the call now carries Array.isArray(j.taken), whose ")" ended the old [^)]* read before it reached standing; read the whole statement
+if (!/_kickoffCache\.set\(clientId, \{[^;]*[{,]\s*standing\s*\}\);/.test(code)) {
   fail.push("portal/portal.js — the standing booking is not put in the picker's cache, so it is lost "
     + "the first time the client changes month or day and the way out disappears mid-decision.");
 } else pass.push("it survives changing the month or the day");
@@ -186,7 +187,7 @@ if (!/\.kc-keep\s*\{/.test(css)) {
 // ── 7 · the way in does not depend on Google guessing an account ──────────────────────────────
 {
   const fn = read("netlify/functions/kickoff-availability.js", 3000);
-  if (!fn) { indet.push("kickoff-availability.js not readable"); }
+  if (!fn) { console.error("⚠️  INDETERMINATE — kickoff-availability.js not readable."); process.exit(2); }
   else {
     const f = fn.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
     if (!/authuser=\$\{encodeURIComponent\(who\)\}/.test(f)) {

@@ -99,8 +99,8 @@
  ],
  [
   "the hours popup loses its X",
-  "admin",
-  "  wrap.querySelector(\"#kfX\").addEventListener(\"click\", close);",
+  "schedulev6dlg",
+  "    wrap.querySelector('[data-sd=\"x\"]').addEventListener(\"click\", () => done(null));\n",
   "",
   1
  ],

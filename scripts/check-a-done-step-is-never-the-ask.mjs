@@ -48,6 +48,16 @@ try {
     for (const r of rows) if (r && r.data && r.data.tasks) for (const id of IDS) r.data.tasks[id] = { status: "done", completed_at: "2026-10-01T17:00:00Z", completed_by: "rga" };
     return route.fulfill({ response: res, json: Array.isArray(body) ? rows : rows[0] });
   });
+  // 4) the page's copy of the client's MODE: self-serve. These steps are the 21-step self-serve portal (kept as a mode, never deleted); the
+  // walk client draws MANAGED since 11-10 (setup_vs_month1_v1), whose Setup holds only Getting started, so 6 of 10 failure tests went unseen.
+  // Managed done cards are held by the managed gates (check-managed-steps-5-to-7, check-setup-vs-month1).
+  await ctx.route(/\/rest\/v1\/clients\?[^#]*select=[^&]*portal_mode/, async (route) => {
+    if (route.request().method() !== "GET") return route.abort();
+    const res = await route.fetch(); let body; try { body = await res.json(); } catch { return route.fulfill({ response: res }); }
+    const rows = Array.isArray(body) ? body : [body];
+    for (const r of rows) if (r && typeof r === "object") r.portal_mode = "self_serve";
+    return route.fulfill({ response: res, json: Array.isArray(body) ? rows : rows[0] });
+  });
   const page = await ctx.newPage();
   await page.goto(link, { waitUntil: "domcontentloaded", timeout: 60000 });
   await page.waitForSelector('.portal-nav a[data-view="setup"]', { timeout: 45000 });
@@ -65,7 +75,9 @@ try {
     const how = !!row.querySelector("details[data-how-fold]");
     const c = row.cloneNode(true);
     // 🔄 10-26: the how-to is an in-card fold now (details.pm-k5-fold) — counted as "something said", it hid an empty card
-    c.querySelectorAll(".pm-step-row-head, button, a.pm-act, .pm-row-actions, .pm-thread, .pm-mails, .pm-m, .pm-detail, .pm-stepmsgs, details.pm-ask, .pm-cs-foot, .pm-lockfoot, input, textarea, select, .pm-msg, details.pm-convo, details.pm-k5-fold").forEach((x) => x.remove());
+    c.querySelectorAll(".pm-step-row-head, button, a.pm-act, .pm-row-actions, .pm-thread, .pm-mails, .pm-m, .pm-detail, .pm-stepmsgs, details.pm-ask, .pm-cs-foot, .pm-lockfoot, input, textarea, select, .pm-msg, details.pm-convo, details.pm-k5-fold, [data-blog-plan]").forEach((x) => x.remove());
+    // 🔄 11-10 night: [data-blog-plan] is the "Your website posts" card (client_step02_managed_access_v1 + the posts veto, 11-6), a separate
+    // card that sits ON the access step and lists RGA's queued pages; it is not the step's own state, so it is set aside like the thread
     // 🔑 THE ASK BY ITS STATE, NOT ITS WORDS: a "your move" card (.pm-k5-plan.you / .gcard.you) on a done row is the ask, whatever it
     // says — the word list went blind when the cards were reworded (10-26: "How should we count your calls?", "One tag on your website")
     const you = c.querySelector(".pm-k5-plan.you, .gcard.you");

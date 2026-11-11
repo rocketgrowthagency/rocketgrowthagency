@@ -30,7 +30,7 @@ const EXCUSES = [
   { file: "portal/portal.js", needle: "complete Step 4 to unlock", reason: SETUP_FOUR },
   { file: "portal/portal.js", needle: "Finish the items in Step 4", reason: SETUP_FOUR },
   { file: "portal/portal.js", needle: "Step 2 · Set up payment", reason: SETUP_FOUR },
-  { file: "portal/portal.js", needle: "Step 1 — Connect your Google account", reason: SETUP_FOUR },
+  { file: "portal/portal.js", needle: "Step 1: Connect your Google account", reason: SETUP_FOUR },   // 11-10: the em dash became a colon (check-portal-has-no-em-dash)
   { file: "portal/portal.js", needle: "Complete Step 1 first", reason: SETUP_FOUR },
   // The website access card is built from three numbered PARTS (accPart(1..3)), drawn inside that one card and numbered by it;
   // "Step 2" there means part 2 of the same card on screen, not a position in the checklist.

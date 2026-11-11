@@ -60,6 +60,8 @@ const SURFACES = {
   "netlify/functions/send-monthly-report.js":   ["EXCLUDED", "reports measured KPIs from client_monthly_records; sets and quotes no price"],
   "portal/portal.js":                           ["DERIVED", "sign card, signed meta, preview pill → contract-pricing"],
   "admin/admin.js":                             ["DERIVED", "plan picker + contract list → data/plans.json"],
+  "admin/walkthrough.js":                       ["DERIVED", "walkthrough console Start as a client confirm grid → start-as-client GET (offer-pricing.json + the real founding count)"],
+  "netlify/functions/start-as-client.js":       ["DERIVED", "founding places + the plan's monthly/setup → data/offer-pricing.json, contract-generate FOUNDING_CAP"],
   "netlify/functions/send-confirmation-email.js":["DERIVED", "intro email reads PLANS"],
   "netlify/functions/_fga-report-builder.js":   ["DERIVED", "FGA report offer chips → data/offer-pricing.json (wired 2026-09-10)"],
 

@@ -474,6 +474,8 @@ export const FILES = {
   rankschedule: "netlify/functions/_rank-schedule.js",
   schedulev6js: "admin/schedule.js",   // schedule_system_v6 (11-10)
   schedulev6dlg: "admin/schedule-dialogs.js",
+  rgacalls: "netlify/functions/_rga-calls.js",   // call_names_v1 (11-10): the one table of call names
+  walkthroughbook: "netlify/functions/walkthrough-book.js",
   rankvalidate: "netlify/functions/validate-tracked-keyword.js",
   // reviews_additions_v1 (11-01): replies read back live, the asked-to-reviewed funnel
   replylive: "netlify/functions/_reply-live.js",
