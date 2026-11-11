@@ -116,7 +116,11 @@ for (const row of rows) {
     }
     // 🔴 A draft that ran out of tokens stops mid-sentence and silently drops whole sections. The RGA
     // service page lost its CTA and internal links that way and still read as finished.
-    if (summary.includes('[[TRUNCATED')) {
+    // 11-11: "do not approve" is moot once the change was approved, published AND read back from the live site (status done +
+    // published.checked): RGA's homepage_meta notes were cut off after complete title/meta lines that are live. The price check above
+    // still runs on every draft, published or not.
+    const liveReadBack = t.status === 'done' && t.published && t.published.checked;
+    if (summary.includes('[[TRUNCATED') && !liveReadBack) {
       failures.push(`${key} (client ${String(row.client_id).slice(0, 8)}) is TRUNCATED — sections are missing, do not approve`);
     }
   }
