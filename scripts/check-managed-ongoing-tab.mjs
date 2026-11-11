@@ -134,7 +134,7 @@ try {
       await openRow(h, "m2.exec.review_push");
       has(t, "Not due this month", L);
       const nd = await h.page.evaluate(`(() => { const c = ${TAB}.querySelector('.pm-og-nd'); return c ? c.innerText.replace(/\\s+/g, " ").trim() : ""; })()`);
-      for (const w of ["9Your numbers We ask in the first week of January Next: Jan 1", "11A video this quarter Optional. RGA writes the script first", "Send a video now"]) has(nd, w, `${L} Not due list`);
+      for (const w of ["9Your numbers We ask in the first week of January Next: Jan 1", "11A video this quarter Optional. One video; pick from two scripts RGA writes first", "Send a video now"]) has(nd, w, `${L} Not due list`);
       hasNot(t, "again in the first week", L);
       // step 8, due this week
       const r8 = await rowText(h, "m2.exec.review_push");
