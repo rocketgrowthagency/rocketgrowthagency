@@ -401,6 +401,23 @@ async function checkTree(root, label) {
       if (!/data-og-qskip="skip"/.test(por) || !/data-og-qskip="undo"/.test(por) || !/is-busy/.test(por.slice(por.indexOf("[data-og-qskip]")))) fail("the quarterly review has no spinning Skip this quarter / Book it after all");
       if (!/ccPurpose = \(k\) => [^;]*"~m3"[^;]*"m3_quarterly"/.test(por) || !/purpose: ccPurpose\(clientId\)/.test(por)) fail("the quarterly picker does not book through portal-book-kickoff with purpose m3_quarterly");
       { const text = por.slice(por.indexOf("m3_quarterly: { name")); const seg = text.slice(0, text.indexOf("};")); if (/—/.test(seg)) fail("the quarterly review's client text has an em dash"); }
+      // 8 CONFIRM A REQUESTED CALL (11-11): the client page and the Schedule panel both confirm a requested quarterly review through kickoff-requests (purpose from the held row), orange dialog, spinning, Google's invite is the notice
+      { const adm = rd("admin/admin.js"), cf = dlg.slice(dlg.indexOf("export function openConfirmDialog")), cfEnd = cf.slice(0, cf.indexOf("export function openCancelDialog"));
+        if (!/data-purpose="\$\{purpose\}"/.test(adm) || !/purpose === "m2_monthly" \|\| purpose === "m3_quarterly"/.test(adm)) fail("the client page does not draw a quarterly review request card");
+        if (!/quarterly = purpose === "m3_quarterly"/.test(adm) || !/quarterly \? "quarterly review"/.test(adm)) fail("the client page's Confirm does not call it the quarterly review");
+        if (!/closeoutAdminHtml\("m3_quarterly"\)/.test(adm)) fail("the client page never shows the quarterly review request");
+        if (!/data-cc-answer="confirm"/.test(adm)) fail("the client page has no Confirm for a requested call");
+        if (!/export const canConfirm = [^;]*c\.status === "requested"[^;]*CLIENT_PURPOSE\[c\.kind\]/.test(dlg)) fail("the Schedule cannot tell a requested client call (kickoff, Month 1, monthly, quarterly) from any other");
+        if (!/tone: "outward"/.test(cfEnd) || !/Confirm \$\{CALL_TITLE\[c\.kind\] \|\| "call"\} for \$\{who\}\?/.test(cfEnd) || !/okLabel: "Confirm and send"/.test(cfEnd)) fail("the Schedule's Confirm is not the orange 'Confirm <call> for <business>?' dialog with 'Confirm and send'");
+        if (!/gets a Google invite for \$\{esc\(day\(c\.starts_at\)\)\}, \$\{esc\(clock\(c\.starts_at\)\)\} PT/.test(cfEnd) || !/for them/.test(cfEnd)) fail("the Confirm dialog does not say who gets which invite, in PT and their time");
+        if (!/post\(token, "kickoff-requests", \{ client_id: c\.client_id, start: c\.starts_at, action: "confirm" \}\)/.test(cfEnd)) fail("the Schedule's Confirm does not go through kickoff-requests like the client page");
+        if (/—/.test(cfEnd)) fail("the Confirm dialog has an em dash");
+        if (!/Quarterly review/.test(dlg) || !/quarterly: "Quarterly review"/.test(dlg)) fail("the Confirm dialog has no name for the quarterly review");
+        if (!/data-sch-confirm/.test(sch) || !/openConfirmDialog\(S\.token, cur\)/.test(sch) || !/c\.status === "requested" && !past && canConfirm\(c\)/.test(sch)) fail("a requested call's panel has no Confirm button");
+        if (!/\(c\.status === "booked" \|\| c\.status === "requested"\) && !past && canMove\(c\)/.test(sch)) fail("a requested call's panel lost Reschedule and Cancel");
+        const ko = rd("netlify/functions/kickoff-requests.js");
+        if (!/purpose: req\[0\]\.purpose \|\| "kickoff"/.test(ko)) fail("kickoff-requests does not confirm with the requested call's own purpose (a quarterly confirm would send a kickoff)");
+        if (!/sendUpdates=all/.test(inv)) fail("the invite no longer emails the client (sendUpdates=all)"); }
     });
 
     if (errs.length) fail(`page errors: ${errs.slice(0, 2).join("; ")}`);

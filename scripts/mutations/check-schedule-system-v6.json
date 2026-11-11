@@ -166,5 +166,35 @@
   "portal",
   "<button type=\"button\" class=\"pm-og-ln\" data-og-qskip=\"skip\">Skip this quarter</button>",
   ""
+ ],
+ [
+  "the Schedule panel loses its Confirm button",
+  "schedulev6js",
+  "c.status === \"requested\" && !past && canConfirm(c)",
+  "false"
+ ],
+ [
+  "the Schedule's Confirm sends nothing like the client page",
+  "schedulev6dlg",
+  "await post(token, \"kickoff-requests\", { client_id: c.client_id, start: c.starts_at, action: \"confirm\" });",
+  "await post(token, \"schedule-call-action\", { action: \"confirm\", call_id: c.id });"
+ ],
+ [
+  "the Confirm button is not the orange send dialog",
+  "schedulev6dlg",
+  "okLabel: \"Confirm and send\", cancelLabel: \"Not now\"",
+  "okLabel: \"Confirm\", cancelLabel: \"Not now\""
+ ],
+ [
+  "the client page never shows a quarterly review request",
+  "adminjs",
+  "+ closeoutAdminHtml(\"m3_quarterly\") + callOutcomeHtml(t)",
+  "+ callOutcomeHtml(t)"
+ ],
+ [
+  "the client page calls a quarterly review a Month 1 review",
+  "adminjs",
+  "const callName = quarterly ? \"quarterly review\" : monthly",
+  "const callName = monthly"
  ]
 ]
