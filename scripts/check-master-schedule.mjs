@@ -118,7 +118,7 @@ async function checkTree(root, label) {
   else {
     for (const [re, what] of [[/data-sch-view/, "Day / Week / Month views"], [/data-sch-goto/, "Go to date"], [/data-sch-type/, "the call-type filter"], [/data-sch-who/, "the prospect / client filter"], [/data-sch-block/, "Block time"], [/data-sch-hours/, "Set your hours"],
       [/data-kickoff-grant-freebusy/, "the freebusy grant button"], [/Google Calendar not connected for busy times/, "the not-connected banner"], [/staff\.length >= 2/, "the Showing picker only with 2+ staff"], [/scheduleNavBadge/, "the sidebar badge"],
-      [/Join Meet/, "Join Meet"], [/Reschedule/, "Reschedule"], [/Their portal as they see it/, "Their portal as they see it"], [/Open the console/, "Open the console"], [/read only/, "read-only past dates"], [/sch-cx/, "a cancelled call kept and struck through"]])
+      [/Join Meet/, "Join Meet"], [/Reschedule/, "Reschedule"], [/Their portal \(as they see it\)/, "Their portal as they see it"], [/Open the console/, "Open the console"], [/read only/, "read-only past dates"], [/sch-cx/, "a cancelled call kept and struck through"]])
       if (!re.test(sch)) fail(`the Schedule lacks ${what}`);
   }
   const html = rd("admin/index.html") || "";
