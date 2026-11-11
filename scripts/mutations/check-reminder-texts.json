@@ -3,5 +3,7 @@
  ["a UK number gets texted", "schedulev6remind", "  if (d.length === 11 && d[0] === \"1\") return `+${d}`;\n  return null;", "  if (d.length === 11 && d[0] === \"1\") return `+${d}`;\n  return `+${d}`;"],
  ["texts ignore the switch", "schedulev6remfn", "if (!tk || !C.textsAvailable().on || sent.has(tk)) continue;", "if (!tk || sent.has(tk)) continue;"],
  ["the text is no longer claimed first", "schedulev6remfn", "      if (!(await R.claimReminder(call.id, tk))) { out.alreadySent++; continue; }\n", ""],
- ["the 1h text maps to the 24h text", "schedulev6remind", "email_1h: \"text_1h\"", "email_1h: \"text_24h\""]
+ ["the 1h text maps to the 24h text", "schedulev6remind", "email_1h: \"text_1h\"", "email_1h: \"text_24h\""],
+ ["a text falls back to the contact phone", "schedulev6remfn", "phone: mobile,", "phone: c.primary_contact_phone,"],
+ ["a prospect text falls back to the note phone", "schedulev6remfn", "phone: n.mobile || null", "phone: n.mobile || n.phone"]
 ]

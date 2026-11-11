@@ -30,7 +30,10 @@ must(/async function sendText\(/.test(job) && /api\.openphone\.com\/v1\/messages
 const tb = job.slice(job.indexOf("const tk = C.TEXT_OF[kind]"));
 must(/!C\.textsAvailable\(\)\.on/.test(tb.slice(0, 300)), "a text can go out with texting switched off");
 must(tb.indexOf("claimReminder(call.id, tk)") > -1 && tb.indexOf("claimReminder(call.id, tk)") < tb.indexOf("sendText(to"), "a text is sent before it is claimed (could send twice)");
-must(/primary_contact_phone/.test(job), "the client's phone is never read");
+// reminder_mobile_v1 (11-11): texts go ONLY to clients.reminder_mobile / the prospect note's mobile. Never the contact phone, never the note's phone.
+const who = job.slice(job.indexOf("async function whoIs("), job.indexOf("/** Google"));
+must(who.length > 50 && /reminder_mobile/.test(who) && /n\.mobile/.test(who), "whoIs does not read reminder_mobile / the note mobile");
+must(!/primary_contact_phone/.test(who) && !/n\.phone\b/.test(who), "whoIs falls back to the contact phone or the note phone (RGA's own Quo line would be texted)");
 fs.rmSync(dir, { recursive: true, force: true });
 if (bad.length) { console.log(`❌ ${bad.length} reminder-text problem(s):`); bad.forEach((b) => console.log(`  · ${b}`)); process.exit(1); }
 console.log("✅ reminder texts hold: their clock, STOP line, no em dash, US numbers only, off unless switched on, claimed before sent (nothing sent)");
