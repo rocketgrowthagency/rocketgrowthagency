@@ -16,7 +16,7 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
-import { runGate } from "./lib/site-rev.mjs";
+import { runGate, loader } from "./lib/site-rev.mjs";
 
 const BEFORE = "9a821a73";
 const SHOT = (process.argv.find((a) => a.startsWith("--shot=")) || "").slice(7);
@@ -319,6 +319,64 @@ async function checkTree(root, label) {
       const src = fs.readFileSync(path.join(root, "admin/admin.js"), "utf8");
       if (!/setScheduleBadge\(state\.todoCalls\)/.test(src)) fail("the To do loader does not set the badge (it is empty until the Schedule is opened)");
       if (/const today = new Date\(\)\.toISOString\(\)\.slice\(0, 10\), tm/.test(src)) fail("the To do window is still computed in UTC");
+    });
+
+    // ── v6 leftovers (11-11): history gaps on System health, Recap row, console stamp from Calls, callbacks on the Schedule, M1/monthly/quarterly reminders, quarterly SQL ──
+    await step("10 leftovers", async () => {
+      const rd = (p) => { try { return fs.readFileSync(path.join(root, p), "utf8"); } catch { return ""; } };
+      const rem = rd("netlify/functions/call-reminders.js"), manifest = rd("netlify/functions/_job-manifest.js"), data = rd("netlify/functions/schedule-data.js"), sch = rd("admin/schedule.js"), calls = rd("admin/calls.js");
+      const slots = rd("netlify/functions/_kickoff-slots.js"), recap = rd("netlify/functions/send-kickoff-recap.js"), sql = rd("docs/supabase/SCHEDULE_V6B_2026-11-11.sql");
+      // 1 a booking whose rga_calls write failed reaches System health (the call-reminders job already on the card)
+      if (!/async function historyGapPass/.test(rem) || !/kickoff_slot_holds\?slot_start/.test(rem) || !/rga_calls\?starts_at/.test(rem)) fail("call-reminders does not compare the booking ledger with rga_calls (a failed history write would go unseen)");
+      if (!/if \(!out\.needsSql\) \{ try \{ await historyGapPass\(now, out\)/.test(rem)) fail("the reminder run never calls the history check");
+      if (!/historyGaps/.test(manifest) || !/missing from call history/.test(manifest)) fail("System health's call-reminders line does not say a booking is missing from call history");
+      // 2 the Recap row
+      if (!/recap_sent_at: c\.recap_at/.test(data)) fail("schedule-data does not return recap_sent_at from rga_calls.recap_at");
+      if (!/row\("Recap", `Sent /.test(sch)) fail('the past-call panel has no "Recap · Sent <date>" row');
+      if (!/recap_at: sentAt/.test(recap)) fail("sending the recap does not stamp rga_calls.recap_at, so the Recap row would never show");
+      // 3 the console from the Calls tab stamps console_opened_at (through the same endpoint)
+      const wtOpen = calls.slice(calls.indexOf("data-wt-open]"), calls.indexOf("data-wt-open]") + 1400);
+      if (!/schedule-call-action/.test(wtOpen) || !/action: "console"/.test(wtOpen)) fail("opening the walkthrough console from the Calls tab does not stamp console_opened_at");
+      // 4 scheduled callbacks: gray Intro call blocks on the Schedule and blocked in freeSlots
+      if (!/callbackIntervals/.test(data) || !/kind: "intro"/.test(data) || !/callbacksError/.test(data)) fail("schedule-data does not add scheduled callbacks as Intro call blocks (or hides a failed read)");
+      if (!/callbackIntervals\(from\.getTime\(\), to\.getTime\(\)\)/.test(slots)) fail("freeSlots does not keep a scheduled callback's time out of the pickers");
+      if (!/d\.callbacksError/.test(sch)) fail("a failed callbacks read is not said on the Schedule");
+      try {
+        const req = loader(root);
+        const { callbackIntervals } = req("./netlify/functions/_callback-slots.js");
+        const got = await callbackIntervals(Date.parse("2026-11-12T00:00:00Z"), Date.parse("2026-11-14T00:00:00Z"), async () => [{ id: "a", business: "A Plumbing", phone: "1", due: "2026-11-12", time: { h: 14, min: 30 } }, { id: "b", business: "No time", phone: "2", due: "2026-11-12", time: null }, { id: "c", business: "Far", phone: "3", due: "2026-12-30", time: { h: 9, min: 0 } }]);
+        if (got.length !== 1 || new Date(got[0].start).toISOString() !== "2026-11-12T22:30:00.000Z" || got[0].end - got[0].start !== 30 * 60000) fail(`a callback at 2:30 PM PT on Nov 12 is not the 30-minute block 22:30Z (got ${JSON.stringify(got.map((g) => new Date(g.start).toISOString()))})`);
+        let q = null; try { q = req("./netlify/functions/sales-call-queue.js")._test; } catch { /* needs env */ }
+        if (q) {
+          const t = q.callbackTime("[2026-11-10] [call] Callback scheduled — callback 2026-11-12: callback at 2:30 PM PT"), t2 = q.callbackTime("[x] [call] Callback scheduled: nice (callback 12:05 AM PT)"), t3 = q.callbackTime("[x] [call] Callback scheduled — callback 2026-11-12");
+          if (!t || t.h !== 14 || t.min !== 30) fail("callbackTime does not read 2:30 PM from the note");
+          if (!t2 || t2.h !== 0 || t2.min !== 5) fail("callbackTime reads 12:05 AM wrong");
+          if (t3) fail("callbackTime invents a time from the date");
+        } else if (!/function callbackTime/.test(rd("netlify/functions/sales-call-queue.js"))) fail("sales-call-queue has no callbackTime");
+      } catch (e) { fail(`callback slots do not run: ${String(e.message).slice(0, 120)}`); }
+      // 5 Month 1 review, monthly check-in and quarterly review reminders: 24 h and 1 h, once each, dry-run, no "no reminder" line
+      try {
+        const C = loader(root)("./netlify/functions/_call-reminders.js");
+        for (const kind of ["m1_review", "monthly", "quarterly"]) {
+          const start = new Date(Date.now() + 23 * 3600000).toISOString(), created = new Date(Date.now() - 5 * 86400000).toISOString();
+          const d1 = C.dueEmails({ kind, status: "booked", starts_at: start, created_at: created }, new Date(), new Set());
+          if (d1.join() !== "email_24h") fail(`${kind}: a call 23 hours out should be due email_24h, got [${d1}]`);
+          const soon = new Date(Date.now() + 40 * 60000).toISOString();
+          if (C.dueEmails({ kind, status: "booked", starts_at: soon, created_at: created }, new Date(), new Set(["email_24h"])).join() !== "email_1h") fail(`${kind}: a call 40 minutes out should be due email_1h`);
+          if (C.dueEmails({ kind, status: "booked", starts_at: soon, created_at: created }, new Date(), new Set(["email_24h", "email_1h"])).length) fail(`${kind}: a reminder already sent would go out again`);
+          for (const k of ["email_24h", "email_1h"]) {
+            const m = C.reminderEmail({ kind, starts_at: start }, k, { business: "Beta Roofing", name: "Sam Lee", theirTz: "America/New_York", forClient: true }), t = `${m.subject}\n${m.markup}`;
+            if (/—/.test(t)) fail(`${kind} ${k} email has an em dash`);
+            if (!/Month 1 review|monthly check-in|quarterly review/.test(t)) fail(`${kind} ${k} email does not name the call`);
+          }
+        }
+      } catch (e) { fail(`call reminders do not run: ${String(e.message).slice(0, 120)}`); }
+      if (!/C\.EMAIL_KINDS\.join/.test(rem)) fail("the reminder job still reads only walkthroughs and kickoffs");
+      if (!/dry_run === true/.test(rem) || !/if \(dry\) \{ out\.wouldSend/.test(rem)) fail("the reminder job has no dry run (nothing may be sent while building)");
+      if (rem.indexOf("if (dry) { out.wouldSend") > rem.indexOf("R.claimReminder(call.id, kind)")) fail("the dry run comes after the claim, so a dry run would write the ledger");
+      if (/No reminder email goes out for this call yet/.test(sch)) fail('the panel still says "No reminder email goes out for this call yet"');
+      // 6 the quarterly review's purpose needs the database check to allow it: the SQL file says so (the portal picker waits for it)
+      if (!/check \([^;]*'m3_quarterly'[^;]*\)/.test(sql) || !/kickoff_slot_holds_purpose_check/.test(sql) || !/'walkthrough'/.test(sql) || !/'m2_monthly'/.test(sql)) fail("SCHEDULE_V6B_2026-11-11.sql does not extend the purpose check with m3_quarterly (and keep the others)");
     });
 
     if (errs.length) fail(`page errors: ${errs.slice(0, 2).join("; ")}`);

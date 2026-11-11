@@ -474,6 +474,15 @@ export const FILES = {
   rankschedule: "netlify/functions/_rank-schedule.js",
   schedulev6js: "admin/schedule.js",   // schedule_system_v6 (11-10)
   schedulev6dlg: "admin/schedule-dialogs.js",
+  schedulev6calls: "admin/calls.js",   // v6 leftovers (11-11)
+  schedulev6remind: "netlify/functions/_call-reminders.js",
+  schedulev6remfn: "netlify/functions/call-reminders.js",
+  schedulev6data: "netlify/functions/schedule-data.js",
+  schedulev6cb: "netlify/functions/_callback-slots.js",
+  schedulev6slots: "netlify/functions/_kickoff-slots.js",
+  schedulev6recap: "netlify/functions/send-kickoff-recap.js",
+  schedulev6mf: "netlify/functions/_job-manifest.js",
+  schedulev6sql: "docs/supabase/SCHEDULE_V6B_2026-11-11.sql",
   rgacalls: "netlify/functions/_rga-calls.js",   // call_names_v1 (11-10): the one table of call names
   walkthroughbook: "netlify/functions/walkthrough-book.js",
   rankvalidate: "netlify/functions/validate-tracked-keyword.js",

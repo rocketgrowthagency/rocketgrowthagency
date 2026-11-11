@@ -58,5 +58,77 @@
   "schedulev6js",
   "btn(`/portal/report/?client=${cid}`, \"Their portal\", true)",
   "btn(`/admin/?view=client&id=${cid}&tab=overview`, \"Their portal\", true)"
+ ],
+ [
+  "a failed history write is never looked for",
+  "schedulev6remfn",
+  "if (!out.needsSql) { try { await historyGapPass(now, out); }",
+  "if (false) { try { await historyGapPass(now, out); }"
+ ],
+ [
+  "System health does not say a booking is missing",
+  "schedulev6mf",
+  "missing from call history (the write to rga_calls failed)",
+  "missing"
+ ],
+ [
+  "the Recap row never gets its date",
+  "schedulev6data",
+  "recap_sent_at: c.recap_at || null",
+  "recap_sent_at: null"
+ ],
+ [
+  "the recap send does not stamp the call",
+  "schedulev6recap",
+  "await R.updateCall(k.id, { recap_at: sentAt });",
+  "void 0;"
+ ],
+ [
+  "the console from Calls does not stamp",
+  "schedulev6calls",
+  "action: \"console\", call_id: c.id",
+  "action: \"noop\", call_id: c.id"
+ ],
+ [
+  "a callback is drawn an hour early",
+  "schedulev6cb",
+  "instantAt(c.due, c.time.h, c.time.min, TZ)",
+  "instantAt(c.due, c.time.h - 1, c.time.min, TZ)"
+ ],
+ [
+  "a callback time is not held in the pickers",
+  "schedulev6slots",
+  "callbackIntervals(from.getTime(), to.getTime())",
+  "callbackIntervals(0, 1)"
+ ],
+ [
+  "a monthly check-in gets no reminder",
+  "schedulev6remind",
+  "const EMAIL_KINDS = [\"walkthrough\", \"kickoff\", \"m1_review\", \"monthly\", \"quarterly\"];",
+  "const EMAIL_KINDS = [\"walkthrough\", \"kickoff\"];"
+ ],
+ [
+  "a quarterly review email has an em dash",
+  "schedulev6remind",
+  "subject: `Tomorrow: your ${nm} with Rocket Growth Agency`",
+  "subject: `Tomorrow — your ${nm} with Rocket Growth Agency`"
+ ],
+ [
+  "the dry run sends anyway",
+  "schedulev6remfn",
+  "if (dry) { out.wouldSend.push({ call: call.id, kind: call.kind, reminder: kind }); continue; }",
+  "if (false) { continue; }"
+ ],
+ [
+  "the panel brings back the no-reminder line",
+  "schedulev6js",
+  "if (c.status === \"booked\" && !started && remindable) rows += row(\"Reminders\", rem.length",
+  "if (c.status === \"booked\" && !started) rows += row(\"Reminders\", !remindable ? \"No reminder email goes out for this call yet\" : rem.length"
+ ],
+ [
+  "the quarterly purpose is left out of the SQL",
+  "schedulev6sql",
+  "'walkthrough', 'm3_quarterly'",
+  "'walkthrough'"
  ]
 ]
