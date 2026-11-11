@@ -52,6 +52,7 @@ const SABOTAGE = process.env.SABOTAGE === "1";
 // 🔑 The tokens each EXCLUDED file contained when its excuse was written. NOT a hash — a reader can
 // see what was allowed and why. Adding a token here is a deliberate act with a reason attached.
 const ALLOWED = {
+  "admin/walkthrough.js": ["beta_unbilled"],   // 11-10 night: the plan id on the confirm grid's Beta radio; every figure comes from start-as-client
   "research_notes/Service agreement in depth/service_agreement.md": ["$1,250","$2,500","$5,000","$625","$750","commit_3mo"],
   "research_notes/Video and audit report audit/free_growth_audit.md": ["$1,250","$2,500"],
   "research_notes/Video and audit report audit/video_generator.md": ["$1,250","$2,500","$625","$750"],
