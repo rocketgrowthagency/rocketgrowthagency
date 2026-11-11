@@ -1,0 +1,44 @@
+[
+ [
+  "the tracked-call destination falls back to the contact's cell",
+  "ctprovision",
+  "body.destination_number || client.identity_phone || \"\"",
+  "body.destination_number || client.identity_phone || client.primary_contact_phone || \"\""
+ ],
+ [
+  "the end-of-service number falls back to the contact's cell",
+  "offboarding",
+  "(d.client || {}).identity_phone || \"\"",
+  "(d.client || {}).identity_phone || (d.client || {}).primary_contact_phone || \"\""
+ ],
+ [
+  "the end-of-service line with no business number loses its words",
+  "offboarding",
+  "Real business number unknown: RGA enters it before Google is changed",
+  "A tracking number is on record"
+ ],
+ [
+  "the duplicate-cleanup note is dropped",
+  "dupcleared",
+  "Phone not compared: no business phone on file",
+  "Phone checked"
+ ],
+ [
+  "the step notices compare against the contact's cell",
+  "notifystepopen",
+  ": (client.identity_phone || \"\")",
+  ": (client.identity_phone || client.primary_contact_phone || \"\")"
+ ],
+ [
+  "the tracked-call 400 loses its question",
+  "ctprovision",
+  "Where should tracked calls ring? Enter the business phone first",
+  "No destination number for this client"
+ ],
+ [
+  "account health shows a contact's cell",
+  "aicheck",
+  "Business phone not on file · Add it",
+  "The record has none to compare"
+ ]
+]

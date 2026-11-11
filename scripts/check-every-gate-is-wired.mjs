@@ -461,6 +461,7 @@ const NOT_PREFLIGHT = {
   'check-schedule-system-v6.mjs': 'renders the WEBSITE repo admin Schedule (schedule.js + schedule-dialogs.js) in headless Chrome, opens every control and popup against the approved v6 mockup (11-10), with the browser in Tokyo time to prove Pacific; sends nothing; run by daily-health-check.sh',
   'check-dialog-tone.mjs': 'lifts rgaInferTone from the WEBSITE admin.js and holds dialog kinds both ways (11-10); run by daily-health-check.sh.',
   'check-master-schedule.mjs': 'the WEBSITE repo\'s master schedule (master_schedule_v1 v5, 11-10) on fakes only; run by daily-health-check.sh; it reads no video pipeline output.',
+  'check-business-phone-never-a-contact-cell.mjs': 'static scan of the WEBSITE repo\'s netlify/functions for a contact\'s phone standing in for the business phone, plus the five messages (business_phone_only_v1, 11-11); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-call-names.mjs': 'the WEBSITE repo\'s six call names (call_names_v1, 11-10), a static scan; run by daily-health-check.sh; it reads no video pipeline output.',
   'check-portal-has-no-em-dash.mjs': 'static scan of the WEBSITE repo\'s client portal source for an em dash in client-visible text (11-10); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-the-morning-run.mjs': 'the WEBSITE repo\'s morning run (steps_57_64_v1, 11-9), fakes only (database, runners, search count); run by daily-health-check.sh; it reads no video pipeline output.',
@@ -784,6 +785,8 @@ console.log(`  ✓ every gate that reads the site can be pointed at a copy, so i
       "runs its source rules and fixtures (reminders, the cap, the one-press start, the FAQ) on the website and then on the build's before state (LIVE_BEFORE, default 6c340245), where 10+ must fail or it exits 2 INDETERMINATE; --against=<revision> runs it on any revision.",
     "check-master-schedule.mjs":
       "runs its source rules, zone fixtures and a fake-database double booking (call card and client pick on one slot) on the website and then on the build's before state (LIVE_BEFORE, default 6c340245), where 8+ must fail or it exits 2 INDETERMINATE; --against=<revision> runs it on any revision.",
+    "check-business-phone-never-a-contact-cell.mjs":
+      "scans every netlify function for a fallback from identity_phone to a contact's phone and checks the five messages, on the website and then on the build's before state (LIVE_BEFORE, default df9de9b5), where 6+ must fail (24 on 11-11) or it exits 2 INDETERMINATE; --against=<revision> runs it on any revision.",
     "check-call-names.mjs":
       "scans every client- and admin-visible code line for close-out and a bare Call 1 / Call 2 and checks the six names, on the website and then on the build's before state (LIVE_BEFORE, default 6c340245), where 6+ must fail or it exits 2 INDETERMINATE; --against=<revision> runs it on any revision.",
     "check-portal-has-no-em-dash.mjs":
