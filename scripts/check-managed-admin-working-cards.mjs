@@ -32,6 +32,11 @@ import { JSDOM } from "jsdom";
 // steps_59_63_v1 (59: its message card) + steps_57_64_v1 (61: reads Google and drafts by itself), approved by the owner 11-9, draw differently on purpose
 // 11-9 night fixer: every Monthly row (m2.*) was redrawn on purpose for every mode by monthly_v1 + monthly_fix_v2 + monthly_audit_v2 (all approved 11-9,
 // held by the check-monthly-* gates), so the Month-1/setup proof below stays byte-identical and the Monthly rows are judged by their own gates
+// 11-11 (master map Tier 1, "wrong who tags"): the runners' own SELF lists (shared/steps-57-64, monthly-monthly, -close, -quarter, -health) and the
+// listings check that runs itself; admin.js stepRunsItself reads the same lists, so these tags may change for every client
+const RUNNER_SELF = (() => { const out = new Set(["m1.audit.citations"]); const site = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+  for (const f of ["steps-57-64", "monthly-monthly", "monthly-close", "monthly-quarter", "monthly-health"]) { try { const box = { module: { exports: {} } }; new Function("module", "globalThis", fs.readFileSync(`${site}/shared/${f}.js`, "utf8"))(box.module, {}); for (const id of box.module.exports.SELF || []) out.add(id); } catch { /* none */ } }
+  return out; })();
 const MONTHLY_REDRAWN = (id) => /^m2\./.test(id);
 const CHANGED_ON_PURPOSE = new Set(["m1.review.system", "m1.review.response", "m1.brand.youtube_setup", "m1.gbp.knowledge_panel", "m1.handoff.month2"]);
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
@@ -143,7 +148,7 @@ try {
       const A = world({ mode, src: OLDJS }), B = world({ mode, src: AJS });
       for (const id of ids) for (const actor of ["both", "rga", "client", undefined]) for (const clientFacing of [true, false]) for (const sopType of ["auto", "manual", undefined]) {
         const o = { flowId: id, actor, clientFacing, sopType, hasRunner: false, clientStepNo: 4, managedStepNo: 3, managedRole: "check" };
-        tagN++; if (A.w.__x.kindTag(o) !== B.w.__x.kindTag(o) && id !== "m2.exec.gbp_posts") tagDiff++;   // monthly_audit_v2 (approved 11-9): Google posts is "You + client" (RGA drafts, the client approves)
+        tagN++; if (A.w.__x.kindTag(o) !== B.w.__x.kindTag(o) && id !== "m2.exec.gbp_posts" && !RUNNER_SELF.has(id)) tagDiff++;   // 11-11 master map Tier 1: a step its runner starts AND finishes reads "Runs itself" for every client   // monthly_audit_v2 (approved 11-9): Google posts is "You + client" (RGA drafts, the client approves)
       }
       for (const id of ids) {
         const mk = (W) => { W.host.innerHTML = `<div class="ob-step" data-ob-step="${id}"><div class="ob-body"></div></div>`;   /* a real row has its .ob-body; since monthly_fix_v3 (11-9) a bare queued row gets one made for its More */ W.w.__x.injectSeeClientLinks(W.host, [{ obj: { flowId: id, actor: "both", clientFacing: true, managedStepNo: 3, managedRole: "check", clientStepNo: 4 } }], (o) => W.w.__x.stepKind(o)); return W.host.innerHTML; };

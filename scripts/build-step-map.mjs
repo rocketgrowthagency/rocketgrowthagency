@@ -48,8 +48,7 @@ const admin = rows.map((r) => {
   return { n: r.n, id: r.id, title: clean(r.title) || d.title || r.id, who, client: d.clientStepNo || null, clientLabel: d.clientLabel || null, what: WHAT.admin[r.id] || "", month: d.month || (String(r.id).startsWith("m1.") ? "month1" : "month2plus") };
 });
 const month1 = admin.filter((a) => a.month === "month1");
-// 🔒 MONTHLY NUMBERS NEVER MOVE (approved monthly_audit_v2 + mature_account_health_v1, shared/monthly-sections.js APPENDED): a step added
-// after the first 25 is numbered 26, 27 … although it sits mid-list, so the page prints 1–13, 26, 27, 21–25. And the "Every quarter"
+// 🔒 MONTHLY NUMBERS RUN IN SECTION ORDER (11-11, master map Tier 1; before that monthly_audit_v2 appended 26, 27 … mid-list). The "Every quarter"
 // section (outside months 3, 6, 9 …) and "Account health" (before Month 4) are folded, so their steps draw no .ob-step row at all.
 // 🔑 So the sheet lists Monthly BY NUMBER, every step, and a step the page does not draw this month gets its number from the SAME
 // rule the admin numbers with (obMonthlyPageNumbers over shared/monthly-sections.js) — trusted only if that rule reproduces EVERY
@@ -62,35 +61,53 @@ const monthlyRule = (() => {
   const list = (play.month2plus && (play.month2plus.steps || play.month2plus)) || [], ids = list.map((s) => s.id), app = M.APPENDED || [];
   const order = []; for (const sec of M.SECTIONS) for (const id of sec.ids) if (ids.includes(id) && !order.includes(id)) order.push(id);
   for (const id of ids) if (!order.includes(id)) order.push(id);
-  const num = new Map(); let n = 0;
-  order.filter((id) => !app.includes(id)).forEach((id) => num.set(id, ++n));
-  app.forEach((id) => { if (ids.includes(id)) num.set(id, ++n); });
+  // 🔄 11-11 (master map Tier 1): the admin numbers in section order (obMonthlyPageNumbers). Until that build is live the page still prints the
+  // retired rule (APPENDED numbered last). 🔑 THE PAGE DECIDES: of the two, the one that reproduces EVERY number the page printed fills the folded
+  // steps; if neither does, the sheet is not rebuilt. The sheet always says which rule the live page uses.
+  const section = new Map(); let n = 0; order.forEach((id) => section.set(id, ++n));
+  const appended = new Map(); n = 0; order.filter((id) => !app.includes(id)).forEach((id) => appended.set(id, ++n)); app.forEach((id) => { if (ids.includes(id)) appended.set(id, ++n); });
   const sec = (id) => (M.SECTIONS.find((s) => s.ids.includes(id)) || M.SECTIONS[M.SECTIONS.length - 1]);
-  return { num, sec };
+  return { rules: { "section order": section, "appended (retired 11-11)": appended }, num: section, name: "section order", sec };
 })();
+// the same lists admin.js stepRunsItself reads (11-11): a step its runner starts AND finishes reads "Runs itself"
+const SELF_IDS = (() => { const out = new Set(); for (const f of ["steps-57-64", "monthly-monthly", "monthly-close", "monthly-quarter", "monthly-health"]) {
+  try { const box = { module: { exports: {} } }; new Function("module", "globalThis", fs.readFileSync(`${SITE}/shared/${f}.js`, "utf8"))(box.module, {}); for (const id of box.module.exports.SELF || []) out.add(id); } catch { /* a missing list adds nothing */ } }
+  return out; })();
+const runsItselfById = (id) => SELF_IDS.has(id);
 const monthlyShown = admin.filter((a) => a.month !== "month1");
 const monthlyBad = [];
 if (!monthlyRule) monthlyBad.push("shared/monthly-sections.js couldn't be read, so a folded Monthly step has no number");
-else for (const a of monthlyShown) if (Number(a.n) !== monthlyRule.num.get(a.id)) monthlyBad.push(`Monthly ${a.id}: the page prints ${a.n}, the numbering rule says ${monthlyRule.num.get(a.id)}`);
+else {
+  const fits = Object.entries(monthlyRule.rules).find(([, num]) => monthlyShown.every((a) => Number(a.n) === num.get(a.id)));
+  if (fits) { monthlyRule.name = fits[0]; monthlyRule.num = fits[1]; }
+  else for (const a of monthlyShown) if (Number(a.n) !== monthlyRule.num.get(a.id)) monthlyBad.push(`Monthly ${a.id}: the page prints ${a.n}, the section-order rule says ${monthlyRule.num.get(a.id)} (and the retired rule disagrees too)`);
+}
 const monthly = monthlyRule ? [...monthlyShown, ...[...monthlyRule.num.keys()].filter((id) => !monthlyShown.some((a) => a.id === id)).map((id) => {
   const d = defs.get(id) || {};
-  return { n: String(monthlyRule.num.get(id)), id, title: `${d.title || id} (folded this month: ${monthlyRule.sec(id).name})`, who: whoOf(d), client: d.clientStepNo || null, clientLabel: d.clientLabel || null, what: WHAT.admin[id] || "", month: "month2plus" };
+  return { n: String(monthlyRule.num.get(id)), id, title: `${d.title || id} (folded this month: ${monthlyRule.sec(id).name})`, who: runsItselfById(id) && d.actor !== "client" ? "Runs itself" : whoOf(d), client: d.clientStepNo || null, clientLabel: d.clientLabel || null, what: WHAT.admin[id] || "", month: "month2plus" };
 })].sort((a, b) => Number(a.n) - Number(b.n)) : monthlyShown;
 const client = [...defs.values()].filter((d) => d.clientStepNo).sort((a, b) => a.clientStepNo - b.clientStepNo).map((d) => {
   const a = admin.find((x) => x.id === d.id);
   return { n: d.clientStepNo, id: d.id, label: d.clientLabel || d.title, what: WHAT.client[d.id] || "", admin: a ? a.n : null, adminMonth: a ? a.month : null };
 });
 
-// 🔒 MANAGED MODE (approved client_portal_slim_v1 + client_portal_slim_visual_v1, 11-4): the same client steps by their managed number,
-// read from the published client-steps.json, since managed step 3 "Check what we found" is not a playbook step (admin numbers stay).
+// 🔒 MANAGED MODE, AS THE LIVE PORTAL PRINTS IT (11-11, master map Tier 1: the section said "being built, no client uses it" with 1–12 long after
+// setup_vs_month1_v1). Every number comes from shared/portal-mode.js stepNo, the one rule the portal prints with: Getting started 1–3 (step 3 is
+// "Check what we found", client-steps.json managed.check); Month 1 work (photos, review asks, videos, the Month 1 review) is a line in the Month 1
+// card on Ongoing work with NO number; the Monthly cards print what stepNo gives them.
 const CS = JSON.parse(fs.readFileSync(`${SITE}/data/playbooks/client-steps.json`, "utf8"));
-const ROLE_WORDS = { check: "a row in managed step 3", card: "an RGA card, no number", setup: "part of a Setup step, as today", step: "a step with no number, as today" };
+const PMODE = (() => { const box = { module: { exports: {} } }; new Function("module", "globalThis", fs.readFileSync(`${SITE}/shared/portal-mode.js`, "utf8"))(box.module, {}); return box.module.exports; })();
+const ROLE_WORDS = { check: "a row in managed step 3", card: "an RGA card, no number", setup: "part of a Setup step", step: "a step with no number" };
 const managedRows = (() => {
   const all = [...(CS.month1 || []), ...(CS.month2plus || [])], chk = CS.managed && CS.managed.check;
-  const numbered = [...all.filter((d) => d.managedStepNo != null), ...(chk ? [{ ...chk, clientStepNo: null }] : [])].sort((a, b) => a.managedStepNo - b.managedStepNo);
-  const rest = all.filter((d) => d.managedStepNo == null).sort((a, b) => ["check", "card", "setup", "step"].indexOf(a.managedRole) - ["check", "card", "setup", "step"].indexOf(b.managedRole) || (a.clientStepNo || 99) - (b.clientStepNo || 99));
-  return [...numbered.map((d) => ({ n: d.managedStepNo, id: d.id, label: d.managedLabel || d.clientLabel, becomes: d.id === "managed.check_found" ? `one step for ${d.covers.length} of today's: ${d.covers.map((id) => (all.find((x) => x.id === id) || {}).clientStepNo).join(", ")}` : "a numbered step", today: d.clientStepNo ?? "new" })),
-    ...rest.map((d) => ({ n: "", id: d.id, label: d.managedLabel || d.clientLabel, becomes: ROLE_WORDS[d.managedRole] || "", today: d.clientStepNo ?? "" }))];
+  const noOf = (d) => (d.id === "managed.check_found" ? Number(d.managedStepNo) : PMODE.stepNo(d, "managed"));
+  const withNo = [...all, ...(chk ? [{ ...chk, clientStepNo: null }] : [])].map((d) => ({ d, n: noOf(d) }));
+  const numbered = withNo.filter((x) => x.n != null).sort((a, b) => a.n - b.n);
+  const month1Work = new Set(PMODE.MONTH1_WORK || []);
+  const rest = withNo.filter((x) => x.n == null).map((x) => x.d).sort((a, b) => (month1Work.has(b.id) - month1Work.has(a.id)) || ["check", "card", "setup", "step"].indexOf(a.managedRole) - ["check", "card", "setup", "step"].indexOf(b.managedRole) || (a.clientStepNo || 99) - (b.clientStepNo || 99));
+  const where = (d) => (/^m2\./.test(d.id) ? "a Monthly card on Ongoing work" : "Getting started (Setup)");
+  return [...numbered.map(({ d, n }) => ({ n, id: d.id, label: PMODE.stepLabel(d, "managed") || d.clientLabel, becomes: d.id === "managed.check_found" ? `Getting started: one step for ${d.covers.length} checks (today's ${d.covers.map((id) => (all.find((x) => x.id === id) || {}).clientStepNo).join(", ")})` : where(d), today: d.clientStepNo ?? "new" })),
+    ...rest.map((d) => ({ n: "", id: d.id, label: PMODE.stepLabel(d, "managed") || d.clientLabel, becomes: month1Work.has(d.id) ? "Month 1 work: a line in the Month 1 card on Ongoing work, no number" : (ROLE_WORDS[d.managedRole] || ""), today: d.clientStepNo ?? "" }))];
 })();
 
 // what the client also sees with no step number: approvals and asks tied to an admin step, plus the cards that aren't steps at all (data/playbooks/what-it-does.json clientCards)
@@ -108,7 +125,9 @@ if (!month1.some((a) => a.id === "m1.gbp.photos")) bad.push("the photo step isn'
 if (client.length < 10 || client.some((c, i) => c.n !== i + 1)) bad.push("the client numbers don't run 1, 2, 3 in order");
 bad.push(...monthlyBad);
 if (monthly.some((a, i) => Number(a.n) !== i + 1)) bad.push("the Monthly numbers aren't 1 to N, each once");
-{ const mn = managedRows.filter((r) => r.n !== "").map((r) => r.n); if (mn.length < 10 || mn.some((n, i) => n !== i + 1)) bad.push("the managed client numbers don't run 1, 2, 3 in order"); }
+// the managed portal: Getting started is 1, 2, 3; a gap after it (Month 1 work has no number) is printed as it is and said under the table
+{ const mn = managedRows.filter((r) => r.n !== "").map((r) => r.n); if (mn.slice(0, 3).join() !== "1,2,3" || new Set(mn).size !== mn.length) bad.push("the managed Getting started numbers aren't 1, 2, 3, or a managed number is used twice"); }
+const managedGap = (() => { const mn = managedRows.filter((r) => r.n !== "").map((r) => r.n); const gaps = mn.filter((n, i) => i && n !== mn[i - 1] + 1); return gaps.length ? `The live managed portal prints ${mn.join(", ")}: after Getting started the numbers jump to ${gaps[0]} (Month 1 work has no number). Renumbering is Chris's call.` : ""; })();
 if (bad.length) { console.error(`🔴 the step map came out wrong, the old one stays:\n${bad.map((b) => `   · ${b}`).join("\n")}`); process.exit(1); }
 
 // planned work, so a proposal can't be forgotten and its effect on the numbers is written down before anything moves
@@ -144,10 +163,11 @@ ${client.map((c) => `| ${c.n} | ${c.label} | ${c.what.replace(/\|/g, "/")} | ${a
 |---|---|---|---|
 ${clientUnnumbered.map((c) => `| ${c.label} | ${c.what.replace(/\|/g, "/")} | ${c.admin ? adminLabel(c) : "none"} | \`${c.id}\` |`).join("\n")}
 
-## Managed client portal (approved 11-4, being built; no client uses it yet)
-| Managed step | Title | Becomes | Today's client step | id |
+## Managed client portal (live: RGA's clients default to managed, setup_vs_month1_v1 11-10)
+| Managed step | Title | Where it is | Self-serve client step | id |
 |---|---|---|---|---|
 ${managedRows.map((r) => `| ${r.n} | ${r.label} | ${r.becomes} | ${r.today} | \`${r.id}\` |`).join("\n")}
+${managedGap ? `\n${managedGap}\n` : ""}
 
 ## Admin portal · Month 1
 | Admin step | Title | What it does | Who | Client step | id |
@@ -155,6 +175,8 @@ ${managedRows.map((r) => `| ${r.n} | ${r.label} | ${r.becomes} | ${r.today} | \`
 ${month1.map((a) => `| ${a.n} | ${a.title} | ${a.what.replace(/\|/g, "/")} | ${a.who} | ${a.client ?? ""} | \`${a.id}\` |`).join("\n")}
 
 ## Admin portal · Monthly
+Numbered by the live page's rule: ${monthlyRule ? monthlyRule.name : "unknown"}.
+
 | Admin step | Title | What it does | Who | Client step | id |
 |---|---|---|---|---|---|
 ${monthly.map((a) => `| ${a.n} | ${a.title} | ${a.what.replace(/\|/g, "/")} | ${a.who} | ${a.client ?? ""} | \`${a.id}\` |`).join("\n")}
@@ -179,7 +201,7 @@ section{background:var(--paper);border:1px solid var(--line);border-radius:16px;
 <section><h2>Approved, not built yet</h2><p class="lede">None of these has a number yet. A new step gets its number when it's built, and then this page updates itself.</p>${table(["What", "Where", "Effect on numbers"], proposed.map((x) => [`<a href="${esc(x.url)}">${esc(x.name)}</a>`, esc(x.where), esc(x.numbers)]))}</section>
 <section><h2>Client portal (${client.length} steps)</h2>${table(["Client step", "What it is", "Admin step"], client.map((c) => [c.n, `${esc(c.label)}${c.what ? `<small>${esc(c.what)}</small>` : ""}`, esc(adminLabel(c))]))}</section>
 <section><h2>Client portal, no number (${clientUnnumbered.length} cards)</h2><p class="lede">The client sees these too, as approvals, asks or standing cards. They carry no step number.</p>${table(["Client portal shows", "Admin step"], clientUnnumbered.map((c) => [`${esc(c.label)}${c.what ? `<small>${esc(c.what)}</small>` : ""}`, c.admin ? esc(adminLabel(c)) : "none"]))}</section>
-<section><h2>Managed client portal (${managedRows.filter((r) => r.n !== "").length} steps)</h2><p class="lede">Approved Nov 4 and being built. No client uses it yet; every client sees the steps above until RGA chooses managed for them.</p>${table(["Managed step", "What it is", "Becomes", "Today's step"], managedRows.map((r) => [r.n, esc(r.label), esc(r.becomes), esc(r.today)]))}</section>
+<section><h2>Managed client portal (${managedRows.filter((r) => r.n !== "").length} numbered)</h2><p class="lede">Live: RGA's clients see this portal. Getting started is numbered 1 to 3; Month 1 work is a line in the Month 1 card on Ongoing work with no number.${managedGap ? ` ${esc(managedGap)}` : ""}</p>${table(["Managed step", "What it is", "Where it is", "Self-serve step"], managedRows.map((r) => [r.n, esc(r.label), esc(r.becomes), esc(r.today)]))}</section>
 <section><h2>Admin portal · Month 1 (${month1.length} steps)</h2>${table(["Admin step", "Title and what it does", "Who", "Client step"], month1.map((a) => [a.n, `${esc(a.title)}${a.what ? `<small>${esc(a.what)}</small>` : ""}`, esc(a.who), a.client ?? ""]))}</section>
 <section><h2>Admin portal · Monthly (${monthly.length} steps)</h2>${table(["Admin step", "Title and what it does", "Who", "Client step"], monthly.map((a) => [a.n, `${esc(a.title)}${a.what ? `<small>${esc(a.what)}</small>` : ""}`, esc(a.who), a.client ?? ""]))}</section>
 </div>

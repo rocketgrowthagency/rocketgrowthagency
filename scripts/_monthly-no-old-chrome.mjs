@@ -68,8 +68,9 @@ export function oldChromeFailures(SITE) {
   has(js, "o.flowId === \"m2.exec.gbp_posts\" ? \"both\"", "AUDIT 4: Google posts is not tagged You + client");
   const sec = rd("shared/monthly-sections.js"), mm = rd("shared/monthly-monthly.js");
   has(sec, "\"m2.exec.profile_watch\", \"m2.exec.tracking_check\"", "AUDIT 7/8: the two new steps are not in Once a month");
-  has(sec, "const APPENDED", "AUDIT 7/8: the new steps are not numbered after the existing 25");
-  has(js, "app.forEach((id) =>", "AUDIT 7/8: the admin does not number the appended steps 26 and 27");
+  // 🔄 11-11 (master map Tier 1): shared/monthly-sections.js declares how the Monthly is numbered (NUMBERING); the admin must number that way
+  if (/const NUMBERING = "section";/.test(sec)) has(js, "let n = 0; obMonthlyOrder(steps).forEach((i) => m.set(i, ++n));", "monthly-sections declares section order, but the admin's Monthly numbers don't run that way");
+  else { has(sec, "const APPENDED", "AUDIT 7/8: the new steps are not numbered after the existing 25"); has(js, "app.forEach((id) =>", "AUDIT 7/8: the admin does not number the appended steps 26 and 27"); }
   has(mm, "[ID.NUMBERS]: \"This month so far\"", "AUDIT 5: step 8 is not called This month so far");
   has(mm, "partial · updated", "AUDIT 5: step 8 does not say partial and updated");
   has(rd("netlify/functions/_monthly-once.js"), "nowMs - Date.parse(sf.at) >= 7 * 86400000", "AUDIT 5: the month-to-date numbers are not refreshed weekly");

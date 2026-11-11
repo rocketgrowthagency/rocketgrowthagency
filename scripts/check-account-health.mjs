@@ -122,12 +122,20 @@ async function runtimeCases() {
   // the numbering: appended, never renumbered. Mirror of admin.js obMonthlyPageNumbers over the playbook (the admin source anchor is checked below).
   {
     const PB = JSON.parse(fs.readFileSync(`${SITE}/data/playbooks/playbooks.json`, "utf8")).month2plus, app = MS.APPENDED, num = new Map();
-    let n = 0; MS.SECTIONS.flatMap((s) => s.ids).filter((id) => !app.includes(id)).forEach((id) => num.set(id, ++n)); app.forEach((id) => num.set(id, ++n));
-    const want = { "m2.report.freeze": 21, "m2.report.generate": 22, "m2.report.deliver": 23, "m2.call.monthly": 24, "m2.handoff.next_month": 25, "m2.exec.profile_watch": 26, "m2.exec.tracking_check": 27,
-      "m2.health.churn_risk": 28, "m2.health.upsell": 29, "m2.health.referral_ask": 30, "m2.quarter.letter": 31, "m2.quarter.grow_plan": 32, "m2.quarter.ai_check": 33 };
+    // 🔄 11-11 (Chris's master map Tier 1, "Admin Monthly numbers out of order"): shared/monthly-sections.js DECLARES the rule (NUMBERING). "section" =
+    // 1..N in SECTIONS order, folded sections included; no declaration = the retired monthly_audit_v2 rule (APPENDED numbered last), until that build ships.
+    const SECTION_RULE = MS.NUMBERING === "section";
+    let n = 0;
+    if (SECTION_RULE) MS.SECTIONS.flatMap((s) => s.ids).forEach((id) => num.set(id, ++n));
+    else { MS.SECTIONS.flatMap((s) => s.ids).filter((id) => !app.includes(id)).forEach((id) => num.set(id, ++n)); app.forEach((id) => num.set(id, ++n)); }
+    const want = !SECTION_RULE ? { "m2.report.freeze": 21, "m2.report.generate": 22, "m2.report.deliver": 23, "m2.call.monthly": 24, "m2.handoff.next_month": 25, "m2.exec.profile_watch": 26, "m2.exec.tracking_check": 27,
+      "m2.health.churn_risk": 28, "m2.health.upsell": 29, "m2.health.referral_ask": 30, "m2.quarter.letter": 31, "m2.quarter.grow_plan": 32, "m2.quarter.ai_check": 33 } : { "m2.exec.profile_watch": 14, "m2.exec.tracking_check": 15, "m2.quarter.letter": 23, "m2.quarter.grow_plan": 24, "m2.quarter.ai_check": 25,
+      "m2.health.churn_risk": 26, "m2.health.upsell": 27, "m2.health.referral_ask": 28, "m2.report.freeze": 29, "m2.report.generate": 30, "m2.report.deliver": 31, "m2.call.monthly": 32, "m2.handoff.next_month": 33 };
     for (const [id, w] of Object.entries(want)) if (num.get(id) !== w) fail(`numbering · ${id} should be step ${w}, the page would print ${num.get(id)}`);
     if (PB.length !== 33 || n !== 33) fail(`numbering · the Monthly has ${PB.length} steps (${n} numbered), expected 33`);
-    if (!/const M = globalThis\.rgaMonthly, app = \(M && M\.APPENDED\) \|\| \[\]/.test(fs.readFileSync(`${SITE}/admin/admin.js`, "utf8"))) fail("numbering · admin.js obMonthlyPageNumbers no longer numbers APPENDED last (the gate mirrors it)");
+    const adm = fs.readFileSync(`${SITE}/admin/admin.js`, "utf8");
+    if (SECTION_RULE && !/let n = 0; obMonthlyOrder\(steps\)\.forEach\(\(i\) => m\.set\(i, \+\+n\)\);/.test(adm)) fail("numbering · shared/monthly-sections.js declares section order, but admin.js obMonthlyPageNumbers doesn't number that way");
+    if (!SECTION_RULE && !/const M = globalThis\.rgaMonthly, app = \(M && M\.APPENDED\) \|\| \[\]/.test(adm)) fail("numbering · admin.js obMonthlyPageNumbers no longer numbers APPENDED last (the gate mirrors it)");
     for (const id of SIX) { const s = PB.find((x) => x.id === id); if (!s || s.hasRunner) fail(`no Run button · ${id} has a runner`); }
   }
   // Months 3, 4, 5, 6, 12: Account health from Month 4; the added quarter steps in a quarter month only; the count follows
