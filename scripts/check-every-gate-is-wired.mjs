@@ -466,6 +466,7 @@ const NOT_PREFLIGHT = {
   'check-account-health.mjs': 'the WEBSITE repo\'s Account health (Monthly 28-30) and the added quarter steps (31-33) (mature_account_health_v1, 11-10), fakes only (no network, no email, no model, no Google); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-monthly-quarter.mjs':'the WEBSITE repo\'s Every quarter (monthly_s4_quarterly_v1, 11-9), fakes only (no network, no email, no search, no Google write); run by daily-health-check.sh; it reads no video pipeline output.',
   'check-monthly-before-january.mjs': 'the WEBSITE repo\'s Monthly before January (monthly_before_january_v1, 11-9), fakes only (no network, no email, no search, no Google write); run by daily-health-check.sh; it reads no video pipeline output.',
+  'check-supabase-security-advisor.mjs': 'reads Supabase\'s own security advisor (read-only Management API) + our SQL files (11-10 kickoff_slot_holds had RLS off); no write; run by daily-health-check.sh; it reads no video pipeline output.',
   'check-scheduled-jobs-find-claude.mjs': 'reads this Mac\'s launchd schedules (11-10 weekly audit "claude not found") and runs only `command -v claude` with each plist\'s PATH; no write; run by daily-health-check.sh; it reads no video pipeline output.',
   'check-email-engagement-is-counted.mjs': 'the WEBSITE repo\'s email engagement rules (11-10: Gmail opens dropped, clickers suppressed as non-openers, Calls lost them), fakes only (no Airtable, no network); it proves itself against the before state; run by daily-health-check.sh; it reads no video pipeline output.',
   'check-every-outreach-link-resolves.mjs': 'live check of the outreach EMAILS\' page links (11-10: /growth-audit/ 404\'d for 10 days), reads the Apps Script copy in the website repo and fetches each page on the live site; no write (function URLs skipped); run by daily-health-check.sh; it reads no video pipeline output.',
@@ -756,6 +757,8 @@ console.log(`  ✓ every gate that reads the site can be pointed at a copy, so i
     "check-every-identity-points-at-rga.mjs":
       "reads live credential state (git, ssh, gh, netlify, gcloud); no file for a mutation to change. "
       + "Proves itself by parsing known output and exiting 2 when its own reading is wrong.",
+    "check-supabase-security-advisor.mjs":
+      "reads the LIVE Supabase advisor, so no file copy can be mutated; proven 11-10 red on the real findings (kickoff_slot_holds RLS off, client_change_effect security definer) before the fix SQL ran. No token or API = INDETERMINATE (exit 2).",
     "check-scheduled-jobs-find-claude.mjs":
       "reads the live launchd plists and resolves claude with each one's own PATH, so no file copy can be mutated; proven 11-10 by removing the find-claude.sh line from weekly-audit.sh (exit 1) and restoring it (exit 0). No plist or no install = INDETERMINATE (exit 2).",
     "check-email-engagement-is-counted.mjs":
