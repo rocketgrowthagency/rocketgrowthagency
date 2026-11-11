@@ -54,7 +54,9 @@ const found = [];
 const walk = (obj, clientId, trail = []) => {
   if (!obj || typeof obj !== 'object') return;
   for (const [k, v] of Object.entries(obj)) {
-    if (ERRORY.test(k) && v !== null && v !== '' && v !== false) {
+    // 11-11: an EMPTY list or object is "no failures" (auto_send.failed [] / rank_grid.failed_pins []), not a failure; 8 of 15 hits were these
+    const empty = (Array.isArray(v) && !v.length) || (v && typeof v === 'object' && !Array.isArray(v) && !Object.keys(v).length);
+    if (ERRORY.test(k) && v !== null && v !== '' && v !== false && !empty) {
       found.push({ client: nameOf(clientId), field: [...trail, k].join('.'), value: String(typeof v === 'object' ? JSON.stringify(v) : v).replace(/\s+/g, ' ').slice(0, 130) });
     } else if (v && typeof v === 'object' && trail.length < 3) {
       walk(v, clientId, [...trail, k]);
