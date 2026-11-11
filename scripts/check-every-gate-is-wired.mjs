@@ -458,6 +458,7 @@ const NOT_PREFLIGHT = {
   'check-setup-vs-month1.mjs': 'the WEBSITE repo\'s Getting started / Month 1 split (setup_vs_month1_v1, 11-10): shared/setup-split.js fixtures, the open-moves rules, the skip endpoint and the real portal drawn in headless chrome on our fake database; run by daily-health-check.sh; it reads no video pipeline output.',
   'check-call-to-client.mjs': 'the WEBSITE repo\'s call-to-client build (call_to_client_v1 + call2_console_v1, 11-10) on fakes only (database, Google, Airtable); run by daily-health-check.sh; it sends nothing and reads no video pipeline output.',
   'check-schedule-matches-mockup.mjs': 'renders the WEBSITE repo admin Schedule tab in headless Chrome and compares it with the approved mockup (11-10); run by daily-health-check.sh; no live data.',
+  'check-dialog-tone.mjs': 'lifts rgaInferTone from the WEBSITE admin.js and holds dialog kinds both ways (11-10); run by daily-health-check.sh.',
   'check-master-schedule.mjs': 'the WEBSITE repo\'s master schedule (master_schedule_v1 v5, 11-10) on fakes only; run by daily-health-check.sh; it reads no video pipeline output.',
   'check-call-names.mjs': 'the WEBSITE repo\'s six call names (call_names_v1, 11-10), a static scan; run by daily-health-check.sh; it reads no video pipeline output.',
   'check-portal-has-no-em-dash.mjs': 'static scan of the WEBSITE repo\'s client portal source for an em dash in client-visible text (11-10); run by daily-health-check.sh; it reads no video pipeline output.',
