@@ -13,11 +13,14 @@
 //      (or why it never persists). A new one nobody declared fails: that is the guard against the next writer.
 //   2. Each declared clear is still in the code.
 //   3. Both merge rules (flow-execute + admin), RUN: an errored step that then finishes comes out with no error.
+//   4. (11-11) The website steps' shared clear (SC.supersedeFailures), RUN: a success moves auto_failed (and, set aside,
+//      auto_send.failed) into the step's `superseded` list; every success path that calls it is declared under clearIn.
 // The rule the healer already follows (heal-onboarding-errors): clear a failure only on PROOF — a real success.
 // exit 0 = no stored failure can outlive the success that supersedes it · 1 = one can · 2 = can't tell
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 import fs from "node:fs";
 import vm from "node:vm";
+import { createRequire } from "node:module";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const FN = `${SITE}/netlify/functions`;
@@ -33,7 +36,17 @@ const DECLARED = {
     // publish_failure_shows_v1 (11-8): a refused snapshot / pull request / merge, scoped to its version (every reader checks publish_failed.v ===
     // site_change.v), DELETED by admin-deliverables when the pull request opens or merges; a merged change never reads as stuck (wcStuck)
     publish_failed: { why: "scoped to the change's version; cleared in admin-deliverables open_pr / merge_pr (delete t.publish_failed), and wcStuck ignores it once merged" },
-    auto_failed: { why: "scoped to the run it describes: every reader (SC.autoMove, planStep) uses it only while auto_failed.run === the step's ran_at, so a later run supersedes it without a delete" },
+    // 11-11: scoped to its run (every reader uses it only while auto_failed.run === ran_at), AND cleared on every success: a draft saved,
+    // "nothing needs changing" (by RGA, or a run that found it already right), the change marked live. Scoping alone left RGA's 8 stored
+    // failures under later successes for days, and check-onboarding-errors-surfaced stayed red on all 8.
+    auto_failed: { clearIn: {
+      "admin-deliverables.js": [
+        /SC\.supersedeFailures\(t, \{ at: now, by: who, why: "a draft was saved" \}\);/,
+        /SC\.supersedeFailures\(t, \{ at: now, by: who, why: "nothing needed changing", setAside: true \}\);/,
+        /SC\.supersedeFailures\(t, \{ at: now, by: who, why: "the change went live", setAside: true \}\);/,
+      ],
+      "flow-execute.js": [/\.\.\.\(supersededPatch \|\| \{\}\),/],
+    } },
   },
   "refresh-review-metrics.js": {
     profile_error: { why: "response only (the run's result row), never stored — the snapshot holds only a measured count" },
@@ -72,6 +85,8 @@ const DECLARED = {
     failed_at: { clear: "mergeTaskState" },
   },
   "flow-execute.js": {
+    // 11-11: written only as `auto_failed: null`, the run that found the step already right clearing the old one (SiteChange.supersedeFailures)
+    auto_failed: { clear: /supersededPatch = \{ auto_failed: null, superseded: prevT\.superseded,/ },
     anchor_read_error: { why: "part of one run's output, replaced whole by the next run" },
     locked_read_error: { why: "part of one run's output, replaced whole by the next run" },
   },
@@ -114,6 +129,11 @@ for (const f of files) {
     const d = DECLARED[f] && DECLARED[f][k];
     if (!d) { fail(`${f} stores \`${k}\` and nothing says how a later success clears it — declare it here, with the clear (or why it never persists)`); continue; }
     if (d.clear instanceof RegExp && !d.clear.test(src)) fail(`${f}: a success no longer clears \`${k}\` (it would read as current under every later success)`);
+    // a field one writer stores and OTHER files clear on their success paths (each path listed)
+    for (const [cf, res] of Object.entries(d.clearIn || {})) {
+      let csrc = ""; try { csrc = code(fs.readFileSync(`${FN}/${cf}`, "utf8")); } catch { fail(`${f}: \`${k}\` is cleared in ${cf}, which is gone — re-read this gate`); continue; }
+      for (const re of res) if (!re.test(csrc)) fail(`${cf}: a success path no longer clears \`${k}\` from ${f} (${String(re).slice(1, 70)}…)`);
+    }
   }
 }
 if (found < 5) { console.error(`⚠️  INDETERMINATE — only ${found} failure fields found; the scan no longer sees the writers`); process.exit(2); }
@@ -138,6 +158,24 @@ for (const [where, rel] of [["flow-execute", "netlify/functions/flow-execute.js"
   if (own.error !== null) fail(`${where}: a patch that sets the field itself no longer wins (the patch must override)`);
   const touch = ctx.m(errored, { notes: "x" });
   if (touch.error !== "Calendar 500") fail(`${where}: a patch that is not a success cleared the failure (only proof clears it)`);
+}
+
+// ── 4 · the shared clear, run: a success moves the automatic failure (and, set aside, the waiting draft's failed checks) into `superseded` ──
+{
+  let SCx = null;
+  try { SCx = createRequire(import.meta.url)(`${SITE}/shared/site-change.js`); } catch (e) { console.error(`⚠️  INDETERMINATE — cannot load shared/site-change.js (${String(e.message).slice(0, 80)})`); process.exit(2); }
+  if (typeof SCx.supersedeFailures !== "function") fail("shared/site-change.js: supersedeFailures is gone, so no success path clears auto_failed (re-read this gate)");
+  else {
+    const mk = () => ({ status: "done", note: "kept", auto_failed: { at: "2026-11-07T23:00:27Z", run: "r1", why: "The check found: GA4 missing" }, auto_send: { v: "v1", held: { at: "x" }, failed: [{ label: "The page", why: "Held" }] } });
+    const a = mk(), n = SCx.supersedeFailures(a, { at: "2026-11-11T00:00:00Z", by: "test", why: "nothing needed changing", setAside: true });
+    if (a.auto_failed || (a.auto_send.failed || []).length) fail(`supersedeFailures: a success left a failure stored (${JSON.stringify({ auto_failed: a.auto_failed, failed: a.auto_send.failed })})`);
+    if (n !== 2 || !Array.isArray(a.superseded) || a.superseded.length !== 2 || a.superseded[0].was.why !== "The check found: GA4 missing") fail("supersedeFailures: a cleared failure was not kept in `superseded` (never lose what happened)");
+    if (a.note !== "kept" || !a.auto_send.held) fail("supersedeFailures: clearing a failure dropped the step's other fields");
+    const b = mk(); SCx.supersedeFailures(b, { at: "x", by: "test", why: "a draft was saved" });
+    if (b.auto_failed || (b.auto_send.failed || []).length !== 1) fail("supersedeFailures: without setAside it must clear auto_failed and leave the waiting send's checks alone");
+    const c = { status: "in_progress", note: "kept" };
+    if (SCx.supersedeFailures(c, { at: "x" }) !== 0 || "superseded" in c) fail("supersedeFailures: a step with no failure was written to (only a stored failure moves)");
+  }
 }
 
 if (F.length) { console.error("🔴 a stored failure can outlive the success that supersedes it:"); for (const f of F) console.error("   · " + f); process.exit(1); }

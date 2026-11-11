@@ -54,5 +54,40 @@
   "last_status: \"ok\", last_error: null,",
   "last_status: \"ok\",",
   1
+ ],
+ [
+  "recording nothing-needs-changing keeps the old automatic failure",
+  "admindeliv",
+  "      SC.supersedeFailures(t, { at: now, by: who, why: \"nothing needed changing\", setAside: true });\n",
+  "",
+  1
+ ],
+ [
+  "a run that found it already right keeps the old automatic failure",
+  "flowexec",
+  "      ...(supersededPatch || {}),\n",
+  "",
+  1
+ ],
+ [
+  "the shared clear leaves auto_failed stored",
+  "sitechange",
+  "if (t.auto_failed) { moved.push({ field: \"auto_failed\", was: t.auto_failed }); delete t.auto_failed; }",
+  "if (t.auto_failed) { moved.push({ field: \"auto_failed\", was: t.auto_failed }); }",
+  1
+ ],
+ [
+  "the shared clear never sets aside a waiting draft's failed checks",
+  "sitechange",
+  "if (setAside && t.auto_send && Array.isArray(t.auto_send.failed)",
+  "if (false && setAside && t.auto_send && Array.isArray(t.auto_send.failed)",
+  1
+ ],
+ [
+  "the shared clear forgets what it cleared",
+  "sitechange",
+  "    if (moved.length) t.superseded = ",
+  "    if (false) t.superseded = ",
+  1
  ]
 ]
