@@ -154,6 +154,16 @@ else
   fi
 fi
 
+# ── PHASE C2: the night run's own hard pre-flight gates ─────────────────────────────────────────
+# 11-10: this rehearsal PASSED at 7 PM, then the 9 PM run died at check-every-gate-is-wired (a gate added that
+# afternoon had no mutation suite) and built nothing. The list is read from overnight-pipeline.sh itself, so a
+# gate added there is rehearsed here the same evening; the two can never drift apart.
+phase "C2. the night run's hard pre-flight gates (read from overnight-pipeline.sh)"
+while read -r G; do
+  [ -f "scripts/$G" ] || { fail "$G is in the night pre-flight but the file is missing"; continue; }
+  if node "scripts/$G" >/dev/null 2>&1; then pass "$G"; else fail "$G FAILS: the 9 PM run will stop here. Run: node scripts/$G"; fi
+done < <(grep -oE '^node scripts/check-[a-z0-9-]+\.mjs \|\| exit 1' scripts/overnight-pipeline.sh | awk '{print $2}' | sed 's#scripts/##' | sort -u)
+
 # ── PHASE D: arming state ─────────────────────────────────────────────────────────────────────
 # Catches "it silently never started": stale processes, a stop flag, stray today-dated inputs.
 phase "D. arming state"
