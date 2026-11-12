@@ -1,30 +1,226 @@
 [
- ["flag off still asks for the code (page)", "adminjs", "if (adminMfaRequired) {\n        const level = await twoStepLevel();", "if (true) {\n        const level = await twoStepLevel();", 1],
- ["the page flag defaults on", "adminjs", "adminMfaRequired = config.adminMfaRequired === true;", "adminMfaRequired = config.adminMfaRequired !== false;", 1],
- ["an unenrolled user is sent to the code screen", "adminjs", "  return \"setup\";\n}", "  return \"code\";\n}", 1],
- ["an enrolled aal1 user skips the code screen", "adminjs", "if (data.nextLevel === \"aal2\") return \"code\";", "if (data.nextLevel === \"aal9\") return \"code\";", 1],
- ["a reload with requiresMfa enters the admin", "adminjs", "await showTwoStepScreen(context.requiresMfa);\n    return;", "await showTwoStepScreen(context.requiresMfa);", 1],
- ["the wrong-code line changes", "adminjs", "That code didn't match. Codes change every 30 seconds; try the newest one.", "Wrong code.", 1],
- ["a button stops spinning", "adminjs", "button.classList.toggle(\"is-pending\", on);", "button.classList.toggle(\"is-pendingx\", on);", 1],
- ["the server guard accepts aal1", "sa_auth", "if (jwtAal(jwt) === \"aal2\") return null;\n  return fail(401,", "return null;\n  return fail(401,", 1],
- ["the server guard is on when the flag is off", "sa_auth", "if (!adminMfaOn()) return null;", "if (false) return null;", 1],
- ["a user with no code app is refused (lockout)", "sa_auth", "if (!hasVerifiedFactor) return null;", "if (!hasVerifiedFactor) return fail(401, \"Two-step sign-in is required. Sign in again.\");", 1],
- ["an unverified factor counts", "sa_auth", "f && f.status === \"verified\"", "f && f.status !== \"zzz\"", 1],
- ["the portal guard asks for the code", "sa_auth", "if (!u.email) return { error: fail(401, \"No email on token\") };", "if (!u.email) return { error: fail(401, \"No email on token\") };\n  { const m = staffMfaRefusal(u.user, bearer(event)); if (m) return { error: m }; }", 1],
- ["the refusal line changes", "sa_auth", "Two-step sign-in is required. Sign in again.\");\n}", "Sign in again.\");\n}", 1],
- ["admin-config says on by default", "adminconfigfn", "[\"1\", \"true\", \"on\", \"yes\"].includes(", "[\"1\", \"true\", \"on\", \"yes\", \"\"].includes(", 1],
- ["the code boxes cannot shrink", "admincss", "flex: 0 1 48px; min-width: 0;", "flex: 0 0 48px; min-width: 48px;", 1],
- ["the box row can overflow the card", "admincss", "min-width: 0; max-width: 100%; box-sizing: border-box; }\n.admin-code-box {", "}\n.admin-code-box {", 1],
- ["a hex colour sneaks into the two-step css", "admincss", "color: var(--lock-warn-ink); border-radius: 8px;", "color: #123456; border-radius: 8px;", 1],
- ["an approved word changes", "adminhtml", "Turn on</button>", "Go</button>", 1],
- ["the Bitwarden warning is dropped", "adminhtml", "If your phone is lost, it's the way back in.", "", 1],
- ["the sign-in heading goes back to Admin Login", "adminhtml", "<h1 class=\"admin-lock-heading\">Log in to RGA Admin</h1>", "<h1 class=\"admin-lock-heading\">Admin Login</h1>", 1],
- ["the lock button loses its doubled selector (squashed by .admin-button)", "admincss", ".admin-button.admin-lock-submit {\n  box-sizing", ".admin-lock-submit {\n  box-sizing", 1],
- ["a lock rule takes a hex literal instead of a token", "admincss", "  color: var(--lock-muted);\n  text-align: center;\n  font-size: 0.95rem;", "  color: #a7b0c4;\n  text-align: center;\n  font-size: 0.95rem;", 1],
- ["an approved lock token value drifts", "admincss", "--lock-field:#1d2335", "--lock-field:#1d2336", 1],
- ["the lock logo shrinks back to 32px", "admincss", "  width: 48px;\n  height: 48px;\n  display: block;\n  margin: 0;\n  border-radius: 14px;", "  width: 32px;\n  height: 32px;\n  display: block;\n  margin: 0;\n  border-radius: 14px;", 1],
- ["the lock heading shrinks", "admincss", "  font-size: 2.4rem;", "  font-size: 2rem;", 1],
- ["the lock panel loses its background", "admincss", "  background: var(--lock-panel);\n  border-radius: 12px;", "  border-radius: 12px;", 1],
- ["the lock page goes back to light", "admincss", "linear-gradient(180deg, var(--lock-page-top) 0%, var(--lock-page) 55%);", "linear-gradient(180deg, var(--lock-ink) 0%, var(--lock-ink) 100%);", 1],
- ["the old wordmark line returns", "adminhtml", "<h1 class=\"admin-lock-heading\">Log in to RGA Admin</h1>", "<div class=\"admin-lock-wordmark\">Rocket</div><h1 class=\"admin-lock-heading\">Log in to RGA Admin</h1>", 1]
+ [
+  "flag off still asks for the code (page)",
+  "adminjs",
+  "if (adminMfaRequired) {\n        const level = await twoStepLevel();",
+  "if (true) {\n        const level = await twoStepLevel();",
+  1
+ ],
+ [
+  "the page flag defaults on",
+  "adminjs",
+  "adminMfaRequired = config.adminMfaRequired === true;",
+  "adminMfaRequired = config.adminMfaRequired !== false;",
+  1
+ ],
+ [
+  "an unenrolled user is sent to the code screen",
+  "adminjs",
+  "  return \"setup\";\n}",
+  "  return \"code\";\n}",
+  1
+ ],
+ [
+  "an enrolled aal1 user skips the code screen",
+  "adminjs",
+  "if (data.nextLevel === \"aal2\") return \"code\";",
+  "if (data.nextLevel === \"aal9\") return \"code\";",
+  1
+ ],
+ [
+  "a reload with requiresMfa enters the admin",
+  "adminjs",
+  "await showTwoStepScreen(context.requiresMfa);\n    return;",
+  "await showTwoStepScreen(context.requiresMfa);",
+  1
+ ],
+ [
+  "the wrong-code line changes",
+  "adminjs",
+  "That code didn't match. Codes change every 30 seconds; try the newest one.",
+  "Wrong code.",
+  1
+ ],
+ [
+  "a button stops spinning",
+  "adminjs",
+  "button.classList.toggle(\"is-pending\", on);",
+  "button.classList.toggle(\"is-pendingx\", on);",
+  1
+ ],
+ [
+  "the server guard accepts aal1",
+  "sa_auth",
+  "if (jwtAal(jwt) === \"aal2\") return null;\n  return fail(401,",
+  "return null;\n  return fail(401,",
+  1
+ ],
+ [
+  "the server guard is on when the flag is off",
+  "sa_auth",
+  "if (!adminMfaOn()) return null;",
+  "if (false) return null;",
+  1
+ ],
+ [
+  "a user with no code app is refused (lockout)",
+  "sa_auth",
+  "if (!hasVerifiedFactor) return null;",
+  "if (!hasVerifiedFactor) return fail(401, \"Two-step sign-in is required. Sign in again.\");",
+  1
+ ],
+ [
+  "an unverified factor counts",
+  "sa_auth",
+  "f && f.status === \"verified\"",
+  "f && f.status !== \"zzz\"",
+  1
+ ],
+ [
+  "the portal guard asks for the code",
+  "sa_auth",
+  "if (!u.email) return { error: fail(401, \"No email on token\") };",
+  "if (!u.email) return { error: fail(401, \"No email on token\") };\n  { const m = staffMfaRefusal(u.user, bearer(event)); if (m) return { error: m }; }",
+  1
+ ],
+ [
+  "the refusal line changes",
+  "sa_auth",
+  "Two-step sign-in is required. Sign in again.\");\n}",
+  "Sign in again.\");\n}",
+  1
+ ],
+ [
+  "admin-config says on by default",
+  "adminconfigfn",
+  "[\"1\", \"true\", \"on\", \"yes\"].includes(",
+  "[\"1\", \"true\", \"on\", \"yes\", \"\"].includes(",
+  1
+ ],
+ [
+  "the code boxes cannot shrink",
+  "admincss",
+  "flex: 0 1 48px; min-width: 0;",
+  "flex: 0 0 48px; min-width: 48px;",
+  1
+ ],
+ [
+  "the box row can overflow the card",
+  "admincss",
+  "min-width: 0; max-width: 100%; box-sizing: border-box; }\n.admin-code-box {",
+  "}\n.admin-code-box {",
+  1
+ ],
+ [
+  "a hex colour sneaks into the two-step css",
+  "admincss",
+  "color: var(--lock-warn-ink); border-radius: 8px;",
+  "color: #123456; border-radius: 8px;",
+  1
+ ],
+ [
+  "an approved word changes",
+  "adminhtml",
+  "Turn on</button>",
+  "Go</button>",
+  1
+ ],
+ [
+  "the Bitwarden warning is dropped",
+  "adminhtml",
+  "If your phone is lost, it's the way back in.",
+  "",
+  1
+ ],
+ [
+  "the sign-in heading goes back to Admin Login",
+  "adminhtml",
+  "<h1 class=\"admin-lock-heading\">Log in to RGA Admin</h1>",
+  "<h1 class=\"admin-lock-heading\">Admin Login</h1>",
+  1
+ ],
+ [
+  "the lock button loses its doubled selector (squashed by .admin-button)",
+  "admincss",
+  ".admin-button.admin-lock-submit {\n  box-sizing",
+  ".admin-lock-submit {\n  box-sizing",
+  1
+ ],
+ [
+  "a lock rule takes a hex literal instead of a token",
+  "admincss",
+  "  color: var(--lock-muted);\n  text-align: center;\n  font-size: 0.95rem;",
+  "  color: #a7b0c4;\n  text-align: center;\n  font-size: 0.95rem;",
+  1
+ ],
+ [
+  "an approved lock token value drifts",
+  "admincss",
+  "--lock-field:#1d2335",
+  "--lock-field:#1d2336",
+  1
+ ],
+ [
+  "the lock logo shrinks back to 32px",
+  "admincss",
+  "  width: 48px;\n  height: 48px;\n  display: block;\n  margin: 0;\n  border-radius: 14px;",
+  "  width: 32px;\n  height: 32px;\n  display: block;\n  margin: 0;\n  border-radius: 14px;",
+  1
+ ],
+ [
+  "the lock heading shrinks",
+  "admincss",
+  "  font-size: 2.4rem;",
+  "  font-size: 2rem;",
+  1
+ ],
+ [
+  "the lock panel loses its background",
+  "admincss",
+  "  background: var(--lock-panel);\n  border-radius: 12px;",
+  "  border-radius: 12px;",
+  1
+ ],
+ [
+  "the lock page goes back to light",
+  "admincss",
+  "linear-gradient(180deg, var(--lock-page-top) 0%, var(--lock-page) 55%);",
+  "linear-gradient(180deg, var(--lock-ink) 0%, var(--lock-ink) 100%);",
+  1
+ ],
+ [
+  "the old wordmark line returns",
+  "adminhtml",
+  "<h1 class=\"admin-lock-heading\">Log in to RGA Admin</h1>",
+  "<div class=\"admin-lock-wordmark\">Rocket</div><h1 class=\"admin-lock-heading\">Log in to RGA Admin</h1>",
+  1
+ ],
+ [
+  "the sign-in button stops spinning (dims and freezes again)",
+  "adminjs",
+  "button.classList.add(\"is-pending\", \"is-busy\");",
+  "button.classList.add(\"is-pending\");",
+  1
+ ],
+ [
+  "the waiting label goes back to title case",
+  "adminjs",
+  "button.textContent = \"Signing in…\";",
+  "button.textContent = \"Signing In...\";",
+  1
+ ],
+ [
+  "the two-step buttons stop spinning",
+  "adminjs",
+  "  button.classList.toggle(\"is-busy\", on);\n",
+  "",
+  1
+ ],
+ [
+  "the waiting lock button is dimmed again",
+  "admincss",
+  "  opacity: 1;   /* 11-12: no dimming; the spinner (is-busy) says it's working */",
+  "  opacity: 0.82;",
+  1
+ ]
 ]

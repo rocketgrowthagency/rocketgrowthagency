@@ -143,5 +143,14 @@ for (const [v, want] of [[undefined, false], ["0", false], ["1", true], ["true",
 }
 fs.rmSync(tmp, { recursive: true, force: true });
 
+// 11-12 (Chris: "the signing in button is glitchy"): the lock buttons spin at full colour while waiting (house standard), never dim + freeze.
+{
+  const signIn = admin.match(/button\.classList\.add\("is-pending"[^)]*\);\s*button\.textContent = "([^"]+)";/);
+  if (!signIn || !/"is-busy"/.test(signIn[0])) F("sign-in: the Log in button must add is-busy (the spinner) while it waits");
+  else if (signIn[1] !== "Signing in…") F(`sign-in: the waiting label must be "Signing in…" (sentence case), got "${signIn[1]}"`);
+  if (!/button\.classList\.toggle\("is-busy", on\)/.test(admin)) F("two-step screens: their buttons must spin (is-busy) while they wait");
+  const dim = css.match(/\.admin-button\.admin-lock-submit\.is-pending \{[^}]*opacity:\s*([0-9.]+)/);
+  if (!dim || Number(dim[1]) !== 1) F("the waiting lock button must stay full colour (opacity 1), not dimmed");
+}
 if (fails.length) { console.error("BROKEN: admin two-step sign-in"); for (const f of fails) console.error("   - " + f); process.exit(1); }
 console.log("two-step sign-in holds: off = unchanged, on = aal2 for enrolled staff, no lockout, portal/internal untouched, words exact, boxes shrink");
