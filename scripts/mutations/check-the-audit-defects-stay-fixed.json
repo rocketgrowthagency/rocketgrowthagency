@@ -16,8 +16,8 @@
  [
   "description ignores the plan",
   "exec",
-  "GBP descriptions. HARD LIMIT: 750 chars. Lead with what + where, mention 2-3 services, end with contact action. Plain prose, no bullets, no emojis.`,\n      `${clientCtx(client)}${planBlock(_plan)}`",
-  "GBP descriptions. HARD LIMIT: 750 chars. Lead with what + where, mention 2-3 services, end with contact action. Plain prose, no bullets, no emojis.`,\n      `${clientCtx(client)}`",
+  "end with contact action. Plain prose, no bullets, no emojis.${extra}`,\n      `${clientCtx(client)}${planBlock(_plan)}`",
+  "end with contact action. Plain prose, no bullets, no emojis.${extra}`,\n      `${clientCtx(client)}`",
   1
  ],
  [

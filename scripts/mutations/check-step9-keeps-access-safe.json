@@ -37,8 +37,8 @@
  [
   "step 9 reads You, not Runs itself",
   "admin",
-  ": o.sopType === \"auto\" || o.selfSettles || (typeof wcRunsItself === \"function\" && wcRunsItself(o.flowId)) ? \"auto\" : \"you\");",
-  ": o.sopType === \"auto\" || (typeof wcRunsItself === \"function\" && wcRunsItself(o.flowId)) ? \"auto\" : \"you\");",
+  ": o.sopType === \"auto\" || o.selfSettles || (typeof wcRunsItself",
+  ": o.sopType === \"auto\" || (typeof wcRunsItself",
   1
  ],
  [

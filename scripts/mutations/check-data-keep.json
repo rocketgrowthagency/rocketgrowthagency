@@ -542,8 +542,8 @@
  [
   "the Month 1 report shows a cleared Google figure as 0",
   "month1report",
-  "    const x = num(B[col]), y = num(N[col]);\n    if (x === null || y === null) continue;",
-  "    const x = num(B[col]) ?? 0, y = num(N[col]) ?? 0;\n    if (x === null || y === null) continue;"
+  "    const x = valOf(B, col), y = valOf(N, col);\n    if (col.startsWith(\"gsc_\")",
+  "    const x = valOf(B, col) ?? 0, y = valOf(N, col) ?? 0;\n    if (col.startsWith(\"gsc_\")"
  ],
  [
   "the Month 1 report doesn't say why a Google figure can't be compared",

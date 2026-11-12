@@ -23,8 +23,8 @@
  [
   "beta told about an invoice",
   "confirmemail",
-  "        ? `You connect your Google accounts, which takes about two minutes, and I'll email you",
-  "        ? `Your invoice is in the portal. You connect your Google accounts, which takes about two minutes, and I'll email you",
+  "? `You connect your Google accounts (about a minute) and I'll email you",
+  "? `Your invoice is in the portal. You connect your Google accounts (about a minute) and I'll email you",
   1
  ],
  [

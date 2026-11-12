@@ -62,8 +62,8 @@
  [
   "admin 30 stops saying what the client sees",
   "adminjs",
-  "${fixPlanClientRowsHtml({",
-  "${(() => \"\")({"
+  "top: fixPlanClientRowsHtml({",
+  "top: (() => \"\")({"
  ],
  [
   "the preview guard forgets the new read",

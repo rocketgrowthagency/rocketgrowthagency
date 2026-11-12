@@ -156,8 +156,8 @@
  [
   "the Advance dialog doesn't name the steps",
   "admin",
-  "say: `Client ${steps} ${ids.length === 2 ? \"aren't\" : \"isn't\"} finished",
-  "say: `Client ${steps} not finished",
+  "say: `${who} ${ids.length === 2 || !named ? \"aren't\" : \"isn't\"} finished (",
+  "say: `${who} not finished (",
   1
  ],
  [

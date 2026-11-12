@@ -80,8 +80,8 @@
  [
   "the autorun's claim drops the record's version",
   "webautorun",
-  "const ver = fresh.updated_at ?",
-  "const ver = false ?"
+  "const ver = fresh.updated_at ? `&updated_at=eq.${encodeURIComponent(fresh.updated_at)}` : \"\";",
+  "const ver = \"\";"
  ],
  [
   "admin-deliverables saves skip the version-checked writer",

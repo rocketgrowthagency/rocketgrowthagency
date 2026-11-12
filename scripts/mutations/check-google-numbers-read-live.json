@@ -30,8 +30,8 @@
  [
   "a month Google only half has is shown as a total",
   "googlelive",
-  "if (daysPresent < daysExpected) return { status: \"not_kept\" };",
-  "if (daysPresent < daysExpected) return { status: \"ok\", value: total };",
+  "return { status: \"not_kept\" };   // Google has only part of this month",
+  "return { status: \"ok\", value: total };   // Google has only part of this month",
   1
  ],
  [

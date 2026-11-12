@@ -86,8 +86,8 @@
  [
   "the run's reply drops the snapshots",
   "metricsdaily",
-  ", rating_snapshots: ratingSnapshots });",
-  " });",
+  ", rating_snapshots: ratingSnapshots, leads: leadResults",
+  ", leads: leadResults",
   1
  ],
  [

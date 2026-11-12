@@ -93,8 +93,8 @@
  [
   "56's buttons press 56",
   "admin",
-  "cbRowsHtml(p.rows, (r) => cbListActs(P.STEP.TOP, r, pack), right),",
-  "cbRowsHtml(p.rows, (r) => cbListActs(step, r, pack), right),",
+  "(r) => cbListActs(P.STEP.TOP, r, pack), right),",
+  "(r) => cbListActs(step, r, pack), right),",
   1
  ],
  [

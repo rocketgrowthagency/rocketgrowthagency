@@ -9,7 +9,7 @@
  [
   "a beta client is told Payment received again",
   "notifystage",
-  "`Hi ${first},\\n\\nYour agreement is countersigned, so you're all set to start.\\n\\n`",
+  "`Hi ${first},\\n\\nYour agreement is countersigned and you're all set to start.\\n\\n`",
   "`Hi ${first},\\n\\nPayment received. Thank you.\\n\\n`",
   1
  ],
@@ -23,8 +23,8 @@
  [
   "stage 2 says the last thing again",
   "notifystage",
-  "Then I'll ask you to connect your Google accounts, which takes about two minutes, and we book your kickoff call.",
-  "Then I'll ask you to connect your Google accounts, which takes about two minutes, and that is the last thing I need from you.",
+  "Then I'll ask you to connect your Google accounts (it takes about a minute) and we book your kickoff call.",
+  "Then I'll ask you to connect your Google accounts (it takes about a minute) and that is the last thing I need from you.",
   1
  ],
  [

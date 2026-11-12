@@ -30,8 +30,8 @@
  [
   "the monthly read ignores the month",
   "steprecord",
-  "`/client_monthly_records?client_id=eq.${clientId}&reporting_month=eq.${first}&select=id,data&limit=1`",
-  "`/client_monthly_records?client_id=eq.${clientId}&select=id,data&limit=1`",
+  "`/client_monthly_records?client_id=eq.${clientId}&reporting_month=eq.${month}&select=id,data,updated_at&limit=1`",
+  "`/client_monthly_records?client_id=eq.${clientId}&select=id,data,updated_at&limit=1`",
   1
  ],
  [

@@ -135,8 +135,8 @@
  [
   "the appended steps are numbered into the old range",
   "adminjs",
-  "let n = 0; obMonthlyOrder(steps).filter((i) => !isApp(i))",
-  "let n = 0; obMonthlyOrder(steps)",
+  "let n = 0; obMonthlyOrder(steps).forEach((i) => m.set(i, ++n));",
+  "let n = 0; obMonthlyOrder(steps).forEach((i) => m.set(i, i + 1 + 0 * ++n));",
   1
  ]
 ]

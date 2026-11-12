@@ -1,9 +1,9 @@
 [
  [
   "pipeline value counts taps again",
-  "reportjs",
-  "const forms = num(current.form_leads);",
-  "const forms = num(current.total_leads);"
+  "sharedmetrics",
+  "return { ...out, value: forms + calls, why: null };",
+  "return { ...out, value: forms + calls + (num(rec.gbp_calls) || 0), why: null };"
  ],
  [
   "the funnel tile adds taps again",
@@ -13,15 +13,15 @@
  ],
  [
   "a whole phone line counts as leads",
-  "reportjs",
-  "const calls = client?.call_tracking_attributed === false ? null : num(current.total_calls);",
-  "const calls = num(current.total_calls);"
+  "sharedmetrics",
+  "    if (client.call_tracking_attributed === false) return false;\n    if (client.kpi_config",
+  "    if (client.kpi_config"
  ],
  [
   "a client's read forgets to ask for the flag",
   "reportjs",
-  "account_manager, call_tracking_attributed )",
-  "account_manager )"
+  "account_manager, call_tracking_attributed, kpi_config",
+  "account_manager, kpi_config"
  ],
  [
   "the lead count stops saying taps aren't in it",
@@ -62,8 +62,8 @@
  [
   "an unmeasured earlier month reads as the first",
   "reportjs",
-  "  if (!prior) {\n    return { figure: shown, title: \"This is your first",
-  "  if (was == null) {\n    return { figure: shown, title: \"This is your first"
+  "  if (was == null) {\n    return { figure: shown, title: `${APPEARED} ${shown} times.`,",
+  "  if (was == null) {\n    return { figure: shown, title: \"This is your first full month of tracking.\","
  ],
  [
   "1 to 2 prints a percent again",
@@ -134,20 +134,20 @@
  [
   "total_leads adds this refresh's taps again",
   "metricsjs",
-  "patch.total_leads = ga4.formSubmissions + trackedCalls;",
-  "patch.total_leads = ga4.formSubmissions + trackedCalls + Number(gbp?.calls || 0);"
+  "data: { ga4 } }, flagRow).value : null;",
+  "data: { ga4 } }, flagRow).value + Number(gbp?.calls || 0) : null;"
  ],
  [
   "a whole line counts in total_leads",
   "metricsjs",
-  "if (flagRow && flagRow.call_tracking_attributed !== false) trackedCalls",
-  "if (flagRow) trackedCalls"
+  "data: { ga4 } }, flagRow).value : null;",
+  "data: { ga4 } }, { ...flagRow, call_tracking_attributed: true }).value : null;"
  ],
  [
   "an unread flag counts the calls",
   "metricsjs",
-  "if (flagRow && flagRow.call_tracking_attributed !== false) trackedCalls",
-  "if (!flagRow || flagRow.call_tracking_attributed !== false) trackedCalls"
+  "patch.total_leads = flagRow ? METRICS.leadsOf({ reporting_month: reportingMonth, form_leads: ga4.formSubmissions, total_calls: existing ? existing.total_calls : null, data: { ga4 } }, flagRow).value : null;",
+  "patch.total_leads = METRICS.leadsOf({ reporting_month: reportingMonth, form_leads: ga4.formSubmissions, total_calls: existing ? existing.total_calls : null, data: { ga4 } }, flagRow || {}).value;"
  ],
  [
   "the read forgets the tracked-call column",
@@ -207,22 +207,22 @@
  [
   "the portal hint promises booking requests again",
   "portal",
-  "Form submissions plus tracked calls this month. Call-button taps are not included.\", { emptyText",
-  "Calls + form fills + booking requests from search this month.\", { emptyText",
+  "MET().LEADS_DEF(client), { emptyText: \"Not available\"",
+  "\"Calls + form fills + booking requests from search this month.\", { emptyText: \"Not available\"",
   1
  ],
  [
   "a missing call count reads as a partial total",
-  "portal",
-  "  return calls == null ? null : forms + calls;",
-  "  return forms + (calls || 0);",
+  "sharedmetrics",
+  "if (calls == null) return { ...out, value: null, why: \"calls_unknown\" };",
+  "if (calls == null) return { ...out, value: forms, why: \"calls_unknown\" };",
   1
  ],
  [
   "a plain phone line counts as leads in the portal",
-  "portal",
-  "  if (client && client.call_tracking_attributed === false) return forms;\n",
-  "",
+  "sharedmetrics",
+  "const tracked = callsCount(client) && (",
+  "const tracked = (",
   1
  ],
  [
@@ -298,8 +298,8 @@
  [
   "sections 3 and 4 swap places",
   "reportjs",
-  "    ${valueSection(current, client)}\n    ${leadsHistorySection(series, current, client)}",
-  "    ${leadsHistorySection(series, current, client)}\n    ${valueSection(current, client)}"
+  "    ${valueSection(current, client, series)}\n    ${leadsHistorySection(series, current, client)}",
+  "    ${leadsHistorySection(series, current, client)}\n    ${valueSection(current, client, series)}"
  ],
  [
   "the speed score comes back into the report",
@@ -340,14 +340,14 @@
  [
   "a month with no form count is drawn as 0",
   "reportjs",
-  "return f == null || c == null ? null : f + c;",
-  "return (f || 0) + (c || 0);"
+  "return L && L.value != null && L.kind === kindNow ? L.value : null;",
+  "return L && L.kind === kindNow ? (L.value ?? 0) : null;"
  ],
  [
   "forms and forms plus calls share one line",
   "reportjs",
-  "const f = num(r.form_leads), c = withCalls ? num(r.total_calls) : 0;",
-  "const f = num(r.form_leads), c = num(r.total_calls) || 0;"
+  "return L && L.value != null && L.kind === kindNow ? L.value : null;",
+  "return L && L.value != null ? L.value : null;"
  ],
  [
   "last year's line is never drawn",
@@ -364,8 +364,8 @@
  [
   "a client with no calls piece is read as having one",
   "reportjs",
-  "const withCalls = client?.call_tracking_attributed !== false && num(current.total_calls) != null;",
-  "const withCalls = true;"
+  "const kindNow = M().leadsOf(current, client).kind, withCalls",
+  "const kindNow = \"forms+calls\", withCalls"
  ],
  [
   "the slump sentence prints for a no",
@@ -376,8 +376,8 @@
  [
   "the why-now column is asked inside the query that opens the report",
   "reportjs",
-  "primary_market, account_manager, call_tracking_attributed )\n    `)",
-  "primary_market, account_manager, call_tracking_attributed, why_now_slow )\n    `)"
+  "account_manager, call_tracking_attributed, kpi_config",
+  "account_manager, call_tracking_attributed, why_now_slow, kpi_config"
  ],
  [
   "the next steps are no longer capped at three",

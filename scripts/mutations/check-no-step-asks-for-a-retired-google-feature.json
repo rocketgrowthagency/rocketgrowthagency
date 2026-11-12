@@ -16,8 +16,8 @@
  [
   "admin draws the Q&A preview again",
   "admin",
-  "    fiDiv.innerHTML = `\n      <p style=\"font-size:var(--fs-2xs);font-weight:600;color:var(--admin-muted);margin:0 0 4px;\">KEYWORDS</p>",
-  "    const qaPreview = (fi.qa_pairs || []).length ? \"Q&A PREVIEW\" : \"\";\n    fiDiv.innerHTML = `\n      <p style=\"font-size:var(--fs-2xs);font-weight:600;color:var(--admin-muted);margin:0 0 4px;\">KEYWORDS</p>"
+  "function obMonthlyOrder(steps) {\n",
+  "function obMonthlyOrder(steps) {\n  const qaPreview = ((typeof fi !== \"undefined\" && fi && fi.qa_pairs) || []).length ? \"Q&A PREVIEW\" : \"\";\n"
  ],
  [
   "the Brain is asked for Q&A pairs again",

@@ -99,7 +99,7 @@
  [
   "the counter is never reset",
   "exec",
-  "    DRAFT_CALLS = 0;\n    const result = await executor(",
-  "    const result = await executor("
+  "    DRAFT_CALLS = 0;\n    LEDGER_CTX = { step: step_id, clientId: client_id };",
+  "    LEDGER_CTX = { step: step_id, clientId: client_id };"
  ]
 ]

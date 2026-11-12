@@ -17,7 +17,7 @@
  ["the managed cards stop using the one card", "admin", "  return adminCard({ tone: kind, label: pill, tile: tile || OL_G, title, when: side, blk: body, foot, attrs, cls: \"ob-mg\" });", "  return `<div class=\"ob-mg\">${title}${body}${foot}</div>`;", 1],
  ["a body class from the old card comes back", "admin", "body: `<div class=\"ob-card-in\">${wcLabelHtml(c)}</div>` + wcLoopHtml(task, c, st, gh) + wcWhatHtml(task, c, false),", "body: `<div class=\"ob-ac-in\">${wcLabelHtml(c)}</div>` + wcLoopHtml(task, c, st, gh) + wcWhatHtml(task, c, false),", 1],
  ["adminCard stops being the shared renderer", "admin", "function adminCard(o) { return globalThis.rgaAdminCard.cardHtml(o); }", "function adminCard(o) { return `<div>${o.title}</div>`; }", 1],
- ["admin stops importing the renderer", "admin", "import \"/shared/admin-card.js?v=20261111nb\";", "// no renderer", 1],
+ ["admin stops importing the renderer", "admin", "import \"/shared/admin-card.js?v=20261112a\";", "// no renderer", 1],
  ["the Google tinted card is replaced", "admin", "function adminGoogleCardHtml(", "function adminGoogleCardHtmlOld(", 1],
  ["Leads: a failed read isn't Failed", "leadsshared", "if (o.error) return card(\"failed\", \"Not read\"", "if (o.error) return card(\"you\", \"Not read\"", 1],
  ["Leads: the client-sees line is lost", "leadsshared", "AC.cardHtml({ state, label: esc(pill), tile: no, title: `Leads · ${esc(word)}`, when, rows, result, sees, attrs: \" data-lds-admin\" })", "AC.cardHtml({ state, label: esc(pill), tile: no, title: `Leads · ${esc(word)}`, when, rows, result, attrs: \" data-lds-admin\" })", 1],

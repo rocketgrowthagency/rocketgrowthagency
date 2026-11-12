@@ -16,8 +16,8 @@
  [
   "the fixture is declared at another stage",
   "walkclients",
-  "  client_portal_stage: \"stage_5_monthly\",\n  contract_signed: true,\n  invoice_paid: true,\n  source: MONTH2_CLIENT_SOURCE,",
-  "  client_portal_stage: \"stage_6_mature\",\n  contract_signed: true,\n  invoice_paid: true,\n  source: MONTH2_CLIENT_SOURCE,",
+  "  billing_status: \"active\",\n  client_portal_stage: \"stage_5_monthly\",",
+  "  billing_status: \"active\",\n  client_portal_stage: \"stage_6_mature\",",
   1
  ],
  [

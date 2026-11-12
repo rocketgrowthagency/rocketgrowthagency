@@ -51,8 +51,8 @@
  [
   "the who tag turns the verify step into You",
   "admin",
-  "MW_YOU.has(o.flowId) && kind === \"both\" ? \"you\"",
-  "(MW_YOU.has(o.flowId) && kind === \"both\" || o.flowId === \"m1.gbp.verify\") ? \"you\"",
+  "kind === \"both\" && (MW_YOU.has(o.flowId) || globalThis",
+  "(kind === \"both\" || o.flowId === \"m1.gbp.verify\") && (MW_YOU.has(o.flowId) || o.flowId === \"m1.gbp.verify\" || globalThis",
   1
  ],
  [
@@ -65,8 +65,8 @@
  [
   "the who tag turns a client-only step into You",
   "admin",
-  "MW_YOU.has(o.flowId) && kind === \"both\" ? \"you\"",
-  "MW_YOU.has(o.flowId) ? \"you\"",
+  "o && kind === \"both\" && (MW_YOU.has(o.flowId)",
+  "o && (MW_YOU.has(o.flowId)",
   1
  ],
  [

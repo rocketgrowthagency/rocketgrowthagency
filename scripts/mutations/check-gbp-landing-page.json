@@ -326,8 +326,8 @@
  [
   "Save does not spin",
   "admin",
-  "  b.classList.add(\"is-busy\");\n  try {\n    const r = await fetch(\"/.netlify/functions/admin-gbp-landing\"",
-  "  try {\n    const r = await fetch(\"/.netlify/functions/admin-gbp-landing\""
+  "  if (b.hasAttribute(\"data-gl-auto\")) { _glAuto.delete(cid); b.classList.add(\"is-busy\"); await glAutoRun(cid); return; }\n  const keepHome = b.hasAttribute(\"data-gl-keep-home\"), save = b.hasAttribute(\"data-gl-save\") || keepHome;\n  const choice = keepHome ? \"homepage\" : save ? host.querySelector('input[type=\"radio\"]:checked')?.value || \"\" : \"\";\n  if (save && !choice) { setBanner(\"Pick one of the choices first.\", \"error\"); return; }\n  b.classList.add(\"is-busy\");\n  try {",
+  "  if (b.hasAttribute(\"data-gl-auto\")) { _glAuto.delete(cid); await glAutoRun(cid); return; }\n  const keepHome = b.hasAttribute(\"data-gl-keep-home\"), save = b.hasAttribute(\"data-gl-save\") || keepHome;\n  const choice = keepHome ? \"homepage\" : save ? host.querySelector('input[type=\"radio\"]:checked')?.value || \"\" : \"\";\n  if (save && !choice) { setBanner(\"Pick one of the choices first.\", \"error\"); return; }\n  try {"
  ],
  [
   "the row says Done over B and E",
