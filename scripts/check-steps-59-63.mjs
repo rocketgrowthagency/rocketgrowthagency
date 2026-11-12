@@ -14,6 +14,7 @@
 //   6 the noun of a count agrees with its number in admin, portal and the Month 1 report ("customer asked" -> "customers asked").
 //   7 no em dash and no hardcoded step number in the new code.
 // Exit 0 holds · 1 regressed · 2 can't tell
+import { adminCardLift } from "./lib/admin-card-lift.mjs";   // card_notice_designs_v1 §1 (11-11): admin cards draw through shared/admin-card.js
 import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
@@ -115,7 +116,7 @@ const sb = { state: { selectedClient: { id: CID } }, globalThis: null, setTimeou
   obNumberOf: () => 12, document: {}, console };
 sb.globalThis = sb; sb.rgaSetupFewer = FEWER; sb.rgaPortalMode = { stepNo: () => 8 };
 vm.createContext(sb);
-try { vm.runInContext(`${srcs.join("\n")}\n${consts.join("\n")}\nglobalThis.__out = { rvMessageCardHtml, rvFirst5CardHtml, rvCloseSkippedCardHtml, rvNoRerun, rgaNounPlural };`, sb); } catch (e) { console.error(`INDETERMINATE: the card code did not run: ${e.message}`); process.exit(2); }
+try { vm.runInContext(`${adminCardLift(SITE, admin)}\n${srcs.join("\n")}\n${consts.join("\n")}\nglobalThis.__out = { rvMessageCardHtml, rvFirst5CardHtml, rvCloseSkippedCardHtml, rvNoRerun, rgaNounPlural };`, sb); } catch (e) { console.error(`INDETERMINATE: the card code did not run: ${e.message}`); process.exit(2); }
 const R = sb.__out, txt = (h) => String(h).replace(/<[^>]*>/g, " ").replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/\s+/g, " ");
 
 const t59 = { status: "done", completed_at: "2026-10-19T15:00:00Z", outcome_data: { google_review_link: "https://search.google.com/local/writereview?placeid=ChIJ51uY", messages: { sms_1: "Hi {{first_name}}, thanks for working with Test Co! Share your experience: {{review_link}}" } },

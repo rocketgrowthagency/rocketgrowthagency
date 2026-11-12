@@ -9,6 +9,7 @@
 // Covers a client starting from scratch AND one whose step was ticked done earlier with nothing recorded (RGA's own test record).
 // 2026-10-30 night fixer: the client's card (5) lifts the card system too (csBlock) — accessCardHtml draws csCard since client_step03_access_v1
 //   exit 0 holds · 1 broken · 2 harness
+import { adminCardLift } from "./lib/admin-card-lift.mjs";   // card_notice_designs_v1 §1 (11-11): admin cards draw through shared/admin-card.js
 import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
@@ -55,7 +56,7 @@ vm.runInContext(fnSrc(A, "accessAdminHtml"), actx);
 // auto_live_and_proof_v1 (10-28): the VERIFIED badge + GitHub connection fetch from the server — stubbed here (their own gate runs them)
 vm.runInContext(`var ghBadgeHtml = () => ""; var ghPanelHtml = () => "";`, actx);
 vm.runInContext(`var RGA_ACCESS_ACCOUNT = "access@x"; ${fnSrc(A, "accInviteLinkHtml")}`, actx);
-vm.runInContext(`${A.slice(A.indexOf("function acCardHtml("), A.indexOf("\n}\n", A.indexOf("function acCardHtml(")) + 2)} ${fnSrc(A, "acDueChip")} ${["acMono", "acConsent", "acSite", "GH_MONO", "mvDay", "mvDueDays", "acDay", "acCk"].map((n) => { const at = A.search(new RegExp(`^const ${n} = `, "m")); if (at < 0) return ""; const eol = A.indexOf("\n", at); const first = A.slice(at, eol); return (first.trimEnd().endsWith("{") ? A.slice(at, A.indexOf("\n};", at) + 3) : first).replace(/^const /, "var "); }).join("\n")} var movesForSelected = () => null;`, actx);   // row 8's one card (admin_action_card_and_row8_v1)   // other builders' "Open the invite in access@" link (step3_admin_accept_v1)
+vm.runInContext(`${adminCardLift(SITE, A)}\n${A.slice(A.indexOf("function acCardHtml("), A.indexOf("\n}\n", A.indexOf("function acCardHtml(")) + 2)} ${fnSrc(A, "acDueChip")} ${["acMono", "acConsent", "acSite", "GH_MONO", "mvDay", "mvDueDays", "acDay", "acCk"].map((n) => { const at = A.search(new RegExp(`^const ${n} = `, "m")); if (at < 0) return ""; const eol = A.indexOf("\n", at); const first = A.slice(at, eol); return (first.trimEnd().endsWith("{") ? A.slice(at, A.indexOf("\n};", at) + 3) : first).replace(/^const /, "var "); }).join("\n")} var movesForSelected = () => null;`, actx);   // row 8's one card (admin_action_card_and_row8_v1)   // other builders' "Open the invite in access@" link (step3_admin_accept_v1)
 // the access ledger + before-snapshot under a confirmed access (rga_client_access_and_work_v1, 10-23)
 vm.runInContext(`${(A.match(/^const ACC_REMOVED_HOW = \{[^\n]*\};$/m) || ["var ACC_REMOVED_HOW = {};"])[0].replace(/^const /, "var ")} ${fnSrc(A, "accessRemoveHtml")} ${fnSrc(A, "accessLedgerCardHtml")} ${fnSrc(A, "snapshotFactHtml")} ${fnSrc(A, "accessDoneTitle")}`, actx);   // admin_row8_done_v1 → v2
 const adminRow = (t) => vm.runInContext(`accessAdminHtml(${JSON.stringify(t)})`, actx);

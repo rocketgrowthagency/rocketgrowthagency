@@ -8,6 +8,7 @@
 //   6 · a sent photo says up to 48 hours as an estimate, in both portals; no line claims what was seen on Maps
 //   7 · the listings check runs itself once when setup reaches it: claimed first, once per client, never loops, however the run ends
 // Everything runs on fakes: real modules, a stubbed network. Nothing reaches Google, SerpAPI or a database. exit 0 = holds · 1 = regressed · 2 = can't tell
+import { adminCardLift } from "./lib/admin-card-lift.mjs";   // card_notice_designs_v1 §1 (11-11): admin cards draw through shared/admin-card.js
 import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
@@ -104,7 +105,7 @@ const actx = { MutationObserver: class { observe() {} disconnect() {} }, documen
   secondLogos: SL.secondLogos, tidiedByRga: SL.tidiedByRga, FILED_AS: SL.FILED_AS, photoListedNames: SL.photoListedNames, photoMissingFromList: SL.photoMissingFromList, photoCountable: SL.photoCountable, photoLiveByLine: SL.photoLiveByLine, photoOnlyVisible: SL.photoOnlyVisible, photoShortfall: SL.photoShortfall,
   escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", PHOTO_EXAMPLE_SPRITE: "", ADMIN_PHOTO_STATE: { pending: { label: "Approved" } }, photoExampleOf: () => ({ art: "x" }), photoExampleArt: () => "<svg></svg>", artKey: (s, it) => `E|g|${it.n}`, formatDateTime: () => "Oct 9", obNumberOf: () => 11,
   OL_G: "<svg></svg>", OB_WEB_TILE: "<svg></svg>", adminGcardWhen: (iso) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }) + ", 3:30 AM" : ""), adminGoogleCardHtml: (o) => `<div class="ob-gcard ${o.state}"><i>${o.small}</i><u>${o.side || ""}</u><b>${o.title}</b>${o.body || ""}</div>`, adminGcardMaps: () => "", state: { selectedClient: { id: "c1", created_at: "2026-05-01T00:00:00Z" }, photos: [], onboardingData: { tasks: {} } } };
-vm.createContext(actx); actx.clientStepWhere = (o) => (o && o.clientStepNo != null ? `step ${o.clientStepNo}` : null); /* managed_admin_v1: admin.js names a step by the client mode; these cards are drawn for a client with none */ 
+vm.createContext(actx); vm.runInContext(adminCardLift(SITE, AD), actx); actx.clientStepWhere = (o) => (o && o.clientStepNo != null ? `step ${o.clientStepNo}` : null); /* managed_admin_v1: admin.js names a step by the client mode; these cards are drawn for a client with none */ 
 try { vm.runInContext(`${partA}\n${partB}\n${citAuto}\n${pillSrc}\nthis.review = photoReviewHtml; this.waitCard = photosWaitCardHtml; this.waitState = photosWaitState; this.every = photoEverythingHtml; this.pace = photoPaceLine; this.toPublish = descriptionToPublish; this.pubCard = descriptionPublishCardHtml; this.citAuto = citAutoHtml; this.pill = wcRowPill;`, actx); }
 catch (e) { can(`the admin renderers did not load: ${e.message}`); }
 
@@ -333,7 +334,7 @@ catch (e) { can(`the admin renderers did not load: ${e.message}`); }
   if (actx.pill(STEP, appr)?.text !== "Approved · Publish to Google") fail("the row doesn't say Approved · Publish to Google");
   const card = actx.pubCard(appr, { open: true });
   if (!/Approved · Publish to Google/.test(card) || !card.includes(esc(TEXT)) || !/data-desc-publish>Publish to Google</.test(card) || !/data-desc-card/.test(card) || !/never goes on its own/.test(card)) fail("the card doesn't show the approved text and the one press");
-  if (!/class="ob-zc you"/.test(card)) fail("the card isn't the admin card design");
+  if (!/class="ob-card you"/.test(card)) fail("the card isn't the one admin card (Your move)");
   if (!/data-desc-publish disabled/.test(actx.pubCard(appr, { open: false, state: "duplicate" }))) fail("the button is live while a second listing is open");
   if (!/data-desc-publish disabled/.test(actx.pubCard({ approval: { ...appr.approval, approved_content: "x".repeat(751) } }, { open: true }))) fail("the button is live past Google's 750");
   const failed = actx.pubCard({ ...appr, publish_failed: { at: "2026-11-01T11:00:00Z", error: "The client hasn't authorized changes to their Google profile." } }, { open: true });

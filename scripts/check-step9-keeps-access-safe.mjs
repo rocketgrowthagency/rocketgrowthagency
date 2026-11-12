@@ -11,6 +11,7 @@
 //     "Keep access safe", no runner, no actionLabel, selfSettles; admin reads "Runs itself" and never shows the old draft
 //   · admin's card renders every state with the right buttons (vm)
 // Point it at a copy with APPROVAL_ARCHIVE_SITE_DIR. exit 0 holds · 1 regressed · 2 code moved
+import { adminCardLift } from "./lib/admin-card-lift.mjs";   // card_notice_designs_v1 §1 (11-11): admin cards draw through shared/admin-card.js
 import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
@@ -73,7 +74,7 @@ const fnSrc = (n) => { const at = A.indexOf(`function ${n}(`); if (at < 0) { con
 const cst = (n) => { const at = A.search(new RegExp(`^const ${n} = `, "m")); if (at < 0) { console.error(`⚠️  INDETERMINATE — ${n} moved`); process.exit(2); } const eol = A.indexOf("\n", at), first = A.slice(at, eol); return (first.trimEnd().endsWith("{") ? A.slice(at, A.indexOf("\n};", at) + 3) : first).replace(/^const /, "var "); };
 const ctx = vm.createContext({ escapeHtml: (x) => String(x ?? "").replace(/</g, "&lt;"), escapeAttribute: (x) => String(x ?? ""), adminGcardWhen: (x) => (x ? new Date(x).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : ""),   // like the real one
   admPlatforms: () => ({ wix: { name: "Wix", kind: "invite", color: "#111111" }, wordpress: { name: "WordPress", kind: "invite" }, squarespace: { name: "Squarespace", kind: "invite" }, godaddy: { name: "GoDaddy", kind: "invite" }, custom: { name: "Custom-coded", kind: "invite" } }), movesForSelected: () => null, mvDay: (x) => x, mvDueDays: () => 0 });
-vm.runInContext(`${["VAULT_SHIELD", "VAULT_TILE", "GH_MONO", "acMono", "OB_WEB_TILE"].map(cst).join("\n")}\n${fnSrc("acCardHtml")}\n${fnSrc("vaultAdminHtml")}\nvar state = {};`, ctx);
+vm.runInContext(`${["VAULT_SHIELD", "VAULT_TILE", "GH_MONO", "acMono", "OB_WEB_TILE"].map(cst).join("\n")}\n${adminCardLift(SITE, A)}\n${fnSrc("acCardHtml")}\n${fnSrc("vaultAdminHtml")}\nvar state = {};`, ctx);
 const render = (t8, t9) => { ctx.state = { selectedClient: { id: "c1", business_name: "Acme Plumbing" }, flowM1State: { tasks: { "m1.access.website": t8 } } }; return vm.runInContext(`vaultAdminHtml(${JSON.stringify(t9)})`, ctx); };
 const t8g = ok8({ access: { github: "rocketgrowthagency-admin" } }), t8w = ok8({ access: { account: "access@x" }, ci: { platform: "wix" } });
 // admin_row9_done_v3: a positive title, three ticked checks with "Oct 26"-style dates (never ISO), the saved vault line, Check again

@@ -61,7 +61,7 @@ for (const scene of pick("LOOK_ADMIN", ["kept", "bulk", "short"])) {
   const fold = row.locator("[data-zc-everything]");
   if (await fold.count()) { await fold.locator("summary").click(); await page.waitForTimeout(300); console.log(`[admin 38 fold · ${scene}]`, clean(await fold.innerText()).slice(0, 900)); }
   if (scene === "bulk") console.log("[admin 38 bulk]", clean(await row.locator(".pr-top").first().innerText()).slice(0, 300));
-  if (scene === "short") console.log("[admin 38 head]", clean(await row.locator(".ob-zc-h").first().innerText()).slice(0, 200), "|", clean(await row.locator(".ob-zc-note").first().innerText()).slice(0, 260));
+  if (scene === "short") console.log("[admin 38 head]", clean(await row.locator(".ob-card-h").first().innerText()).slice(0, 200), "|", clean(await row.locator(".ob-zc-note").first().innerText()).slice(0, 260));
   await row.screenshot({ path: `${out}/admin-38-${scene}.png` });
   if (scene === "kept") {
     const d = page.locator('.ob-step[data-ob-step="m1.gbp.business_description"]').first(); await reveal(d);

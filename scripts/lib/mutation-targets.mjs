@@ -725,4 +725,6 @@ export const FILES = {
   adminmonthlyquarterfn: "netlify/functions/admin-monthly-quarter.js",
   serpapibudgetlib: "scraper:lib/serpapi-budget.cjs",
   serpapibudgetcli: "scraper:scripts/serpapi-budget.mjs",
+  // card_notice_designs_v1 §1 (11-11): THE ONE ADMIN CARD renderer (check-one-admin-card)
+  admincard: "shared/admin-card.js",
 };

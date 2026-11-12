@@ -17,6 +17,7 @@
 //   · THE SERVER'S read ACTION reads and writes nothing, refuses a stranger, an unknown card and an unreachable profile
 //   · COPY: US English, no em dashes, no emoji, never the owner's first name, in everything drawn
 // Exit 0 = holds · 1 = broken · 2 = can't tell.
+import { adminCardLift } from "./lib/admin-card-lift.mjs";   // card_notice_designs_v1 §1 (11-11): admin cards draw through shared/admin-card.js
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
@@ -80,6 +81,7 @@ function world({ mode = "managed", tasks = {}, proven = PROVEN, ticked = ["has_w
   w.eval(`var OL_G = "<svg data-g></svg>"; var adminGcardWhen = (i) => "Nov 6, 3:00 PM";`);
   w.eval(HE);
   w.eval(fs.readFileSync(path.join(SITE, "shared/portal-mode.js"), "utf8"));   // the real helper → window.rgaPortalMode
+  w.eval(adminCardLift(SITE, AJS));   // the one admin card: mgCard draws through it
   // the stubs for everything rowStepCardsHtml calls that this block doesn't own
   const names = [...new Set([...ROWFN.matchAll(/(?<![.\w])([A-Za-z_]\w*)\(/g)].map((m) => m[1]))].filter((n) => !/^(mg|if|for|function|return)/.test(n) && !(n in w));
   w.eval([...new Set([...ROWFN.matchAll(/(?<![.\w"'])([A-Z][A-Z0-9_]{2,})\b(?!["'])/g)].map((m) => m[1]))].map((n) => `var ${n} = "__stub_${n}__";`).join("\n"));

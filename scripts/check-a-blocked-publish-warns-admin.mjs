@@ -160,7 +160,7 @@ if (!/if \(!full\) \{ host\.hidden = true;/.test(A)) fail("the System health car
 if (!/const shLooks = \(\) => \(SH\.data \? \(\(SH\.data\.summary && SH\.data\.summary\.problems\) \|\| 0\) \+ \(Array\.isArray\(SH\.data\.blocked\) \? SH\.data\.blocked\.length : 0\) : null\);/.test(A)
   || !/const looks = shLooks\(\);\s*\n\s*if \(looks\) todo\.push\(/.test(A)) fail("the Dashboard's work queue doesn't count the jobs and blocked websites that need a look");
 if (!/loadPublishBlocked\(state\.selectedClient\.id\)/.test(A) || !/<div id="publishBlockedBanner" hidden><\/div>/.test(IDX)) fail("the client page doesn't read the newest reading into its warning");
-if (!/publishBlockedRowsHtml\(blocked\)\}\$\{alerts\}/.test(A) || !/\$\{pbRows\}<\/div>`;/.test(A)) fail("System health (full or on the Dashboard) doesn't list blocked clients");
+if (!/publishBlockedRowsHtml\(blocked\)\}\$\{alerts\}/.test(A) || !/if \(!o\.full\) return card\(cls, pill, title, right, \{ blk: publishBlockedRowsHtml\(blocked\)/.test(A)) fail("System health (full or on the Dashboard) doesn't list blocked clients");
 const openPr = DEL.slice(DEL.indexOf('if (act === "open_pr")'), DEL.indexOf("// 🔒 ONLY THE APPROVED BUILD UPLOADS"));
 if (!/PB\.publishChecks\(/.test(openPr) || !/PB\.saveReading\(/.test(openPr) || !/if \(pub\.ok === false\) return json\(409/.test(openPr)) fail("a pull request can open without the publish checks, or a found problem doesn't stop it");
 if (!/\[functions\."site-publish-check"\]\s*\n\s*schedule = "45 12 \* \* \*"/.test(TOML) || !/job: "site-publish-check"[^\n]*cron: "45 12 \* \* \*"/.test(MAN)) fail("the nightly check isn't scheduled, or isn't on System health's list");

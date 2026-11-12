@@ -268,8 +268,8 @@
  [
   "38: no Sent line",
   "admin",
-  "+ `<div class=\"ob-zc-b\">${parts ? parts.html : \"\"}${sentRows.join(\"\")}",
-  "+ `<div class=\"ob-zc-b\">${parts ? parts.html : \"\"}",
+  "blk: `${parts ? parts.html : \"\"}${sentRows.join(\"\")}",
+  "blk: `${parts ? parts.html : \"\"}",
   1
  ],
  [

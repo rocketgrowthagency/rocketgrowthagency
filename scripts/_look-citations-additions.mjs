@@ -28,7 +28,7 @@ await page.waitForTimeout(800);
 const row = page.locator('.ob-step[data-ob-step="m1.audit.citations_nap"]').first();
 await row.evaluate((e) => { e.classList.remove("ob-folded"); let p = e; while (p) { if (p.hasAttribute && p.hasAttribute("hidden")) p.removeAttribute("hidden"); p.classList && p.classList.remove("ob-folded", "is-collapsed"); p = p.parentElement; } });
 await row.locator(".ob-title").first().click().catch(() => {}); await page.waitForTimeout(1500);
-const card = row.locator(".ob-zc").first();
+const card = row.locator(".ob-card").first();
 if (!(await card.count())) console.log("NO CARD:", (await row.innerText()).replace(/\s+/g, " ").slice(0, 400)); else {
   console.log("[admin 29]", (await card.innerText()).replace(/\s+/g, " ").slice(0, 900)); await card.evaluate((e) => { let p = e; while (p) { if (p.hasAttribute && p.hasAttribute("hidden")) p.removeAttribute("hidden"); if (p.tagName === "DETAILS") p.open = true; p.classList && p.classList.remove("ob-folded", "is-collapsed"); p = p.parentElement; } }); await card.scrollIntoViewIfNeeded({ timeout: 10000 }); await page.waitForTimeout(800); const bb = await card.boundingBox();
   await page.screenshot({ path: `${out}/admin-29.png`, clip: { x: Math.max(0, bb.x), y: Math.max(0, bb.y), width: Math.min(bb.width, 1150), height: Math.min(bb.height, 1000) }, timeout: 30000 }); }

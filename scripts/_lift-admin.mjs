@@ -111,8 +111,13 @@ export function liftAdmin(wanted, { extraGlobals = {}, maxRounds = 40, file = "a
   // globalThis.rgaCallNames.NAMES`), as the browser has it after the import. The sandbox gets the same object from the same file.
   let callNames;
   try { const c = vm.createContext({}); vm.runInContext(fs.readFileSync(`${SITE}/shared/call-names.js`, "utf8"), c); callNames = c.rgaCallNames; } catch { callNames = undefined; }
+  // 🔑 11-11: every admin card shell is drawn by shared/admin-card.js (card_notice_designs_v1 §1: admin.js adminCard -> globalThis.rgaAdminCard),
+  // as the browser has it after the import. The sandbox gets the same object from the same file.
+  let adminCardApi;
+  try { const c = vm.createContext({}); vm.runInContext(fs.readFileSync(`${SITE}/shared/admin-card.js`, "utf8"), c); adminCardApi = c.rgaAdminCard; } catch { adminCardApi = undefined; }
   const makeCtx = () => vm.createContext({
     ...(callNames ? { rgaCallNames: callNames } : {}),
+    ...(adminCardApi ? { rgaAdminCard: adminCardApi } : {}),
     console: { log() {}, warn() {}, error() {} },
     document: undefined,
     URL, URLSearchParams, TextEncoder, TextDecoder,
@@ -209,7 +214,7 @@ function escapeAttribute(s){return escapeHtml(s);}\n`;
           process.exit(2);
         },
         /** Call a lifted function, resolving any dependency it reaches for mid-run. */
-        call(name, args = [], rounds = 20) {
+        call(name, args = [], rounds = 30) {   // 11-11: the one admin card adds adminCard to every card's chain
           // 🔑 RESOLVE THE NAMED FUNCTION ITSELF, not only what it reaches for. `obMarker` is an
           // indented arrow declared inside another function; asking for it without pulling it in
           // first reported "did not lift" when the lifter could perfectly well have fetched it.

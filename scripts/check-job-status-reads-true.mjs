@@ -6,6 +6,7 @@
 // from when check-ins began; (4) the alert decision: once, daily, retry undelivered, only a real OK clears; (5) the Mac's verdict on the watcher, and
 // the later client card's "checked this month"; (6) the card itself (lifted from admin.js): which words, which tone, no green unless every job is OK.
 // Files only. Exit 0 = holds · 1 = it reads wrong · 2 = moved (indeterminate). → memory project_system_health · feedback_an_absence_must_never_be_readable_as_a_value
+import { adminCardLift } from "./lib/admin-card-lift.mjs";   // card_notice_designs_v1 §1 (11-11): admin cards draw through shared/admin-card.js
 import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
@@ -140,16 +141,16 @@ const lift = (name) => { const at = js.indexOf(`function ${name}(`); if (at < 0)
 function skipTpl(i) { for (i++; i < js.length; i++) { const c = js[i]; if (c === "\\") { i++; continue; } if (c === "`") return i; if (c === "$" && js[i + 1] === "{") { let d = 1; i += 2; for (; i < js.length && d; i++) { const k = js[i]; if (k === "`") i = skipTpl(i); else if (k === "{") d++; else if (k === "}") d--; } i--; } } return i; }
 const box = { escapeHtml: (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])), escapeAttribute: (s) => String(s ?? "") };
 vm.createContext(box);
-vm.runInContext(`${lift("shProgress")}\n${lift("publishBlockedRowsHtml")}\n${lift("systemHealthRow")}\n${lift("systemHealthHtml")}\nthis.card = systemHealthHtml;`, box);
+vm.runInContext(`${adminCardLift(SITE, js)}\n${lift("shProgress")}\n${lift("publishBlockedRowsHtml")}\n${lift("systemHealthRow")}\n${lift("systemHealthHtml")}\nthis.card = systemHealthHtml;`, box);
 const row = (job, st_, where = "netlify") => ({ job, label: job, where, ...S.evaluateJob({ ...J, job, label: job, where }, st_ === "ok" ? good : st_ === "bad" ? { ...good, ok: false, error: "boom" } : null, null, { ...ctx, systemStart: null, tableReady: st_ !== "unset" }) });
 const data = (jobs, extra = {}) => ({ ok: true, table_ready: true, read_label: "Oct 31, 8:00 PM", jobs, summary: S.summarize(jobs), alerts: { tone: "unk", tag: "Messages only", line: "No webhook is set" }, ...extra });
 const card = (d, o = { full: true }) => box.card(d, o);
 const has = (name, html, re) => { if (!re.test(html)) F.push(`the card, ${name}: expected ${re}`); };
 const hasnt = (name, html, re) => { if (re.test(html)) F.push(`the card, ${name}: must not show ${re}`); };
-const GREEN = /class="ob-zc ok"|All clear/;
+const GREEN = /data-state="done"|All clear/;   // the one admin card (card_notice_designs_v1 §1): green = the Done state
 {
   const c = card(data([row("a", "ok"), row("b", "bad"), row("c", "bad"), row("m", "none", "mac")]));
-  has("two problems", c, /class="ob-zc you"/); has("two problems", c, /Your move/); has("two problems", c, /2 jobs need a look/); hasnt("two problems", c, GREEN);
+  has("two problems", c, /data-state="you"/); has("two problems", c, /Your move/); has("two problems", c, /2 jobs need a look/); hasnt("two problems", c, GREEN);
   has("two problems", c, /class="ob-zc-place you"/); has("two problems", c, /ob-zc-you">Failed/); has("the OK row", c, /class="ob-zc-place ok"/); has("the unknown row", c, /class="ob-zc-place unk"/); has("the unknown row", c, /ob-zc-unk">Not recorded/);
   if (c.indexOf('place you') > c.indexOf('place ok')) F.push("the card lists a healthy row above a problem");
   has("a footer control", c, /data-sh-refresh/); has("when it was read", c, /read Oct 31, 8:00 PM/); has("alerts row", c, /Alerts to you/); has("alerts row", c, /Messages only/);

@@ -13,6 +13,7 @@
 //   · admin step 28 draws card A (approved): "All 3 areas are already covered", "Inside Los Angeles", "Nothing was sent to Google",
 //     no "Open Google Business Profile"; the client portal draws the covered chip ("Mar Vista · in Los Angeles")
 // Point it at a copy with APPROVAL_ARCHIVE_SITE_DIR. exit 0 holds · 1 regressed · 2 code moved
+import { adminCardLift } from "./lib/admin-card-lift.mjs";   // card_notice_designs_v1 §1 (11-11): admin cards draw through shared/admin-card.js
 import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
@@ -109,12 +110,13 @@ const parts = ["ZC_PIN", "areaCoveredItems", "areaCoveredCardHtml"].map((n) => l
 if (parts.some((x) => !x)) { console.error("⚠️  INDETERMINATE — admin card A moved"); process.exit(2); }
 const ctx = { OL_G: "<svg data-g></svg>", escapeHtml: (x) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"),
   adminGcardWhen: () => "Oct 29, 8:00 AM" };
-vm.createContext(ctx); vm.runInContext(parts.join("\n") + "\nthis.card = areaCoveredCardHtml;", ctx);
+vm.createContext(ctx); vm.runInContext(adminCardLift(SITE, AJS), ctx); vm.runInContext(parts.join("\n") + "\nthis.card = areaCoveredCardHtml;", ctx);
 const gA = { state: "on_google", area_now: AREA, area_cover: { at: "2026-10-29T15:00:00Z" }, progress: { items: ["Mar Vista", "Palms", "Playa Vista"].map((n) => ({ kind: "area", name: n, on: true, covered_by: "Los Angeles, CA, USA" })) } };
 const html = ctx.card(gA);
 if (!/All 3 areas are already covered/.test(html)) fail("admin card A doesn't say 'All 3 areas are already covered'");
 if ((html.match(/Inside <em>Los Angeles<\/em>, which is already on their Google profile\./g) || []).length !== 3) fail("admin card A doesn't say each place is inside Los Angeles");
-if (!/Done · no Google change/.test(html) || !/Nothing was sent to Google/.test(html) || !/<b>6<\/b> places · unchanged/.test(html)) fail("admin card A is missing 'Done · no Google change', 'Nothing was sent to Google' or '6 places · unchanged'");
+if (!/class="ob-card-w">Done<\/span>[\s\S]*?class="ob-card-d">No Google change</.test(html) ||   // the one admin card: Done, then the label's own words
+   !/Nothing was sent to Google/.test(html) || !/<b>6<\/b> places · unchanged/.test(html)) fail("admin card A is missing 'Done · no Google change', 'Nothing was sent to Google' or '6 places · unchanged'");
 if (/Open Google Business Profile|Mark step complete/.test(html)) fail("admin card A still sends RGA to Google Business Profile or offers Mark step complete");
 if (!/g\.state === "on_google" && areaCoveredItems\(g\)\.length \? areaCoveredCardHtml\(g\)/.test(AJS)) fail("admin step 28's done card doesn't use card A when places are covered");
 if (!/x\.covered_by \? `<span class="pm-fxt-pl cov">[^`]*· in \$\{escapeHtml\(placeName\(x\.covered_by\)\)\}/.test(PJS)) fail("the client portal doesn't draw a covered place as 'Mar Vista · in Los Angeles'");

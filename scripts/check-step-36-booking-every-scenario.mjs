@@ -12,6 +12,7 @@
 //     Send reminder, no "Open in Gmail instead"; an X on every popup (admin dialogs, the hours popup, the portal's confirm / alert)
 //   · the finder says "couldn't read" apart from "nothing found"
 // Point it at a copy with APPROVAL_ARCHIVE_SITE_DIR. exit 0 holds · 1 regressed · 2 code moved
+import { adminCardLift } from "./lib/admin-card-lift.mjs";   // card_notice_designs_v1 §1 (11-11): admin cards draw through shared/admin-card.js
 import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
@@ -33,7 +34,7 @@ const ctx = { Date, escapeHtml: esc, escapeAttribute: esc, OL_G: "<svg data-g></
 vm.createContext(ctx);
 const zf = /^const ZC_FOLD_T = [^\n]*;$/m.exec(AJS);
 if (!zf) { console.error("⚠️  INDETERMINATE — the fold control (ZC_FOLD_T) moved"); process.exit(2); }
-try { vm.runInContext(`${zf[0]}\n${AJS.slice(a0, a1)}\n${AJS.slice(d0, d1 + 2)}\nthis.view = bk36View; this.card = bk36CardFor; this.done = bk36DoneCardHtml;`, ctx); }
+try { vm.runInContext(`${adminCardLift(SITE, AJS)}\n${zf[0]}\n${AJS.slice(a0, a1)}\n${AJS.slice(d0, d1 + 2)}\nthis.view = bk36View; this.card = bk36CardFor; this.done = bk36DoneCardHtml;`, ctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — admin step 36's block didn't run: ${e.message}`); process.exit(2); }
 const T = (url, opens) => ({ types: [{ key: "url_appointment", label: "Appointment links", links: url ? [{ url, clean: url.replace(/^https?:\/\//, ""), opens }] : [] }] });
 const page = (p, kind) => ({ url: `https://joes.com${p}`, label: `joes.com${p}`, kind });
@@ -113,7 +114,7 @@ if (!/Change the link/.test(chgH) || !/On Google now: joes\.com\/book/.test(chgH
 const bkBlock = AJS.slice(a0, a1) + AJS.slice(d0, d1);
 if (/Shows as a Book button|a Book button|Book button opens|tap Book\b|tap <b>Book/i.test(bkBlock + doneH)) fail("step 36 promises a \"Book button\" (Google picks the button's words)");
 if (!/if \(step\?\.flowId === "m1\.gbp\.booking_link" && task\?\.google_push && task\.google_push\.state === "on_google"\) return "";/.test(AJS)) fail("step 36: a link on Google shows \"What the client sent\" inside the row (its card is below the row)");
-for (const c of [".ob-zc.bad {", ".ob-zc.care {", ".ob-zc-place.r.pick {", ".ob-zc-checks {", ".ob-zc-radio {"]) if (!ACSS.includes(c)) fail(`step 36: the style ${c} is gone`);
+for (const c of [".ob-card.bad {", ".ob-card.unk {", ".ob-zc-place.r.pick {", ".ob-zc-checks {", ".ob-zc-radio {"]) if (!ACSS.includes(c)) fail(`step 36: the style ${c} is gone`);
 
 // ── the server ───────────────────────────────────────────────────────────────────────────────────
 let FNM; try { FNM = require(`${SITE}/netlify/functions/admin-gbp-booking.js`); } catch (e) { console.error(`⚠️  INDETERMINATE — admin-gbp-booking didn't load: ${e.message}`); process.exit(2); }

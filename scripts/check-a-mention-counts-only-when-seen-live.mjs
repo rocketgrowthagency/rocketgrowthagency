@@ -341,11 +341,15 @@ try {
   if (!cron) fail("8: mentions-check isn't scheduled in netlify.toml");
   if (!new RegExp(`job: "mentions-check"[^\\n]*cron: "${(cron || "x").replace(/\*/g, "\\*")}"`).test(man)) fail("8: the job manifest doesn't list mentions-check with the same schedule");
   if (!/withCheckin\("mentions-check"/.test(read("netlify/functions/mentions-check.js"))) fail("8: mentions-check doesn't check in");
-  if (!/import "\/shared\/mentions\.js\?v=20261111z"/.test(adm) || !/import "\/shared\/mentions\.js\?v=20261111z"/.test(por)) fail("8: admin or portal doesn't import shared/mentions.js at ?v=20261111z");
+  // 11-11 (one admin card, batch 1): mentions.js moved again (its admin card is the one card), so the pin is "the same buster in both", not one string
+  { const va = (/import "\/shared\/mentions\.js\?v=([0-9a-z]+)"/.exec(adm) || [])[1], vp = (/import "\/shared\/mentions\.js\?v=([0-9a-z]+)"/.exec(por) || [])[1];
+    if (!va || !vp || va !== vp || va === "20261111x") fail(`8: admin and portal don't import shared/mentions.js at the same moved buster (${va} / ${vp})`); }
   if (!/step === "m1\.platform\.mentions" \? mnHostHtml\(step\)/.test(adm)) fail("8: admin step 55 doesn't draw the one list");
   if (!/mnHostHtml\(Q2\.ID\.LINKS\)/.test(adm)) fail("8: Monthly 15 doesn't draw the one list");
   if ((por.match(/\$\{ogMnHost\(cid\)\}/g) || []).length < 5) fail("8: an Ongoing work layout is missing the Where you're mentioned card");
-  if (!/admin\.js\?v=20261111z/.test(read("admin/index.html")) || !/portal\.js\?v=20261111z/.test(read("portal/index.html"))) fail("8: the admin or portal page buster didn't move");
+  // 11-11: one pinned string broke the day another build moved the page (main went to ...mj, then ...nb). Whether a buster MOVED with its file is
+  // check-every-cache-buster-moved-with-its-file's job (against origin/main); here: both pages load their script with a buster at all.
+  if (!/admin\.js\?v=20261111[0-9a-z]+"/.test(read("admin/index.html")) || !/portal\.js\?v=20261111[0-9a-z]+"/.test(read("portal/index.html"))) fail("8: the admin or portal page loads its script with no buster");
 }
 
 // ══ 4b · step 55's places join the one list, their state carried over (nothing lost) ══

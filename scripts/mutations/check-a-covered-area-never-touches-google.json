@@ -79,8 +79,8 @@
  [
   "admin card A sends RGA to Google again",
   "admin",
-  "+ `<div class=\"ob-zc-f\"><button type=\"button\" class=\"admin-button admin-button-secondary\" data-area-check>↻ Check Google now</button></div></div>`;",
-  "+ `<div class=\"ob-zc-f\"><a href=\"https://business.google.com/\">Open Google Business Profile ↗</a></div></div>`;",
+  "foot: `<button type=\"button\" class=\"admin-button admin-button-secondary\" data-area-check>↻ Check Google now</button>` });",
+  "foot: `<a href=\"https://business.google.com/\">Open Google Business Profile ↗</a>` });",
   1
  ],
  [

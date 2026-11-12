@@ -28,7 +28,7 @@ const adminScene = async (scene, core, stepText, name) => {
   const step = page.locator(".ob-step", { hasText: stepText }).first();
   await step.locator(".ob-head, .ob-main, .ob-title").first().click().catch(() => {}); await page.waitForTimeout(2500);
   await page.evaluate(() => document.querySelectorAll("[data-admin-core]:not([data-ready])").length);
-  console.log(name, "cards", await step.locator(".ob-zc").count(), "gcards", await step.locator(".ob-gcard").count(), "class", (await step.getAttribute("class")));
+  console.log(name, "cards", await step.locator(".ob-card").count(), "gcards", await step.locator(".ob-gcard").count(), "class", (await step.getAttribute("class")));
   await shot(step, name); await ctx.close();
 };
 const portalScene = async (scene, name) => {

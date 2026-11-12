@@ -52,7 +52,7 @@
  ["the slot keeps the turned-down photo", "admin", "const slotRank = (p) => (isUp(p) ? 2 : p.publish_state === \"turned_down\" ? 0 : 1);", "const slotRank = (p) => 1;", 1],
  ["delete uses the upload's name", "photoretire", "const target = (before && photoOnList(photo, before, rows)) || name;", "const target = name;", 1],
  ["a 404 alone reads as gone", "photoretire", "if (!after) return { ok: false, status: 0, error: \"We couldn't check with Google that it's gone.\" };", "if (!after) return { ok: true, status: 404, name: target };", 1],
- ["the pill counts only reviews", "admin", "${parts && parts.rgaN ? \"Your move\"", "${parts && parts.reviewN ? \"Your move\"", 1],
+ ["the pill counts only reviews", "admin", "state: parts && parts.rgaN ? \"you\"", "state: parts && parts.reviewN ? \"you\"", 1],
  ["failed sends aren't RGA's", "admin", "rgaN: review.length + broken.length + photoToSortCount()", "rgaN: review.length", 1],
  ["view larger dead on the old view", "admin", ", .pr-wrap [data-photo-zoom], .pr-wrap [data-photo-zoom-src], .pr-wrap .pr-ph.photo", "", 1],
  ["a logo gets no sent line", "admin", "isUp(p) && p.pushed_at && googleState(p) !== \"hide\"", "isUp(p) && p.pushed_at && p.category !== \"logo\"", 1],
