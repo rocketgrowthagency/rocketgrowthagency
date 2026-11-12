@@ -148,7 +148,7 @@ for (const s of plain.slice(0, 1)) {
   if (decide(s, { ok: true, summary: "measured, no AI" }, 0) !== true) F(`${s.id}: a plain run with no draft no longer finishes`);
 }
 // 11-11: the AI ledger names the step between the reset and the run (no draft runs there)
-if (!/\n\s*DRAFT_CALLS = 0;\n(?:\s*LEDGER_CTX = \{[^\n]*\};\n)?\s*const result = await executor\(/.test(exec)) F("the draft counter isn't reset right before the executor runs — one run's drafts would leak into the next");
+if (!/\n\s*DRAFT_CALLS = 0;\n(?:\s*LEDGER_CTX = \{[^\n]*\};\n)?(?:\s*\/\/[^\n]*\n)*\s*const result = await executor\(/.test(exec)) F("the draft counter isn't reset right before the executor runs — one run's drafts would leak into the next");
 if (!/async function aiDraft\([^)]*\) \{\n\s*DRAFT_CALLS\+\+;/.test(exec)) F("aiDraft doesn't count itself — the draft rule can't fire");
 
 console.log(`  decision: isDone = ${decision}`);

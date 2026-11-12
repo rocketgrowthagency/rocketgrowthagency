@@ -20,8 +20,8 @@
  [
   "the Anthropic branch hands back model text unconverted",
   "exec",
-  "toUsIdiom(text.trim())",
-  "(text.trim())",
+  "toUsIdiom(got.text.trim())",
+  "(got.text.trim())",
   1
  ],
  [

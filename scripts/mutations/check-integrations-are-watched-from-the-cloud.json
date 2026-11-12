@@ -32,5 +32,5 @@
  ["a laptop writes to the real ledger", "sa_ledger", "  if (!deps.fetch && !inRuntime()) return { written: false, why: \"not a deployed function\" };\n", ""],
  ["the 12-hour window is dropped", "sa_ledger", "    if (r.ok && (await r.json()).length) return \"already_told\";", "    if (false) return \"already_told\";"],
  ["a second Anthropic ledger comes back", "flowexec", "const AL = require(\"./_ai-ledger\");", "const AL = require(\"./_ai-ledger\"); require(\"./_anthropic-ledger\");"],
- ["a meter wrapper comes back at a call site", "sa_photolook", "    const r = await fetch(\"https://api.anthropic.com/v1/messages\", {", "    const r = await require(\"./_ai-ledger\").meter(\"photo-look\")(\"https://api.anthropic.com/v1/messages\", {"]
+ ["a meter wrapper comes back at a call site", "sa_photolook", "    const AM = require(\"./_ai-models\");\n", "    const AM = require(\"./_ai-models\");\n    const _metered = require(\"./_ai-ledger\").meter(\"photo-look\");\n"]
 ]
