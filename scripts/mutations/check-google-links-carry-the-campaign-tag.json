@@ -1,0 +1,98 @@
+[
+ [
+  "the website link's tag loses its campaign name",
+  "gbpsafetyshared",
+  "const LINK_TAG = [...OLD_TAG, [\"utm_campaign\", LINK_CAMPAIGN]];",
+  "const LINK_TAG = [...OLD_TAG];"
+ ],
+ [
+  "our older two tags read as the client's own (an existing client could never be updated)",
+  "gbpsafetyshared",
+  "if (ours && utm.length === 2) return \"no_campaign\";",
+  "if (false) return \"no_campaign\";"
+ ],
+ [
+  "linkFor no longer adds the campaign to our older tags",
+  "gbpsafety",
+  "if (state === \"none\" || state === \"no_campaign\") for (const [k, v] of S.LINK_TAG)",
+  "if (state === \"none\") for (const [k, v] of S.LINK_TAG)"
+ ],
+ [
+  "the Update overwrites the client's own tags",
+  "gbpsafety",
+  "if (state === \"own\") return { error: \"The website link on Google carries the client's own tags, so it's left as it is.\" };",
+  ""
+ ],
+ [
+  "the website link is no longer read back from Google after the write",
+  "gbpsafety",
+  "try { back = await call(`${deps.loc}?readMask=websiteUri`); }",
+  "try { back = { websiteUri: choice.link }; }"
+ ],
+ [
+  "website_campaign skips campaignChoiceFor (it could write a tagged link or the client's own tags)",
+  "gbpsafetyfn",
+  "const cc = G.campaignChoiceFor(task, client);",
+  "const cc = { kind: \"home\", url: G.baseWebsite(task, client) };"
+ ],
+ [
+  "the client's Google card shows the tagged link",
+  "profilevisits",
+  "title: `Your profile links to ${S.cleanLink(l.link)}`",
+  "title: `Your profile links to ${l.link}`"
+ ],
+ [
+  "the taps tile adds Analytics' visits to Google's taps",
+  "profilevisits",
+  "const taps = isNum(row.gbp_website_clicks) ? Number(row.gbp_website_clicks) : null;",
+  "const taps = isNum(row.gbp_website_clicks) ? Number(row.gbp_website_clicks) + ((campaignsOf(row).listing || {}).visits || 0) : null;"
+ ],
+ [
+  "a failed Analytics read shows as 0 visits",
+  "profilevisits",
+  "if (!c.campaigns) return { state: \"failed\", listing: null, booking: null, why: \"Couldn't read Google Analytics\" };",
+  "if (!c.campaigns) return { state: \"read\", listing: { visits: 0, form_leads: 0 }, booking: null, why: \"\" };"
+ ],
+ [
+  "Update is offered on the client's own tags",
+  "profilevisits",
+  "else if (st === \"own\") rows.push({ kind: \"ln\", mark: \"ok\", title: \"Website link\", mono: live.link, small: \"The client's own tags. Kept as they are.\", side: { pill: \"Their tags\", cls: \"ok\" } });",
+  "else if (st === \"own\") { update = true; rows.push({ kind: \"ln\", mark: \"you\", title: \"Website link\", mono: live.link, small: \"\", side: { button: \"Update\" } }); }"
+ ],
+ [
+  "every event counts as a visit (a form opening, a submit)",
+  "metricsjs",
+  "if (ev === \"session_start\") campaigns[c].visits += n;",
+  "campaigns[c].visits += n;"
+ ],
+ [
+  "a failed Analytics read reads as zero visits",
+  "metricsjs",
+  "if (!res.ok) { const b = await res.text().catch(() => \"\"); return { from: monthStart, read_at: at, error:",
+  "if (false) { const b = await res.text().catch(() => \"\"); return { from: monthStart, read_at: at, error:"
+ ],
+ [
+  "admin step 42 stops drawing the tag card",
+  "adminjs",
+  "gbpLandingAdminHtml(t, s) + tagCardHtml(",
+  "gbpLandingAdminHtml(t, s) + (() => \"\")("
+ ],
+ [
+  "admin's Update posts the plain website choice",
+  "adminjs",
+  "gsPost(cid, { action: \"website_campaign\" })",
+  "gsPost(cid, { action: \"website_choice\" })"
+ ],
+ [
+  "the portal Dashboard stops drawing From your Google profile",
+  "portal",
+  "${gliveWrap(\"gpv\", client.id || row.client_id, () => profileVisitsHtml(client.id || row.client_id, monthlyRecords, onboarding, oauth))}",
+  ""
+ ],
+ [
+  "the booking link's campaign name changes",
+  "bookinglink",
+  "[\"utm_campaign\", \"gbp-booking\"]",
+  "[\"utm_campaign\", \"gbp\"]"
+ ]
+]

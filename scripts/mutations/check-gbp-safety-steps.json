@@ -170,8 +170,8 @@
  [
   "own tags get ours too",
   "gbpsafety",
-  "if (tagged && ![...u.searchParams.keys()].some((k) => /^utm_/i.test(k))) for",
-  "if (tagged) for",
+  "if (state === \"none\" || state === \"no_campaign\") for",
+  "if (true) for",
   1
  ],
  [

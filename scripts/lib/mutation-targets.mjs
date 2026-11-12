@@ -605,4 +605,9 @@ export const FILES = {
   reviewsites: "netlify/functions/_review-sites.js",
   reviewsitesdata: "data/review-sites.json",
   reviewsecondfn: "netlify/functions/review-second-site.js",
+  // 11-11 tier3 items 9 + 10 (tier3_best_in_class_v1 s9, s10a, s10b): the campaign tag and the profile's two counters, the client's fix plan, Your numbers pre-filled
+  profilevisits: "shared/profile-visits.js",
+  fixplanclient: "shared/fix-plan-client.js",
+  portalfixplanfn: "netlify/functions/portal-fix-plan.js",
+  yournumbers: "shared/your-numbers.js",
 };

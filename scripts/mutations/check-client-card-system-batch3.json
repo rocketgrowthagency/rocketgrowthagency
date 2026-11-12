@@ -128,8 +128,8 @@
  [
   "17: the note field dropped",
   "portal",
-  "${note}</div>${csNote(\"Estimates are fine.\")}",
-  "</div>${csNote(\"Estimates are fine.\")}",
+  "<input type=\"checkbox\" data-in-notsure-all checked hidden>${note}` })}`",
+  "<input type=\"checkbox\" data-in-notsure-all checked hidden>` })}`",
   1
  ],
  [

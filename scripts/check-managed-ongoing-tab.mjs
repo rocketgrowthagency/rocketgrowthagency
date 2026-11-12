@@ -298,8 +298,9 @@ try {
     try {
       await openRow(h, "m2.snap.business_outcomes");
       const r9 = await rowText(h, "m2.snap.business_outcomes"), L = "managed Monthly, January";
-      for (const w of ["For Oct – Dec", "2 numbers · about a minute", "for Oct – Dec", "Send my numbers"]) has(r9 || "", w, `${L} step 9`);
-      for (const w of ["about 2 minutes", "Jan – Mar", "quarterly report"]) hasNot(r9 || "", w, `${L} step 9`);
+      // tier3 item 10b (approved tier3_best_in_class_v1 s10b, 11-11): the pre-filled card ("Your part", the quarter in words, Confirm and Not sure)
+      for (const w of ["For October to December", "Your part", "October to December", "Are these right? Confirm saves them for this quarter.", "Not sure"]) has(r9 || "", w, `${L} step 9`);
+      for (const w of ["about 2 minutes", "Jan – Mar", "quarterly report", "Send my numbers"]) hasNot(r9 || "", w, `${L} step 9`);
     } finally { await h.close(); }
   }
   // ── NOT MANAGED: today's tab ─────────────────────────────────────────────────────────────────────────────────

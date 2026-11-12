@@ -189,17 +189,17 @@
   1
  ],
  [
-  "step 9 takes 2 minutes again",
+  "step 9 says quarterly report instead of the months the numbers cover",
   "portal",
-  "head: `${(spec.fields || []).length} numbers · about a minute`, side: `for ${escapeHtml(q)}`,",
-  "head: `${(spec.fields || []).length} numbers · about 2 minutes`, side: \"for your quarterly report\",",
+  "csCard({ tone: \"you\", head: \"Your part\", side: escapeHtml(quarter),",
+  "csCard({ tone: \"you\", head: \"Your part\", side: \"for your quarterly report\",",
   1
  ],
  [
   "step 9's pill names the current quarter",
   "portal",
-  "pills: [[\"Your turn\", \"you\"], [`For ${q}`, \"wait off\"]],",
-  "pills: [[\"Your turn\", \"you\"], [ogQuarter(), \"wait off\"]],",
+  "pills: [[\"Your turn\", \"you\"], [`For ${yn.quarter}`, \"wait off\"]], html: yn.html };",
+  "pills: [[\"Your turn\", \"you\"], [ogQuarter(), \"wait off\"]], html: yn.html };",
   1
  ],
  [
