@@ -182,17 +182,17 @@
   1
  ],
  [
-  "a page that links but does not name the business is live",
+  "a page read without the link is counted live (re-aimed 11-11: tier3 item 8 counts a link to the domain, the name is no longer required)",
   "monthlyquartersrv",
-  "const ok = d.pageNames(pg.html, name) && linksToSite(pg.html, site);",
-  "const ok = linksToSite(pg.html, site);",
+  "else { results[host] = { read_at: at }; out.still++; }",
+  "else { results[host] = { read_at: at, state: \"live\", live_seen_at: at }; out.still++; }",
   1
  ],
  [
   "a page that names the business but has no link is live",
   "monthlyquartersrv",
-  "const ok = d.pageNames(pg.html, name) && linksToSite(pg.html, site);",
-  "const ok = d.pageNames(pg.html, name);",
+  "const link = linkOnPage(pg.html, site);",
+  "const link = linkOnPage(pg.html, site) || (d.pageNames(pg.html, \"Sam's Plumbing\") ? { href: site, rel: \"\" } : null);",
   1
  ],
  [
@@ -205,8 +205,8 @@
  [
   "a page is read every day instead of weekly",
   "monthlyquartersrv",
-  "now - Date.parse(p.read_at) < WEEK - 3600000",
-  "false",
+  "const gap = (p) => (p.state === \"live\" ? MONTH_READ : WEEK) - 3600000;",
+  "const gap = () => 0;",
   1
  ],
  [
@@ -219,7 +219,7 @@
  [
   "an ask that was never sent is read",
   "monthlyquartersrv",
-  "p && p.state === \"asked\" && p.url",
+  "p && [\"asked\", \"replied\", \"live\"].includes(p.state) && p.url",
   "p && p.url",
   1
  ],
@@ -231,10 +231,10 @@
   1
  ],
  [
-  "live without the weekly wording",
+  "the live line drops where and when it was seen",
   "monthlyquarter",
-  "Live · the page names the business and links to its website",
-  "Live",
+  "`Links to ${site || \"their website\"}. Seen ${shortDay(p.live_seen_at)}.`",
+  "\"Live.\"",
   1
  ]
 ]

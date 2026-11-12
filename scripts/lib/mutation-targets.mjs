@@ -708,4 +708,15 @@ export const FILES = {
   apcfn: "netlify/functions/approval-comments.js",
   midnotefn: "netlify/functions/_mid-note.js",
   noticessql: "docs/supabase/NOTICES_AND_COMMENTS_2026-11-11.sql",
+  // tier3_best_in_class_v1 items 7, 6, 8 (approved 11-11): the client health view, the AI sample, the link pilot
+  clienthealth: "shared/client-health.js",
+  clienthealthsrv: "netlify/functions/_client-health.js",
+  adminclienthealthfn: "netlify/functions/admin-client-health.js",
+  aisample: "shared/ai-sample.js",
+  aisamplesrv: "netlify/functions/_ai-sample.js",
+  aisamplebg: "netlify/functions/ai-sample-background.js",
+  serpreserve: "netlify/functions/_serpapi-reserve.js",
+  adminmonthlyquarterfn: "netlify/functions/admin-monthly-quarter.js",
+  serpapibudgetlib: "scraper:lib/serpapi-budget.cjs",
+  serpapibudgetcli: "scraper:scripts/serpapi-budget.mjs",
 };

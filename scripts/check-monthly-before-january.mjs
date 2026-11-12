@@ -214,31 +214,37 @@ try {
   const pages = { "https://a.test/p": named('<a href="https://samsplumbing.test">website</a>'), "https://b.test/p": named("<p>No link</p>"), "https://c.test/p": "<html><body><a href=\"https://samsplumbing.test\">a plumber</a></body></html>", "https://d.test/p": null };
   const places = (over = {}) => ({ "a.test": { state: "asked", url: "https://a.test/p", name: "Chamber", asked_at: "2026-11-02T10:00:00Z", ...over.a }, "b.test": { state: "asked", url: "https://b.test/p", name: "Journal", asked_at: "2026-11-02T10:00:00Z", ...over.b },
     "c.test": { state: "asked", url: "https://c.test/p", asked_at: "2026-11-02T10:00:00Z", ...over.c }, "d.test": { state: "asked", url: "https://d.test/p", asked_at: "2026-11-02T10:00:00Z", ...over.d }, "e.test": { state: "drafted", url: "https://a.test/p", ask: "x" } });
+  // 🔄 tier3_best_in_class_v1 item 8 (the owner 11-11) superseded two of this section's rules: the step is the LINK PILOT (pages are read only for a client in it), and
+  // "Live" is a page that holds a link to the client's domain (a sponsor logo link need not print the name). The pilot's full rules: check-a-link-counts-only-when-seen-live.
+  const PIL = { on: true, at: "2026-11-01T00:00:00Z" };
   const f = fake({ readPage: async (u) => { f.pageReads = (f.pageReads || 0) + 1; return pages[u] ? { status: 200, html: pages[u] } : { status: 0, html: "" }; }, pageNames: B.pageNames });
-  f.store = { [Q.ID.LINKS]: { places: places() } };
+  f.store = { [Q.ID.LINKS]: { pilot: PIL, places: places() } };
   const r = await MQ.linksRead({ clientId: "c1", month: QMONTH, deps: f }), pl = f.store[Q.ID.LINKS].places;
   if (pl["a.test"].state !== "live" || !pl["a.test"].live_seen_at || !pl["a.test"].read_at) fail(`5 a page that names the business AND links to its website is live: ${JSON.stringify(pl["a.test"])}`);
   if (pl["b.test"].state !== "asked" || pl["b.test"].live_seen_at || !pl["b.test"].read_at) fail(`5 a page that names the business with no link is NOT live (read, still asked): ${JSON.stringify(pl["b.test"])}`);
-  if (pl["c.test"].state !== "asked" || pl["c.test"].live_seen_at) fail("5 a page that links but does not name the business is NOT live");
+  if (pl["c.test"].state !== "live" || !pl["c.test"].live_seen_at) fail("5 a page that links to the website is live even when its text does not print the name (tier3 item 8)");
   if (pl["d.test"].state !== "asked" || pl["d.test"].read_at) fail("5 a page that would not open changes nothing (never 'no link')");
   if (pl["e.test"].state !== "drafted") fail("5 a place that was never asked is not read");
-  if (r.live !== 1 || r.still !== 2 || r.failed !== 1) fail(`5 the run counts what it read: ${JSON.stringify(r)}`);
+  if (r.live !== 2 || r.still !== 1 || r.failed !== 1) fail(`5 the run counts what it read: ${JSON.stringify(r)}`);
+  const outside = fake({ readPage: async () => { outside.reads = (outside.reads || 0) + 1; return { status: 200, html: pages["https://a.test/p"] }; }, pageNames: B.pageNames }); outside.store = { [Q.ID.LINKS]: { places: places() } };
+  await MQ.linksRead({ clientId: "c1", month: QMONTH, deps: outside }); if (outside.reads) fail("5 pages are read for a client outside the link pilot");
   const before = f.pageReads; f.store[Q.ID.LINKS].places["b.test"].read_at = new Date(NOW - 2 * 86400000).toISOString();
   await MQ.linksRead({ clientId: "c1", month: QMONTH, deps: f });
   if (f.pageReads - before !== 1) fail(`5 a page read within the week is not read again; only the one that never opened is retried: ${f.pageReads - before} reads`);
-  const old = fake({ readPage: async () => ({ status: 200, html: pages["https://b.test/p"] }), pageNames: B.pageNames }); old.store = { [Q.ID.LINKS]: { places: { "b.test": { state: "asked", url: "https://b.test/p", read_at: new Date(NOW - 8 * 86400000).toISOString() } } } };
+  const old = fake({ readPage: async () => ({ status: 200, html: pages["https://b.test/p"] }), pageNames: B.pageNames }); old.store = { [Q.ID.LINKS]: { pilot: PIL, places: { "b.test": { state: "asked", url: "https://b.test/p", read_at: new Date(NOW - 8 * 86400000).toISOString() } } } };
   const r2 = await MQ.linksRead({ clientId: "c1", month: QMONTH, deps: old }); if (r2.read !== 1) fail("5 a page last read 8 days ago is read again");
-  const noSite = fake({ websiteOf: async () => null, readPage: async () => ({ status: 200, html: pages["https://a.test/p"] }), pageNames: B.pageNames }); noSite.store = { [Q.ID.LINKS]: { places: places() } };
+  const noSite = fake({ websiteOf: async () => null, readPage: async () => ({ status: 200, html: pages["https://a.test/p"] }), pageNames: B.pageNames }); noSite.store = { [Q.ID.LINKS]: { pilot: PIL, places: places() } };
   await MQ.linksRead({ clientId: "c1", month: QMONTH, deps: noSite }); if (Object.values(noSite.store[Q.ID.LINKS].places).some((p) => p.state === "live")) fail("5 with no website on file nothing is marked live");
   // the morning run reads them: settle() calls it
-  const s = fake({ gscRows: async () => null, videoLive: async () => null, readPage: async (u) => ({ status: 200, html: pages["https://a.test/p"] }), pageNames: B.pageNames }); s.store = { [Q.ID.LINKS]: { places: { "a.test": { state: "asked", url: "https://a.test/p" } } } };
+  const s = fake({ gscRows: async () => null, videoLive: async () => null, readPage: async (u) => ({ status: 200, html: pages["https://a.test/p"] }), pageNames: B.pageNames }); s.store = { [Q.ID.LINKS]: { pilot: PIL, places: { "a.test": { state: "asked", url: "https://a.test/p" } } } };
   const so = await MQ.settle({ clientId: "c1", month: QMONTH, deps: s });
   if (!so.links || so.links.live !== 1 || s.store[Q.ID.LINKS].places["a.test"].state !== "live") fail(`5 the morning run's settle reads the asked pages: ${JSON.stringify(so.links)}`);
   // the card's words
-  const v = Q.linksView({ task: { searched_at: "2027-01-05T10:00:00Z", places: { "x.test": { state: "live", name: "Culver City Chamber of Commerce", live_seen_at: "2027-01-12T09:00:00Z", read_at: "2027-01-12T09:00:00Z" }, "y.test": { state: "asked", name: "Westside Business Journal", asked_at: "2027-01-05T09:00:00Z", read_at: "2027-01-12T09:00:00Z" } } } });
+  // the card's words, as tier3 item 8 draws them ("Links to betaroofing.com. Seen Nov 9." / "Asked Nov 4.")
+  const v = Q.linksView({ task: { pilot: PIL, searched_at: "2027-01-05T10:00:00Z", places: { "x.test": { state: "live", name: "Culver City Chamber of Commerce", live_seen_at: "2027-01-12T09:00:00Z", read_at: "2027-01-12T09:00:00Z" }, "y.test": { state: "asked", name: "Westside Business Journal", asked_at: "2027-01-05T09:00:00Z", read_at: "2027-01-12T09:00:00Z" } } }, now: Date.parse("2027-01-20T09:00:00Z"), site: "samsplumbing.test" });
   const lines = v.rows.map((r) => `${r.title} | ${r.line}`).join("\n");
-  if (!/Culver City Chamber of Commerce \| Live · the page names the business and links to its website · read Jan 12/.test(lines)) fail(`5 the live line: ${lines}`);
-  if (!/Westside Business Journal \| Asked Jan 5 · no link on the page yet · read again weekly/.test(lines)) fail(`5 the asked line: ${lines}`);
+  if (!/Culver City Chamber of Commerce \| Links to samsplumbing\.test\. Seen Jan 12\./.test(lines)) fail(`5 the live line: ${lines}`);
+  if (!/Westside Business Journal \| Asked Jan 5\./.test(lines)) fail(`5 the asked line: ${lines}`);
   if (/Link seen live|Asked, waiting/.test(strip(read("shared/monthly-quarter.js")))) fail("5 the old 'Link seen live' / 'Asked, waiting' wording must be removed at the producer");
   const nm = MQ.defaultDeps.toString(); if (!/readPage/.test(nm) || !/B\.pageNames/.test(nm)) fail("5 the live deps must reuse the free page read and pageNames from _citation-build");
   if (/serpSearch|search\(/.test(MQ.linksRead.toString())) fail("5 reading a page must be free: no search");

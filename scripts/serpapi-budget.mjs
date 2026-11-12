@@ -57,7 +57,11 @@ if (!acct) {
   console.log('[serpapi-budget] INDETERMINATE - could not read account.json (no key, or the call failed). Not stopping the night for that; the wrapper keeps enforcing the last fresh snapshot if there is one.');
   process.exit(0);
 }
-B.writeState({ remaining: acct.remaining, perMonth: acct.perMonth, usage: acct.usage, plan: acct.plan, renewal: acct.renewal, reserve: B.reserve(), snapshotAt: new Date().toISOString() });
+// 11-11 (tier3 decision 4): the client reserve grows with the active paying clients (the Website's formula). A fixture run never reads the database; an env
+// SERPAPI_RESERVE override wins; a count that cannot be read keeps the base (the night is never stopped for not knowing).
+const cr = process.env.SERPAPI_ACCOUNT_FIXTURE || process.env.SERPAPI_RESERVE ? null : await B.clientReserveNow();
+if (cr) console.log(`[serpapi-budget] client reserve: ${cr.reserve} (${cr.active} active paying client${cr.active === 1 ? '' : 's'}, the Website's formula)`);
+B.writeState({ remaining: acct.remaining, perMonth: acct.perMonth, usage: acct.usage, plan: acct.plan, renewal: acct.renewal, ...(cr ? { activeClients: cr.active, clientReserve: cr.reserve } : {}), reserve: cr ? cr.reserve : B.reserve(), snapshotAt: new Date().toISOString() });
 const v = B.paceVerdict(acct);
 console.log(`[serpapi-budget] plan=${acct.plan} | ${acct.remaining} left of ${acct.perMonth ?? '?'} | used ${acct.usage ?? '?'}${v.usedPct != null ? ` (${Math.round(v.usedPct * 100)}%)` : ''} | resets ${acct.renewal ?? '?'} (${v.daysLeft ?? '?'} days) | client reserve ${v.reserve}`);
 if (v.perDay != null) console.log(`[serpapi-budget] this cycle: ${v.perDay.toFixed(1)}/day so far; the remaining days need about ${v.projectedNeed}, usable above the reserve: ${v.usableBeforeReset}`);
