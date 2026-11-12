@@ -7,6 +7,7 @@
 //     killed as a "non-opener" (6 real clickers were).
 //   3 the Calls tab takes back a lead closed ONLY by that auto-suppress if it clicked, never one a person closed (reply, unsubscribe, bounce,
 //     a call outcome), and never by touching its email sequence.
+//   4 (master audit #7, 11-11) a lead who REPLIED is on Calls in its own Replied bucket (not To call), unless the reply said stop.
 // Fakes only (no Airtable, no network). Proves itself on the before state (380620b1 by default; --against=<rev>): exit 2 if it can't.
 import fs from "node:fs"; import path from "node:path"; import os from "node:os"; import { execFileSync } from "node:child_process"; import { createRequire } from "node:module";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
@@ -44,6 +45,23 @@ function check(dir) {
     need(Q.callable({ ...base, "Funnel State": "closed_not_interested" }) === false, "3 a not-interested lead is callable");
     need(Q.callable({ ...base, Phone: "" }) === false, "3 a lead with no phone is callable");
   }
+  // 4 · master audit #7 (11-11): the people who REPLIED are on Calls, in their own Replied bucket (callable() drops them from To call, rightly)
+  need(Q && typeof Q.replierCallable === "function", "4 Calls has no Replied rule: the leads who wrote back are on no call surface");
+  if (Q && Q.replierCallable) {
+    const r = { Phone: "(310) 555-0101", Replied: true, "Reply Date": "2026-11-09", "Reply Sentiment": "interested", "Funnel State": "closed_replied", "Email Status": "valid" };
+    need(Q.replierCallable(r) === true, "4 a lead who replied 'interested' and has a phone is not on Calls");
+    need(Q.replierCallable({ ...r, "Reply Sentiment": "question" }) === true, "4 a lead who replied with a question is not on Calls");
+    need(Q.replierCallable({ ...r, "Reply Sentiment": "unsubscribe" }) === false, "4 a lead who replied 'unsubscribe' is put on Calls");
+    need(Q.replierCallable({ ...r, "Reply Sentiment": "not_interested" }) === false, "4 a lead who replied 'not interested' is put on Calls");
+    need(Q.replierCallable({ ...r, "Email Status": "unsubscribed" }) === false, "4 an unsubscribed replier is put on Calls");
+    need(Q.replierCallable({ ...r, Phone: "" }) === false, "4 a replier with no phone is put on Calls");
+    need(Q.replierCallable({ ...r, Replied: false, "Reply Date": null }) === false, "4 a lead who never replied lands in Replied");
+  }
+  const rd = (f) => { try { return fs.readFileSync(path.join(dir, f), "utf8"); } catch { return ""; } };
+  const q = rd("netlify/functions/sales-call-queue.js"), calls = rd("admin/calls.js");
+  need(/"\{Replied\}", "\{Reply Date\}"/.test(q), "4 the Calls read (QUEUE_FORMULA) never fetches a replier who opened nothing");
+  need(/b\.replied\.push\(shape\(r, "replied"\)\)/.test(q), "4 the Calls buckets have no Replied bucket");
+  need(/\{ key: "replied", label: "Replied" \}/.test(calls), "4 the Calls tab draws no Replied tab");
   return bad;
 }
 const now = check(SITE);

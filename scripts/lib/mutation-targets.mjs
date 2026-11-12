@@ -690,4 +690,8 @@ export const FILES = {
   measurerun: "netlify/functions/site-measure-run.js",
   formcheck: "netlify/functions/_form-check.js",
   robotstxt: "robots.txt",
+  // master audit #7 + #15 + #16 (11-11): a signed client reaches the CRM; the video CTA keeps the lead
+  startasclientfn: "netlify/functions/start-as-client.js",
+  leadcrmfn: "netlify/functions/_lead-crm.js",
+  outreachgs: "docs/apps-scripts/gmail-to-airtable.gs",
 };

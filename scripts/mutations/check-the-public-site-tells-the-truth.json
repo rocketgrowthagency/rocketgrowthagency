@@ -460,5 +460,26 @@
   "\"addressLocality\": \"Culver City\",",
   "\"streetAddress\": \"9937 Jefferson Blvd, Suite 120\", \"addressLocality\": \"Culver City\",",
   1
+ ],
+ [
+  "the demo page loses its structured data",
+  "demopage",
+  "<script type=\"application/ld+json\">",
+  "<script type=\"application/json\">",
+  1
+ ],
+ [
+  "the data report's structured data stops parsing",
+  "statepage",
+  "\"@type\": \"WebPage\",",
+  "\"@type\": \"WebPage\",,",
+  1
+ ],
+ [
+  "the growth plan page loses its structured data",
+  "startgrowth",
+  "<script type=\"application/ld+json\">",
+  "<script type=\"text/plain\">",
+  1
  ]
 ]

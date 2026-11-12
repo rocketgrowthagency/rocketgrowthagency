@@ -176,5 +176,15 @@ if (/automatic note/i.test(CT)) fail("contact/index.html promises an automatic n
   const bad = pages.filter((f) => !KEPT_STREET.has(f) && (/9937\s+Jefferson|Suite\s+120\b/i.test(raw[f]) || /"streetAddress"/.test(raw[f])));
   if (bad.length) fail(`${bad.length} public pages show the street or a streetAddress again (first: ${bad[0]}); only the privacy and terms contact lines may keep the mailing address`);
 }
+// master audit #15 (11-11): every INDEXABLE public page carries structured data that parses (5 did not: /demo/, /industries/, /local-seo/,
+// /start-growth-plan/, /state-of-local-seo/). A noindex page (a thank-you confirmation, the sample report) may go without.
+{
+  const noSchema = pages.filter((f) => !/name="robots" content="noindex/.test(raw[f])).filter((f) => {
+    const blocks = [...raw[f].matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+    if (!blocks.length) return true;
+    try { return !blocks.map((b) => JSON.parse(b)).some((o) => o && (o["@type"] || (Array.isArray(o["@graph"]) && o["@graph"].length))); } catch { return true; }
+  });
+  if (noSchema.length) fail(`${noSchema.length} indexable public page(s) carry no structured data that parses (first: ${noSchema.slice(0, 5).join(", ")})`);
+}
 if (F.length) { console.error(`🔴 the public site says something it can't back — ${F.length}:\n${F.slice(0, 40).map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
 console.log(`✅ ${pages.length} public pages: the approved words, none of the false lines, one footer with Google's notice, FAQ schema equals the page; the exposed files blocked, wrong URLs get a 404, sitemap dates from history`);

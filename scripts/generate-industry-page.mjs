@@ -735,6 +735,13 @@ function buildHub() {
     .ih-float .st{display:inline-flex}.ih-float .st svg{width:13px;height:13px;color:#f4b400}
     @media(max-width:900px){.ih-in{grid-template-columns:1fr;gap:2.4rem}}
   </style>
+  <!-- master audit #15 (11-11): structured data, the same publisher block as the other pages (CollectionPage). Kept here so a rebuild keeps it;
+       check-the-public-site-tells-the-truth.mjs fails an indexable page without it. -->
+  <script type="application/ld+json">
+${JSON.stringify({ "@context": "https://schema.org", "@type": "CollectionPage", name: "Local SEO by Industry | Rocket Growth Agency",
+  description: "Done-for-you Google Maps local SEO, by industry. See what we do for your type of business, and get a free audit that shows where you rank today.", url,
+  publisher: { "@type": "Organization", name: "Rocket Growth Agency", logo: { "@type": "ImageObject", url: "https://www.rocketgrowthagency.com/images/assets/rga-logo.svg" } } }, null, 2)}
+  </script>
 </head>
 <body>
 ${HEADER}
