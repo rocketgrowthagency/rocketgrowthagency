@@ -165,7 +165,7 @@ for (const which of ["main", "month2"]) {
       "m2.exec.tracking_check": { status: "done", completed_at: iso, monthly_once: { settled_at: iso, label: `Working · data through ${thru}` } },
     };
   };
-  const monthRow = (month, tasks, plan) => ({ client_id: wc2.id, reporting_month: month, total_leads: null, total_calls: 1, form_leads: 1, closed_jobs: null, avg_revenue_per_job: null, organic_sessions: null, gsc_impressions: null, gsc_clicks: null, citations_live_count: null, ranking_position: null, data: { tasks, plan: plan || null } });
+  const monthRow = (month, tasks, plan) => ({ client_id: wc2.id, reporting_month: month, total_leads: null, total_calls: 1, form_leads: 1, closed_jobs: null, avg_revenue_per_job: null, organic_sessions: null, gsc_impressions: null, gsc_clicks: null, citations_live_count: null, ranking_position: null, data: { tasks, plan: plan || null, ga4: { forms_window: "month", forms_month: month } } });   // master audit #8: a row as the pull writes it since 11-11 (forms counted for the calendar month)
   const VARIANTS = [
     { name: "m2", number: 2, sentMonth: cm(-1), view: ["desk", "phone"] },
     { name: "m3", number: 3, sentMonth: cm(-2), view: ["desk"] },

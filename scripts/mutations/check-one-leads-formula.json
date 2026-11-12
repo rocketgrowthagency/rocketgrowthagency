@@ -65,7 +65,7 @@
  [
   "the monthly tiles add the two numbers themselves",
   "clientmonthly",
-  "    const LL = Met().leadsOf(row, L.callTracking === false ? { call_tracking_attributed: false } : {});",
+  "    const LL = Met().leadsOf(row, L.callTracking === false ? { call_tracking_attributed: false } : { kpi_config: { call_tracking: true } });",
   "    const LL = { value: num(L.forms) != null && (L.callTracking === false || num(L.calls) != null) ? num(L.forms) + (L.callTracking === false ? 0 : num(L.calls)) : null, why: null };",
   1
  ],
