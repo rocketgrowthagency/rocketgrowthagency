@@ -583,6 +583,7 @@ run build-client-step-ledger.mjs "every client step draws a DONE RECORD in the p
 run check-every-mockup-is-in-memory.mjs "every new mockup is cited by the memory of its system, and every mockup is registered"
 run check-memory-has-no-drift.mjs "memory is linked, reachable and mirrored to git"
 run check-colours-come-from-the-system.mjs "every state colour comes from the one approved system, in both portals"
+run check-admin-two-step-sign-in.mjs "admin two-step sign-in (TOTP): off = sign-in unchanged, on = aal2 for enrolled staff, no lockout, portal/internal untouched, approved words, code boxes shrink inside the card"
 run check-client-emails-tell-the-truth.mjs "no client email says nothing is needed while steps are open; a beta client is never told it paid"
 run check-the-client-journey-tells-one-story.mjs "the client sets up their Business Profile now, RGA sets up GA4/GSC in week 1, no Calendly, the playbook says Google before the kickoff"
 run check-every-plan-is-wired-end-to-end.mjs "every contract plan: one price from agreement to charge, Accept emails, the welcome email unblocked, DFY balance billed"

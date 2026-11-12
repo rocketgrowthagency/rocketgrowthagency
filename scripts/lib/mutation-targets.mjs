@@ -736,4 +736,6 @@ export const FILES = {
   serpapibudgetcli: "scraper:scripts/serpapi-budget.mjs",
   // card_notice_designs_v1 §1 (11-11): THE ONE ADMIN CARD renderer (check-one-admin-card)
   admincard: "shared/admin-card.js",
+  // admin_2fa (approved 11-12): two-step sign-in
+  adminconfigfn: "netlify/functions/admin-config.js",
 };
