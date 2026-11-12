@@ -1853,7 +1853,28 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
   // raw page.goto-opened card hangs page.screenshot; an in-page-opened one does not. So for an in-page-opened card
   // force the page-shot grab. Set true by the deep-rank block after an SPA/click open, false on the goto fallback.
   let _cardOpenedInPage = false;
-  const grabFreeze = async () => ((DAYTIME_SAFE || _cardOpenedInPage) ? grabViaPageShot() : grabViaScreenCapture());
+  // 🔴 2026-11-12 LOCKED-SCREEN FIX. `screencapture` films the real display; while the Mac's screen is
+  // LOCKED it returns nothing, so every grab was null → "fallback re-grab pushed 0 card frames" → the
+  // Maps WebM was never written → "2/3 WebMs" on 8 of 13 leads the night of 11-11 (the 3 that shipped had
+  // their card opened in-page, i.e. the page-shot path). page.screenshot reads the browser page, not the
+  // display, so it works locked and cannot leak desktop content. Locked → page shot; a null desktop grab
+  // → page shot as the fallback. See memory project_night_run_needs_an_unlocked_screen.
+  let _lockSeen = { at: 0, locked: false };
+  const screenIsLocked = () => {
+    if (Date.now() - _lockSeen.at < 15000) return _lockSeen.locked;
+    let locked = false;
+    try {
+      const r = spawnSync('ioreg', ['-n', 'Root', '-d1', '-a'], { encoding: 'utf8', timeout: 3000 });
+      locked = /<key>CGSSessionScreenIsLocked<\/key>\s*<true\/>/.test(String(r.stdout || ''));
+    } catch (_) {}
+    if (locked && !_lockSeen.locked) console.warn('   [screen-locked] the Mac screen is locked — Maps frames come from the page, not the display');
+    _lockSeen = { at: Date.now(), locked };
+    return locked;
+  };
+  const grabFreeze = async () => {
+    if (DAYTIME_SAFE || _cardOpenedInPage || screenIsLocked()) return grabViaPageShot();
+    return (await grabViaScreenCapture()) || grabViaPageShot();
+  };
 
   async function zoomOutMap(page, steps) {
     // Zoom the Maps canvas OUT `steps` times so the held frame shows a wider area than Maps' default

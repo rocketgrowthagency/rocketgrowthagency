@@ -45,7 +45,13 @@ const localStamp = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).
 // the real nightly logs. They are never set by cron.
 const now = process.env.PRODUCTIVITY_NOW ? new Date(process.env.PRODUCTIVITY_NOW) : new Date();
 const LOG_DIR = process.env.PRODUCTIVITY_LOG_DIR || '/tmp';
-const DATES = [localStamp(new Date(now.getTime() - 86400000)), localStamp(now)];
+// 🔴 11-12: the night that CONTAINS `now`. From noon on, tonight starts today; before noon it started
+// yesterday. The old [yesterday, today] read the PREVIOUS night whenever the report was written before
+// midnight (the 11-11 run finished 23:38 and reported 11-10's Veterinarians window, "No dead window").
+const NIGHT_STARTED_TODAY = now.getHours() >= 12;
+const DATES = NIGHT_STARTED_TODAY
+  ? [localStamp(now), localStamp(new Date(now.getTime() + 86400000))]
+  : [localStamp(new Date(now.getTime() - 86400000)), localStamp(now)];
 // 🔴 Same blindness as pipeline-status.mjs — the runner writes overnight-local-<date>.log.
 // See that file's note: /tmp/overnight-pipeline-*.log has never existed.
 const LOGS = DATES.flatMap((d) => [`${LOG_DIR}/overnight-local-${d}.log`, `${LOG_DIR}/overnight-pipeline-${d}.log`])
@@ -95,13 +101,22 @@ const winEnd = new Date(`${DATES[1]}T07:00:00`);
 const tonight = builds.filter((b) => b.t >= winStart && b.t <= winEnd).sort((a, b) => a.t - b.t);
 
 // ── 3. Attribute builds to searches by time window ───────────────────────────────────────────────
-const withTime = searches.filter((s) => s.started);
-for (let i = 0; i < withTime.length; i++) {
-  const s = withTime[i];
+const timed = searches.filter((s) => s.started);
+for (let i = 0; i < timed.length; i++) {
+  const s = timed[i];
   // A search's log date is the file it was written to; combine with its clock time.
   const d = s.log.includes(DATES[1]) ? DATES[1] : DATES[0];
   s.startAt = new Date(`${d}T${s.started}:00`);
 }
+// 🔴 11-12: overnight-local-<date>.log tees the pipeline's output, so the SAME search appears in both
+// logs; counted once (the copy with the most dispatches), or every row printed twice and the earlier
+// twin got a zero-length window (built: 0).
+const byKey = new Map();
+for (const s of timed) {
+  const k = `${s.name}|${s.startAt.getTime()}`;
+  if (!byKey.has(k) || s.dispatched > byKey.get(k).dispatched) byKey.set(k, s);
+}
+const withTime = [...byKey.values()];
 withTime.sort((a, b) => a.startAt - b.startAt);
 for (let i = 0; i < withTime.length; i++) {
   const from = withTime[i].startAt;

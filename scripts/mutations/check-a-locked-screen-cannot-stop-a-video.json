@@ -1,0 +1,51 @@
+[
+ [
+  "a locked screen still goes to the desktop grab",
+  "recorder3",
+  "if (DAYTIME_SAFE || _cardOpenedInPage || screenIsLocked()) return grabViaPageShot();",
+  "if (DAYTIME_SAFE || _cardOpenedInPage) return grabViaPageShot();",
+  1
+ ],
+ [
+  "an empty desktop grab is not retried from the page",
+  "recorder3",
+  "return (await grabViaScreenCapture()) || grabViaPageShot();",
+  "return grabViaScreenCapture();",
+  1
+ ],
+ [
+  "the lock check never reads the lock flag",
+  "recorder3",
+  "locked = /<key>CGSSessionScreenIsLocked<\\/key>\\s*<true\\/>/.test(String(r.stdout || ''));",
+  "locked = false;",
+  1
+ ],
+ [
+  "the failure line goes back to guessing bot-blocked",
+  "nightpipeline",
+  "WebMs — missing: ${WEBM_MISSING:-unknown} (see the ❌ Error recording line above for why)",
+  "WebMs (website or mobile recording failed — likely bot-blocked site)",
+  1
+ ],
+ [
+  "the missing check stops looking for the Maps recording",
+  "nightpipeline",
+  "for _seg in desktop_website mobile desktop_maps; do",
+  "for _seg in desktop_website mobile; do",
+  1
+ ],
+ [
+  "the roll-up reads yesterday's night again before midnight",
+  "nightrollup",
+  "const NIGHT_STARTED_TODAY = now.getHours() >= 12;",
+  "const NIGHT_STARTED_TODAY = false;",
+  1
+ ],
+ [
+  "the roll-up lists a search once per log again",
+  "nightrollup",
+  "const withTime = [...byKey.values()];",
+  "const withTime = timed;",
+  1
+ ]
+]

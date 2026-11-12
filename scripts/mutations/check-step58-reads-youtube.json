@@ -114,8 +114,8 @@
  [
   "the morning run sends 58 through the script runner",
   "morningrun",
-  "if (READS.includes(p.id)) await d.readYoutube(c.id); else await d.start(c.id, p.id);",
-  "await d.start(c.id, p.id);",
+  "if (READS.includes(p.id)) await d.readYoutube(c.id); else await d.start(c.id, p.id, null, AUDITS.includes(p.id) ? \"morning\" : undefined);",
+  "await d.start(c.id, p.id, null, AUDITS.includes(p.id) ? \"morning\" : undefined);",
   1
  ],
  [

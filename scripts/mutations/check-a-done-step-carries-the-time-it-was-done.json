@@ -50,8 +50,8 @@
  [
   "server: the start stamp moves after the work",
   "exec",
-  "  const startedAt = new Date().toISOString();\n  try {\n    DRAFT_CALLS = 0;\n    LEDGER_CTX = { step: step_id, clientId: client_id };\n    const result = await executor({ client, clientId: client_id, tasks, month: is_monthly ? monthKeyOf(is_monthly) : null });",
-  "  try {\n    DRAFT_CALLS = 0;\n    LEDGER_CTX = { step: step_id, clientId: client_id };\n    const result = await executor({ client, clientId: client_id, tasks, month: is_monthly ? monthKeyOf(is_monthly) : null });\n    const startedAt = new Date().toISOString();"
+  "  const startedAt = new Date().toISOString();\n  try {\n    DRAFT_CALLS = 0;\n    LEDGER_CTX = { step: step_id, clientId: client_id };\n    // origin: \"morning\" when the morning run started it (master map 11-11): a step that would buy a scan only reads what the schedule measured\n    const result = await executor({ client, clientId: client_id, tasks, month: is_monthly ? monthKeyOf(is_monthly) : null, origin: [\"morning\", \"chain\"].includes(body.origin) ? body.origin : null });",
+  "  try {\n    DRAFT_CALLS = 0;\n    LEDGER_CTX = { step: step_id, clientId: client_id };\n    // origin: \"morning\" when the morning run started it (master map 11-11): a step that would buy a scan only reads what the schedule measured\n    const result = await executor({ client, clientId: client_id, tasks, month: is_monthly ? monthKeyOf(is_monthly) : null, origin: [\"morning\", \"chain\"].includes(body.origin) ? body.origin : null });\n    const startedAt = new Date().toISOString();"
  ],
  [
   "server: the one-key ternary for the two stamps returns",

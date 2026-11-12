@@ -1247,8 +1247,17 @@ EOPY
   fi
   if [ "$WEBM_COUNT" -lt 3 ]; then
     echo "" | tee -a "$LOGFILE"
-    echo ">>> step-3 produced only ${WEBM_COUNT}/3 WebMs (website or mobile recording failed — likely bot-blocked site)" | tee -a "$LOGFILE"
-    append_result "$RESULTS_FAILED" "$BIZ_NAME${RSEP}step-3 incomplete (${WEBM_COUNT}/3 WebMs)"
+    # 11-12: name the MISSING recording. The old text blamed "website or mobile … bot-blocked site" for
+    # every case; on 11-11 it was the Maps one each time (a locked screen), so the message sent the
+    # diagnosis the wrong way.
+    WEBM_MISSING=""
+    for _seg in desktop_website mobile desktop_maps; do
+      if [ -z "$STEP3_DIR" ] || [ -z "$(find "$STEP3_DIR" -maxdepth 1 -type f -name "*_${_seg}.webm" -size +0c 2>/dev/null | head -1)" ]; then
+        WEBM_MISSING="${WEBM_MISSING:+$WEBM_MISSING, }${_seg}"
+      fi
+    done
+    echo ">>> step-3 produced only ${WEBM_COUNT}/3 WebMs — missing: ${WEBM_MISSING:-unknown} (see the ❌ Error recording line above for why)" | tee -a "$LOGFILE"
+    append_result "$RESULTS_FAILED" "$BIZ_NAME${RSEP}step-3 incomplete (${WEBM_COUNT}/3 WebMs; missing ${WEBM_MISSING:-unknown})"
     echo "  ✗ FAILED: $BIZ_NAME — landing not built" | tee -a "$LOGFILE"
     # Also pre-step-8, so also invisible to the reconciler. A bot-blocked site may well succeed on a
     # cold retry ([[feedback-capture-instability-in-long-batches]]); the cap stops a truly dead site
