@@ -1,4 +1,5 @@
-[["a managed step gets another number, so two steps share one","clientstepsjson","\"managedStepNo\": 4,","\"managedStepNo\": 5,",1],
+[
+ ["a managed step gets another number, so two steps share one","clientstepsjson","\"managedStepNo\": 4,","\"managedStepNo\": 5,",1],
  ["a client step loses its managed role","clientstepsjson","\"managedStepNo\": 1,\n      \"managedRole\": \"step\"","\"managedStepNo\": 1,\n      \"managedRole\": \"stage\"",1],
  ["the playbook changes and client-steps.json isn't rebuilt","playbooksjson","\"managedStepNo\": 7,","\"managedStepNo\": 77,",1],
  ["step 3 stops covering one of the steps it replaces","clientstepsjson","\"m1.gbp.hours_attributes\",\n        \"m1.gbp.attributes\"\n      ]","\"m1.gbp.hours_attributes\"\n      ]",1],
@@ -7,14 +8,17 @@
  ["the helper reads any word as a mode","portalmode","const modeOf = (raw) => (MODES.includes(raw) ? raw : null);","const modeOf = (raw) => raw || null;",1],
  ["the helper names a mode for a client with none","portalmode","|| \"Not chosen\";","|| \"Self-serve\";",1],
  ["the portal reads today's number itself again","portal","return st ? `${pmNo(st) != null ? `Step ${pmNo(st)} · ` : \"\"}","return st ? `${st.clientStepNo != null ? `Step ${st.clientStepNo} · ` : \"\"}",1],
- ["the portal asks for the mode inside the client load","portal","        call_tracking_attributed\n      )","        call_tracking_attributed,\n        portal_mode\n      )",1],
+ ["the portal asks for the mode inside the client load","portal","        call_tracking_attributed,\n        kpi_config\n      )","        call_tracking_attributed,\n        kpi_config,\n        portal_mode\n      )",1],
  ["the portal stops falling back when the mode can't be read","portal","if (error) { _portalModeState = \"not_set_up\"; return {}; }","if (error) throw error;",1],
  ["a new surface reads a step number itself","steplock","  const past = (iso, now) =>","  const stepNoOf = (s) => s.clientStepNo;\n  const past = (iso, now) =>",1],
  ["the column gets a default, so every client flips at once","portalmodesql","add column if not exists portal_mode text;","add column if not exists portal_mode text default 'managed';",1],
  ["the column takes any value","portalmodesql","check (portal_mode is null or portal_mode in ('managed', 'self_serve'))","check (true)",1],
  ["admin writes a mode of its own choosing","admin","clientStepNo: s.clientStepNo != null ? s.clientStepNo : null,","clientStepNo: s.clientStepNo != null ? s.clientStepNo : null, portal_mode: \"self_serve\",",1],
  ["another function sets a client to managed","notifystepopen","const PMode = require(\"../../shared/portal-mode.js\");","const PMode = require(\"../../shared/portal-mode.js\"); const _x = { portal_mode: \"managed\" };",1],
- ["a new client is no longer given managed","admin",".insert({ portal_mode: \"managed\", ...payload })",".insert(payload)",1],
- ["a promoted lead is no longer given managed","admin","portal_mode: \"managed\",   // managed_admin_v1","// managed_admin_v1",1],
+ ["a new client is no longer given managed","admin",".insert({ portal_mode: clientDefaultMode(), ...payload })",".insert(payload)",1],
+ ["a promoted lead is no longer given managed","admin","portal_mode: clientDefaultMode(),   // managed_admin_v1","// managed_admin_v1",1],
  ["a surface goes back to reading the number alone","portalmessagefn","const Words = require(\"../../shared/portal-mode-words.js\");\nconst PMode = require(\"../../shared/portal-mode.js\");","",1],
- ["the month 1 report stops asking the helper","month1report","const PM = require(\"../../shared/portal-mode.js\"), Words = require(\"../../shared/portal-mode-words.js\");","const PM = null, Words = null;",1]]
+ ["the month 1 report stops asking the helper","month1report","const PM = require(\"../../shared/portal-mode.js\"), Words = require(\"../../shared/portal-mode-words.js\");","const PM = null, Words = null;",1],
+ ["the shared default stops being managed","portalmode","const DEFAULT_MODE = \"managed\";","const DEFAULT_MODE = \"self_serve\";",1],
+ ["start-as-client types its own mode","startasclientfn","portal_mode: require(\"../../shared/portal-mode.js\").DEFAULT_MODE, lead_ref: leadRef };","portal_mode: \"self_serve\", lead_ref: leadRef };",1]
+]
