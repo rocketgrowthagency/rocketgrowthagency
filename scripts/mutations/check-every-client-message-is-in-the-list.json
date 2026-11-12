@@ -1,0 +1,14 @@
+[
+ ["the one sender records nothing", "gmail", "const note = (status, extra = {}) => (notice && notice.clientId", "const note = (status, extra = {}) => (false && notice && notice.clientId", 1],
+ ["a refused send isn't recorded as failed", "gmail", "} catch (e) { await note(\"failed\", { error: e.message }); throw e; }", "} catch (e) { throw e; }", 1],
+ ["a suppressed send reads as sent", "gmail", "await note(out.suppressed ? \"suppressed\" : \"sent\", { providerId: out.id || null });", "await note(\"sent\", { providerId: out.id || null });", 1],
+ ["call reminders skip the list", "schedulev6remfn", "notice: call.client_id ? { clientId: call.client_id, code: codeOf(call.kind, kind)", "nolist: call.client_id ? { clientId: call.client_id, code: codeOf(call.kind, kind)", 1],
+ ["the photos reminder skips the list", "notifystepopen", "notice: { clientId: client.id, code: \"M4\"", "nolist: { clientId: client.id, code: \"M4b\"", 1],
+ ["stage emails skip the list", "notifystage", "require(\"./_notices\").record({ clientId, channel: \"email\", code: STAGE_CODE[stage]", "({ clientId, channel: \"email\", code: STAGE_CODE[stage]", 1],
+ ["an invite is listed as an email", "kickinvite", "channel: \"invite\", code: {", "channel: \"email\", code: {", 1],
+ ["the monthly report skips the list", "monthlyclosesrv", "code: \"R1\", kind: \"service\"", "code: \"R0\", kind: \"service\"", 1],
+ ["the shared sendGmail drops its notice", "monthlyreport", "if (notice && notice.clientId) await require(\"./_notices\").record(", "if (false) await require(\"./_notices\").record(", 1],
+ ["the client sees a failed send", "noticesshared", "filter((r) => r && r.status === \"sent\")", "filter((r) => r)", 1],
+ ["the client's list query reads every row", "noticesfn", "${view === \"client\" ? \"&status=eq.sent\" : \"\"}", "${\"\"}", 1],
+ ["a link may open outside the portal", "noticessql", "link_path     text check (link_path is null or link_path ~ '^/portal/'),", "link_path     text,", 1]
+]

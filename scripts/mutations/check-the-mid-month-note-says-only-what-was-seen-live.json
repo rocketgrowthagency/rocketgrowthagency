@@ -1,0 +1,9 @@
+[
+ ["a post still processing is claimed", "midnotefn", "if (q.status === \"live\") live.push(", "if (q.status !== \"failed\") live.push(", 1],
+ ["a reply not showing yet is claimed", "midnotefn", "if (r.status === \"live\" && inWin(r.seen_at || r.posted_at, from, to))", "if (inWin(r.seen_at || r.posted_at, from, to))", 1],
+ ["a change not read back is claimed", "midnotefn", "if (c.verified === true) live.push(", "if (true) live.push(", 1],
+ ["work before the last report is claimed", "midnotefn", "return Number.isFinite(t) && t > Date.parse(from) && t <= Date.parse(to);", "return Number.isFinite(t) && t <= Date.parse(to);", 1],
+ ["a line's number isn't its count", "midnotefn", "Replied to ${plural(replies.length,", "Replied to ${plural(replies.length + 1,", 1],
+ ["Edit takes a new ticked line", "midnotefn", "if (!allowed.has(t)) return", "if (false) return", 1],
+ ["nothing new still makes a note", "midnotefn", "  if (!live.length) {\n", "  if (false) {\n", 1]
+]

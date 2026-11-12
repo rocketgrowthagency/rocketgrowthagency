@@ -630,4 +630,11 @@ export const FILES = {
   midmonth: "netlify/functions/_mid-month-note.js",
   notesdraftfn: "netlify/functions/client-notes-draft.js",
   suggestedcall: "netlify/functions/_suggested-call.js",
+  // card_notice_designs_v1 (11-11): the client's notice list, reminder switches, approval comments, the mid-month note
+  noticesshared: "shared/notices.js",
+  noticesfn: "netlify/functions/_notices.js",
+  portalnoticesfn: "netlify/functions/portal-notices.js",
+  apcfn: "netlify/functions/approval-comments.js",
+  midnotefn: "netlify/functions/_mid-note.js",
+  noticessql: "docs/supabase/NOTICES_AND_COMMENTS_2026-11-11.sql",
 };

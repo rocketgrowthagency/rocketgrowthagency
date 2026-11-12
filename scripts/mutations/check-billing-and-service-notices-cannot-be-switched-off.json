@@ -1,0 +1,10 @@
+[
+ ["billing becomes switchable", "noticesshared", "const SWITCHABLE = new Set(REMINDERS.map((r) => r.kind));", "const SWITCHABLE = new Set([...REMINDERS.map((r) => r.kind), \"billing\"]);", 1],
+ ["the gate honors a billing row", "noticesshared", "if (LOCKED.has(kind) || !SWITCHABLE.has(kind)) return { send: true, why: \"always sent\" };\n  const r = REMINDERS.find((x) => x.kind === kind);", "const r = REMINDERS.find((x) => x.kind === kind) || { text: true };\n  if (!r.kind && !(prefs || []).length) return { send: true, why: \"always sent\" };", 1],
+ ["the API takes a billing switch", "portalnoticesfn", "const bad = N.validatePref(kind, channel, on); if (bad) return json(400, { ok: false, error: bad });", "const bad = null;", 1],
+ ["billing waits when settings can't be read", "noticesfn", "if (N.LOCKED.has(kind) || !N.SWITCHABLE.has(kind)) return { send: true, why: \"always sent\" };", "", 1],
+ ["the portal draws billing as a switch", "noticesshared", "<span class=\"nt-sw lock\" role=\"switch\" aria-checked=\"true\" aria-disabled=\"true\" aria-label=\"Email, always on\"></span>", "<button type=\"button\" class=\"nt-sw on\" role=\"switch\" aria-checked=\"true\" data-nt-sw=\"${esc(a.kind)}:email\"></button>", 1],
+ ["the table takes a billing row", "noticessql", "'step_waiting', 'photos_later')),   -- never billing or service", "'step_waiting', 'photos_later', 'billing', 'service')),   -- billing and service too", 1],
+ ["a first invoice isn't billing", "noticesshared", "C5: \"billing\",", "C5: \"service\",", 1],
+ ["a text switch for an email-only reminder", "noticesshared", "if (channel === \"text\" && !r.text) return \"That reminder is email only.\";", "", 1]
+]
