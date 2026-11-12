@@ -825,6 +825,10 @@ run check-we-never-promise-what-we-dont-do.mjs "copy must not assert behaviour t
 run check-post-payment-shows-real-data.mjs "after a payment the portal renders the ledger, or nothing"
 run check-test-reset-clears-every-write.mjs "a partial reset makes the next run skip steps that look like defects"
 run check-a-charge-settles-its-invoice.mjs "a charge is complete when OUR ledger says so, not when Stripe does"
+# master audit #9 (11-11): both run the real billing functions on a fake world (fake database, Stripe, Gmail); nothing is charged or sent
+run check-a-paid-invoice-always-settles.mjs "every way a client pays settles THAT invoice and lifts the pause; a failed webhook event is retried, not lost; an unmatched paid charge is red"
+run check-the-pause-follows-the-contract.mjs "a pause needs a delivered written notice + 5 days (Section 4) and never hides the client's data; a failed billing email is an ERROR + a Messages alert"
+run check-every-internal-call-carries-the-secret.mjs "a cron or webhook's own call to a secret-guarded function sends the secret; a forwarder never adds it unchecked (the billing emails never sent, 11-11)"
 run check-the-price-shown-is-the-price-charged.mjs "the number on the button must be the number taken"
 run check-no-client-paid-without-a-receipt.mjs "money in, receipt out — a silent send failure is an outage"
 run check-emails-clear-the-spam-floor.mjs "no client email is short enough to look like spam"

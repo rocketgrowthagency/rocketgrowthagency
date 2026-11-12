@@ -123,7 +123,13 @@ if (fs.existsSync(BILLING)) {
   let bsrc = strip(fs.readFileSync(BILLING, "utf8"));
   if (SABOTAGE && CASE === "6") bsrc = bsrc.replace(/autocharge_\$\{invoice\.id\}_d\$\{attemptDay\}/, "autocharge_${invoice.id}");
   const perAttempt = /Idempotency-Key["']?\s*:\s*`autocharge_\$\{invoice\.id\}_d\$\{attemptDay\}`/.test(bsrc);
-  const retries = /RETRY_DAYS\s*=\s*\[0,\s*3,\s*5,\s*7\]/.test(bsrc);
+  // master audit #9 (11-11): the schedule moved to shared/billing-rules.js (one ladder for the job, the portal and the gates), and
+  // the job asks it which attempt is due ON OR AFTER its day. Either home counts; the job must still ask the shared rule.
+  const RULES = `${SITE}/shared/billing-rules.js`;
+  let rsrc = fs.existsSync(RULES) ? strip(fs.readFileSync(RULES, "utf8")) : "";
+  if (SABOTAGE && CASE === "7") rsrc = rsrc.replace(/RETRY_DAYS:\s*\[0,\s*3,\s*5,\s*7\]/, "RETRY_DAYS: [0]");
+  const retries = /RETRY_DAYS\s*=\s*\[0,\s*3,\s*5,\s*7\]/.test(bsrc)
+    || (/RETRY_DAYS:\s*\[0,\s*3,\s*5,\s*7\]/.test(rsrc) && /R\.chargeAttemptDue\(/.test(bsrc));
   if (!perAttempt) {
     bad("the auto-charge idempotency key is not per-attempt", [
       "A fixed key makes Stripe replay the ORIGINAL decline forever — the retry can never succeed.",

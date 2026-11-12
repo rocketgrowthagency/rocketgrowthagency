@@ -120,6 +120,7 @@ const SURFACES = {
   "netlify/functions/admin-send-balance-invoice.js": ["DERIVED", "Done-For-You balance invoice #2 → contract-generate.dfyHalf() (2026-10-08)"],
   "netlify/functions/portal-payment-intent.js":  ["DERIVED", "inline Payment Element amount → contract-generate.firstInvoiceAmount()"],
   "netlify/functions/stripe-webhook.js":        ["DERIVED", "invoice ledger amounts → contract-generate.firstInvoiceAmount() (was the 5th/6th pre-discount copy)"],
+  "netlify/functions/admin-open-moves.js": ["DERIVED", "the Section 4A To do names the refundable Month 1 fee → contract-generate PLANS.commit_3mo.schedule[0].amount (master audit #9, 11-11); holds no price of its own"],
   "netlify/functions/billing-daily-check.js": ["DERIVED", "the NEXT invoice's amount when an auto-charge settles one → contract-generate PLANS.recurring_after_term (added 2026-09-10; would have been the 8th copy)"],
   // 🔑 These three matched the CODE pattern and are NOT prices — inspected 2026-09-10. A number is
   // only a price in context, so the inventory records the human decision rather than the regex

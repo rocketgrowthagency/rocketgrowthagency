@@ -621,4 +621,9 @@ export const FILES = {
   flipslib: "scraper:scripts/lib/gate-flips.mjs",
   backuplib: "scraper:scripts/lib/backup-judge.mjs",
   mockuplib: "scraper:scripts/lib/mockup-match.mjs",
+  // master audit #9 billing (11-11): check-a-paid-invoice-always-settles + check-the-pause-follows-the-contract
+  invoicepayfn: "netlify/functions/portal-invoice-pay.js",
+  reconcilefn: "netlify/functions/stripe-reconcile-payments.js",
+  billingrules: "shared/billing-rules.js",
+  billingalert: "netlify/functions/_billing-alert.js",
 };

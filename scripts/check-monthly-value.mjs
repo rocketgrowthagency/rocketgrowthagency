@@ -166,7 +166,8 @@ const WIRED = { website_url: "https://www.denver-plumbing.example", google_conne
   if (/startsAfter[^\n]*ogHost\("value"\)/.test(P)) fail("the card shows during setup");
   if (!/month2Only\) ogSet[^\n]*\n\s*loadMonthlyValue\(clientId\);/.test(P) || !/\/\.netlify\/functions\/portal-monthly-value/.test(P)) fail("the portal never asks for the card");
   if (/portal-monthly-value[\s\S]{0,400}method:\s*"(PATCH|PUT|DELETE)"/.test(P)) fail("the card's loader writes");
-  if (!/\?v=[0-9]{8}[a-z]"/.test(IDX.match(/portal\/portal\.js\?v=[^"]*"/)?.[0] || "")) fail("portal.js has no letter cache-buster"); }
+  // a day's letters run past z (20261111ed, 11-11), so one or two letters
+  if (!/\?v=[0-9]{8}[a-z]{1,2}"/.test(IDX.match(/portal\/portal\.js\?v=[^"]*"/)?.[0] || "")) fail("portal.js has no letter cache-buster"); }
 // ── 5 · copy: US English, no em dash, nothing hard-coded ──
 { const copy = [MV_SRC, SC_SRC, PV_SRC, P.slice(P.indexOf("function ogValueRow"), P.indexOf("function paintOngoingExtras"))].map((s) => s.split("\n").filter((l) => !/^\s*(\/\/|\*)/.test(l)).map((l) => l.replace(/\s\/\/ .*$/, "")).join("\n")).join("\n");
   if (/[—–]/.test(copy)) fail("an em or en dash in the card's copy");

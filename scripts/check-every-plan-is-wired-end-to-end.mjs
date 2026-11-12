@@ -94,7 +94,8 @@ for (const [tier, addons, pt] of CASES) {
 
 // wiring
 const N = code(read("netlify/functions/notify-client-stage.js"));
-if (!/const msg = messageFor\(stage, \{ first, kickoffWhen, beta, amount \}\);/.test(N)) F("the stage email is no longer given the invoice amount");
+// master audit #9 (11-11): the pause notice is also handed its date (pauseOn); the amount must still be there
+if (!/const msg = messageFor\(stage, \{ first, kickoffWhen, beta, amount(?:, [a-zA-Z]+)* \}\);/.test(N)) F("the stage email is no longer given the invoice amount");
 if (!/cg\.dfyHalf\(signedContract\)[\s\S]{0,200}cg\.firstInvoiceAmount\(signedContract\.tier/.test(N)) F("the stage email's amount is not computed by the charge's own helpers");
 const S = code(read("netlify/functions/send-confirmation-email.js"));
 if (!/if \(isAgreementSend\) \{\s*data\.agreement_email = /.test(S)) F("the agreement email writes step 1 again — it would block the welcome email");

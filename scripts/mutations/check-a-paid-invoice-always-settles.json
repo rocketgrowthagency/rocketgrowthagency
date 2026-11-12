@@ -1,0 +1,142 @@
+[
+ [
+  "a Checkout payment event is ignored again (no kind 'invoice')",
+  "stripewebhook",
+  "(kind === \"invoice\" || kind === \"renewal\" || (kind === \"first_invoice\" && piInvoiceNum > 1))",
+  "(kind === \"renewal\" || (kind === \"first_invoice\" && piInvoiceNum > 1))",
+  1
+ ],
+ [
+  "a Checkout session that names an invoice settles nothing",
+  "stripewebhook",
+  "if (md.invoice_id || md.kind === \"invoice\") {",
+  "if (false) {",
+  1
+ ],
+ [
+  "dedupe before process: any 409 reads as handled, so a failed event is lost",
+  "stripewebhook",
+  "if (!row || row.processed === true) return { proceed: false, response: json(200, { ok: true, deduped: true, type: evt.type }) };",
+  "return { proceed: false, response: json(200, { ok: true, deduped: true, type: evt.type }) };",
+  1
+ ],
+ [
+  "processed is never written",
+  "stripewebhook",
+  "{ processed: true, processed_at: new Date().toISOString(), processing_error: null }",
+  "{ processing_error: null }",
+  1
+ ],
+ [
+  "a copy of an event still running processes too",
+  "stripewebhook",
+  "if (!row.processing_error && Number.isFinite(age) && age < IN_FLIGHT_MS) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "a paid invoice no longer lifts the pause",
+  "dailybilling",
+  "await liftPauseIfClear(invoice, client, opts.via || \"payment\").catch(",
+  "Promise.resolve().catch(",
+  1
+ ],
+ [
+  "a payment reopens an account closed for non-payment",
+  "dailybilling",
+  "if (st === \"terminated\") {",
+  "if (false) {",
+  1
+ ],
+ [
+  "two settles of one payment leave two next invoices",
+  "dailybilling",
+  "for (const t of (twins || []).slice(1))",
+  "for (const t of [])",
+  1
+ ],
+ [
+  "a renewal is labelled first_invoice again",
+  "dailybilling",
+  "kind: Number(invoice.invoice_num) > 1 ? \"renewal\" : \"invoice\",",
+  "kind: \"first_invoice\",",
+  1
+ ],
+ [
+  "a card retry fires only ON its day (a missed run skips it)",
+  "billingrules",
+  "x <= daysOverdue && x > last",
+  "x === daysOverdue && x > last",
+  1
+ ],
+ [
+  "a bank payment still processing no longer holds the ladder",
+  "dailybilling",
+  "if (hold) { results.push({ invoice: invoice.id, invoice_num: invoice.invoice_num, client_id: invoice.client_id, held: \"payment_processing\"",
+  "if (false) { results.push({ invoice: invoice.id, invoice_num: invoice.invoice_num, client_id: invoice.client_id, held: \"payment_processing\"",
+  1
+ ],
+ [
+  "the reconciler files an unmatched paid charge as info, not red",
+  "reconcilefn",
+  "    out.ok = out.missing_from_ledger.length === 0 && out.unattributed.length === 0;\n    out.summary = `FIXTURE",
+  "    out.ok = out.missing_from_ledger.length === 0;\n    out.summary = `FIXTURE",
+  1
+ ],
+ [
+  "the reconciler no longer asks the session for a charge's names",
+  "reconcilefn",
+  "if (s && s.metadata && s.metadata.client_id) md = s.metadata;",
+  "",
+  1
+ ],
+ [
+  "Pay now puts the names on the session only",
+  "invoicepayfn",
+  "    payment_intent_data: { metadata: names },\n",
+  "",
+  1
+ ],
+ [
+  "Pay now reuses an expired Checkout link",
+  "invoicepayfn",
+  "if (open && open.status === \"open\" && open.url)",
+  "if (open && open.url)",
+  1
+ ],
+ [
+  "a full refund leaves the invoice paid",
+  "stripewebhook",
+  "if (invoice && full && String(invoice.status).toLowerCase() === \"paid\") {",
+  "if (false) {",
+  1
+ ],
+ [
+  "a dispute reaches nobody",
+  "stripewebhook",
+  "await alert({ clientId, workspaceId: invoice && invoice.workspace_id, kind: \"payment_disputed\"",
+  "await Promise.resolve({ clientId, workspaceId: invoice && invoice.workspace_id, kind: \"payment_disputed\"",
+  1
+ ],
+ [
+  "the auto-charge's own decline is alerted twice",
+  "stripewebhook",
+  "auto ? \"payment_failure_recorded\" : \"payment_attempt_failed\"",
+  "\"payment_attempt_failed\"",
+  1
+ ],
+ [
+  "a billing alert is never written",
+  "billingalert",
+  "    await d.supa(`/client_activity`, {",
+  "    if (0) await d.supa(`/client_activity`, {",
+  1
+ ],
+ [
+  "a payment naming a missing invoice is silent",
+  "stripewebhook",
+  "    await alert({ clientId, workspaceId: client.workspace_id, kind: \"payment_unmatched\"",
+  "    await Promise.resolve({ clientId, workspaceId: client.workspace_id, kind: \"payment_unmatched\"",
+  1
+ ]
+]

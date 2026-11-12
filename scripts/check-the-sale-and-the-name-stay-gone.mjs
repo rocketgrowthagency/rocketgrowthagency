@@ -76,11 +76,13 @@ if (C.PLANS.commit_3mo.schedule.map((r) => r.amount).join() !== "1250,625,625") 
 if (C.firstInvoiceAmount("commit_3mo") !== 1250) fail("the charge isn't the shown price");
 if (!/j\[k\] && !j\[k\]\.retired/.test(AJ)) fail("admin's picker still offers a retired plan");
 if (C.FOUNDING_CAP !== 5) fail("the founding cap isn't 5");
-const rows = Array.from({ length: 5 }, (_, i) => ({ client_id: `c${i}`, status: "sent" }));
+// master audit #9 item 6 (11-11): a place is a SIGNED founding agreement; one sent and never signed (or expired) holds none
+const rows = Array.from({ length: 5 }, (_, i) => ({ client_id: `c${i}`, status: "signed" }));
 if (C.foundingPlacesTaken(rows, []) !== 5) fail("five founding clients aren't counted as five");
 if (C.foundingPlacesTaken([...rows, { client_id: "c0", status: "signed" }], []) !== 5) fail("one client with two agreements takes two places");
 if (C.foundingPlacesTaken([{ client_id: "x", status: "voided" }], []) !== 0) fail("a voided agreement takes a place");
-if (C.foundingPlacesTaken([{ client_id: "t", status: "sent" }], ["t"]) !== 0) fail("a test record takes a place");
+if (C.foundingPlacesTaken([{ client_id: "s", status: "sent" }, { client_id: "e", status: "expired" }, { client_id: "d", status: "draft" }], []) !== 0) fail("an agreement sent and never signed (or expired) takes a place");
+if (C.foundingPlacesTaken([{ client_id: "t", status: "signed" }], ["t"]) !== 0) fail("a test record takes a place");
 if (!/if \(taken >= FOUNDING_CAP\) return json\(409/.test(CS)) fail("a 6th founding agreement isn't refused");
 if (!/catch \{ return json\(503/.test(CS)) fail("an unreadable count doesn't stop a founding agreement");
 if (!/!ctx\.addons\.data_consent \? ""/.test(CS)) fail("the data clause isn't conditional on the client agreeing");
