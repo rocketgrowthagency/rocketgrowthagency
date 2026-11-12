@@ -1,17 +1,92 @@
 [
- ["a database error is read as a missing function (a whole write answers a 500)", "onboardingpatch", "  return /PGRST202|Could not find the function/i.test(m) || /\\b404\\b/.test(m);", "  return true;"],
- ["the helper stops sending the client", "onboardingpatch", "p_client: clientId, p_task: taskId,", "client: clientId, p_task: taskId,"],
- ["a removed field is never removed", "onboardingpatch", "  for (const k of Object.keys(b)) if (!(k in a) || a[k] === undefined) { if (b[k] !== undefined) remove.push(k); }\n", ""],
- ["a done step keeps its old error", "onboardingpatch", "    if (!(\"error\" in (patch || {}))) remove.push(\"error\");\n", ""],
- ["the fallback is silent", "onboardingpatch", "  console.warn(`[onboarding-patch] ${fn} is not in the database yet", "  void (`[onboarding-patch] ${fn} is not in the database yet"],
- ["a signed-in browser may call the task function", "onboardingpatchsql", "revoke all on function public.set_onboarding_task(uuid, text, jsonb, text[], jsonb, jsonb) from public, anon, authenticated;", "revoke all on function public.set_onboarding_task(uuid, text, jsonb, text[], jsonb, jsonb) from public;"],
- ["the key function runs as the caller", "onboardingpatchsql", "create or replace function public.set_onboarding_data_key(p_client uuid, p_key text, p_value jsonb)\nreturns jsonb\nlanguage plpgsql\nsecurity definer", "create or replace function public.set_onboarding_data_key(p_client uuid, p_key text, p_value jsonb)\nreturns jsonb\nlanguage plpgsql\nsecurity invoker"],
- ["the compare-and-set leaves the statement", "onboardingpatchsql", "and (p_expect is null or public.rga_onboarding_task_matches", "and (true or public.rga_onboarding_task_matches"],
- ["the stamp writes more than its mark", "morningrun", "{ set: { morning_run: mark } }, () => stampWhole", "{ set: { morning_run: mark, status: \"pending\" } }, () => stampWhole"],
- ["the stamp trusts the database without the read-back", "morningrun", "  const m = per.applied && per.task && per.task.morning_run;\n  return !!(m && m.at === mark.at);", "  const m = per.applied && per.task && per.task.morning_run;\n  return true;"],
- ["the claim stops comparing auto_n", "webautorun", "expect: { auto_n: n || null }", "expect: null"],
- ["the step save is a plain spread again", "flowexec", "require(\"./_onboarding-patch\").opsFromMerge(patch)", "{ set: patch }"],
- ["the form fields write the whole record", "flowexec", "  for (const [k, v] of Object.entries(fields || {})) {", "  await whole(); return; for (const [k, v] of Object.entries(fields || {})) {"],
- ["admin-deliverables writes the whole record for Month 1", "admindeliv", "  if (monthly || !tasksRead) return whole();", "  return whole();"],
- ["the heavy runner's failure sets nothing", "heavy", "{ set: failure },", "{ set: {} },"]
+ [
+  "a database error is read as a missing function (a whole write answers a 500)",
+  "onboardingpatch",
+  "  return /PGRST202|Could not find the function/i.test(m) || /\\b404\\b/.test(m);",
+  "  return true;"
+ ],
+ [
+  "the helper stops sending the client",
+  "onboardingpatch",
+  "p_client: clientId, p_task: taskId,",
+  "client: clientId, p_task: taskId,"
+ ],
+ [
+  "a removed field is never removed",
+  "onboardingpatch",
+  "  for (const k of Object.keys(b)) if (!(k in a) || a[k] === undefined) { if (b[k] !== undefined) remove.push(k); }\n",
+  ""
+ ],
+ [
+  "a done step keeps its old error",
+  "onboardingpatch",
+  "    if (!(\"error\" in (patch || {}))) remove.push(\"error\");\n",
+  ""
+ ],
+ [
+  "the fallback is silent",
+  "onboardingpatch",
+  "  console.warn(`[onboarding-patch] ${fn} is not in the database yet",
+  "  void (`[onboarding-patch] ${fn} is not in the database yet"
+ ],
+ [
+  "a signed-in browser may call the task function",
+  "onboardingpatchsql",
+  "revoke all on function public.set_onboarding_task(uuid, text, jsonb, text[], jsonb, jsonb) from public, anon, authenticated;",
+  "revoke all on function public.set_onboarding_task(uuid, text, jsonb, text[], jsonb, jsonb) from public;"
+ ],
+ [
+  "the key function runs as the caller",
+  "onboardingpatchsql",
+  "create or replace function public.set_onboarding_data_key(p_client uuid, p_key text, p_value jsonb)\nreturns jsonb\nlanguage plpgsql\nsecurity definer",
+  "create or replace function public.set_onboarding_data_key(p_client uuid, p_key text, p_value jsonb)\nreturns jsonb\nlanguage plpgsql\nsecurity invoker"
+ ],
+ [
+  "the compare-and-set leaves the statement",
+  "onboardingpatchsql",
+  "and (p_expect is null or public.rga_onboarding_task_matches",
+  "and (true or public.rga_onboarding_task_matches"
+ ],
+ [
+  "the stamp writes more than its mark",
+  "morningrun",
+  "{ set: { morning_run: mark } }, () => stampWhole",
+  "{ set: { morning_run: mark, status: \"pending\" } }, () => stampWhole"
+ ],
+ [
+  "the stamp trusts the database without the read-back",
+  "morningrun",
+  "  const m = per.applied && per.task && per.task.morning_run;\n  return !!(m && m.at === mark.at);",
+  "  const m = per.applied && per.task && per.task.morning_run;\n  return true;"
+ ],
+ [
+  "the step save is a plain spread again",
+  "flowexec",
+  "require(\"./_onboarding-patch\").opsFromMerge(patch)",
+  "{ set: patch }"
+ ],
+ [
+  "the form fields write the whole record",
+  "flowexec",
+  "  for (const [k, v] of Object.entries(fields || {})) {",
+  "  await whole(); return; for (const [k, v] of Object.entries(fields || {})) {"
+ ],
+ [
+  "the heavy runner's failure sets nothing",
+  "heavy",
+  "{ set: failure },",
+  "{ set: {} },"
+ ],
+ [
+  "the autorun's claim drops the record's version",
+  "webautorun",
+  "const ver = fresh.updated_at ?",
+  "const ver = false ?"
+ ],
+ [
+  "admin-deliverables saves skip the version-checked writer",
+  "admindeliv",
+  "=> TC.casWrite(supa, table, c, data,",
+  "=> supa(table, c, data,"
+ ]
 ]

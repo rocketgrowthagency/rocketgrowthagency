@@ -51,7 +51,7 @@ const NOT_YET = new Set(["_citation-build.js", "_citation-recheck.js", "_gbp-lan
   "send-invoice-email.js", "send-kickoff-invite.js", "send-kickoff-recap.js", "send-monthly-report.js", "send-step-email.js", "site-change-watch.js",
   "site-publish-watch.js", "v2-audit-website.js", "v2-brain-analysis-background.js", "v2-competitor-profile.js", "v2-gbp-profile.js",
   "v2-generate-content-background.js", "v2-rank-grid-background.js"]);
-const ADOPTED = new Set(["_morning-run.js", "flow-execute.js", "_website-autorun.js", "admin-deliverables.js", "flow-execute-heavy-background.js"]);
+const ADOPTED = new Set(["_morning-run.js", "flow-execute.js", "flow-execute-heavy-background.js", "_website-autorun.js", "admin-deliverables.js"]);   // the last two: main's version-checked writer (3b/3d)
 
 // ── the fake database: the SQL's semantics, written again here (so the helper is checked against the file, not against itself) ────────
 const EMPTY = (v) => v === undefined || v === null || v === "" || v === false || v === 0;
@@ -215,27 +215,6 @@ try {
     if (notes !== 2) fail(`3a: the month note must be set and cleared through patchDataKey (found ${notes} of 2)`);
     for (const line of src.split("\n").filter((l) => /month_open_error/.test(l) && /method: "PATCH"/.test(l))) if (!/patchDataKey\(/.test(line)) fail(`3a: a whole-record write of the month note outside its fallback: ${line.trim().slice(0, 120)}`); }
 
-  // ═══ 3b · the website autorun's claim: compare-and-set on auto_n, inside the database ═══
-  { const w = world([REC({ k: { status: "pending", auto_n: 1, auto_done: { old: "x" } } })], { beforeWrite: OTHER });
-    const d = { supa: w.supa, now: () => Date.now() };
-    const won = await live("3b claim", () => W.claim(d, { id: "rec-a" }, "k", "sig1", { auto_run: { at: "t" } }));
-    const t = w.row("a").data.tasks;
-    if (!won) fail("3b: an uncontested claim lost");
-    if (w.log.patches.length) fail("3b: the claim wrote the whole record although the function exists");
-    if (!t.other) fail("3b: the claim erased another task written meanwhile");
-    if (t.k.auto_n !== 2 || !t.k.auto_done.sig1 || t.k.auto_done.old !== "x" || !t.k.auto_run) fail(`3b: the claim's fields are wrong (${JSON.stringify(t.k)})`);
-    const a = (w.log.rpc[0] || {}).a || {};
-    if (!a.p_expect || a.p_expect.auto_n !== 1) fail("3b: the claim is not conditional on the auto_n it read"); }
-  { // two passes read the same auto_n: the second must lose
-    const w = world([REC({ k: { status: "pending" } })]);
-    let first = true;
-    const racing = async (p, init) => { if (p.startsWith("/rpc/") && first) { first = false; const r = w.row("a"); r.data.tasks.k = { ...r.data.tasks.k, auto_n: 1, auto_done: { other: "t" } }; } return w.supa(p, init); };
-    const won = await W.claim({ supa: racing, now: () => Date.now() }, { id: "rec-a" }, "k", "sig2");
-    if (won) fail("3b: a claim on an auto_n another pass moved still won (two passes would both act)"); }
-  { const w = world([REC({ k: { status: "pending" } })], { mode: "missing" });
-    const won = await live("3b claim (missing)", () => W.claim({ supa: w.supa, now: () => Date.now() }, { id: "rec-a" }, "k", "s"));
-    if (!won || !w.log.patches.length || !/auto_n=is\.null/.test(decodeURIComponent(w.log.patches[0]))) fail("3b: with the function missing, the claim must still be the old conditional write"); }
-
   // ═══ 3c · flow-execute: saveTaskState and the form fields ═══
   { const w = world([REC({ mine: { status: "error", error: "boom", failed_at: "f", keep: 1 } })], { beforeWrite: both(OTHER, SAMEFIELD("mine")) });
     globalThis.fetch = w.fetchFake;
@@ -261,32 +240,13 @@ try {
     let threw = false; try { await FX.writeOnboardingFormFields({ id: "a", workspace_id: "ws" }, { tasks: {} }); } catch { threw = true; }
     if (!threw || !r.data.tasks.t1) fail("3c: a form field named tasks must be refused (it would replace every step)"); }
 
-  // ═══ 3d · admin-deliverables: a press writes only what it changed ═══
-  AD = req("./admin-deliverables.js");
-  if (typeof AD.saveChangedTasks !== "function") throw new Error("admin-deliverables no longer exports saveChangedTasks");
-  { const w = world([REC({ step: { status: "pending", site_change: { v: 1 }, live_drift: "x" }, untouched: { status: "done" } })], { beforeWrite: both(OTHER, SAMEFIELD("step")) });
-    globalThis.fetch = w.fetchFake;
-    const rows = [clone(w.row("a"))], tasks = rows[0].data.tasks, tasksRead = clone(tasks);
-    tasks.step.published = { v: 1 }; delete tasks.step.live_drift; tasks.step.status = "done";
-    await live("3d save", () => AD.saveChangedTasks({ table: "client_onboarding_records", recId: "rec-a", rows, tasks, tasksRead, clientId: "a", monthly: false, where: "gate" }));
-    const t = w.row("a").data.tasks;
-    if (w.log.patches.length) fail("3d: admin-deliverables wrote the whole record although the function exists");
-    if (!t.other) fail("3d: a press erased another task written while it worked");
-    if (t.step.status !== "done" || !t.step.published || "live_drift" in t.step || t.step.note_by_other !== "kept") fail(`3d: the press's own change is wrong or erased the other writer's field (${JSON.stringify(t.step)})`);
-    if (w.log.rpc.length !== 1 || w.log.rpc[0].a.p_task !== "step") fail(`3d: only the changed task is written (${w.log.rpc.map((x) => x.a.p_task).join(", ")})`); }
-  { const w = world([REC({ step: { status: "pending" } })]);
-    globalThis.fetch = w.fetchFake;
-    const rows = [clone(w.row("a"))], tasks = rows[0].data.tasks;
-    tasks.step.status = "done";
-    await live("3d save (Month 2)", () => AD.saveChangedTasks({ table: "client_monthly_records", recId: "rec-a", rows, tasks, tasksRead: null, clientId: "a", monthly: true, where: "gate" }));
-    if (w.log.rpc.length) fail("3d: a Month 2 record went through the Month 1 function"); }
-  { const src = read("netlify/functions/admin-deliverables.js");
-    const whole = (src.match(/JSON\.stringify\(\{ data: \{ \.\.\.rows\[0\]\.data, tasks \} \}\)/g) || []).length;
-    if (whole !== 1) fail(`3d: admin-deliverables writes { ...rows[0].data, tasks } in ${whole} places; only saveChangedTasks' fallback may`);
-    if (!/const whole = \(\) => supa\(`\/\$\{table\}\?id=eq\.\$\{recId\}`, \{ method: "PATCH", headers: \{ Prefer: "return=minimal" \}, body: JSON\.stringify\(\{ data: \{ \.\.\.rows\[0\]\.data, tasks \} \}\) \}\);\n  if \(monthly \|\| !tasksRead\) return whole\(\);/.test(src)) fail("3d: the whole write is no longer only saveChangedTasks' Month 2 / missing-function path");
-    for (const line of src.split("\n").filter((l) => /JSON\.stringify\(\{ data: d1 \}\)/.test(l))) if (!/^\s*\(\) => supa\(/.test(line)) fail("3d: the rest check writes the whole record outside its fallback");
-    const saves = (src.match(/await saveTasks\(recId, /g) || []).length;
-    if (saves < 5) fail(`3d: ${saves} of admin-deliverables' saves go through saveTasks (5 expected)`); }
+  // ═══ 3b/3d · the website autorun's claim and admin-deliverables' saves: main's VERSION-CHECKED writer (_tasks-cas.js, master mockup #11 W2) covers them ═══
+  // (reconciled 11-11: two builds fixed the same lost write; main's covers these two writers with a version check + three-way merge + 409, so the
+  // per-key calls are not added on top. This holds that they STAY on it; the other writers remain per key or on NOT_YET.)
+  { const ad = read("netlify/functions/admin-deliverables.js"), wa = read("netlify/functions/_website-autorun.js");
+    if (!/TC\.casWrite\(/.test(ad) || !/require\("\.\/_tasks-cas"\)/.test(ad)) fail("3d: admin-deliverables no longer saves through the version-checked writer (_tasks-cas casWrite)");
+    if (/\.\.\.rows\[0\]\.data, tasks \} \}\)/.test(ad.replace(/saveData\(\{ \.\.\.rows\[0\]\.data, tasks \}\)/g, ""))) fail("3d: admin-deliverables writes the record whole outside the version-checked writer");
+    if (!/updated_at=eq\./.test(wa) || !/auto_n/.test(wa)) fail("3b: the website autorun's claim is no longer a compare-and-set (auto_n + the record's version)"); }
 
   // ═══ 3e · the heavy runner's failure (static: its handler needs a whole run) ═══
   { const src = read("netlify/functions/flow-execute-heavy-background.js");
