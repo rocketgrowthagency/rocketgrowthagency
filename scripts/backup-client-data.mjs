@@ -295,6 +295,14 @@ function tellChris(msg) {
 }
 async function main() {
   checkIn("start", "client-data-backup");
+  // 🔒 11-11 (automation clock decision 1): one production-reading run at a time. The backup waits up to 45 minutes for the night full
+  // check (which ends by 06:00) and has a 90-minute hard end of its own. A gate's copy (BACKUP_DATA_STATUS) runs inside the morning
+  // check, which already holds the turn. Gate: check-production-runs-take-turns.
+  if (!process.env.BACKUP_DATA_STATUS) {
+    const { takeTurn } = await import("./lib/production-turn.mjs");
+    const turn = await takeTurn({ who: "client-data-backup", maxWaitMin: 45, hardEndEpoch: Math.floor(Date.now() / 1000) + 90 * 60 });
+    if (!turn.ok) { const m = `Did not run: ${turn.why}`; console.error(`🔴 ${m}`); record({ ok: false, problem: m }); tellChris(m); process.exit(2); }
+  }
   if (!SUPA || !KEY) { console.error("⚠️  no Supabase settings"); record({ ok: false, problem: "no Supabase settings" }); process.exit(2); }
   if (!fs.existsSync(path.dirname(DIR))) { const m = "LaCie isn't connected: client data was not backed up"; console.error(`🔴 ${m}`); record({ ok: false, problem: m }); tellChris(m); process.exit(2); }
   const t0 = Date.now();

@@ -1,0 +1,80 @@
+[
+ [
+  "a live holder is taken over",
+  "prodturnsh",
+  "kill -0 \"$pid\" 2>/dev/null || return 0",
+  "return 0"
+ ],
+ [
+  "no 10-minute grace past the hard end",
+  "prodturnsh",
+  "-gt $(( until + 600 ))",
+  "-gt $(( until - 600 ))"
+ ],
+ [
+  "a run started by the holder must wait on it",
+  "prodturnsh",
+  "if [ -n \"${RGA_PRODUCTION_TURN_HELD:-}\" ]; then return 0; fi",
+  ":"
+ ],
+ [
+  "the guardian never gives the turn back",
+  "prodturnsh",
+  "rm -rf \"$PRODUCTION_TURN_DIR\" ) </dev/null",
+  "true ) </dev/null"
+ ],
+ [
+  "the Node lock never takes over a dead holder",
+  "prodturnmjs",
+  "if (!alive(Number(pid))) return true;",
+  ""
+ ],
+ [
+  "the Node lock passes nothing on",
+  "prodturnmjs",
+  "env.RGA_PRODUCTION_TURN_HELD = who;",
+  ""
+ ],
+ [
+  "the morning check skips the turn",
+  "dailyhealth",
+  "if ! production_turn_take daily-health-check 120",
+  "if false && ! production_turn_take daily-health-check 120"
+ ],
+ [
+  "a refused morning check is silent",
+  "dailyhealth",
+  "node scripts/job-checkin.mjs finish daily-health-check --ok 0 --error \"Did not run: $PRODUCTION_TURN_WHY\" || true",
+  "true"
+ ],
+ [
+  "the full check ends at 07:00",
+  "nightlyfull",
+  "\"${FULL_CHECK_HARD_END_HHMM:-0600}\"",
+  "\"${FULL_CHECK_HARD_END_HHMM:-0700}\""
+ ],
+ [
+  "the watchdog stops a run that already finished",
+  "nightlyfull",
+  "kill -0 \"$main\" 2>/dev/null || exit 0",
+  "true"
+ ],
+ [
+  "a refused backup records nothing",
+  "backupdata",
+  "if (!turn.ok) { const m = `Did not run: ${turn.why}`;",
+  "if (false) { const m = `Did not run: ${turn.why}`;"
+ ],
+ [
+  "the rehearsal grace goes back to 90",
+  "jobmanifest",
+  "grace_min: 60, max_run_min: 45",
+  "grace_min: 90, max_run_min: 45"
+ ],
+ [
+  "the 9 PM pre-flight reads the clients' database",
+  "nightpipeline",
+  "node scripts/check-verification-system.mjs || exit 1",
+  "node scripts/check-admin-tabs-render.mjs || exit 1"
+ ]
+]

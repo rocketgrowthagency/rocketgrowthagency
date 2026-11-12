@@ -403,6 +403,13 @@ const NOT_PREFLIGHT = {
   'check-airtable-refusals-are-never-silent.mjs': 'website functions: every Airtable caller checks the answer (the Nov 3-6 outage, 11-7); static plus the helper on fakes, nothing real called; runs in daily-health-check.sh',
   'check-job-alert-path.mjs': 'the monthly test: a job broken on a fake proves the alert path (admin_system_health_v1, 10-31); nothing real called, runs in daily-health-check.sh',
   'check-job-watcher-ran.mjs': 'the Mac watches the watcher (admin_system_health_v1, 10-31); one read, guarded by db-health in daily-health-check.sh',
+  // 11-11 automation clock + runbooks master pages: none of these can affect whether a video is safe to build or send
+  'check-production-runs-take-turns.mjs': 'the one turn on the clients\' database between the morning check, the night full check and the backup (11-11); runs the lock in a temp dir and reads both repos; run by daily-health-check.sh. It proves the 9 PM pre-flight reads no client data, so it is not a pre-flight gate itself.',
+  'check-alerts-have-a-second-channel.mjs': 'the WEBSITE repo\'s alert paths (Quo text, RGA-only email, outside ping, 11-11), fakes only; run by daily-health-check.sh; the video pipeline sends no alerts through them.',
+  'check-billing-email-has-its-own-budget.mjs': 'the WEBSITE repo\'s billing email budget (11-11), fakes only; run by daily-health-check.sh; nothing in the video pipeline bills.',
+  'check-system-health-shows-both-pacific-times.mjs': 'the WEBSITE repo\'s System health schedule words (UTC + PST + PDT, 11-11), pure; run by daily-health-check.sh; no bearing on a video.',
+  'check-the-blind-spots-are-probed.mjs': 'the WEBSITE repo\'s cloud probes (Google Cloud billing, Supabase health, sign-in email delivery, 11-11), fakes only; run by daily-health-check.sh; the video pipeline calls none of them.',
+  'check-backups-run-every-day.mjs': 'the client data backup\'s every-day LaunchAgent (11-11), files only; run by daily-health-check.sh; backups are not part of the video pipeline.',
   'check-the-weekly-audit-is-read-only.mjs': 'the weekly audit job stays read-only (Chris 10-31); files only, runs in daily-health-check.sh',
   'check-the-step-map-is-current.mjs': 'compares the step sheet with the playbook, and the sheet only changes after a deploy or the morning rebuild, so a pre-deploy stop would refuse every step change before the sheet could be rebuilt from the live page. Runs in the daily check right after the rebuild',
   'check-the-daily-check-is-alive.mjs': 'watches the morning job itself, so it cannot run only from inside that job: nightly-full-check.sh runs it every night; files only, not the video pre-flight',

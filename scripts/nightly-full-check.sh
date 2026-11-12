@@ -37,6 +37,22 @@ job_checkin_finish() {
 trap 'job_checkin_finish; rm -rf "$LOCK"' EXIT
 [ "${DRY:-}" = "1" ] || node "$SCR/scripts/job-checkin.mjs" start nightly-full-check || true
 
+# 🔒 11-11 ONE TURN ON THE CLIENTS' DATABASE + THE 06:00 HARD END (automation clock decision 1, approved: "the full check never runs
+# past 06:00"). It waits up to an hour for the turn (a held turn = it did not run, said on System health, emailed); at 06:00 a watchdog
+# stops whatever is still running, writes it into the morning report and the run ends "stopped before the end", so the 06:40 backup and
+# the 07:30 morning check get the database. On 11-11 it ran to 06:19. Gate: check-production-runs-take-turns.
+. "$(dirname "${BASH_SOURCE[0]}")/lib/production-turn.sh"
+FULL_CHECK_HARD_END=$(production_turn_next_clock "${FULL_CHECK_HARD_END_HHMM:-0600}")
+if [ "${DRY:-}" != "1" ] && ! production_turn_take nightly-full-check 60 "$FULL_CHECK_HARD_END"; then
+  node "$SCR/scripts/job-checkin.mjs" finish nightly-full-check --ok 0 --error "Did not run: $PRODUCTION_TURN_WHY" || true
+  trap 'rm -rf "$LOCK"' EXIT; echo "the full check did not run: $PRODUCTION_TURN_WHY"; exit 0
+fi
+full_check_kill_tree() { local c; for c in $(pgrep -P "$1" 2>/dev/null); do full_check_kill_tree "$c"; done; kill -TERM "$1" 2>/dev/null; }
+[ "${DRY:-}" = "1" ] || ( main=$$; sleep $(( FULL_CHECK_HARD_END - $(date +%s) )) 2>/dev/null || exit 0
+  kill -0 "$main" 2>/dev/null || exit 0   # it finished in time: nothing to stop
+  { echo; echo "## Stopped at the 06:00 hard end"; echo "- The full check was still running at $(date +%H:%M) and was stopped so the morning backup and the morning check get the clients' database. What did not finish is checked again tomorrow night."; } >> "$OUT"
+  kill -TERM "$main" 2>/dev/null; for c in $(pgrep -P "$main" 2>/dev/null); do [ "$c" = "$BASHPID" ] || full_check_kill_tree "$c"; done ) </dev/null >/dev/null 2>&1 &
+
 # ── 1 · the range ────────────────────────────────────────────────────────────────────────────────
 W_HEAD=$(git -C "$SITE" rev-parse HEAD); S_HEAD=$(git -C "$SCR" rev-parse HEAD)
 W_SINCE=$(node -e 'try{process.stdout.write(require(process.argv[1]).website||"")}catch{}' "$STATE")

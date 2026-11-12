@@ -1,0 +1,38 @@
+[
+ [
+  "billing shares the client-email cap again",
+  "gtsendinvoice",
+  "const CAP = Number(process.env.RGA_BILLING_EMAIL_DAILY_CAP || 20);",
+  "const CAP = Number(process.env.RGA_EMAIL_DAILY_CAP || 10);"
+ ],
+ [
+  "the cap is raised to 2000",
+  "gtsendinvoice",
+  "process.env.RGA_BILLING_EMAIL_DAILY_CAP || 20",
+  "process.env.RGA_BILLING_EMAIL_DAILY_CAP || 2000"
+ ],
+ [
+  "an unread count is read as 0",
+  "gtsendinvoice",
+  "    return { ok: false, error: `Could not count today's billing emails",
+  "    usedToday = 0; if (0) return { ok: false, error: `Could not count today's billing emails"
+ ],
+ [
+  "billing counts every workspace",
+  "gtsendinvoice",
+  "client_activity?workspace_id=eq.${encodeURIComponent(workspaceId)}&kind=eq.invoice_email_sent",
+  "client_activity?kind=eq.invoice_email_sent"
+ ],
+ [
+  "billing spends the shared counter again",
+  "gtsendinvoice",
+  "body: JSON.stringify({ sends_total: Number(cred.sends_total || 0) + 1 }),",
+  "body: JSON.stringify({ sends_date: today, sends_today: 1, sends_total: Number(cred.sends_total || 0) + 1 }),"
+ ],
+ [
+  "the cap allows one over",
+  "gtsendinvoice",
+  "if (usedToday >= CAP) {\n    return { ok: false, capped: true, error: `Daily billing-email cap",
+  "if (usedToday > CAP) {\n    return { ok: false, capped: true, error: `Daily billing-email cap"
+ ]
+]

@@ -39,6 +39,16 @@ cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" || { echo "✗ cannot ente
 # 🔴 `set -a` only; never echo a value. These are the 13 secrets backup-secrets.sh exists to protect.
 if [ -f .env ]; then set -a; . ./.env >/dev/null 2>&1 || true; set +a; fi
 
+# 🔒 11-11 ONE TURN ON THE CLIENTS' DATABASE (automation clock decision 1, approved): the morning check waits up to 2 hours for the night
+# full check or the client data backup, then holds the turn for its whole run (hard end: 6 hours, its run limit). Still held after the
+# wait = it did not run, said on System health (emailed), never run beside them. Gate: check-production-runs-take-turns.
+. scripts/lib/production-turn.sh
+if ! production_turn_take daily-health-check 120 $(( $(date +%s) + 360 * 60 )); then
+  node scripts/job-checkin.mjs start daily-health-check || true
+  node scripts/job-checkin.mjs finish daily-health-check --ok 0 --error "Did not run: $PRODUCTION_TURN_WHY" || true
+  echo "🔴 the morning check did not run: $PRODUCTION_TURN_WHY"; exit 0
+fi
+
 
 # 🔒 SYSTEM HEALTH (approved admin_system_health_v1, Chris 10-31): this job says it ran. 10-27 to 10-30 it died four mornings running and nobody
 # heard. Reaching the end counts as having run, however many gates are red: those are the gates' verdict and live in the morning report. Dying
@@ -715,6 +725,13 @@ run check-system-health-covers-every-job.mjs "every scheduled job is on the list
 run check-job-status-reads-true.mjs "a job's state is worked out right, and empty, unknown and not-set-up never read as OK on the admin card"
 run check-job-alert-path.mjs "break a job on a fake: the check-in records it, the watcher alerts once then daily, a success clears it, an undelivered alert is on record"
 run check-job-watcher-ran.mjs "the hourly job watcher itself ran (the Mac watches the watcher)"
+# 🔒 11-11 the automation clock + runbooks master pages (approved): one turn on the clients' database, a second alert channel, the blind spots probed
+run check-production-runs-take-turns.mjs "automation clock decision 1 (11-11): the morning check, the night full check and the client data backup take ONE turn on the clients' database (a refused turn says Did not run); the full check ends at 06:00; the 9 PM pre-flight reads no client data; the rehearsal pages before 21:00; the lock itself run in a temp dir"
+run check-alerts-have-a-second-channel.mjs "runbooks + clock (11-11): a Quo text to RGA's business line only (behind QUO_TEXTS_ENABLED, a second Quo number, never the personal cell) when an alert can't be emailed and for the blind spots; alert email to an RGA inbox only; job-watcher pings an outside watcher (/fail when it can't read); fakes only"
+run check-billing-email-has-its-own-budget.mjs "automation clock decision 4 (11-11): invoices, notices and receipts have their own daily budget (today's invoice_email_sent rows, RGA_BILLING_EMAIL_DAILY_CAP 20), fail closed on an unread count, and no longer spend the shared client-email counter; fakes only"
+run check-system-health-shows-both-pacific-times.mjs "automation clock decision 5 (11-11): every job on System health says when it runs in UTC plus PST and PDT (checked against the time zone database on a winter and a summer date), the Mac's local time the same all year, off jobs no time; admin.js cache buster moved"
+run check-the-blind-spots-are-probed.mjs "runbooks Tier 1 (11-11): Google Cloud billing probed daily (free ID-only Places read + PageSpeed, a billing 403 red, never a quota), Supabase health read hourly from outside it (2 s budget, texts itself, never restarts: the alert says what to press), sign-in emails proven by Resend's delivery log; fakes only"
+run check-backups-run-every-day.mjs "automation clock decision 3 (11-11): the client data backup's LaunchAgent runs every day; the job list says what the Mac runs today and what it becomes; the install line is in PENDING_FOR_CHRIS until it's installed; LaCie stays Mon-Fri"
 run check-airtable-refusals-are-never-silent.mjs "an Airtable refusal is never read as no records or done: every caller checks the answer through _airtable-ok, and the helper throws on every refusal shape (the Nov 3-6 outage)"
 run check-the-contract-promises-only-what-the-code-does.mjs "the agreement promises only what the code does; the public pages drop the 60-day claim and the double price"
 run check-audit-decisions.mjs "the seven audit decisions (approved 10-31): bulk photos at 5 a day, Everything on Google, a service-area client can finish step 10 in one count, the kept copy says what's true, one press for an approved description behind the two guards, up to 48 hours as an estimate, the listings check once per client"
