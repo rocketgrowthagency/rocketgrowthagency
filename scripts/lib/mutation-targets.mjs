@@ -599,4 +599,10 @@ export const FILES = {
   mentionssql: "docs/supabase/CLIENT_MENTIONS_2026-11-11.sql",
   // 11-11 master map Tier 1: the daily rating snapshot (client_gbp_snapshots); setupsplit is above
   gbpsnapshot: "netlify/functions/_gbp-snapshot.js",
+  // tier3_best_in_class_v1 sections 4 + 5 (11-11): the competitor watch (check-a-spam-report-has-evidence) and the second review site (check-review-requests-never-ask-on-yelp)
+  competitorwatch: "shared/competitor-watch.js",
+  competitorwatchfn: "netlify/functions/_competitor-watch.js",
+  reviewsites: "netlify/functions/_review-sites.js",
+  reviewsitesdata: "data/review-sites.json",
+  reviewsecondfn: "netlify/functions/review-second-site.js",
 };

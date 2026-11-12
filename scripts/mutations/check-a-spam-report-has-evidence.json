@@ -1,0 +1,19 @@
+[
+ ["a name is flagged whatever its own site says", "competitorwatch", "if (b.length >= 2) add(l, \"name\"", "if (b.length >= 0) add(l, \"name\""],
+ ["a listing with no website is flagged for its name", "competitorwatch", "if (!l.website) { out.cant.push({ id: l.id, name: l.name, why: \"No website, so we can't compare the name. Not a flag.\" }); continue; }", "if (!l.website) { add(l, \"name\", \"Name has search words\"); continue; }"],
+ ["evidence loses its scan date", "competitorwatch", "e.push({ kind, text, scan_at: at, ...(extra || {}) })", "e.push({ kind, text, ...(extra || {}) })"],
+ ["phones are compared as typed", "competitorwatch", "for (const l of L) { const p = digits(l.phone);", "for (const l of L) { const p = String(l.phone || \"\");"],
+ ["a practice and its practitioner are flagged", "competitorwatch", "      if (doms.length === g.length && new Set(doms).size === 1) continue;   // one business's own listings", "      // one business's own listings"],
+ ["the client's own listing can be flagged", "competitorwatch", "const L = scan.listings.filter((l) => l && l.id && l.name && !isSelf(l, self))", "const L = scan.listings.filter((l) => l && l.id && l.name)"],
+ ["an earlier scan is read as a change", "competitorwatch", "ms(s.at) > ms(report.reported_at) &&", "ms(s.at) > 0 &&"],
+ ["a partial scan is read as gone", "competitorwatch", "!seen ? (s.complete !== false ? \"gone\" : \"unread\")", "!seen ? \"gone\""],
+ ["an older scan outranks the newest", "competitorwatch", "const last = full[full.length - 1], kind = read(last);", "const last = full[0], kind = read(last);"],
+ ["the client is shown a reported listing's name", "competitorwatch", "const hide = new Set(reports.map((r) => r.listing_id)), F =", "const hide = new Set(), F ="],
+ ["the client is told RGA removed it", "competitorwatch", "Google decides every report. We report", "We removed it from Google. We report"],
+ ["a report is stored with no evidence", "competitorwatchfn", "    if (!flag || !flag.evidence || !flag.evidence.length) return { ok: false, status: 422,", "    if (false) return { ok: false, status: 422,"],
+ ["a listing is reported twice", "competitorwatchfn", "    if (cur && cur.status === \"reported\") return { ok: false, status: 409, error: \"This listing is already reported.\" };\n", ""],
+ ["the watch keeps a partial map", "competitorwatchfn", "  if (!(g.pins_total && g.pins_read === g.pins_total)) return null;\n", ""],
+ ["the watch spends a search", "competitorwatchfn", "  const sk = skippedOf(grid, month);", "  await d.get(\"https://serpapi.com/search.json?engine=google_maps&q=x\");\n  const sk = skippedOf(grid, month);"],
+ ["the rank job keeps a partial map's listings", "dkgridfn", "listings: complete ? listings : [],", "listings,"],
+ ["the morning run skips the watch", "morningrun", "  if (d.watchCompetitors) {", "  if (false && d.watchCompetitors) {"]
+]

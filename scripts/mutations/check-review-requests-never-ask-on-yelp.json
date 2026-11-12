@@ -1,0 +1,17 @@
+[
+ ["Yelp is not held as never", "reviewsites", "    if (s.never === true || s.key === \"yelp\") { rows.push(", "    if (false) { rows.push("],
+ ["rules of any age are fresh", "reviewsites", "return Number.isFinite(at) && at <= now + DAY && now - at <= max;", "return Number.isFinite(at);"],
+ ["a Yelp URL under another name is carried", "reviewsites", "  if (!url || isYelp(url) || !onHosts(url, site.hosts)) return null;", "  if (!url) return null;"],
+ ["a failed page check is carried", "reviewsites", "if (!c || c.ok !== true || !Number.isFinite(at) || now - at > CHECK_STALE) return null;", "if (!c) return null;"],
+ ["the link text carries a Yelp link", "reviewsites", "  if (!second || !second.url || isYelp(second.url)) return reviewUrl;", "  if (!second || !second.url) return reviewUrl;"],
+ ["a site with no listing is offered", "reviewsites", "    if (!l || isYelp(l.url)) { rows.push(", "    if (false) { rows.push("],
+ ["the trade is ignored", "reviewsites", "    if (t.key == null || !tradeFits(s, t.key)) continue;\n    const l = listingOn(s.hosts || []);", "    const l = listingOn(s.hosts || []);"],
+ ["the allow-list says Yelp allows asking", "reviewsitesdata", "      \"allows_asking\": false,\n      \"never\": true,", "      \"allows_asking\": true,\n      \"never\": false,"],
+ ["Angi's rules were read long ago", "reviewsitesdata", "\"rules_read_at\": \"2026-11-11\",\n      \"rules_say\": \"Angi Help Center", "\"rules_read_at\": \"2024-01-02\",\n      \"rules_say\": \"Angi Help Center"],
+ ["an unconfirmed site can be chosen", "reviewsecondfn", "      if (!row || row.state !== \"offered\" || RS.isYelp(row.url)) return json(409,", "      if (!row) return json(409,"],
+ ["choosing skips the page check", "reviewsecondfn", "      const check = await RS.checkPage(row.url, d.get, now);", "      const check = { at: new Date(now).toISOString(), ok: true, status: 200, count: null };"],
+ ["the send path skips the send-time check", "reviewreqfn", "return require(\"./_review-sites\").secondSiteFor(rec && rec.data && rec.data.tasks && rec.data.tasks[\"m1.review.system\"], Date.now());", "return ((rec && rec.data && rec.data.tasks && rec.data.tasks[\"m1.review.system\"]) || {}).second_site || null;"],
+ ["each customer gets their own links", "reviewreqfn", "  const links = reviewUrl ? require(\"./_review-sites\").linkText(reviewUrl, second) : null;", "  const links = reviewUrl;"],
+ ["the portal offers every site", "portal", "  const opts = offered.map((o) => opt(o.key, o.name, \"You have a profile there.\")).join(\"\")", "  const opts = (v.rows || []).map((o) => opt(o.key, o.name, \"You have a profile there.\")).join(\"\")"],
+ ["the portal card gates by happiness", "portal", "return csCard({ tone: \"you\", head: \"Add a second review site?\"", "return csCard({ tone: \"you\", head: \"Only ask happy customers? Add a second review site?\""]
+]
