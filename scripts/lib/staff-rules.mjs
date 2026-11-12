@@ -60,8 +60,8 @@ export function judgePolicies(rows, allow = TRUE_POLICY_ALLOW) {
   return p;
 }
 
-/** what the portal client could do → problems. counts: { table: n|null }, insert: { status, code } */
-export function judgeLive({ counts, insert }) {
+/** what the portal client could read → problems. counts: { table: n|null }. (11-12: no role-write probe; the guard is judged statically.) */
+export function judgeLive({ counts }) {
   const p = [];
   for (const t of ["client_notes", "lead_intakes", "brain_knowledge", "fga_report_cache"]) {
     if (counts[t] == null) p.push(`could not read ${t} as the portal client`);
@@ -69,7 +69,5 @@ export function judgeLive({ counts, insert }) {
   }
   if (counts.clients == null) p.push("could not read clients as the portal client");
   else if (counts.clients > 1) p.push(`the portal client reads ${counts.clients} client rows (its own only, at most 1)`);
-  if (!insert) p.push("the role probe did not run");
-  else if (insert.code !== "P0001") p.push(`a client asking for role 'owner' was ${insert.status >= 200 && insert.status < 300 ? "GIVEN IT" : `answered ${insert.status} ${insert.code || ""}`}, not refused by the guard (P0001)`);
   return p;
 }

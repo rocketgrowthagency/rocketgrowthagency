@@ -44,7 +44,7 @@
  [
   "report page makes a partial total",
   "reportjs",
-  "  return L.value == null ? null : { total: L.value, forms: L.forms, calls: L.kind === \"forms+calls\" ? L.calls : null };",
+  "  return L.value == null ? null : { total: L.value, forms: L.forms, calls: L.kind === \"forms+calls\" ? L.calls : null, missedWords: M().LEADS_MISSED_WORDS(L) };",
   "  const forms = num(current.form_leads), calls = num(current.total_calls); return forms == null && calls == null ? null : { total: (forms || 0) + (calls || 0), forms, calls };",
   1
  ],
@@ -58,8 +58,8 @@
  [
   "admin reads the stored total_leads",
   "admin",
-  "  const leads = globalThis.rgaMetrics.leadsOf(cur, client).value;",
-  "  const leads = Number(cur.total_leads);",
+  "  const leadsL = globalThis.rgaMetrics.leadsOf(cur, client), leads = leadsL.value,",
+  "  const leadsL = globalThis.rgaMetrics.leadsOf(cur, client), leads = Number(cur.total_leads),",
   1
  ],
  [

@@ -2,8 +2,8 @@
  [
   "pipeline value counts taps again",
   "sharedmetrics",
-  "return { ...out, value: forms + calls, why: null };",
-  "return { ...out, value: forms + calls + (num(rec.gbp_calls) || 0), why: null };"
+  "return { ...out, callers: cl.value, missed: cl.missed, value: forms + cl.value, why: null };",
+  "return { ...out, callers: cl.value, missed: cl.missed, value: forms + cl.value + (num(rec.gbp_calls) || 0), why: null };"
  ],
  [
   "the funnel tile adds taps again",
@@ -207,7 +207,7 @@
  [
   "the portal hint promises booking requests again",
   "portal",
-  "MET().LEADS_DEF(client), { emptyText: \"Not available\"",
+  "MET().LEADS_EXP(curL, client), { emptyText: \"Not available\"",
   "\"Calls + form fills + booking requests from search this month.\", { emptyText: \"Not available\"",
   1
  ],
@@ -270,7 +270,7 @@
  [
   "a missing call count is read as 0 in the month line",
   "reportjs",
-  "  if (nowCalls != null) parts.push(plural(nowCalls, \"tracked call\", \"tracked calls\"));",
+  "  if (nowCalls != null) parts.push(plural(L.callers != null ? L.callers : nowCalls, \"caller\", \"callers\"));",
   "  parts.push(plural(nowCalls || 0, \"tracked call\", \"tracked calls\"));",
   1
  ],

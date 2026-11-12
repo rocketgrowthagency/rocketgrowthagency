@@ -10,13 +10,13 @@
 //            UPDATE, so a portal client could INSERT its own profile naming RGA's workspace (read off its own clients row) and pass every
 //            admin function guard. Now checked both ways: the guard's INSERT branch must refuse a non-null workspace_id (static), and the
 //            portal client's insert naming RGA's workspace must be refused P0001 (static only: no live probe).
+// 11-12 Chris: no live probe; SECURITY_LOCKDOWN_2 (profiles_guard_role on INSERT OR UPDATE) closes it in the database.
 // (a) STATIC, read-only (Supabase Management API read-only SQL, SUPABASE_ACCESS_TOKEN): is_internal_user() ALLOW-lists staff roles
 //     (an `in (...)` list, no `<>`); the trigger profiles_guard_role_trg is on public.profiles and enabled; no policy for the public,
 //     authenticated or anon roles has USING or WITH CHECK exactly `true`, outside TRUE_POLICY_ALLOW (with a reason) in scripts/lib/staff-rules.mjs.
 // (b) LIVE, as the portal client rocketgrowthagencyadmin@gmail.com (a one-time link, verified; the public anon key from admin-config):
-//     0 rows from client_notes, lead_intakes, brain_knowledge, fga_report_cache; at most 1 from clients; and POST profiles {role:'owner'}
-//     is REFUSED by the guard (P0001). 🔴 That probe runs only after (a) proved the guard exists, and if it were ever ACCEPTED the gate puts
-//     the profile back as it was (service role) before it reports red: a check must never leave a client as owner.
+//     0 rows from client_notes, lead_intakes, brain_knowledge, fga_report_cache; at most 1 from clients (reads only).
+//     The old role-owner WRITE probe (POST profiles {role:'owner'}) was removed 11-12: nothing in this gate writes to the live database.
 // 🔑 SELF-PROVING: every rule (scripts/lib/staff-rules.mjs, read from SCRAPER_COPY_DIR when set) is run on fixtures first: the 11-10 deny-list
 // definition, a missing trigger, a `true` policy for authenticated, an accepted role write must each be caught, the fixed shapes passed;
 // else INDETERMINATE. In the mutation harness only the self-test runs (the live database is not touched).
@@ -52,11 +52,10 @@ const R = await import(pathToFileURL(libPath).href);
   t(R.judgePolicies([pol("{authenticated}", "is_internal_user()")], {}).length === 0, "a staff-only policy is flagged");
   t(R.judgePolicies([pol("{anon}", "true")], { "public.brain_knowledge.Service role full access": "a reason long enough to be a reason" }).length === 0, "an allow-listed policy with a reason is flagged");
   const live = { client_notes: 0, lead_intakes: 0, brain_knowledge: 0, fga_report_cache: 0, clients: 1 };
-  t(R.judgeLive({ counts: live, insert: { status: 400, code: "P0001" } }).length === 0, "a locked-down client fails");
-  t(R.judgeLive({ counts: { ...live, brain_knowledge: 3 }, insert: { status: 400, code: "P0001" } }).length > 0, "a client reading brain_knowledge passes");
-  t(R.judgeLive({ counts: { ...live, clients: 4 }, insert: { status: 400, code: "P0001" } }).length > 0, "a client reading 4 client rows passes");
-  t(R.judgeLive({ counts: live, insert: { status: 201, code: null } }).length > 0, "a client given role owner passes");
-  t(R.judgeLive({ counts: { ...live, lead_intakes: null }, insert: { status: 400, code: "P0001" } }).length > 0, "an unread table passes as zero rows");
+  t(R.judgeLive({ counts: live }).length === 0, "a locked-down client fails");
+  t(R.judgeLive({ counts: { ...live, brain_knowledge: 3 } }).length > 0, "a client reading brain_knowledge passes");
+  t(R.judgeLive({ counts: { ...live, clients: 4 } }).length > 0, "a client reading 4 client rows passes");
+  t(R.judgeLive({ counts: { ...live, lead_intakes: null } }).length > 0, "an unread table passes as zero rows");
   // HOLE 3 (11-11 security master S1, SECURITY_LOCKDOWN_2_2026-11-11.sql): the insert case
   const guard1 = "begin\n  if coalesce(auth.role(), '') = 'service_role' then return new; end if;\n  if tg_op = 'INSERT' then\n    if coalesce(new.role, '') not in ('', 'client') and not public.is_internal_user() then\n      raise exception 'x';\n    end if;\n  elsif (new.role is distinct from old.role or new.workspace_id is distinct from old.workspace_id) and not public.is_internal_user() then\n    raise exception 'y';\n  end if;\n  return new;\nend";
   const guard2 = guard1.replace("if coalesce(new.role, '') not in ('', 'client') and not", "if (coalesce(new.role, '') not in ('', 'client') or new.workspace_id is not null) and not");
@@ -113,28 +112,8 @@ const counts = {};
 for (const t of ["client_notes", "lead_intakes", "brain_knowledge", "fga_report_cache", "clients"]) {
   try { const r = await fetch(`${DB}/rest/v1/${t}?select=id&limit=5`, { headers: userH, signal: AbortSignal.timeout(15000) }); const b = await r.json(); counts[t] = r.ok && Array.isArray(b) ? b.length : null; } catch { counts[t] = null; }
 }
-// the role probe: only once the guard is known to exist, and undone if it were ever accepted
-let insert = null;
-// STAFF_PROBE_NO_WRITE=1 skips the probe for a by-hand look; the run is then RED ("the role probe did not run"), never green
-if (process.env.STAFF_PROBE_NO_WRITE) insert = null;
-else if (!trgProblems.length) {
-  const me = session.user.id;
-  let prior = null;
-  try { prior = (await (await fetch(`${DB}/rest/v1/profiles?id=eq.${me}&select=*`, { headers: svcH })).json())[0] || null; } catch { idk("could not read the portal client's profile first (the probe needs a way back)"); }
-  try {
-    const r = await fetch(`${DB}/rest/v1/profiles`, { method: "POST", headers: { ...userH, Prefer: "return=minimal" }, body: JSON.stringify({ id: me, role: "owner" }), signal: AbortSignal.timeout(15000) });
-    const b = await r.json().catch(() => ({}));
-    insert = { status: r.status, code: b && b.code ? b.code : null };
-    if (r.ok) {
-      // 🔴 accepted: put it back exactly as it was, then report red
-      if (prior) await fetch(`${DB}/rest/v1/profiles?id=eq.${me}`, { method: "PATCH", headers: svcH, body: JSON.stringify({ role: prior.role }) });
-      else await fetch(`${DB}/rest/v1/profiles?id=eq.${me}`, { method: "DELETE", headers: svcH });
-    }
-  } catch (e) { idk(`the role probe didn't answer: ${String(e.message).slice(0, 100)}`); }
-} else insert = { status: 0, code: "skipped: the guard trigger is missing, so the probe would make the client owner" };
-// HOLE 3 (the insert case) is checked STATICALLY above (judgeGuardFn on profiles_guard_role()'s own text): no live probe ever tries to give a
-// client RGA's workspace (Chris, 11-11).
-F.push(...R.judgeLive({ counts, insert }));
+// 11-12 Chris: NO live probe. Nothing here writes to the database; the guard is judged statically (judgeGuardFn on profiles_guard_role()'s own text).
+F.push(...R.judgeLive({ counts }));
 
 if (F.length) { console.error(`🔴 someone can be staff by accident:\n${F.map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
-console.log(`✅ nobody is staff by accident: is_internal_user() allow-lists staff roles, profiles_guard_role_trg is on profiles, no public-role policy is \`true\`; the portal client reads 0 staff rows and ${counts.clients} client row, and its ask for role 'owner' was refused (P0001); profiles_guard_role() refuses a workspace on insert (read from its own text, no probe)`);
+console.log(`✅ nobody is staff by accident: is_internal_user() allow-lists staff roles, profiles_guard_role_trg is on profiles, no public-role policy is \`true\`; the portal client reads 0 staff rows and ${counts.clients} client row, profiles_guard_role() refuses a workspace on insert (read from its own text, no probe)`);

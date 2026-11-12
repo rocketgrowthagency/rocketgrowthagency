@@ -1,0 +1,58 @@
+[
+ [
+  "the end date becomes day 31",
+  "billingdates",
+  "const byNotice = addDays(noticeYmd, 30);",
+  "const byNotice = addDays(noticeYmd, 31);",
+  1
+ ],
+ [
+  "the end date becomes day 29",
+  "billingdates",
+  "const byNotice = addDays(noticeYmd, 30);",
+  "const byNotice = addDays(noticeYmd, 29);",
+  1
+ ],
+ [
+  "a minimum can end the account before day 30",
+  "billingdates",
+  "return byMinimum > byNotice ? byMinimum : byNotice;",
+  "return byMinimum < byNotice ? byMinimum : byNotice;",
+  1
+ ],
+ [
+  "an invoice opens on the end date",
+  "billingdates",
+  "if (due >= endsOn) return null;",
+  "if (due > endsOn) return null;",
+  1
+ ],
+ [
+  "the Cancel card works the end date out itself",
+  "leavingterms",
+  "const endsOn = endDateFromNotice(on, firstYmd, minimum);",
+  "const endsOn = addDays(on, 31);",
+  1
+ ],
+ [
+  "the agreement says 31 days for the founding plan",
+  "contractgen",
+  "After that, either party may terminate this Agreement at any time on thirty (30) days' written notice",
+  "After that, either party may terminate this Agreement at any time on thirty-one (31) days' written notice",
+  1
+ ],
+ [
+  "the no-lock-in agreement says 45 days",
+  "contractgen",
+  "Either party may terminate this Agreement at any time on thirty (30) days' written notice; email to the address in Section 16 is enough. RGA bills through the end date, prorated, and charges no exit fee. If RGA ends it without cause, RGA refunds any fee paid for time after the end date.</p>\n${CANCEL_IMMEDIATE}",
+  "Either party may terminate this Agreement at any time on 45 days' written notice; email to the address in Section 16 is enough. RGA bills through the end date, prorated, and charges no exit fee. If RGA ends it without cause, RGA refunds any fee paid for time after the end date.</p>\n${CANCEL_IMMEDIATE}",
+  1
+ ],
+ [
+  "the cancellation record stops using the one function",
+  "cancellationfn",
+  "ends_on: endDateFromNotice(notice_date, firstYmd, minimum)",
+  "ends_on: addDays(notice_date, 31)",
+  1
+ ]
+]

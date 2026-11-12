@@ -120,7 +120,7 @@ async function checkTree(root, label) {
   if (L) {
     const NOW = Date.parse("2026-11-11T19:30:00Z"), month = "2026-11-01", prov = { key: "callrail", label: "CallRail", attributed: true }, forms = { connected: true };
     const row = (o) => ({ month, kind: "call", provider: "callrail", answered: true, counted: true, seconds: 120, at: "2026-11-10T17:42:00Z", last4: "4471", source: "Google My Business", ...o });
-    const rows = [row({ id: "1", lead_key: "callrail:A" }), row({ id: "1b", lead_key: "callrail:A", read_at: "2026-11-11" }), row({ id: "2", lead_key: "callrail:B", answered: false, counted: false, seconds: 0 })];
+    const rows = [row({ id: "1", lead_key: "callrail:A" }), row({ id: "1b", lead_key: "callrail:A", read_at: "2026-11-11" }), row({ id: "2", lead_key: "callrail:B", answered: false, counted: false, seconds: 0, last4: "9902" })];
     const s = L.summaryOf({ month, now: NOW, rows, record: { data: { calls: { connected: 1, answered: 1, missed: 1, at: "2026-11-11T14:05:00Z" } } }, price: 625, provider: prov, forms });
     if (s.calls !== 1) fail(`a call read twice was counted ${s.calls} times`);
     if (s.leads !== 2) fail(`a counted call and a missed call should be 2 leads, got ${s.leads}`);

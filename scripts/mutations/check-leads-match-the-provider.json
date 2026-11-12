@@ -140,7 +140,7 @@
  [
   "the portal stops importing shared/leads.js",
   "portal",
-  "import \"/shared/leads.js?v=20261112a\";",
+  "import \"/shared/leads.js?v=20261112q\";",
   "// leads come later"
  ],
  [

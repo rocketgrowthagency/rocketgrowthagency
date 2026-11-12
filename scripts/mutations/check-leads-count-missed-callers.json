@@ -1,0 +1,135 @@
+[
+ [
+  "Tier 3 stops deduping callers",
+  "leadsshared",
+  "dedupeCallers(all).filter(isLead)",
+  "all.filter(isLead)",
+  1
+ ],
+ [
+  "callLeadsOf counts every call row, not every caller",
+  "leadsshared",
+  "let callers = reps.length,",
+  "let callers = (rows || []).filter((r) => isCounted(r) || isMissed(r)).length,",
+  1
+ ],
+ [
+  "a missed call is no longer a lead",
+  "leadsshared",
+  "const isLead = (r) => !!r && (r.kind === \"form\" || isCounted(r) || isMissed(r));",
+  "const isLead = (r) => !!r && (r.kind === \"form\" || isCounted(r));",
+  1
+ ],
+ [
+  "a caller who was answered is still called a missed lead",
+  "leadsshared",
+  "!(r.last4 && counted.has(r.last4))).length;",
+  "true).length;",
+  1
+ ],
+ [
+  "Tier 3 takes missed from a second count",
+  "leadsshared",
+  "leadsMissed: callLeadsOf(all).missed",
+  "leadsMissed: all.filter(isMissed).length",
+  1
+ ],
+ [
+  "Tier 3 Booked jobs tile loses the missed words",
+  "leadsshared",
+  "\"lead\")}${s.leadsMissed > 0 ? `, ${missedWords(s.leadsMissed)}` : \"\"}`)",
+  "\"lead\")}`)",
+  1
+ ],
+ [
+  "Tier 3 report row loses the missed words",
+  "leadsshared",
+  "\"lead\")}${s.leadsMissed > 0 ? `, ${missedWords(s.leadsMissed)}` : \"\"}.${s.notMarked",
+  "\"lead\")}.${s.notMarked",
+  1
+ ],
+ [
+  "leadsOf ignores the stored caller count",
+  "sharedmetrics",
+  "if (cl != null) return { value: cl,",
+  "if (false) return { value: cl,",
+  1
+ ],
+ [
+  "leadsOf adds only the connected calls, not the callers",
+  "sharedmetrics",
+  "value: forms + cl.value",
+  "value: forms + calls",
+  1
+ ],
+ [
+  "no missed sub-line ever",
+  "sharedmetrics",
+  "l.value != null && l.missed > 0 ?",
+  "l.value != null && l.missed > 99 ?",
+  1
+ ],
+ [
+  "an older month's missed calls are dropped",
+  "sharedmetrics",
+  "return { value: totalCalls + (m != null ? m : 0),",
+  "return { value: totalCalls,",
+  1
+ ],
+ [
+  "the call sync stops writing the caller count",
+  "ctsync",
+  "caller_leads: cl.callers",
+  "caller_x: cl.callers",
+  1
+ ],
+ [
+  "portal Leads tile drops the missed sub-line",
+  "portal",
+  "MET().LEADS_EXP(curL, client)",
+  "MET().LEADS_DEF(client)",
+  1
+ ],
+ [
+  "portal KPI Snapshot drops the missed sub-line",
+  "portal",
+  "M.LEADS_EXP(L, kpiClient)",
+  "M.LEADS_DEF(kpiClient)",
+  1
+ ],
+ [
+  "admin KPI grid drops the missed sub-line",
+  "admin",
+  "M.LEADS_EXP(L, state.selectedClient)",
+  "M.LEADS_DEF(state.selectedClient)",
+  1
+ ],
+ [
+  "the report's month in one line drops the missed words",
+  "reportjs",
+  "(M().LEADS_MISSED_WORDS(L) ? `, ${M().LEADS_MISSED_WORDS(L)}` : \"\")",
+  "\"\"",
+  1
+ ],
+ [
+  "the monthly email drops the missed words",
+  "monthlyreport",
+  "including ${nowL.missed} missed",
+  "incl ${nowL.missed}",
+  1
+ ],
+ [
+  "System health's leads line drops the missed words",
+  "monthlyvalue",
+  "LM.LEADS_MISSED_WORDS(LL) ? `, ${LM.LEADS_MISSED_WORDS(LL)}` : \"\"",
+  "\"\"",
+  1
+ ],
+ [
+  "the client monthly Leads tile drops the missed words",
+  "clientmonthly",
+  "small: `${Met().LEADS_MISSED_WORDS(LL) ?",
+  "small: `${false ?",
+  1
+ ]
+]

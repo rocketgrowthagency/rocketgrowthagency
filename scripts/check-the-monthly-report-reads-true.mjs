@@ -334,7 +334,7 @@ try {
   const lineOf = (rr) => (/Your month in one line\s*(.*?)\s*Your funnel/s.exec(rr.all) || [])[1] || null;
   const SEP25 = "2025-09-01";
   r = await render({ open: "2026-09", client: { call_tracking_attributed: true }, months: [{ reporting_month: SEP, form_leads: 4, total_calls: 12 }] });
-  check(/You had 12 tracked calls and 4 form submissions\. No year-ago number yet, so season is not ruled out\./.test(lineOf(r) || ""), "no year-ago month: the line says season is not ruled out", lineOf(r));
+  check(/You had 12 callers and 4 form submissions\. No year-ago number yet, so season is not ruled out\./.test(lineOf(r) || ""), "no year-ago month: the line says season is not ruled out", lineOf(r));
   r = await render({ open: "2026-09", client: { call_tracking_attributed: true }, months: [{ reporting_month: SEP, form_leads: 4, total_calls: 12 }, { reporting_month: SEP25, form_leads: 5, total_calls: 12 }] });
   check(/About the same as September 2025 \(17\)/.test(lineOf(r) || ""), "a year-ago month that is close reads about the same", lineOf(r));
   r = await render({ open: "2026-09", client: { call_tracking_attributed: true }, months: [{ reporting_month: SEP, form_leads: 4, total_calls: 30 }, { reporting_month: SEP25, form_leads: 5, total_calls: 12 }] });
@@ -580,10 +580,10 @@ try {
     current: { reporting_month: "2026-09-01", form_leads: 3, total_calls: 2, total_leads: 23, gbp_calls: 20, ranking_position: 4.2, new_reviews: 1, data: { ga4: { forms_window: "month", forms_month: "2026-09-01" } } },
     prior: { reporting_month: "2026-08-01", form_leads: 1, total_calls: null, total_leads: 9, gbp_calls: 7 } });
   const mailText = (built && `${built.html}\n${built.text}`.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")) || "";
-  check(!!built && /Leads \(form submissions plus tracked calls\)/.test(mailText) && !/Total leads/.test(mailText) && !/\b23\b/.test(mailText), "the email counts leads as forms plus tracked calls (5), and never reads total_leads (23)", mailText.slice(0, 400));
+  check(!!built && /Leads \(form submissions plus each caller once/.test(mailText) && !/Total leads/.test(mailText) && !/\b23\b/.test(mailText), "the email counts leads as forms plus each caller once (5), and never reads total_leads (23)", mailText.slice(0, 400));
   check(/taps aren't calls/i.test(mailText) && !/Calls from your Google profile/.test(mailText), "the email names Google's call-button taps as taps", null);
   check(!/Average map rank/.test(mailText), "the email carries no average position: that number is RGA's", null);
-  const lead = (built.html.match(/Leads \(form submissions plus tracked calls\)[\s\S]{0,400}/) || [""])[0];
+  const lead = (built.html.match(/Leads \(form submissions plus each caller once[\s\S]{0,400}/) || [""])[0];
   check(!/↑|↓|▲|▼/.test(lead), "forms plus calls this month against forms alone last month isn't drawn as a change", lead.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 200));
 
   // ── the alert list: RGA only, once per bad stretch, an unknown is never a bad ──

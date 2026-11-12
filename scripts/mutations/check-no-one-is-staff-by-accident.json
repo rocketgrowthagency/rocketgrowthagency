@@ -28,13 +28,6 @@
   2
  ],
  [
-  "a client given role owner reads as refused",
-  "staffrules",
-  "  else if (insert.code !== \"P0001\") p.push(",
-  "  else if (false) p.push(",
-  2
- ],
- [
   "a client reading staff rows is let through",
   "staffrules",
   "    else if (counts[t] > 0) p.push(",
