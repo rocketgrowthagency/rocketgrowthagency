@@ -587,4 +587,11 @@ export const FILES = {
   catauto: "netlify/functions/_categories-auto.js",
   formsettle: "shared/form-settle.js",
   stepsautopilot: "netlify/functions/steps-autopilot.js",
+  // tier3_best_in_class_v1 section 3 (11-11): "Best of" lists and local mentions (check-a-mention-counts-only-when-seen-live)
+  mentionsshared: "shared/mentions.js",
+  mentionsfn: "netlify/functions/_mentions.js",
+  mentionsadminfn: "netlify/functions/admin-mentions.js",
+  mentionsportalfn: "netlify/functions/portal-mentions.js",
+  mentionscheck: "netlify/functions/mentions-check.js",
+  mentionssql: "docs/supabase/CLIENT_MENTIONS_2026-11-11.sql",
 };

@@ -1,0 +1,380 @@
+[
+ [
+  "Listed holds after 35 days",
+  "mentionsshared",
+  "if (n - seen > SEEN_DAYS * DAY || seen - n > 5 * 60000) return false;",
+  "if (seen - n > 5 * 60000) return false;",
+  1
+ ],
+ [
+  "a read that answered 403 counts as seen",
+  "mentionsshared",
+  "return Number(ev.http) === 200 && ",
+  "return ",
+  1
+ ],
+ [
+  "evidence for another page counts",
+  "mentionsshared",
+  "&& urlKey(ev.url) === urlKey(r.url) ",
+  "",
+  1
+ ],
+ [
+  "a stale listing reads Listed",
+  "mentionsshared",
+  "return seenLive(r, now) ? \"listed\" : \"stale\";",
+  "return \"listed\";",
+  1
+ ],
+ [
+  "the admin On count trusts the status",
+  "mentionsshared",
+  "const on = rows.filter((r) => r.shown === \"listed\").length",
+  "const on = rows.filter((r) => r.status === \"listed\").length",
+  1
+ ],
+ [
+  "the client card trusts the status",
+  "mentionsshared",
+  "const listed = rows.filter((r) => r.shown === \"listed\")",
+  "const listed = rows.filter((r) => r.status === \"listed\")",
+  1
+ ],
+ [
+  "a page that wouldn't open says Not on it",
+  "mentionsshared",
+  "small: `${siteOf(r).site} wouldn't open",
+  "small: `Not on it. ${siteOf(r).site} wouldn't open",
+  1
+ ],
+ [
+  "a page that wouldn't open is read as not on it",
+  "mentionsfn",
+  "status: r.status === \"declined\" ? \"declined\" : \"could_not_check\" };",
+  "status: r.status === \"declined\" ? \"declined\" : \"found\", on_page: false };",
+  1
+ ],
+ [
+  "a split name counts as on the page",
+  "mentionsfn",
+  "for (const f of nameForms(n)) if (text.includes(f)) return f.trim();",
+  "for (const f of nameForms(n)) if (f.trim().split(\" \").every((w) => text.includes(` ${w} `))) return f.trim();",
+  1
+ ],
+ [
+  "LLC / Inc. aren't dropped",
+  "mentionsfn",
+  "let core = base; for (let i = 0; i < 2; i++) core = core.replace(SUFFIX, \"\").trim();",
+  "let core = base;",
+  1
+ ],
+ [
+  "the & and \"and\" forms aren't tried",
+  "mentionsfn",
+  "for (const v of [s, s.replace(/\\s*&\\s*/g, \" and \"), s.replace(/\\s+and\\s+/gi, \" & \")])",
+  "for (const v of [s])",
+  1
+ ],
+ [
+  "a one-word short name matches any page",
+  "mentionsfn",
+  "(words.length >= 2 || words[0].length >= 6)",
+  "true",
+  1
+ ],
+ [
+  "a pay-to-be-listed page isn't marked",
+  "mentionsfn",
+  "status: pay ? \"pay_to_list\" : workStatus(r)",
+  "status: workStatus(r)",
+  1
+ ],
+ [
+  "a pay-to-be-listed page can be sent",
+  "mentionsfn",
+  "if (r.status === \"pay_to_list\" || r.pay_to_list) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "an advertise footer reads as pay to be listed",
+  "mentionsfn",
+  "|(?:buy|purchase) (?:a |your )?(?:listing|placement|spot)",
+  "|advertise|sponsored",
+  1
+ ],
+ [
+  "the reserve is ignored",
+  "mentionsfn",
+  "if (left - SERPAPI_RESERVE < n)",
+  "if (left < n)",
+  1
+ ],
+ [
+  "the reserve floor is zero",
+  "mentionsfn",
+  "const { SERPAPI_RESERVE } = require(\"./_serpapi-reserve\");",
+  "const SERPAPI_RESERVE = 0;",
+  1
+ ],
+ [
+  "an unreadable count spends",
+  "mentionsfn",
+  "if (!Number.isFinite(left)) return { ok: false",
+  "if (false) return { ok: false",
+  1
+ ],
+ [
+  "the quarter's cap is ignored",
+  "mentionsfn",
+  "const room = SEARCHES_MAX - (Number(spentThisQuarter) || 0);",
+  "const room = SEARCHES_MAX;",
+  1
+ ],
+ [
+  "a second run in the quarter searches again",
+  "mentionsfn",
+  "if (!S.searchedThisQuarter && !plan.none && !refusedUntil)",
+  "if (!plan.none && !refusedUntil)",
+  1
+ ],
+ [
+  "a refusal's next try is ignored",
+  "mentionsfn",
+  "const refusedUntil = led.filter(",
+  "const refusedUntil = false && led.filter(",
+  1
+ ],
+ [
+  "searches can't be switched off",
+  "mentionsfn",
+  "const searchOff = (env) => String((env || {}).MENTIONS_SEARCH || \"\").trim() === \"0\" ||",
+  "const searchOff = (env) => false ||",
+  1
+ ],
+ [
+  "no trade still searches",
+  "mentionsfn",
+  "if (!tr.key || !trade) return { queries: [], none:",
+  "if (false) return { queries: [], none:",
+  1
+ ],
+ [
+  "the searches aren't best/top trade city",
+  "mentionsfn",
+  "const qs = [`best ${trade} in ${city}`, `top ${trade} ${areas[0] || city}`,",
+  "const qs = [`${trade} ${city}`, `${trade} near ${city}`,",
+  1
+ ],
+ [
+  "a US client isn't localized",
+  "mentionsfn",
+  "countryOf(client) === \"US\" ? \"us\" : null",
+  "null",
+  1
+ ],
+ [
+  "directories join the list",
+  "mentionsfn",
+  "dirs.some((m) => onHost(h, m)) || ",
+  "",
+  1
+ ],
+ [
+  "their own site joins the list",
+  "mentionsfn",
+  "(own && onHost(h, own)) || ",
+  "",
+  1
+ ],
+ [
+  "the pitch has no address",
+  "mentionsfn",
+  "{ to: r.contact_email || null, subject: got.subject",
+  "{ to: null, subject: got.subject",
+  1
+ ],
+ [
+  "the run sends the pitch itself",
+  "mentionsfn",
+  "if (w && !got.error) out.drafted++;",
+  "if (w && !got.error) { out.drafted++; await d.send({ to: pitch.to, subject: pitch.subject, body: pitch.body }); }",
+  1
+ ],
+ [
+  "a pitch can be sent twice",
+  "mentionsfn",
+  "if (p.sent_at) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "a pitch with no address is sent",
+  "mentionsfn",
+  "if (!isEmail(p.to)) return { ok: false, status: 409",
+  "if (false) return { ok: false, status: 409",
+  1
+ ],
+ [
+  "Skip needs no reason",
+  "mentionsfn",
+  "const reason = clip(b.reason, 200); if (!reason) return",
+  "const reason = clip(b.reason, 200) || \"skipped\"; if (!reason) return",
+  1
+ ],
+ [
+  "Undo writes listed back",
+  "mentionsfn",
+  "if (back.status === \"listed\") back.status = workStatus(back);",
+  "",
+  1
+ ],
+ [
+  "listed becomes a press",
+  "mentionsfn",
+  "const ACTIONS = [\"send\", \"edit\", \"skip\", \"undo\", \"replied\", \"declined\"];",
+  "const ACTIONS = [\"send\", \"edit\", \"skip\", \"undo\", \"replied\", \"declined\", \"listed\"];",
+  1
+ ],
+ [
+  "a missing table is searched anyway",
+  "mentionsfn",
+  "if (!(await tableReady(d))) return { ...out, ready: false };",
+  "if (false) return { ...out, ready: false };",
+  1
+ ],
+ [
+  "the client sees pages that wouldn't open",
+  "mentionsfn",
+  "[\"listed\", \"asked\", \"not_on\", \"replied\"].includes(M.shownOf(r, now))",
+  "[\"listed\", \"asked\", \"not_on\", \"replied\", \"unk\", \"pay\"].includes(M.shownOf(r, now))",
+  1
+ ],
+ [
+  "the client read carries the pitch",
+  "mentionsfn",
+  ".map((r) => ({ id: r.id, url: r.url,",
+  ".map((r) => ({ pitch: r.pitch, contact_email: r.contact_email, id: r.id, url: r.url,",
+  1
+ ],
+ [
+  "a number off the record is kept",
+  "mentionsfn",
+  "if (stray) return { error:",
+  "if (false) return { error:",
+  1
+ ],
+ [
+  "an em dash survives the draft",
+  "mentionsfn",
+  "const t = String(text || \"\").replace(/\\s*\\u2014\\s*/g, \", \")",
+  "const t = String(text || \"\")",
+  1
+ ],
+ [
+  "step 55's places are lost",
+  "mentionsfn",
+  "if (legacy.length) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "a skipped step 55 still searches",
+  "mentionsfn",
+  "if (t55.status === \"skipped\") return { ...out, skipped55: true };",
+  "",
+  1
+ ],
+ [
+  "a test client is queued",
+  "mentionsfn",
+  "const eligible = (c) => !!c && !String(c.source || \"\").startsWith(\"test:\") &&",
+  "const eligible = (c) => !!c &&",
+  1
+ ],
+ [
+  "the admin read hides the list",
+  "mentionsadminfn",
+  "return json(200, { ok: true, ready: true, rows: all.rows,",
+  "return json(200, { ok: true, ready: true, rows: [],",
+  1
+ ],
+ [
+  "the portal read skips the client filter",
+  "mentionsportalfn",
+  "rows: MN.clientRows(all.rows, now)",
+  "rows: all.rows",
+  1
+ ],
+ [
+  "the schedule runs with no table",
+  "mentionscheck",
+  "if (!(await MN.tableReady(d))) return { ...out, ready: false };",
+  "",
+  1
+ ],
+ [
+  "the schedule doesn't check in",
+  "mentionscheck",
+  "withCheckin(\"mentions-check\"",
+  "withCheckin(\"mentions-checkx\"",
+  1
+ ],
+ [
+  "no row level security on client_mentions",
+  "mentionssql",
+  "alter table public.client_mentions enable row level security;",
+  "-- rls off",
+  1
+ ],
+ [
+  "client_mention_searches open to the browser",
+  "mentionssql",
+  "revoke all on public.client_mention_searches from anon, authenticated;",
+  "-- open",
+  1
+ ],
+ [
+  "the database lets listed skip its evidence",
+  "mentionssql",
+  "check (status <> 'listed' or (seen_at is not null and evidence is not null))",
+  "check (true)",
+  1
+ ],
+ [
+  "the schedule is gone from netlify.toml",
+  "toml",
+  "[functions.\"mentions-check\"]",
+  "[functions.\"mentions-checkx\"]",
+  1
+ ],
+ [
+  "admin 55 draws the old card",
+  "adminjs",
+  "step === \"m1.platform.mentions\" ? mnHostHtml(step)",
+  "step === \"m1.platform.mentions\" ? cbMentionsCardHtml(step, task)",
+  1
+ ],
+ [
+  "Monthly 15 loses the one list",
+  "adminjs",
+  "<div class=\"ob-mn-in15\">${mnHostHtml(Q2.ID.LINKS)}</div>",
+  "<div class=\"ob-mn-in15\"></div>",
+  1
+ ],
+ [
+  "the admin buster didn't move",
+  "adminjs",
+  "import \"/shared/mentions.js?v=20261111z\";",
+  "import \"/shared/mentions.js?v=20261111a\";",
+  1
+ ],
+ [
+  "an Ongoing work layout drops the card",
+  "portal",
+  "${feed}${custRow}${startsAfter}${ogMnHost(cid)}</div>",
+  "${feed}${custRow}${startsAfter}</div>",
+  1
+ ]
+]
