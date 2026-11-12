@@ -122,6 +122,7 @@ const NOT_PREFLIGHT = {
   'check-nothing-goes-on-a-listing-until-it-is-the-only-one.mjs': 'behavioural: one-listing rule + writers + step 7/39 locks; runs in daily-health-check.sh — a listing gate cannot make a video unsafe',
   'check-the-night-run-stops-before-morning.mjs': 'behavioural: the night run\'s real clock lines on 6 start times + every start point + the watchdog; runs in daily-health-check.sh',
   'check-a-found-email-is-the-business.mjs': 'behavioural: the real name-match token filter on 6 trades and the real email validator; runs in daily-health-check.sh + the email-validation suite in the night pre-flight',
+  'check-the-maps-frame-shows-the-business-and-the-search.mjs': 'static + behavioural: the results page is verified + framed before capture pauses on it, and the business must sit inside the visible map (the real businessFramePx on the 11-11 South Bay numbers); runs in daily-health-check.sh',
   'check-a-locked-screen-cannot-stop-a-video.mjs': 'static + behavioural: the Maps freeze grab on a locked screen, the N/3 WebMs line, and the night roll-up on a fixture night; runs in daily-health-check.sh',
   'check-a-step-that-opens-is-told-once.mjs': 'behavioural: the step-open email sweep (states, words, hours, guards, stamp order); runs in daily-health-check.sh — a client email gate cannot make a video unsafe',
   'check-a-client-can-remove-their-own-duplicate.mjs': 'behavioural: the real removal flow against stub Google/Supabase/SerpApi + static safety rules; runs in daily-health-check.sh — a listing gate cannot make a video unsafe',

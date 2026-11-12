@@ -1478,7 +1478,32 @@ const _worldPx = (lat, lng, z) => {
   return { x, y };
 };
 
-async function recentreMapOnBusiness(page, meta, label = 'detail') {
+// 🔴 2026-11-12 — "THE BUSINESS MUST BE IN THE VISIBLE MAP", NOT "WITHIN 25 KM". The 11-11 night shipped
+// South Bay Pest Pros with the map centred on open ocean 9.6km from the business ("limit 25km" passed): at
+// 13z that is ~550px right and ~240px up of the viewport centre, i.e. the pin sat at x≈84% / y≈20% — under
+// the rank overlay — and the frame read as "coastline, mostly ocean". The 25km bound is a physical
+// "off-screen for certain" bound; it cannot see "on screen but hidden or at the edge". So the frame is judged
+// in PIXELS: the Maps URL gives the viewport centre + zoom, the business coordinates are exact, Web Mercator
+// is arithmetic (validated against that frame: predicted x 0.85 / y 0.23, measured 0.84 / 0.20).
+// The visible map is the viewport minus the left card panel (~30%) and the rank overlay (top-right).
+const FRAME_BOX = { xMin: 0.36, xMax: 0.80, yMin: 0.14, yMax: 0.86 };   // fractions of the viewport
+const FRAME_TARGET = { x: 0.62, y: 0.52 };                                // middle of the visible map
+function businessFramePx(page, meta) {
+  const lat = Number(meta?.lat), lng = Number(meta?.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  const c = readMapCentreFromUrl(page);
+  if (!c) return null;
+  const vp = page.viewport() || { width: 1600, height: 900 };
+  const from = _worldPx(c.lat, c.lng, c.z), to = _worldPx(lat, lng, c.z);
+  const fx = 0.5 + (to.x - from.x) / vp.width, fy = 0.5 + (to.y - from.y) / vp.height;
+  const inFrame = fx >= FRAME_BOX.xMin && fx <= FRAME_BOX.xMax && fy >= FRAME_BOX.yMin && fy <= FRAME_BOX.yMax;
+  return { fx, fy, inFrame, z: c.z };
+}
+
+async function recentreMapOnBusiness(page, meta, label = 'detail', opts = {}) {
+  // opts.centre = true: put the business on the exact viewport centre (so a following zoom-in, which zooms
+  // toward the centre, keeps it on screen). Default: the middle of the VISIBLE map (right of the card panel).
+  const target = opts.centre ? { x: 0.5, y: 0.5 } : FRAME_TARGET;
   const lat = Number(meta?.lat), lng = Number(meta?.lng);
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
 
@@ -1486,11 +1511,16 @@ async function recentreMapOnBusiness(page, meta, label = 'detail') {
     const c = readMapCentreFromUrl(page);
     if (!c) return null;
     const off = haversineKm(lat, lng, c.lat, c.lng);
-    if (off <= MAP_CENTRE_MAX_KM) return off;          // already good — nothing to do
+    const fr = businessFramePx(page, meta);
+    const settled = opts.centre
+      ? (fr ? Math.abs(fr.fx - 0.5) <= 0.06 && Math.abs(fr.fy - 0.5) <= 0.08 : off <= MAP_CENTRE_MAX_KM)
+      : (off <= MAP_CENTRE_MAX_KM && (!fr || fr.inFrame));
+    if (settled) return off;                           // already good — nothing to do
 
     const from = _worldPx(c.lat, c.lng, c.z);
     const to = _worldPx(lat, lng, c.z);
-    let dx = to.x - from.x, dy = to.y - from.y;
+    const vp0 = page.viewport() || { width: 1440, height: 900 };
+    let dx = to.x - from.x - (target.x - 0.5) * vp0.width, dy = to.y - from.y - (target.y - 0.5) * vp0.height;
 
     // A pan larger than the viewport cannot be done in one drag. Move in bounded steps instead of
     // attempting an impossible drag and concluding the map is stuck.
@@ -1546,6 +1576,20 @@ async function mapCentreOffsetKm(page, meta, label = 'detail') {
 // wrong location, and failing on it would reject good leads.
 async function assertMapCentredOnBusiness(page, meta, label, businessName) {
   let off = await mapCentreOffsetKm(page, meta, label);
+  let fr0 = businessFramePx(page, meta);
+  if (fr0) console.log(`   → ${label}: business sits at x ${(fr0.fx * 100).toFixed(0)}% / y ${(fr0.fy * 100).toFixed(0)}% of the frame (visible-map box x ${FRAME_BOX.xMin * 100}-${FRAME_BOX.xMax * 100}%, y ${FRAME_BOX.yMin * 100}-${FRAME_BOX.yMax * 100}%) — ${fr0.inFrame ? 'in frame' : 'OUT OF FRAME'}`);
+  if (off !== null && off <= MAP_CENTRE_MAX_KM && fr0 && !fr0.inFrame) {
+    const rec = await recentreMapOnBusiness(page, meta, label);
+    if (rec !== null) off = rec;
+    const fr1 = businessFramePx(page, meta);
+    console.log(`   → ${label}: recentred into frame — now x ${fr1 ? (fr1.fx * 100).toFixed(0) : '?'}% / y ${fr1 ? (fr1.fy * 100).toFixed(0) : '?'}%`);
+    if (fr1 && !fr1.inFrame) {
+      throw new Error(
+        `[step-3 GUARDRAIL] ${label}: the business is not inside the VISIBLE map (x ${(fr1.fx * 100).toFixed(0)}% / y ${(fr1.fy * 100).toFixed(0)}% of the frame; ` +
+        `visible box x ${FRAME_BOX.xMin * 100}-${FRAME_BOX.xMax * 100}%, y ${FRAME_BOX.yMin * 100}-${FRAME_BOX.yMax * 100}%) — it would sit at the edge, behind the card panel or under the rank overlay ` +
+        `(South Bay Pest Pros 11-11: ocean on screen, pin hidden). Failing ${businessName || 'the lead'} to the redo queue.`);
+    }
+  }
   // Recovery lives HERE, inside the assertion, so every capture path gets it. There are 6 call sites;
   // wiring it at one of them would leave the other 5 shipping the defect — the same shape as the
   // `_cardOpenedInPage` bug this file already documents.
@@ -1566,6 +1610,76 @@ async function assertMapCentredOnBusiness(page, meta, label, businessName) {
       `(limit ${MAP_CENTRE_MAX_KM}km) — the Maps viewport is anchored somewhere else entirely, so this render ` +
       `would show the WRONG LOCATION at a convincing zoom. Every pixel gate passes such a frame (card, overlay ` +
       `and scale bar are all correct), so geometry is the only thing that can catch it. Failing the lead.`);
+  }
+}
+
+// 🔴 2026-11-12 — THE RESULTS FRAME IS FOOTAGE TOO, AND NOTHING EVER LOOKED AT IT.
+// The seconds before the business card (≈0:12-0:28) are the live capture of the results page, held while the
+// card loads. The 11-11 night shipped three videos whose results frame was wrong, each a different symptom of
+// "the typed search left the page somewhere unchecked":
+//   american-structural (rank 40): results list beside a county-wide map — Google fits the viewport to ALL
+//       results and the typed search drops the anchored @lat,lng,13z of the first goto;
+//   south-bay-pest-pros (rank 4): the left panel collapsed, map centred on open water;
+//   xtermicon (rank 28): Google's "El Segundo" CITY card (Quick facts, Photos) in place of the results list.
+// Every gate downstream (card, rank overlay, 6/6, acceptance) looks at the card frame, so all three passed.
+// This verifies the results page BEFORE capture is paused on it, repairs what can be repaired (reload the
+// anchored results URL; pan the business to the viewport centre, zoom to city level, pan into the visible
+// map) and FAILS CLOSED when the frame is still not a results list at city level.
+const _normQ = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+async function readResultsViewState(page) {
+  try {
+    return await page.evaluate(() => {
+      const feed = document.querySelector('div[role="feed"]');
+      const fr = feed ? feed.getBoundingClientRect() : null;
+      const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+      const box = document.querySelector('input#searchboxinput') || document.querySelector('input[name="q"]');
+      return {
+        anchors: document.querySelectorAll('a.hfpxzc').length,
+        detail: !!(h1 && (h1.textContent || '').trim().length > 1),
+        box: box ? String(box.value || '') : '',
+        feedVisible: !!(fr && fr.width > 200 && fr.height > 200 && fr.right > 200 && fr.left < window.innerWidth * 0.5),
+      };
+    });
+  } catch { return null; }
+}
+function resultsViewProblem(st, query) {
+  if (!st) return 'the page state could not be read';
+  if (st.detail) return 'a place card is open instead of the results list';
+  if (st.anchors < 3) return `only ${st.anchors} listing(s) on the page`;
+  if (!st.feedVisible) return 'the results panel is collapsed or off-screen';
+  if (query && _normQ(st.box) !== _normQ(query)) return `the search box reads "${st.box}", not the search "${query}"`;
+  return null;
+}
+async function ensureResultsViewFramed(page, meta, query, retryUrl, label = 'results-view') {
+  let problem = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    problem = resultsViewProblem(await readResultsViewState(page), query);
+    if (!problem) break;
+    console.warn(`   ⚠️ ${label}: results page is not usable — ${problem} (attempt ${attempt}/3) — reloading the anchored results URL`);
+    if (attempt === 3 || !retryUrl) break;
+    try { await page.goto(retryUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS }); } catch (_) {}
+    try { await waitForMapsResults(page); } catch (_) {}
+    await page.waitForSelector('a.hfpxzc', { timeout: 9000 }).catch(() => {});
+    await sleep(1500);
+  }
+  if (problem) {
+    throw new Error(`[step-3 GUARDRAIL] ${label}: the Maps results page is not a usable results list — ${problem}. The held "competitive results" frame would show that instead of the search (american-structural / south-bay / xtermicon, 11-11). Failing the lead to the redo queue.`);
+  }
+  // Frame the map: business to the viewport centre → zoom (zooms toward the centre) → into the visible map.
+  let scale = await readMapScaleMeters(page);
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const fr = businessFramePx(page, meta);
+    const wide = scale !== null && scale > CITY_SCALE_MAX_M;
+    if (!wide && (!fr || fr.inFrame)) break;
+    if (fr) await recentreMapOnBusiness(page, meta, label, { centre: wide });
+    if (wide) await forceMapsCityZoom(page, label);
+    if (wide && fr) await recentreMapOnBusiness(page, meta, label);
+    scale = await readMapScaleMeters(page);
+  }
+  const frF = businessFramePx(page, meta);
+  console.log(`   → ${label}: results map scale≈${scale === null ? 'unreadable' : Math.round(scale) + 'm'}, business at ${frF ? `x ${(frF.fx * 100).toFixed(0)}% / y ${(frF.fy * 100).toFixed(0)}%` : 'unknown (no coordinates)'}`);
+  if (scale !== null && scale > CITY_SCALE_MAX_M) {
+    throw new Error(`[step-3 GUARDRAIL] ${label}: the results map is still regional (scale bar ${Math.round(scale)}m > ${Math.round(CITY_SCALE_MAX_M)}m) after zooming — the held results frame would show the whole county (american-structural, 11-11). Failing the lead to the redo queue.`);
   }
 }
 
@@ -2280,6 +2394,8 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       // priority overrides the earlier processing-time-first bail-fast rule.
       await page.waitForSelector('a.hfpxzc', { timeout: 9000 }).catch(() => {});
       await sleep(1500); // settle so cards are interactive before scroll-find
+      // 🔴 2026-11-12 verify + frame the RESULTS page before capture is ever paused on it (see ensureResultsViewFramed).
+      await ensureResultsViewFramed(page, meta, query, initialMapsUrl, 'results-view');
       // 2026-06-22: Google normalizes the displayed category search to lowercase in the box
       // ("roofers in pasadena, ca"). Overwrite it back to Title Case with the state uppercased —
       // purely cosmetic, the search already ran. Chris wants "Roofers In Pasadena, CA".

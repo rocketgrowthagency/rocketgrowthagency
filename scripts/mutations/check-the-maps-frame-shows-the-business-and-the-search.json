@@ -1,0 +1,107 @@
+[
+ [
+  "results page is never verified before capture pauses",
+  "recorder3",
+  "await ensureResultsViewFramed(page, meta, query, initialMapsUrl, 'results-view');",
+  "",
+  1
+ ],
+ [
+  "a bad results page is not reloaded from the anchored URL",
+  "recorder3",
+  "try { await page.goto(retryUrl,",
+  "try { await page.goto(location.href,",
+  1
+ ],
+ [
+  "a still-bad results page does not fail the lead",
+  "recorder3",
+  "if (problem) {\n    throw new Error(`[step-3 GUARDRAIL] ${label}: the Maps results page is not a usable results list",
+  "if (false) {\n    throw new Error(`[step-3 GUARDRAIL] ${label}: the Maps results page is not a usable results list",
+  1
+ ],
+ [
+  "a place card instead of the results list is accepted",
+  "recorder3",
+  "if (st.detail) return 'a place card is open instead of the results list';",
+  "",
+  1
+ ],
+ [
+  "a collapsed results panel is accepted",
+  "recorder3",
+  "if (!st.feedVisible) return 'the results panel is collapsed or off-screen';",
+  "",
+  1
+ ],
+ [
+  "a search box that is not the search is accepted",
+  "recorder3",
+  "if (query && _normQ(st.box) !== _normQ(query)) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "a regional results map ships",
+  "recorder3",
+  "if (scale !== null && scale > CITY_SCALE_MAX_M) {\n    throw new Error(`[step-3 GUARDRAIL] ${label}: the results map is still regional",
+  "if (false) {\n    throw new Error(`[step-3 GUARDRAIL] ${label}: the results map is still regional",
+  1
+ ],
+ [
+  "the results map is never zoomed",
+  "recorder3",
+  "if (wide) await forceMapsCityZoom(page, label);",
+  "",
+  1
+ ],
+ [
+  "the business is not centred before zooming",
+  "recorder3",
+  "{ centre: wide }",
+  "{ centre: false }",
+  1
+ ],
+ [
+  "the visible-map box accepts the right edge under the overlay",
+  "recorder3",
+  "xMax: 0.80",
+  "xMax: 1.0",
+  1
+ ],
+ [
+  "the visible-map box accepts the top edge under the overlay",
+  "recorder3",
+  "yMin: 0.14",
+  "yMin: 0.0",
+  1
+ ],
+ [
+  "an out-of-frame business is not recentred",
+  "recorder3",
+  "if (off !== null && off <= MAP_CENTRE_MAX_KM && fr0 && !fr0.inFrame) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "an out-of-frame business after recentring does not fail the lead",
+  "recorder3",
+  "if (fr1 && !fr1.inFrame) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "recentre returns early on a map within 25km that is out of frame",
+  "recorder3",
+  "(off <= MAP_CENTRE_MAX_KM && (!fr || fr.inFrame));",
+  "(off <= MAP_CENTRE_MAX_KM);",
+  1
+ ],
+ [
+  "the frame maths reads the wrong axis",
+  "recorder3",
+  "const fx = 0.5 + (to.x - from.x) / vp.width",
+  "const fx = 0.5 - (to.x - from.x) / vp.width",
+  1
+ ]
+]

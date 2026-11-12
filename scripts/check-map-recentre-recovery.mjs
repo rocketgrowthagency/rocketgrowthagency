@@ -71,7 +71,7 @@ if (!/off !== null && off > MAP_CENTRE_MAX_KM/.test(assertBody)) {
 }
 const iRec = src.indexOf('async function recentreMapOnBusiness');
 const recBody = src.slice(iRec, src.indexOf('\n}\n', iRec));
-if (!/off <= MAP_CENTRE_MAX_KM\) return off/.test(recBody)) {
+if (!(/off <= MAP_CENTRE_MAX_KM && \(!fr \|\| fr\.inFrame\)\);/.test(recBody) && /if \(settled\) return off/.test(recBody))) {   // 11-12: also in the visible frame (check-the-maps-frame-shows-the-business-and-the-search)
   fail('the recovery does not return early on an already-correct map.');
 }
 ok('it only fires on a map already over the limit');
