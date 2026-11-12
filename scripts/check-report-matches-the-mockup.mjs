@@ -29,7 +29,7 @@ import fs from "node:fs";
 // them. → feedback_a_gate_that_cannot_fail · feedback_the_harness_i_wrote_to_check_my_work_can_lie
 const __SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const SITE = `${__SITE}`;
-const MOCKUP = `${SITE}/mockup-monthly-report.html`;
+const MOCKUP = `${SITE}/reports/mockups/root-history/mockup-monthly-report.html`;   // moved out of the site root 11-11 (master mockup #15)
 const CSS = `${SITE}/portal/report/report.css`;
 const JS = `${SITE}/portal/report/report.js`;
 

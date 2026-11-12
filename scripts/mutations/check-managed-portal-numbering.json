@@ -14,7 +14,8 @@
  ["the column takes any value","portalmodesql","check (portal_mode is null or portal_mode in ('managed', 'self_serve'))","check (true)",1],
  ["admin writes a mode of its own choosing","admin","clientStepNo: s.clientStepNo != null ? s.clientStepNo : null,","clientStepNo: s.clientStepNo != null ? s.clientStepNo : null, portal_mode: \"self_serve\",",1],
  ["another function sets a client to managed","notifystepopen","const PMode = require(\"../../shared/portal-mode.js\");","const PMode = require(\"../../shared/portal-mode.js\"); const _x = { portal_mode: \"managed\" };",1],
- ["a new client is no longer given managed","admin",".insert({ portal_mode: \"managed\", ...payload })",".insert(payload)",1],
- ["a promoted lead is no longer given managed","admin","portal_mode: \"managed\",   // managed_admin_v1","// managed_admin_v1",1],
+ ["a new client is no longer given the default","admin",".insert({ portal_mode: clientDefaultMode(), ...payload })",".insert(payload)",1],
+ ["a promoted lead is no longer given the default","admin","portal_mode: clientDefaultMode(),   // managed_admin_v1","// managed_admin_v1",1],
+ ["the shared default is typed over in admin","admin","const clientDefaultMode = () => (globalThis.rgaPortalMode && globalThis.rgaPortalMode.DEFAULT_MODE) || \"managed\";","const clientDefaultMode = () => \"self_serve\";",1],
  ["a surface goes back to reading the number alone","portalmessagefn","const Words = require(\"../../shared/portal-mode-words.js\");\nconst PMode = require(\"../../shared/portal-mode.js\");","",1],
  ["the month 1 report stops asking the helper","month1report","const PM = require(\"../../shared/portal-mode.js\"), Words = require(\"../../shared/portal-mode-words.js\");","const PM = null, Words = null;",1]]

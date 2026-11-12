@@ -70,6 +70,8 @@ export const MONTH2_CLIENT_ROW = {
   client_portal_stage: "stage_5_monthly",
   contract_signed: true,
   invoice_paid: true,
+  // 🔒 master mockup #16 (approved 11-11): Granite State stays the SELF-SERVE walk (null = the frozen 21-step portal), so both modes are walked daily
+  portal_mode: null,
   source: MONTH2_CLIENT_SOURCE,
 };
 
@@ -104,6 +106,9 @@ export const NEW_CLIENT_ROW = {
   client_portal_stage: "stage_4_onboarding",
   contract_signed: true,
   invoice_paid: true,
+  // 🔒 master mockup #16 (approved 11-11): the daily walk walks a MANAGED client with open steps (RGA's own record is managed but in Monthly with
+  // Setup done, so managed Setup with open steps had no live walk). The live row moves with create-new-test-client.mjs --sync (Chris's step).
+  portal_mode: "managed",
   source: NEW_CLIENT_SOURCE,
 };
 

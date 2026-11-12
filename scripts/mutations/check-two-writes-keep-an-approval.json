@@ -1,0 +1,51 @@
+[
+ [
+  "a write no longer checks the version it read",
+  "taskscas",
+  "?id=eq.${s.id}&updated_at=eq.${encodeURIComponent(stamp)}`",
+  "?id=eq.${s.id}`",
+  1
+ ],
+ [
+  "a same-field clash is merged silently",
+  "taskscas",
+  "if (depth <= 0 || !isObj(mine) || !isObj(theirs)) throw conflictError(path);",
+  "if (depth <= 0 || !isObj(mine) || !isObj(theirs)) return mine;",
+  1
+ ],
+ [
+  "the other writer's change is dropped when mine is unchanged",
+  "taskscas",
+  "if (same(mine, base)) return theirs;",
+  "if (same(mine, base)) return mine;",
+  1
+ ],
+ [
+  "a clash answers 500 not 409",
+  "taskscas",
+  "e.status = 409; e.conflict = true;",
+  "e.status = 500; e.conflict = true;",
+  1
+ ],
+ [
+  "a missing step-row table reads as there",
+  "taskscas",
+  "ok: /PGRST205|42P01|does not exist|Could not find the table|\\b404\\b/.test(m) ? false : null",
+  "ok: true",
+  1
+ ],
+ [
+  "the step-row table has no row level security",
+  "clientsteprowssql",
+  "alter table public.client_step_rows enable row level security;",
+  "-- rls off",
+  1
+ ],
+ [
+  "the step-record writer goes back to a plain write",
+  "steprecord",
+  "const stored = await TC.casWrite(supa, rec.table, rec.cas, data,",
+  "const stored = await TC.casWrite(supa, rec.table, { id: rec.cas.id }, data,",
+  1
+ ]
+]

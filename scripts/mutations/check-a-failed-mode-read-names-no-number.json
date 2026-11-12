@@ -1,0 +1,44 @@
+[
+ [
+  "an unread mode still gets a number",
+  "portalmode",
+  "if (mode === UNREAD) return null;",
+  "",
+  1
+ ],
+ [
+  "the shared default is self-serve",
+  "portalmode",
+  "const DEFAULT_MODE = \"managed\";",
+  "const DEFAULT_MODE = \"self_serve\";",
+  1
+ ],
+ [
+  "a refused mode read is no mode",
+  "portalmodefn",
+  "if (!r.ok) { console.error(`[portal-mode] read failed ${r.status}`); return PM.UNREAD; }",
+  "if (!r.ok) { console.error(`[portal-mode] read failed ${r.status}`); return null; }",
+  1
+ ],
+ [
+  "a thrown mode read is no mode",
+  "portalmodefn",
+  "slice(0, 120)}`); return PM.UNREAD; }",
+  "slice(0, 120)}`); return null; }",
+  1
+ ],
+ [
+  "a missing database setting is no mode",
+  "portalmodefn",
+  "console.error(\"[portal-mode] read failed: no database settings\"); return PM.UNREAD;",
+  "console.error(\"[portal-mode] read failed: no database settings\"); return null;",
+  1
+ ],
+ [
+  "admin falls back to no mode",
+  "admin",
+  "(globalThis.rgaPortalMode && globalThis.rgaPortalMode.DEFAULT_MODE) || \"managed\";",
+  "(globalThis.rgaPortalMode && globalThis.rgaPortalMode.DEFAULT_MODE) || null;",
+  1
+ ]
+]

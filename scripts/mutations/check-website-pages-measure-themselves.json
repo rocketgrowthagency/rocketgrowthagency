@@ -1,0 +1,44 @@
+[
+ [
+  "a not-yet window is recorded",
+  "pagemeasure",
+  "if (w.state === \"not_yet\" || windows[w.weeks]) continue;",
+  "if (windows[w.weeks]) continue;",
+  1
+ ],
+ [
+  "a window is recorded again each week",
+  "pagemeasure",
+  "if (w.state === \"not_yet\" || windows[w.weeks]) continue;",
+  "if (w.state === \"not_yet\") continue;",
+  1
+ ],
+ [
+  "test clients are measured",
+  "measurerun",
+  "&or=(source.is.null,source.not.like.test:*)",
+  "",
+  1
+ ],
+ [
+  "a worse page goes to the client",
+  "openmoves",
+  "else if (m.kind === \"page_worse\") continue;",
+  "else if (m.kind === \"page_worse\") out.push(pick(m, m.step_id, m.kind));",
+  1
+ ],
+ [
+  "the weekly run is not scheduled",
+  "toml",
+  "[functions.\"site-measure-run\"]\n  schedule = \"50 13 * * 1\"",
+  "[functions.\"site-measure-run\"]\n  schedule = \"50 13 * * 2\"",
+  1
+ ],
+ [
+  "System health does not know the job",
+  "jobmanifest",
+  "{ job: \"site-measure-run\", label: \"Website pages measured\", cron: \"50 13 * * 1\"",
+  "{ job: \"site-measure-run\", label: \"Website pages measured\", cron: \"50 13 * * 3\"",
+  1
+ ]
+]
