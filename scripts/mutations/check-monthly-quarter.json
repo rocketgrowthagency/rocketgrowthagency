@@ -6,8 +6,8 @@
  ["the finder has no search cap", "monthlyquarter", "const LINK_SEARCHES_MAX = 4;", "const LINK_SEARCHES_MAX = 40;", 1],
  ["the finder runs more than once a quarter", "monthlyquartersrv", "if (cur.searched_at) return { ok: false, error: \"The finder already ran this quarter.\" };", "", 1],
  ["the finder spends searches while the search is off", "monthlyquartersrv", "if (d.searchOff && d.searchOff()) return", "if (false) return", 1],
- ["an ask that was sent counts as a link", "monthlyquarter", "const live = places.filter((p) => p.state === \"live\" && p.live_seen_at)", "const live = places.filter((p) => p.state === \"live\" || p.state === \"asked\")", 1],
- ["'no place found' is said before the finder ran", "monthlyquarter", "if (!S.searched) {", "if (false) {", 1],
+ ["an ask that was sent counts as a link", "monthlyquarter", "const live = places.filter((p) => liveNow(p, now))", "const live = places.filter((p) => liveNow(p, now) || p.state === \"asked\")", 1],
+ ["'no place found' is said before the finder ran", "monthlyquarter", "if (!S.searched && !S.places.length) {", "if (false) {", 1],
  ["RGA approves a change for the client", "monthlyquartersrv", "(c.state === \"suggested\" ? { ...c, state: \"sent\", sent_at: at } : c)", "(c.state === \"suggested\" ? { ...c, state: \"approved\", sent_at: at } : c)", 1],
  ["a change goes to Google before the client approves", "monthlyquartersrv", "filter((c) => c.state === \"approved\" || c.state === \"written\")", "filter((c) => c.state === \"approved\" || c.state === \"written\" || c.state === \"sent\" || c.state === \"suggested\")", 1],
  ["a refused write counts as read back", "monthlyquartersrv", "state: w && w.state === \"on_google\" ? \"readback\" : w && w.wrote ? \"written\" : \"failed\"", "state: \"readback\"", 1],
@@ -27,8 +27,8 @@
  ["the lead test shows without call tracking", "monthlyquarter", "if (!x.callTracking) return null;", "", 1],
  ["a lead test is recorded without call tracking", "monthlyquartersrv", "if (ct !== true) return { ok: false, error: \"This client has no call tracking, so there is no lead-handling test.\" };", "", 1],
  ["the lead test is always in the list", "monthlyquarter", "return IDS.filter((id) => id !== ID.LEAD || o.callTracking);", "return IDS;", 1],
- ["the quarter block is missing from the letter", "monthlyreportemail", "const quarter = MQ.blockOf({ tasks: x.tasks || {}, monthNumber: x.monthNumber });", "const quarter = null;", 1],
- ["a plain month's letter gets the quarter block", "monthlyreportemail", "monthNumber: x.monthNumber });", "monthNumber: 3 });", 1],
+ ["the quarter block is missing from the letter", "monthlyreportemail", "const quarter = MQ.blockOf({ tasks: x.tasks || {}, monthNumber: x.monthNumber, now: x.now });", "const quarter = null;", 1],
+ ["a plain month's letter gets the quarter block", "monthlyreportemail", "monthNumber: x.monthNumber, now: x.now });", "monthNumber: 3, now: x.now });", 1],
  ["the merged backlink step is back in the section", "monthlyquarter", "const RETIRED = { \"m2.exec.brand_mentions\": ID.LINKS, \"m2.exec.competitor_backlink_steal\": ID.LINKS };", "const RETIRED = { \"m2.exec.brand_mentions\": ID.LINKS };", 1],
  ["the lead step is still called a mystery shop", "monthlyquarter", "[ID.LEAD]: \"Lead-handling test\"", "[ID.LEAD]: \"Mystery shop\"", 1]
 ]

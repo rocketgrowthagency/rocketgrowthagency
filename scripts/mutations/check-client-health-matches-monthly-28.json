@@ -1,0 +1,18 @@
+[
+ ["one sign alone flags a client At risk", "clienthealth", "const state = S.flagged ? \"at_risk\"", "const state = n >= 1 ? \"at_risk\""],
+ ["a client is called Fine with a sign that was never read", "clienthealth", "applicable.every((c) => c.tone === \"ok\") ? \"fine\"", "n === 0 ? \"fine\""],
+ ["a client with a notice to leave stays on the view", "clienthealth", "if (x.terminated || f.notice) return null;", "if (x.terminated) return null;"],
+ ["a terminated client stays on the view", "clienthealthsrv", "terminated: String(c.billing_status || \"\") === \"terminated\" }));", "terminated: false }));"],
+ ["a bill that could not be read shows as paid", "clienthealth", "if (failed.billing) f.billing = \"\";", "if (failed.billing) f.billing = \"active\";"],
+ ["a failed sign-in read is passed on as read", "clienthealthsrv", "failed: { login: !!failed.login,", "failed: { login: false,"],
+ ["the To do row goes to clients that are not at risk", "clienthealth", "if (!row || row.state !== \"at_risk\") return null;", "if (!row) return null;"],
+ ["the days late are counted from the wrong day", "clienthealthsrv", "Math.max(0, Math.floor((now - late) / DAY))", "Math.max(0, Math.floor((now - late) / DAY) + 1)"],
+ ["To do never gets the at-risk row", "adminopenmovesfn", "const mv = CH.todoMove(row); if (!mv) continue;", "const mv = null; if (!mv) continue;"],
+ ["a failed read is shown as an empty view", "adminclienthealthfn", "return json(502, { ok: false, error: `Couldn't read the client health view", "return json(200, { ok: true, rows: [] }); return json(502, { ok: false, error: `Couldn't read the client health view"],
+ ["overdue (what billing-daily-check writes) is not a late bill", "healthshared", "const LATE_BILLING = [\"overdue\", \"warning\", \"paused\", \"past_due\", \"unpaid\"];", "const LATE_BILLING = [\"past_due\", \"unpaid\"];"],
+ ["numbers falling counts before Month 4", "healthshared", "const early = Number.isFinite(x.monthNumber) && x.monthNumber < FIRST_MONTH;", "const early = false;"],
+ ["the sign-in, the bill and the call wait for Month 4", "healthshared", "if (LATE_BILLING.includes(bill)) signals.push(", "if (LATE_BILLING.includes(bill) && !early) signals.push("],
+ ["the view decides signs itself instead of reading Monthly 28", "clienthealth", "function stateOf(facts, now) { return H.churnState({ ...(facts || {}), now }); }", "function stateOf(facts, now) { const S = H.churnState({ ...(facts || {}), now }); return { ...S, signals: S.signals.filter((s) => s.key !== \"call\"), flagged: S.signals.filter((s) => s.key !== \"call\").length >= 2 }; }"],
+ ["a client-facing file says at risk", "portal", "We never buy links. Some months bring none, and that's normal.", "We never buy links. Without them you are at risk."],
+ ["the header miscounts", "clienthealth", "one ? `${one} with one sign` : \"\"", "one ? `${one + 1} with one sign` : \"\""]
+]

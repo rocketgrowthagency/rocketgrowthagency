@@ -117,20 +117,24 @@ const task = (f, id) => f.store[id] || {};
   if (!b2 || !/reported by you/.test(b2.lines.join(" "))) fail("3 the report labels their numbers as theirs");
 }
 
-// 4 links
+// 4 links. tier3_best_in_class_v1 item 8 (the owner 11-11): the step is the LINK PILOT now (2 clients a quarter); outside it nothing is searched. The pilot's own rules
+// (35-day live, paid offers refused, the client's card) are held by check-a-link-counts-only-when-seen-live; here the step's quarter behavior, in the pilot.
 {
-  const f = fake(); let r = await act(f, "links_find");
+  const PIL = { pilot: { on: true, at: "2027-02-01T00:00:00Z" } };
+  const outside = fake(); let r = await act(outside, "links_find");
+  if (r.ok || outside.findCalls !== 0) fail("4 the finder ran for a client outside the link pilot");
+  const f = fake(); f.store[ID.LINKS] = { ...PIL }; r = await act(f, "links_find");
   if (!r.ok || f.findCalls !== 1 || f.findCap !== Q.LINK_SEARCHES_MAX || Q.LINK_SEARCHES_MAX > 4) fail(`4 the finder is capped at ${Q.LINK_SEARCHES_MAX} searches (cap ${f.findCap})`);
   r = await act(f, "links_find"); if (r.ok || f.findCalls !== 1) fail("4 the finder runs once a quarter");
-  const off = fake({ searchOff: () => true }); await act(off, "links_find");
+  const off = fake({ searchOff: () => true }); off.store[ID.LINKS] = { ...PIL }; await act(off, "links_find");
   if (off.findCalls !== 0 || task(off, ID.LINKS).searched_at) fail("4 no search is spent while the search is off, and nothing is claimed");
-  if (!/Waiting|off/i.test(JSON.stringify(Q.linksView({ task: task(off, ID.LINKS) }).rows))) fail("4 off says so");
+  if (!/Waiting|off/i.test(JSON.stringify(Q.linksView({ task: task(off, ID.LINKS), now: NOW }).rows))) fail("4 off says so");
   r = await act(f, "links_ask", { host: "austinchamber.test" }); if (!r.ok || f.draftCalls !== 1 || task(f, ID.LINKS).places["austinchamber.test"].state !== "drafted") fail("4 the ask is drafted by the ask drafter");
   r = await act(f, "links_ask", { host: "not-on-the-list.test" }); if (r.ok) fail("4 an ask for a place that isn't on the list is refused");
-  const asked = Q.linksView({ task: { searched_at: "x", places: { "a.test": { state: "live" }, "b.test": { state: "asked" } } } });
+  const asked = Q.linksView({ task: { ...PIL, searched_at: "x", places: { "a.test": { state: "live" }, "b.test": { state: "asked" } } }, now: NOW });
   if (asked.live !== 0) fail("4 a link counts only when seen live (live_seen_at)");
-  if (Q.linksView({ task: { searched_at: "x", places: { "a.test": { state: "live", live_seen_at: "2027-02-01" } } } }).live !== 1) fail("4 a link seen live counts");
-  if (Q.linksView({ task: {} }).done) fail("4 'no place found' is not said before the finder ran");
+  if (Q.linksView({ task: { ...PIL, searched_at: "x", places: { "a.test": { state: "live", live_seen_at: "2027-02-01" } } }, now: NOW }).live !== 1) fail("4 a link seen live counts");
+  if (Q.linksView({ task: { ...PIL }, now: NOW }).done) fail("4 'no place found' is not said before the finder ran");
   if (!/mentionQueries/.test(read("netlify/functions/_monthly-quarter.js")) || !/searchOff/.test(read("netlify/functions/_monthly-quarter.js"))) fail("4 the finder is Month 1's (mentionQueries / placesFrom) and respects searchOff");
 }
 

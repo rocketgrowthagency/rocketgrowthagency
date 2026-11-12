@@ -1,0 +1,23 @@
+[
+ ["a link stays live past 35 days", "monthlyquarter", "const PILOT_MAX = 2, LIVE_FRESH_DAYS = 35, DAY = 86400000;", "const PILOT_MAX = 2, LIVE_FRESH_DAYS = 3650, DAY = 86400000;"],
+ ["a link counts live without a clock", "monthlyquarter", "&& Number.isFinite(now) && now - Date.parse(p.live_seen_at) <= LIVE_FRESH_DAYS * DAY;", "&& (!Number.isFinite(now) || now - Date.parse(p.live_seen_at) <= LIVE_FRESH_DAYS * DAY);"],
+ ["a place marked live with no read day counts", "monthlyquarter", "const liveNow = (p, now) => !!p && p.state === \"live\" && !!p.live_seen_at && Number.isFinite(now) && now - Date.parse(p.live_seen_at) <= LIVE_FRESH_DAYS * DAY;", "const liveNow = (p, now) => !!p && p.state === \"live\" && (!p.live_seen_at || (Number.isFinite(now) && now - Date.parse(p.live_seen_at) <= LIVE_FRESH_DAYS * DAY));"],
+ ["a look-alike domain counts as their link", "monthlyquartersrv", "u.hostname.replace(/^www\\./, \"\").toLowerCase() === host) { const rel", "u.hostname.replace(/^www\\./, \"\").toLowerCase().includes(host)) { const rel"],
+ ["a page that would not open is read as no link", "monthlyquartersrv", "if (!pg || pg.status !== 200) { out.failed++; continue; }", "if (!pg || pg.status !== 200) { out.failed++; results[host] = { read_at: at }; continue; }"],
+ ["a live page without the link stays live", "monthlyquartersrv", "else if (p.state === \"live\") { results[host] = { read_at: at, state: \"replied\", lost_at: at }; out.lost++; }", "else if (p.state === \"live\") { results[host] = { read_at: at }; out.lost++; }"],
+ ["pages are read for a client outside the pilot", "monthlyquartersrv", "if (!(t.pilot && t.pilot.on)) return out;   // outside the pilot nothing is read", ""],
+ ["a seen link is not kept in client_backlinks", "monthlyquartersrv", "if (d.recordBacklink && (link || p.state === \"live\")) await", "if (false) await"],
+ ["a failing client_backlinks write breaks the read", "monthlyquartersrv", "await safe(() => d.recordBacklink({", "await (() => d.recordBacklink({"],
+ ["a scholarship offer is not seen as paid", "monthlyquarter", "const PAID = /\\b(scholarships?|", "const PAID = /\\b("],
+ ["a paid place can be marked sent", "monthlyquartersrv", "if (Q.isPaid(p) || p.state === \"not_for\") return { ok: false, error: \"That place was refused. A paid, scholarship or guest-post link is never sent.\" };", ""],
+ ["the finder keeps paid offers as places", "monthlyquartersrv", "places[p.host] = Q.isPaid(one) ? { ...one, state: \"not_for\", why: \"paid links break Google's rules.\", paid: true } : one;", "places[p.host] = one;"],
+ ["a yes counts as a live link", "monthlyquartersrv", "[host]: { ...p, state: \"replied\", replied_at: at } } }) });", "[host]: { ...p, state: \"live\", live_seen_at: at, replied_at: at } } }) });"],
+ ["the pilot takes a third client", "monthlyquartersrv", "if (taken >= Q.PILOT_MAX) return { ok: false,", "if (taken > Q.PILOT_MAX) return { ok: false,"],
+ ["the pilot takes a client when the count cannot be read", "monthlyquartersrv", "if (!Number.isFinite(taken)) return { ok: false, error: \"Couldn't count the pilot's clients just now. Nothing was changed.\" };", ""],
+ ["the presses work outside the pilot", "monthlyquartersrv", "if (action.startsWith(\"links_\")) { const cur = await linksTask(); if (!(cur.pilot && cur.pilot.on))", "if (action.startsWith(\"links_\")) { const cur = await linksTask(); if (false)"],
+ ["the client sees a yes as a live link", "monthlyquarter", "return { partOf: S.partOf || [], options: PART_OF, live: S.live.map(", "return { partOf: S.partOf || [], options: PART_OF, live: [...S.live, ...S.replied].map("],
+ ["the report counts a stale link", "monthlyquarter", "const L = linksState(tasks[ID.LINKS], Number.isFinite(x.now) ? x.now : Date.parse(x.now || \"\"));", "const L = { live: Object.values((tasks[ID.LINKS] || {}).places || {}).filter((p) => p.state === \"live\") };"],
+ ["the not-in-pilot card is not folded", "monthlyquarter", "rows: [row(\"off\", \"Links and local press start after the pilot.\",", "rows: [row(\"off\", \"Links and local press.\","],
+ ["the admin endpoint refuses Send", "adminmonthlyquarterfn", "\"links_ask\", \"links_asked\", \"links_pilot\",", "\"links_ask\", \"links_pilot\","],
+ ["the client card promises links", "portal", "We never buy links. Some months bring none, and that's normal.", "We never buy links. We guarantee 3 new links a quarter."]
+]
