@@ -82,11 +82,17 @@ if (!/const mayT = call\.client_id \? await Notices\.mayRemind\([^\n]*channel: "
 // 2 · notify-step-open asks before it stamps or sends
 const pins = [
   [/else if \(!\(await may\("photos_later"\)\)\.send\) \{/, "the photos \"remind me later\" email"],
-  [/const mA = inSendingHours\(client\) \? await may\("call_day_before"\) : null;[\s\S]{0,300}else if \(!mA\.send\)/, "the kickoff agenda (the day before a call)"],
   [/const mR = dueR\.length \? await may\("step_waiting"\) : null;\s*if \(dueR\.length && !mR\.send\)/, "the step reminder"],
   [/const may = async \(kind\) => \{ if \(!prefsRead\) prefsRead = await Notices\.readPrefs\(client\.id\); return Notices\.mayRemind\(\{ clientId: client\.id, kind, channel: "email", prefs: prefsRead \}\); \};/, "the per-client switch read"],
 ];
 for (const [re, what] of pins) if (!re.test(NSO)) fail(`notify-step-open no longer asks the client's switch before ${what}`);
+// 🔒 master client-messages decision 2 (approved 11-11): the kickoff agenda is no longer its own email. Its words ride in call-reminders' 24-hour
+// reminder (_call-reminders.js agendaBlock), whose call_day_before switch is pinned in 1g above. So notify-step-open must send NO kickoff email
+// at all: a second "Tomorrow" email would also be one that never asked the switch.
+{ const NSOcode = NSO.split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
+  if (/kickoff|agenda/i.test(NSOcode)) fail("notify-step-open sends a kickoff email again (the agenda rides in the 24-hour call reminder, which asks the switch)");
+  let CRL = ""; try { CRL = fs.readFileSync(path.join(SITE, "netlify/functions/_call-reminders.js"), "utf8"); } catch { /* checked below */ }
+  if (!/agendaBlock/.test(CRL)) fail("the kickoff agenda's words are gone from the 24-hour call reminder (_call-reminders.js agendaBlock)"); }
 // the rule itself, on its own
 {
   const off = await S.mayRemind({ clientId: CID, kind: "step_waiting", channel: "email", prefs: { state: "ready", rows: [{ kind: "step_waiting", email_on: false, text_on: true }] } });

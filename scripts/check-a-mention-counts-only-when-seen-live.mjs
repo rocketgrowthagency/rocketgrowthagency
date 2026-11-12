@@ -351,7 +351,9 @@ try {
   if ((por.match(/\$\{ogMnHost\(cid\)\}/g) || []).length < 5) fail("8: an Ongoing work layout is missing the Where you're mentioned card");
   // 11-11: one pinned string broke the day another build moved the page (main went to ...mj, then ...nb). Whether a buster MOVED with its file is
   // check-every-cache-buster-moved-with-its-file's job (against origin/main); here: both pages load their script with a buster at all.
-  if (!/admin\.js\?v=20261111[0-9a-z]+"/.test(read("admin/index.html")) || !/portal\.js\?v=20261111[0-9a-z]+"/.test(read("portal/index.html"))) fail("8: the admin or portal page loads its script with no buster");
+  // the page's buster must be this build's (11-11) or a LATER one: a later build bumps it again (11-12 night fixer: 20261112a)
+  const busterOf = (f, n) => (new RegExp(`/${n}/${n}\\.js\\?v=(\\d{8}[a-z]*)"`).exec(read(f)) || [])[1] || "";
+  if (!(busterOf("admin/index.html", "admin") >= "20261111a") || !(busterOf("portal/index.html", "portal") >= "20261111a")) fail("8: the admin or portal page loads its script with no buster");
 }
 
 // ══ 4b · step 55's places join the one list, their state carried over (nothing lost) ══

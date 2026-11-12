@@ -96,7 +96,7 @@ const says = (id, rx, what) => check(rx.test(A.get(id)?.instructions || ""), `${
 says("m1.access.gbp", /hello@rocketgrowthagency\.com/, "the invite goes to hello@, matching the client's text");
 says("m1.review.system", /one reminder after 3 days/i, "one ask and one reminder, matching the client's text");
 says("m1.review.system", /RGA never sends/i, "the client sends, RGA doesn't");
-says("m1.review.first_5", /5 asks sent/i, "it counts asks");
+says("m1.review.first_5", /\b(?:1 ask|5 asks) sent\b/i, "it counts asks");   // master map wording (7903da4c, approved): "Done at 1 ask sent (aim for 5)"
 says("m2.exec.review_push", /no review-count target/i, "it has no review-count target");
 says("m1.web.expanded_schema", /May 7, 2026/, "FAQ rich results ended, with the date");
 says("m1.web.core_web_vitals", /GOOGLE_PAGESPEED_API_KEY/, "the env var that exists");

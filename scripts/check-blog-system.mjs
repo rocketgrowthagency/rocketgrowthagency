@@ -21,6 +21,10 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+// 🔴 11-12: NO DATABASE CREDENTIALS IN HERE. The night run (and run-mutations) load the Scraper .env, and with SUPABASE_URL + key set the
+// 11-11 AI ledger writes its row through the gate's own fake network, which this gate counts as model calls: "2 calls", "a press called the
+// model while it was off". This gate reads nothing live; every database answer below is faked.
+delete process.env.SUPABASE_URL; delete process.env.SUPABASE_SERVICE_ROLE_KEY;
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
 const exists = (r) => fs.existsSync(`${SITE}/${r}`);
 const req = createRequire(import.meta.url);
@@ -245,7 +249,8 @@ const V = (rows, o = {}) => S.weeklyVerdicts({ rows, now: NOW, events: o.events 
   const redirects = (TOML.match(/\[\[redirects\]\][\s\S]*?(?=\n\[|$)/g) || []).map((r) => (/from = "(\/(?:blog|local-seo|industries)\/[^"]*)"/.exec(r) || [])[1]).filter(Boolean).filter((f) => !/^\/industries\/personal-injury-lawyers\/?\*?$/.test(f));
   if (redirects.length) fail(`redirect(s) were added for /blog/, /local-seo/ or /industries/: ${redirects.join(", ")}`);
   const SCR = process.env.SCRAPER_COPY_DIR ? `${process.env.SCRAPER_COPY_DIR}/scripts` : path.dirname(fileURLToPath(import.meta.url)); let drip; try { drip = fs.readFileSync(`${SCR}/drip-content.sh`, "utf8"); } catch { moved("scripts/drip-content.sh"); }
-   if (!/RGA_ALLOW_TEMPLATE_DRIP/.test(drip) || !/exit 0/.test(drip.split("RGA_ALLOW_TEMPLATE_DRIP")[1].slice(0, 200))) fail("the blog drip is no longer on hold");
+   // the HOLD LINE itself (11-12: the 11-11 check-in line names RGA_ALLOW_TEMPLATE_DRIP first, so "the text after its first mention" was the wrong line)
+   if (!/\nif \[ -z "\$\{RGA_ALLOW_TEMPLATE_DRIP:-\}" \]; then echo "HOLD[^\n]*exit 0; fi/.test(drip)) fail("the blog drip is no longer on hold");
   if (exists("blog/does-a-new-logo-show-up-on-google-maps/index.html") || /does-a-new-logo/.test(read("sitemap.xml"))) fail("the logo test post is published before the Nov 2 check");
   let d; try { d = JSON.parse(read("research_notes/blog/logo-test-draft.json")); } catch { moved("the logo test draft"); }
   if (!/NOT PUBLISHED/.test(d.status) || E.evidenceBlock(d.evidence).ok) fail("the logo test draft is complete enough to publish, or isn't marked unpublished");

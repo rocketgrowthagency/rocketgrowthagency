@@ -188,7 +188,8 @@ async function ready(w) { await MCS.freeze({ clientId: "c1", month: MONTH, deps:
   // test: the same email, [Test], to the admin only, no record changes
   const before = JSON.stringify(w.rec), wr = w.writes;
   const t = await MCS.sendReport({ clientId: "c1", month: MONTH, test: true, adminEmail: "chris@rga.test", deps: w.deps });
-  if (t.status !== 200 || !t.body.test || w.sent.length !== 1 || w.sent[0].to !== "chris@rga.test" || !/^\[Test\] November report/.test(w.sent[0].subject) || w.sent[0].html !== LETTER.html && w.sent[0].html !== w.rec.data.report_draft.html) fail(`4 the test goes to the admin only, marked [Test]: ${JSON.stringify(w.sent[0] && { to: w.sent[0].to, s: w.sent[0].subject })}`);
+  // master client-messages decision 6 (11-11): the letter goes through withCall; with no time offered it is the draft without its call marker
+  if (t.status !== 200 || !t.body.test || w.sent.length !== 1 || w.sent[0].to !== "chris@rga.test" || !/^\[Test\] November report/.test(w.sent[0].subject) || w.sent[0].html !== E.withCall(LETTER, null).html && w.sent[0].html !== E.withCall(w.rec.data.report_draft, null).html) fail(`4 the test goes to the admin only, marked [Test]: ${JSON.stringify(w.sent[0] && { to: w.sent[0].to, s: w.sent[0].subject })}`);
   if (JSON.stringify(w.rec) !== before || w.writes !== wr || w.kept.length || w.recorded.length || w.onboarding.length || w.stamped.length) fail("4 a test changes no record: no marker, nothing kept, no activity");
   const nm = await MCS.sendReport({ clientId: "c1", month: MONTH, test: true, adminEmail: "", deps: w.deps });
   if (nm.status === 200 || w.sent.length !== 1) fail("4 a test with no signed-in address sends nothing");

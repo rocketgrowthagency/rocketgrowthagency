@@ -22,7 +22,11 @@ import { spawnSync, spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import { runTwoRepoGate, rd, REAL_SCR } from "./lib/two-repo-gate.mjs";
 
-const bash = (script, env = {}) => spawnSync("bash", ["-c", script], { encoding: "utf8", env: { ...process.env, RGA_PRODUCTION_TURN_POLL_SEC: "1", ...env }, timeout: 30000 });
+// 🔴 11-12: NOT THE OUTER TURN. Inside the night full check this gate runs as a child of the turn's holder, so it inherits
+// RGA_PRODUCTION_TURN_HELD, and every test lock below "inherited" the turn instead of taking it: no holder line, no wait, no refusal
+// (red only in the night run, green by hand). Each test lock starts clean; a test that means to inherit passes the variable itself.
+const { RGA_PRODUCTION_TURN_HELD: _outerTurn, ...OWN_ENV } = process.env;
+const bash = (script, env = {}) => spawnSync("bash", ["-c", script], { encoding: "utf8", env: { ...OWN_ENV, RGA_PRODUCTION_TURN_POLL_SEC: "1", ...env }, timeout: 30000 });
 const tmpLock = () => path.join(fs.mkdtempSync(path.join(os.tmpdir(), "turn-")), "lock");
 const sleeper = () => { const p = spawn("sleep", ["60"], { stdio: "ignore", detached: true }); p.unref(); return p; };
 const now = () => Math.floor(Date.now() / 1000);
