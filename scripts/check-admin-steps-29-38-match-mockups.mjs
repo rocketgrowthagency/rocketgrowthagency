@@ -59,9 +59,10 @@ if (!/const doneBtn = zcWaits \|\| siteStep (\|\| o\.flowId === GL_STEP )?(\|\| 
   fail("step 37: a website step's row still offers Mark step complete");
 
 // ── admin: steps 29 · 30 · 31 — the result first ──────────────────────────────────────────────────
-{ const p3 = ["ZC_FOLD_T", "ZC_LIST", "ZC_PLAIN", "zcPlainTitle", "zcFixAct", "zcCatPlan", "citationsCardHtml", "fixPlanClientRowsHtml", "fixPlanCardHtml", "categoriesCardHtml"].map((n) => lift(AJS, n));
+{ const p3 = ["ZC_FOLD_T", "ZC_LIST", "ZC_PLAIN", "zcPlainTitle", "zcFixAct", "zcCatPlan", "citationsCardHtml", "fixPlanClientRowsHtml", "fixPlanCardHtml", "categoriesCardHtml", "zcAuditRerun"].map((n) => lift(AJS, n));
   if (p3.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a step 29/30/31 card moved (${p3.findIndex((x) => !x)})`); process.exit(2); }
-  const c3 = { escapeHtml: esc, escapeAttribute: esc, OL_G: "<svg></svg>", adminGcardWhen: (iso) => (iso ? "Sep 14, 7:52 PM" : "") };
+  // master map 11-11: 29 and 30 run themselves in the morning run, so a REAL client's card has no Run again (Undo on the row reads it again); a test client keeps it
+  const c3 = { escapeHtml: esc, escapeAttribute: esc, OL_G: "<svg></svg>", adminGcardWhen: (iso) => (iso ? "Sep 14, 7:52 PM" : ""), uniRunsItselfFor: () => false };
   vm.createContext(c3); vm.runInContext(adminCardLift(SITE, AJS), c3); c3.clientStepWhere = (o) => (o && o.clientStepNo != null ? `step ${o.clientStepNo}` : null); /* managed_admin_v1: admin.js names a step by the client mode; these cards are drawn for a client with none */  vm.runInContext(p3.join("\n") + "\nthis.cit = citationsCardHtml; this.plan = fixPlanCardHtml; this.cat = categoriesCardHtml;", c3);
   const DIRS = ["Yelp", "Better Business Bureau", "Facebook", "Angi", "Thumbtack", "Nextdoor", "Apple Maps", "Bing Places"];
   const cit = { outcome_data: { citations_held: 0, fixes: [{ id: "cit.linked_from_site", fix: "Site links to its own directory profiles", why: "links to NONE of the 8 tracked directories. Linking your own profiles corroborates them." }],
@@ -79,6 +80,10 @@ if (!/const doneBtn = zcWaits \|\| siteStep (\|\| o\.flowId === GL_STEP )?(\|\| 
   if (!/No Facebook profile linked from their site/.test(h30) || !/Add the link on their website \(a website change → For your approval\)/.test(h30) || !/Their website links to none of their directory profiles/.test(h30)) fail("step 30: the fixes aren't in the mockup's plain words");
   if (!/data-onboard-run="m1\.audit\.recommendations">⚡ Run again/.test(h30)) fail("step 30: Run again isn't in the card footer");
   if (/Produced|recommendation\(s\)/.test(h30)) fail("step 30: bookkeeping wording is back");
+  { c3.uniRunsItselfFor = () => true; const r29 = c3.cit(cit, ""), r30 = c3.plan(plan, ""); c3.uniRunsItselfFor = () => false;
+    if (/data-onboard-run=/.test(r29) || /data-onboard-run=/.test(r30)) fail("steps 29/30: a real client's card still has a Run button though the morning run starts the step");
+    if (!/Runs itself in the morning run\. Undo on the row reads it again the next morning\./.test(r29) || !/Runs itself in the morning run/.test(r30)) fail("steps 29/30: a real client's card must say it runs itself and how to read it again");
+    if (!/data-zc-goto="m1\.audit\.recommendations">Open the fix plan ›/.test(r29)) fail("step 29: Open the fix plan must stay on a real client's card"); }
   const cat = { outcome_data: { draft: 'primary: "Internet marketing service"\nadditional:\n  - "Marketing agency"\n  - "Marketing consultant"\n  - "Website designer"\n  - "Computer consultant"\n  - "Business management consultant"' },
     approval: { by: "Chris Kapranos", at: "2026-09-14T22:11:15Z" }, published: { at: "2026-09-15T02:53:12Z", after: { primary_category: "Internet marketing service", additional_categories: ["Marketing agency", "Website designer", "Marketing consultant"] } } };
   const h31 = c3.cat(cat);

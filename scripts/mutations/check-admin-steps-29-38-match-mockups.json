@@ -299,5 +299,12 @@
   "<button type=\"button\" class=\"pr-zoom-link\" data-photo-zoom>View larger</button>",
   "",
   1
+ ],
+ [
+  "steps 29 and 30 keep Run again for a real client the morning run covers",
+  "adminjs",
+  "if (uniRunsItselfFor(id)) return `<span class=\"ob-zc-note\">Runs itself in the morning run.",
+  "if (false) return `<span class=\"ob-zc-note\">Runs itself in the morning run.",
+  1
  ]
 ]

@@ -93,7 +93,7 @@
  [
   "a second press overwrites the plan",
   "monthlyplanfn",
-  "if (t.status === \"done\" && rec.data.plan) return json(409",
+  "if (t.status === \"done\" && rec.data.plan && !(body.replace === true && adopted)) return json(409",
   "if (false) return json(409",
   1
  ],
@@ -228,6 +228,69 @@
   "monthlystart",
   "reason: pend ? `Suggestion ready ${dayWords(pend)}.",
   "reason: pend ? `Suggestion ready soon.",
+  1
+ ],
+ [
+  "the morning run adopts over RGA's Hold",
+  "monthlystart",
+  "if (d.plan_hold) return { ok: false, why: \"RGA is holding the plan\" };",
+  "",
+  1
+ ],
+ [
+  "a skipped plan step is adopted",
+  "monthlystart",
+  "if ([\"done\", \"skipped\", \"declined\"].includes(t.status)) return { ok: false, why: `the step is ${t.status}` };",
+  "if ([\"done\"].includes(t.status)) return { ok: false, why: `the step is ${t.status}` };",
+  1
+ ],
+ [
+  "an adopted plan keeps only one task of its focus",
+  "monthlystart",
+  "const ids = ((sg.catalog || {})[sg.focus] || []).map((k) => k.id);",
+  "const ids = ((sg.catalog || {})[sg.focus] || []).map((k) => k.id).slice(0, 1);",
+  1
+ ],
+ [
+  "an adopted plan reads as chosen by a person",
+  "monthlystart",
+  "· Set by itself${plan.chosen_at",
+  "· Chosen by ${plan.chosen_by}${plan.chosen_at",
+  1
+ ],
+ [
+  "the adoption is not read back",
+  "monthlyplanread",
+  "if (!(back && back.adopted && back.focus === a.plan.focus",
+  "if (false && !(back && back.adopted && back.focus === a.plan.focus",
+  1
+ ],
+ [
+  "the adoption is not recorded",
+  "monthlyplanread",
+  "if (record) await record({ clientId, kind: \"monthly_plan_chosen\"",
+  "if (false) await record({ clientId, kind: \"monthly_plan_chosen\"",
+  1
+ ],
+ [
+  "Change replaces a plan a person chose",
+  "monthlyplanfn",
+  "&& !(body.replace === true && adopted)) return json(409",
+  "&& !(body.replace === true)) return json(409",
+  1
+ ],
+ [
+  "Hold leaves the adopted plan in place",
+  "monthlyplanfn",
+  "data.plan_held_from = { ...rec.data.plan, held_at: at }; delete data.plan; delete data.focus_area;",
+  "data.plan_held_from = { ...rec.data.plan, held_at: at };",
+  1
+ ],
+ [
+  "Hold works on a plan a person chose",
+  "monthlyplanfn",
+  "if (rec.data.plan && !adopted) return json(409, { error: \"This month's plan was chosen by a person",
+  "if (false) return json(409, { error: \"This month's plan was chosen by a person",
   1
  ]
 ]

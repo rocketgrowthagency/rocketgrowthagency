@@ -324,9 +324,69 @@ const board = () => {
   if (sk.statusCode !== 200 || DB.cur.T.client_monthly_records.find((x) => x.reporting_month === "2026-12-01").data.tasks["m2.plan.rotating_focus"]?.status !== "skipped") fail(`4 Skip this step must work on Plan the month (got ${sk.statusCode})`);
   if (!STEPS.canSkip("m2.plan.rotating_focus") || !STEPS.noHandDone("m2.plan.rotating_focus")) fail("4 Plan the month can be skipped and has no hand Done");
   if (MS.planView({ record: { tasks: {} }, task: { status: "skipped" } }, {}).state !== "skipped") fail("4 a skipped plan reads skipped");
-  // never auto-accepts: nothing in the server ever writes data.plan except the endpoint
-  for (const f of ["netlify/functions/_open-month.js", "netlify/functions/_monthly-plan.js", "netlify/functions/_morning-run.js"]) if (/\bplan\s*:\s*\{|\.plan\s*=[^=]|data\.plan\s*=[^=]/.test(read(f).replace(/\/\/.*$/gm, "").replace(/plan_suggestion/g, ""))) fail(`4 ${f} must never write the plan by itself`);
+  // 🔒 master map Tier 2d (approved 11-11): the plan is ADOPTED BY DEFAULT, but only in ONE place (_monthly-plan.js adoptWhenSuggested, through the shared
+  // adoptedPlan rule) and only from the morning run. Opening a month never writes it (2b above), and the morning run never writes it itself.
+  for (const f of ["netlify/functions/_open-month.js", "netlify/functions/_morning-run.js"]) if (/\bplan\s*:\s*\{|\.plan\s*=[^=]|data\.plan\s*=[^=]/.test(read(f).replace(/\/\/.*$/gm, "").replace(/plan_suggestion/g, ""))) fail(`4 ${f} must never write the plan by itself`);
+  { const mp = read("netlify/functions/_monthly-plan.js").replace(/\/\/.*$/gm, "").replace(/plan_suggestion/g, "");
+    const writes = mp.match(/\.plan\s*=[^=]/g) || [];
+    const adoptBody = (/async function adoptWhenSuggested[\s\S]*?\n}\n/.exec(mp) || [""])[0];
+    if (writes.length !== 1 || !/\.plan\s*=\s*a\.plan/.test(adoptBody) || !/MS\.adoptedPlan\(/.test(adoptBody)) fail("4 _monthly-plan.js may write the plan only inside adoptWhenSuggested, from the shared adoptedPlan rule");
+    if (!/d\.adoptPlan/.test(read("netlify/functions/_morning-run.js"))) fail("4 the morning run must adopt the plan the morning its suggestion is ready"); }
   if (!/Use this plan/.test(read("admin/admin.js")) || !/Change the focus/.test(read("admin/admin.js")) || !/Skip this step/.test(read("admin/admin.js"))) fail("4 the card's three buttons must be in the admin");
+  if (!/data-mp-edit="1"', "Change"/.test(read("admin/admin.js")) || !/data-mp-hold="1"', "Hold"/.test(read("admin/admin.js"))) fail("4 an adopted plan's card must keep RGA's veto: Change and Hold");
+}
+
+// 4c master map Tier 2d (approved 11-11): "Plan the month" is adopted by default the morning its suggestion is ready, so Monthly 5, 11 and 12 never wait on a
+// press; RGA keeps Change (replace: true) and Hold. Never over a chosen plan, a hold, a skip, a pending suggestion or a closed month. Read back; recorded.
+{
+  const t0 = OPEN_AT + 2 * 3600e3, rec = [];
+  const rowOf = () => DB.cur.T.client_monthly_records.find((x) => x.reporting_month === "2026-12-01");
+  const adopt = (now = t0) => MP.adoptWhenSuggested(DB.cur.supa, CID, "2026-12-01", now, async (o) => { rec.push(o); return {}; });
+  const press = async (b) => { PLAN.__useDeps({ supa: DB.cur.supa, now: () => t0 + 3600e3, gate: { email: "chris@rocketgrowthagency.com" }, record: async (o) => { rec.push(o); return {}; } }); const o = await PLAN.handler({ httpMethod: "POST", body: JSON.stringify({ client_id: CID, month: "2026-12-01", ...b }) }); return { code: o.statusCode, body: JSON.parse(o.body) }; };
+  // a ready suggestion is adopted: every task of the suggested focus, the step done by its checks, read back, recorded as the system
+  board(); await OM.openMonth(DB.cur.supa, CID, "2026-12-01", { now: OPEN_AT, by: "the morning run" });
+  const sgFocus = rowOf().data.plan_suggestion && rowOf().data.plan_suggestion.focus;
+  let r = await adopt();
+  const p = rowOf().data.plan, tk = rowOf().data.tasks["m2.plan.rotating_focus"] || {};
+  if (!r.adopted || !p || p.focus !== sgFocus || !p.adopted || p.tasks.length !== (rowOf().data.plan_suggestion.catalog[sgFocus] || []).length) fail(`4c a ready suggestion must be adopted with every task of its focus: ${JSON.stringify(r)} ${JSON.stringify(p && { f: p.focus, n: p.tasks.length })}`);
+  if (tk.status !== "done" || tk.done_by !== "checks" || rowOf().data.focus_area !== sgFocus) fail("4c adopting must settle the step by its checks and keep focus_area for older readers");
+  if (!rec.some((o) => o.kind === "monthly_plan_chosen" && o.actor === "system")) fail("4c the adoption must be recorded as the system's");
+  const vd = MS.planView({ record: rowOf().data, task: tk }, { ref: () => "step 13" });
+  if (vd.state !== "done" || !vd.adopted || !/Set by itself/.test(vd.doneLine) || /Chosen by/.test(vd.doneLine) || !vd.reason) fail(`4c the adopted plan's done card must say it set itself and why: ${vd.doneLine}`);
+  if ((await adopt(t0 + 86400e3)).adopted) fail("4c a plan is adopted once");
+  // RGA's Change replaces an ADOPTED plan (replace: true); a plain second press still refuses
+  let c = await press({ focus: "Website", task_ids: [rowOf().data.plan_suggestion.catalog["Website"][0].id] });
+  if (c.code !== 409 || rowOf().data.plan.focus !== sgFocus) fail("4c without replace a press must not change an adopted plan");
+  c = await press({ focus: "Website", task_ids: [rowOf().data.plan_suggestion.catalog["Website"][0].id], replace: true });
+  if (c.code !== 200 || rowOf().data.plan.focus !== "Website" || rowOf().data.plan.adopted || !rowOf().data.plan_replaced || rowOf().data.plan_replaced.focus !== sgFocus) fail(`4c Change must replace the adopted plan and keep what it had set itself to: ${c.code} ${JSON.stringify(rowOf().data.plan_replaced)}`);
+  c = await press({ focus: "Reviews", task_ids: [rowOf().data.plan_suggestion.catalog["Reviews"][0].id], replace: true });
+  if (c.code !== 409 || rowOf().data.plan.focus !== "Website") fail("4c a plan a PERSON chose is never replaced");
+  if ((await press({ action: "hold" })).code !== 409) fail("4c a plan a person chose is never held");
+  // Hold on an adopted plan: back to RGA's move for the month, and the morning run never adopts over it
+  board(); await OM.openMonth(DB.cur.supa, CID, "2026-12-01", { now: OPEN_AT, by: "the morning run" }); await adopt();
+  const h = await press({ action: "hold" });
+  if (h.code !== 200 || rowOf().data.plan || !rowOf().data.plan_hold || (rowOf().data.tasks["m2.plan.rotating_focus"] || {}).status === "done" || !rowOf().data.plan_held_from) fail(`4c Hold must put an adopted plan back to RGA's move: ${h.code} ${JSON.stringify(h.body).slice(0, 160)}`);
+  if ((await adopt(t0 + 86400e3)).adopted || rowOf().data.plan) fail("4c the morning run must never adopt over RGA's Hold");
+  const vh = MS.planView({ record: rowOf().data, task: rowOf().data.tasks["m2.plan.rotating_focus"] }, {});
+  if (vh.state !== "suggest" || !vh.held) fail("4c a held plan shows as RGA's move, saying it is held");
+  c = await press({ focus: sgFocus, task_ids: [rowOf().data.plan_suggestion.catalog[sgFocus][0].id] });
+  if (c.code !== 200 || rowOf().data.plan_hold || !rowOf().data.plan) fail("4c Use this plan after a Hold saves the plan and ends the hold");
+  // never: a pending suggestion, a skip, a closed month
+  fresh({ monthly: [NOV({ data: { tasks: {} } })] }); await OM.openMonth(DB.cur.supa, CID, "2026-12-01", { now: OPEN_AT, by: "the morning run" });
+  if ((await adopt()).adopted || rowOf().data.plan) fail("4c a suggestion still waiting on last month's freeze must never be adopted");
+  board(); await OM.openMonth(DB.cur.supa, CID, "2026-12-01", { now: OPEN_AT, by: "the morning run" });
+  rowOf().data.tasks["m2.plan.rotating_focus"] = { status: "skipped" };
+  if ((await adopt()).adopted || rowOf().data.plan) fail("4c a skipped step is never adopted");
+  board(); await OM.openMonth(DB.cur.supa, CID, "2026-12-01", { now: OPEN_AT, by: "the morning run" });
+  rowOf().month_status = "closed"; OM.__resetDetect();
+  const cl = await adopt();
+  if (cl.adopted || rowOf().data.plan) fail("4c a closed month is never adopted");
+  OM.__resetDetect();
+  // a write that does not read back is said (an error), never "adopted"
+  board(); await OM.openMonth(DB.cur.supa, CID, "2026-12-01", { now: OPEN_AT, by: "the morning run" });
+  { const real = DB.cur.supa; DB.cur.supa = async (q, init = {}) => { const o = await real(q, init); if ((init.method || "GET") === "PATCH" && /client_monthly_records\?id=/.test(q)) { const d = JSON.parse(JSON.stringify(o)); if (d && d[0] && d[0].data) delete d[0].data.plan; return d; } if (/client_monthly_records\?id=.*select=data/.test(q)) { const d = JSON.parse(JSON.stringify(o)); if (d && d[0] && d[0].data) delete d[0].data.plan; return d; } return o; };
+    const lost = await adopt(); DB.cur.supa = real;
+    if (lost.adopted || !lost.error) fail(`4c a write that did not read back must be an error: ${JSON.stringify(lost)}`); }
 }
 
 // 5 tasks_for_month is gone, nothing dangles, no model
