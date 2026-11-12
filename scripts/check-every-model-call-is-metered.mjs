@@ -13,6 +13,9 @@
 // redacted, a refused write (table missing) and a thrown write never throwing, no write with no database, and the budget verdicts
 // (not set up, under, at/over, no budget) each said.
 // LIVE, read-only (skipped in the mutation copy): whether the ledger table exists yet (⚠️ until Chris runs the SQL, not red).
+// 🔴 ONE LEDGER (11-11): _ai-ledger.js is the only one. A second ledger file (_anthropic-ledger.js) or table (anthropic_usage), any `.meter(`
+// wrapper, or a call site that both meters and records (two rows for one call) fails. The out-of-credit alert (once in 12 h) and the
+// deployed-functions-only rule live in recordAiCall and are proven below.
 // Exit 0 = metered · 1 = a model call or the daily check escapes the meter · 2 = INDETERMINATE.
 import fs from "node:fs";
 import path from "node:path";
@@ -37,6 +40,7 @@ for (const n of fns) {
   const calls = (src.match(/api\.anthropic\.com|api\.openai\.com/g) || []).length;
   if (!calls) continue;
   callers.push(n);
+  if (/_anthropic-ledger|anthropic_usage|\.meter\(/.test(src)) fail(`${n} uses a second ledger (the Anthropic meter): one ledger only, so a call is recorded once`);
   const records = (src.match(/recordAiCall\(/g) || []).length;
   if (records < calls) fail(`${n} calls a model ${calls} time(s) but records ${records} ledger row(s)`);
   if (records && !/usage: [a-zA-Z_.?]*usage\b|usage: r\.ok \? [a-zA-Z_.]*\.usage/.test(src)) fail(`${n} records its calls without the answer's token usage`);
@@ -53,6 +57,8 @@ for (const n of fns) {
   for (const [what, re] of [["Anthropic's refusal", /provider: "anthropic", model: ladder\[k\], ok: false, status: r\.status, error: AL\.errorType/], ["Anthropic's answer", /provider: "anthropic", model: data\.model \|\| ladder\[k\], usage: data\.usage, ok: true/], ["OpenAI's refusal", /provider: "openai", model: process\.env\.GBP_AI_MODEL \|\| "gpt-4o-mini", ok: false/], ["OpenAI's answer", /provider: "openai", model: data\.model[^,]*, usage: data\.usage, ok: true/]]) if (!re.test(ai)) fail(`aiDraft doesn't record ${what}`);
   if ((ph.match(/recordAiCall\(/g) || []).length < 2) fail("the photo describer doesn't record both its refusal and its answer");
 }
+for (const n of fns) if (/ledger/i.test(n) && n !== "_ai-ledger.js" && /anthropic|openai|ai|model/i.test(n)) fail(`${n} is a second AI ledger file (only _ai-ledger.js)`);
+if (fs.readdirSync(path.join(SITE, "docs/supabase")).some((n) => /^ANTHROPIC_USAGE/i.test(n))) fail("docs/supabase/ANTHROPIC_USAGE_*.sql is back: a second table for the same calls");
 if (callers.length < 5) idk(`only ${callers.length} website files call a model (flow-execute, the Brain, the blog chain, the photo look, the mature deps and ai-model-check are expected)`);
 
 // ── the table: its own SQL file, row level security in it ────────────────────────────────────────────────────────────────
@@ -106,6 +112,27 @@ const saveU = process.env.SUPABASE_URL; delete process.env.SUPABASE_URL;
 r = await AL.recordAiCall({ fn: "x" }, { key: "k", fetch: async () => { called++; return res(201); } });
 if (saveU !== undefined) process.env.SUPABASE_URL = saveU;
 if (called || r.written) fail("with no database set, the ledger still tries to write");
+{
+  const seenRows = [], told = []; let already = false;
+  const lf = async (u, o = {}) => { u = String(u); if (u.includes("error=like.")) return { ok: true, status: 200, json: async () => (already ? [{ id: 1 }] : []), text: async () => "" }; if (o.method === "POST") seenRows.push(JSON.parse(o.body)); return res(201); };
+  const refuse = { fn: "x", provider: "anthropic", model: "m", ok: false, status: 402, error: AL.errorType(402, JSON.stringify({ error: { type: "billing_error", message: "Your credit balance is too low" } })) };
+  await AL.recordAiCall(refuse, { url: "https://sb.test", key: "k", fetch: lf, notify: async (m) => told.push(m) });
+  if (told.length !== 1 || !/credit_balance_too_low/.test(seenRows[0] && seenRows[0].error || "")) fail("an out-of-credit refusal isn't recorded and told");
+  already = true;
+  await AL.recordAiCall(refuse, { url: "https://sb.test", key: "k", fetch: lf, notify: async (m) => told.push(m) });
+  if (told.length !== 1) fail("an out-of-credit refusal is told again inside 12 hours");
+  await AL.recordAiCall({ fn: "x", provider: "openai", ok: false, status: 402, error: "x (402)" }, { url: "https://sb.test", key: "k", fetch: lf, notify: async (m) => told.push(m) });
+  if (told.length !== 1) fail("an OpenAI refusal raises the Anthropic out-of-credit alert");
+  const hit = []; const gf = globalThis.fetch; globalThis.fetch = async () => { hit.push(1); return res(201); };
+  const keepEnv = { L: process.env.AWS_LAMBDA_FUNCTION_NAME, R: process.env.LAMBDA_TASK_ROOT, A: process.env.AI_LEDGER, B: process.env.ANTHROPIC_LEDGER };
+  delete process.env.AWS_LAMBDA_FUNCTION_NAME; delete process.env.LAMBDA_TASK_ROOT; delete process.env.AI_LEDGER; delete process.env.ANTHROPIC_LEDGER;
+  await AL.recordAiCall({ fn: "x" }, { url: "https://sb.test", key: "k" });
+  process.env.AWS_LAMBDA_FUNCTION_NAME = "f"; const onNetlify = AL.inRuntime(); process.env.AI_LEDGER = "0"; const forcedOff = AL.inRuntime();
+  for (const [k, v] of [["AWS_LAMBDA_FUNCTION_NAME", keepEnv.L], ["LAMBDA_TASK_ROOT", keepEnv.R], ["AI_LEDGER", keepEnv.A], ["ANTHROPIC_LEDGER", keepEnv.B]]) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
+  globalThis.fetch = gf;
+  if (hit.length) fail("the ledger writes to the real database from a laptop (only a deployed function writes)");
+  if (!onNetlify || forcedOff) fail("on Netlify the ledger is off, or AI_LEDGER=0 doesn't switch it off");
+}
 const nb = AL.judgeBudget({ ready: false }, "50");
 if (!/Not set up/.test(nb.error || "")) fail("a missing ledger table doesn't say 'Not set up'");
 const under = AL.judgeBudget({ ready: true, cost_usd: 12.5, calls: 40 }, "50");

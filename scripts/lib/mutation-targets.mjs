@@ -457,7 +457,6 @@ export const FILES = {
   ghidentity: "netlify/functions/_github-identity.js",   // rga_github_app_v1 (11-8)
   // integrations_hardening_v1 (11-11, check-integrations-are-watched-from-the-cloud): the cloud integration checks, the Anthropic meter, the budgets
   integrationchecks: "netlify/functions/_integration-checks.js",
-  anthropicledger: "netlify/functions/_anthropic-ledger.js",
   integrationwatchfn: "netlify/functions/integration-watch.js",
   budgetwatchfn: "netlify/functions/budget-watch.js",
   netlifyforecastfn: "netlify/functions/_netlify-credit-forecast.js",

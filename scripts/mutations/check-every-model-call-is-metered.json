@@ -12,5 +12,10 @@
  ["an unknown model is priced at nothing", "sa_ledger", "const UNKNOWN = [5, 25];", "const UNKNOWN = [0, 0];"],
  ["a key in an error is written to the ledger", "sa_ledger", ".replace(/sk-[A-Za-z0-9_-]{8,}/g, \"[key]\")", ""],
  ["a month over budget isn't an error", "sa_ledger", "  const over = mtd.cost_usd >= Number(budget);", "  const over = false;"],
- ["a missing ledger table reads as a month of nothing", "sa_ledger", "    if (r.status === 404 || r.status === 400) return { ready: false, from: start };", "    if (r.status === 404 || r.status === 400) return { ready: true, from: start, calls: 0, failed: 0, cost_usd: 0 };"]
+ ["a missing ledger table reads as a month of nothing", "sa_ledger", "    if (r.status === 404 || r.status === 400) return { ready: false, from: start };", "    if (r.status === 404 || r.status === 400) return { ready: true, from: start, calls: 0, failed: 0, cost_usd: 0 };"],
+ ["the out-of-credit alert is dropped", "sa_ledger", "      await alertCreditOnce(call, f, U, K, deps.notify);", "      void alertCreditOnce;"],
+ ["the 12-hour window is dropped", "sa_ledger", "    if (r.ok && (await r.json()).length) return \"already_told\";", "    if (false) return \"already_told\";"],
+ ["a laptop writes to the real ledger", "sa_ledger", "  if (!deps.fetch && !inRuntime()) return { written: false, why: \"not a deployed function\" };\n", ""],
+ ["a second Anthropic ledger file returns", "sa_photolook", "const AL = require(\"./_ai-ledger\");", "const AL = require(\"./_ai-ledger\"); require(\"./_anthropic-ledger\");"],
+ ["a call site meters and records (two rows)", "sa_photolook", "    const r = await fetch(\"https://api.anthropic.com/v1/messages\", {", "    const r = await require(\"./_x\").meter(\"p\")(\"https://api.anthropic.com/v1/messages\", {"]
 ]
