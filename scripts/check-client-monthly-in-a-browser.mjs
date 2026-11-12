@@ -39,7 +39,11 @@ function letterHandler() {
 async function expectedState(clientId) {
   const [ob] = await rest(`/client_onboarding_records?client_id=eq.${clientId}&select=data&limit=1`);
   const tasks = (ob && ob.data && ob.data.tasks) || {};
-  return { tasks, between: CM.betweenMonths(tasks, new Date()), done: CM.month1DoneOf(tasks) };
+  // one current month (11-11): Month 1 also ends at the hand-off (shared/month-now.js), so a test client handed off without a send is between months too.
+  // The between-months CARD is the managed portal's (portal.js pmManaged); a client with no mode or self_serve keeps its 21 steps, so it is only expected there.
+  const [cl] = await rest(`/clients?id=eq.${clientId}&select=portal_mode&limit=1`).catch(() => []);
+  const managed = !!cl && cl.portal_mode === "managed";
+  return { tasks, between: managed ? CM.betweenMonths(tasks, new Date()) : null, done: CM.month1DoneOf(tasks), managed };
 }
 
 async function visible(page, view) {
