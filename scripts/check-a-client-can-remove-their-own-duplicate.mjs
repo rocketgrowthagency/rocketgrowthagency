@@ -303,7 +303,7 @@ try {
   }
   // 10d · RGA's answer to a request: "Keep ours…" needs a line and the request; "Make the second one the main listing" is allowed
   {
-    const mkdb = (withReq) => ({ clients: [{ id: CID, workspace_id: "w1", google_place_id: "ChIJ-kept", gbp_url: "u" }], profiles: [{ id: "u1", workspace_id: "w1" }],
+    const mkdb = (withReq) => ({ clients: [{ id: CID, workspace_id: "w1", google_place_id: "ChIJ-kept", gbp_url: "u" }], profiles: [{ id: "u1", workspace_id: "w1", role: "owner" }],
       client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: { "m1.audit.gbp_duplicate": { outcome_data: { verdict: "duplicate", own_listing: { reviews: 9 },
         duplicates: [{ place_id: "ChIJ-dupe", data_id: "0xa:0xb", title: "T", phone: "(424) 396-8499", reviews: 0, gps: { lat: 34.1, lng: -118.2 } }], ...(withReq ? { keep_request: { note: "real address", at: "2026-10-14T09:20:00Z" } } : {}) } } } } }] });
     const J = (b, st = 200) => new Response(JSON.stringify(b), { status: st });
@@ -338,7 +338,7 @@ try {
         gbp_url: "https://www.google.com/maps/place/x/@34.0,-118.4,14z/data=!3m1!4b1!4m6!3m5!1s0xccc:0xddd!8m2" }],
       client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: {} } }],
       client_google_oauth: oauth ? [{ client_id: CID, refresh_token: "rt" }] : [],
-      profiles: [{ id: "u1", workspace_id: "w1" }],
+      profiles: [{ id: "u1", workspace_id: "w1", role: "owner" }],
     };
     const row = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined));
     const J = (b, st = 200) => new Response(b == null ? null : JSON.stringify(b), { status: st });
@@ -423,7 +423,7 @@ try {
   }
   // a case the rule already decides is refused: the endpoint can't move a client's listing on a whim
   {
-    const db = { clients: [{ id: CID, workspace_id: "w1", google_place_id: "ChIJ-kept" }], profiles: [{ id: "u1", workspace_id: "w1" }],
+    const db = { clients: [{ id: CID, workspace_id: "w1", google_place_id: "ChIJ-kept" }], profiles: [{ id: "u1", workspace_id: "w1", role: "owner" }],
       client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: { "m1.audit.gbp_duplicate": { outcome_data: { verdict: "duplicate", own_listing: { reviews: 9 }, duplicates: [{ place_id: "ChIJ-dupe", data_id: "0xa:0xb", reviews: 0, gps: { lat: 1, lng: 2 } }] } } } } }] };
     const J = (b, st = 200) => new Response(JSON.stringify(b), { status: st });
     const real = globalThis.fetch;

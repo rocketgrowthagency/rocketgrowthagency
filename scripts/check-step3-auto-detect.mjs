@@ -263,7 +263,7 @@ globalThis.fetch = async (input, init = {}) => {
   if (method === "POST") { const row = { id: `n${rows.length}`, ...(body || {}) }; rows.push(row); return J([row]); }
   return J(hit);
 };
-db = { client_portal_access: [{ portal_email: "owner@acme.test", client_id: CID }], profiles: [{ id: "rga-u", workspace_id: "w1" }], clients: [{ id: CID, workspace_id: "w1", business_name: "Acme Plumbing", website_url: "https://acme.example" }],
+db = { client_portal_access: [{ portal_email: "owner@acme.test", client_id: CID }], profiles: [{ id: "rga-u", workspace_id: "w1", role: "owner" }], clients: [{ id: CID, workspace_id: "w1", business_name: "Acme Plumbing", website_url: "https://acme.example" }],
   client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: {} } }], client_activity: [] };
 for (const k of Object.keys(req.cache)) if (k.startsWith(FNS_REAL)) delete req.cache[k];
 const r = await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website",

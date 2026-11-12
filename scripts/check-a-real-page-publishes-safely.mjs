@@ -5,10 +5,12 @@
 //   9 · the pull request carries exactly the approved files, through every safety check; a stale edit, a changed file, a skipped snapshot or a wrong repo open nothing
 //   · a builder site has no files: a preview at most, and it never stops the send
 // Point it at a copy with APPROVAL_ARCHIVE_SITE_DIR. exit 0 holds · 1 regressed · 2 can't tell
-import path from "node:path"; import { createRequire } from "node:module";
+import crypto from "node:crypto"; import path from "node:path"; import { createRequire } from "node:module";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const F = [], fail = (m) => F.push(m);
 Object.assign(process.env, { SUPABASE_URL: "https://db.test", SUPABASE_ANON_KEY: "anon", SUPABASE_SERVICE_ROLE_KEY: "svc", INTERNAL_FN_SECRET: "gate-secret", URL: "https://site.test", GITHUB_ADMIN_TOKEN: "gh-fake" });
+// integrations_hardening_v1 (11-11): only RGA's GitHub app acts on a repository (GITHUB_ADMIN_TOKEN retired), so the fake GitHub has the app installed on o/r
+const APP_PEM = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 }).privateKey.export({ type: "pkcs1", format: "pem" });
 const CID = "11111111-1111-4111-8111-111111111111", K = "m1.web.priority_pages", M = "m1.web.service_location_matrix", SITEURL = "https://sparks.test";
 const shell = (title, h1, band = "") => `<!doctype html><html><head><title>${title}</title><meta name="description" content="old"><link rel="canonical" href="https://sparks.test/old/"><script type="application/ld+json">{"@type":"WebPage","name":"${title}"}</script></head><body><header><a href="/">Sparks</a></header><main><h1>${h1}</h1><p>old words</p></main>${band}<footer>Sparks Electric</footer></body></html>`;
 const b64 = (s) => Buffer.from(s).toString("base64");
@@ -24,6 +26,7 @@ const unexpected = [];
 globalThis.fetch = async (url, init = {}) => {
   const u = String(url), m = (init.method || "GET").toUpperCase();
   if (u.startsWith("https://db.test")) {
+    if (u.includes("/storage/v1/object/raw-store/secrets/github-app-private-key.pem")) return new Response(APP_PEM, { status: 200 });
     if (u.includes("/auth/v1/user")) return ok({ id: "u1", email: "owner@sparks.test" });
     if (u.includes("/rest/v1/client_onboarding_records")) { if (m === "PATCH") { DB.rec.data = JSON.parse(init.body).data; return ok(null, 204); } return ok([JSON.parse(JSON.stringify(DB.rec))]); }
     if (u.includes("/rest/v1/clients")) return ok([{ id: CID, business_name: "Sparks Electric", website_url: SITEURL, workspace_id: "w1", owner_email: "owner@sparks.test", portal_user_id: "u1", email: "owner@sparks.test" }]);
@@ -31,6 +34,9 @@ globalThis.fetch = async (url, init = {}) => {
   }
   if (u.startsWith("https://api.github.com")) {
     const p = u.replace("https://api.github.com", ""), path0 = p.split("?")[0];
+    // the app's own sign-in (minting its key for o/r) is not a write to their repository, so it stays out of W.gh
+    if (m === "GET" && path0 === "/repos/o/r/installation") return ok({ id: 42 });
+    if (m === "POST" && path0 === "/app/installations/42/access_tokens") return ok({ token: "ghs_app" }, 201);
     W.gh.push(`${m} ${path0}`);
     if (m === "GET" && path0 === "/user") return ok({ login: "rocketgrowthagency-admin" });
     if (m === "GET" && /^\/repos\/[^/]+\/[^/]+$/.test(path0)) return ok({ default_branch: "main", permissions: { push: true, pull: true } });

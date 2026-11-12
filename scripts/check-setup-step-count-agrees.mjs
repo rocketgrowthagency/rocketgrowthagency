@@ -50,7 +50,9 @@ if (vals.length > 1) {
 // 3 ─ no literal spelled the long way
 for (const f of FILES) {
   // strip comments: this gate's own explanation names the thing it forbids
-  const code = src[f].replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  const code = src[f].replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "")
+    // the billing MRR default (admin Dashboard, 11-11) is a money total, not a stage entry: that one line is not a step count
+    .replace(/^.*const MRR = state\.mrr \|\| \{ total: 0, priced: 0, billed: 0, contracted: 0 \};.*$/m, "");
   for (const [rx, what] of [
     [/Step \$\{[^}]+\} of \d+/g, "an interpolated step number against a literal total"],
     [/Step \d+ of \d+/g, "a fully literal \"Step N of M\""],

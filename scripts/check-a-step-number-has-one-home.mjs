@@ -158,6 +158,8 @@ const REGISTRY = [
   { file: "netlify/functions/flow-execute.js",          needle: "so step 52 cannot read them",          step: "m1.cit.priority_top10" },
   { file: "netlify/functions/flow-execute.js",          needle: "Step 52, Build top-10 priority citations, reads these rows — it", step: "m1.cit.priority_top10" },
   { file: "netlify/functions/flow-execute.js",          needle: "Step 52, Build top-10 priority citations, reads these rows.",     step: "m1.cit.priority_top10" },
+  // tier3 item 3 (11-11): the one mentions list marks a place that came from admin step 55 with source "step55" (a stored value, so registered, not renamed)
+  { file: "netlify/functions/_mentions.js",             needle: 'source: "step55"',                    step: "m1.platform.mentions" },
   // admin steps 29–38 (approved admin_step29_citations_v1 / admin_step31_categories_v1, 10-29): each card names the step it leans on
   // step 36's settled-with-nothing-sent records (approved step36_booking_rga_does_it_v1, 10-29)
   // 🔑 client: true = the number is the CLIENT portal's (the step's declared clientStepNo), not the admin page's. Admin step 36's

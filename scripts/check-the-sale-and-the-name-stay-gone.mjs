@@ -88,7 +88,9 @@ if (!/if \(taken >= FOUNDING_CAP\) return json\(409/.test(CS)) fail("a 6th found
 if (!/catch \{ return json\(503/.test(CS)) fail("an unreadable count doesn't stop a founding agreement");
 if (!/!ctx\.addons\.data_consent \? ""/.test(CS)) fail("the data clause isn't conditional on the client agreeing");
 if (/\/questions`/.test(read("netlify/functions/v2-push-gbp-content.js")) || /v2PushQABtn/.test(read("admin/index.html"))) fail("admin can still push Q&A to a retired Google API");
-if (/gbp_qa/.test(read("netlify/functions/v2-generate-content-background.js"))) fail("the generator still writes Q&A");
+// the content generator is deleted (approved content-AI decision, 11-11: fe418a02), so the rule is now wider: NO function writes Q&A
+{ const FN = `${SITE}/netlify/functions`, qa = fs.readdirSync(FN).filter((f) => f.endsWith(".js") && /gbp_qa/.test(fs.readFileSync(`${FN}/${f}`, "utf8")));
+  if (qa.length) fail(`a function writes Q&A again: ${qa.join(", ")}`); }
 if (!/from = "\/new-client-playbook\/\*"/.test(read("netlify.toml"))) fail("the internal playbook isn't blocked at the edge");
 for (const f of ["drip-content.sh", "blog-engine-cron.sh"]) {
   let s = ""; try { s = fs.readFileSync(path.join(DIR, f), "utf8"); } catch { console.error(`⚠️  INDETERMINATE — ${f} moved`); process.exit(2); }

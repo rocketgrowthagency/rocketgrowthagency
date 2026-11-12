@@ -8,10 +8,12 @@
 //   · the Monthly row's post lives on the setup record, reads its draft from the row's run, and a month's record can't lose it
 //   · RGA's own blog: one press plus someone reading it. A client's record refuses that press on the server
 // Point it at a copy with APPROVAL_ARCHIVE_SITE_DIR. exit 0 holds · 1 regressed · 2 can't tell
-import path from "node:path"; import fs from "node:fs"; import { createRequire } from "node:module";
+import crypto from "node:crypto"; import path from "node:path"; import fs from "node:fs"; import { createRequire } from "node:module";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const F = [], fail = (m) => F.push(m);
 Object.assign(process.env, { SUPABASE_URL: "https://db.test", SUPABASE_ANON_KEY: "anon", SUPABASE_SERVICE_ROLE_KEY: "svc", INTERNAL_FN_SECRET: "gate-secret", URL: "https://site.test", GITHUB_ADMIN_TOKEN: "gh-test", ANTHROPIC_API_KEY: "model-test", SUPABASE_WORKSPACE_ID: "w1" });
+// integrations_hardening_v1 (11-11): only RGA's GitHub app acts on a repository (GITHUB_ADMIN_TOKEN retired), so the fake GitHub has the app installed on o/r
+const APP_PEM = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 }).privateKey.export({ type: "pkcs1", format: "pem" });
 const CID = "11111111-1111-4111-8111-111111111111", S = "m1.web.blog_seed", M = "m1.web.blog_post", SITEURL = "https://sparks.test", RESULT = "We rewired a 1950s house in 3 days.", QUOTE = "They showed up on time and left it clean.";
 const ok = (b, s = 200) => new Response(s === 204 ? null : JSON.stringify(b), { status: s, headers: { "content-type": "application/json" } });
 const shell = (title, h1, extra = "") => `<!doctype html><html><head><title>${title}</title><meta name="description" content="old"><link rel="canonical" href="https://sparks.test/old/"></head><body><header>Sparks</header><main><h1>${h1}</h1><p>old words</p>${extra}</main><footer>Sparks Electric</footer></body></html>`;
@@ -29,10 +31,11 @@ const unexpected = [];
 globalThis.fetch = async (url, init = {}) => {
   const u = String(url), m = (init.method || "GET").toUpperCase();
   if (u.startsWith("https://db.test")) {
+    if (u.includes("/storage/v1/object/raw-store/secrets/github-app-private-key.pem")) return new Response(APP_PEM, { status: 200 });
     if (u.includes("/auth/v1/user")) return ok({ id: "u1", email: (init.headers && (init.headers.Authorization || init.headers.authorization) || "").includes("rga") ? "someone@rocketgrowthagency.com" : "owner@sparks.test" });
     if (u.includes("/rest/v1/client_onboarding_records")) { if (m === "PATCH") { DB.rec.data = JSON.parse(init.body).data; return ok(null, 204); } return ok([JSON.parse(JSON.stringify(DB.rec))]); }
     if (u.includes("/rest/v1/client_monthly_records")) { if (m === "PATCH") { DB.month.data = JSON.parse(init.body).data; return ok(null, 204); } return ok([JSON.parse(JSON.stringify(DB.month))]); }
-    if (u.includes("/rest/v1/profiles")) return ok([{ workspace_id: "w1" }]);
+    if (u.includes("/rest/v1/profiles")) return ok([{ workspace_id: "w1", role: "owner" }]);
     if (u.includes("/rest/v1/client_portal_access")) return ok(u.includes("owner%40sparks.test") ? [{ client_id: CID, portal_email: "owner@sparks.test" }] : []);
     if (u.includes("/rest/v1/clients")) return ok([DB.client]);
     return ok([]);
@@ -40,6 +43,9 @@ globalThis.fetch = async (url, init = {}) => {
   if (u.startsWith("https://api.anthropic.com")) { modelCalls++; return ok({ content: [{ text: typeof MODEL === "string" ? MODEL : JSON.stringify(MODEL) }], usage: {} }); }
   if (u.startsWith("https://api.github.com")) {
     const p = u.replace("https://api.github.com", ""), path0 = p.split("?")[0];
+    // the app's own sign-in (minting its key for o/r) is not a write to their repository, so it stays out of W.gh
+    if (m === "GET" && path0 === "/repos/o/r/installation") return ok({ id: 42 });
+    if (m === "POST" && path0 === "/app/installations/42/access_tokens") return ok({ token: "ghs_app" }, 201);
     W.gh.push(`${m} ${path0}`);
     if (m === "GET" && path0 === "/user") return ok({ login: "rocketgrowthagency-admin" });
     if (m === "GET" && /^\/repos\/[^/]+\/[^/]+$/.test(path0)) return ok({ default_branch: "main", permissions: { push: true, pull: true } });

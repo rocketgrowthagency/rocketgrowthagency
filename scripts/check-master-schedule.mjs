@@ -158,7 +158,7 @@ async function checkTree(root, label) {
     globalThis.fetch = async (url, init = {}) => {
       const u = String(url), m = (init.method || "GET").toUpperCase(), body = init.body && typeof init.body === "string" && init.body.startsWith("{") ? JSON.parse(init.body) : null;
       if (u.includes("/auth/v1/user")) return J({ id: "u1", email: "rep@rga.test" });
-      if (u.includes("/rest/v1/profiles")) return J([{ workspace_id: "w1" }]);
+      if (u.includes("/rest/v1/profiles")) return J([{ workspace_id: "w1", role: "owner" }]);
       if (u.includes("/rest/v1/kickoff_slot_holds")) {
         if (m === "GET") return J([...store.values()]);
         if (m === "DELETE") { for (const [k, v] of store) if (v.status === "held" || v.status === "booked") store.delete(k); return J([]); }

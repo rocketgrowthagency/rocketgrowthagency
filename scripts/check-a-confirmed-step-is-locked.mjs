@@ -65,7 +65,7 @@ globalThis.fetch = async (url, opt = {}) => {
 };
 const world = (tasks, extra = {}) => {
   writes = 0;
-  db = { client_portal_access: [{ portal_email: "owner@acme.test", client_id: CID }], profiles: [{ id: "u1", workspace_id: "w1" }],
+  db = { client_portal_access: [{ portal_email: "owner@acme.test", client_id: CID }], profiles: [{ id: "u1", workspace_id: "w1", role: "owner" }],
     clients: [{ id: CID, workspace_id: "w1", business_name: "Acme Plumbing" }],
     client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks, ...extra } }] };
 };

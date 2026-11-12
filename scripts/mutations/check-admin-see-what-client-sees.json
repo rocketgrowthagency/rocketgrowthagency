@@ -212,22 +212,22 @@
  [
   "the guard is not on the page",
   "portalindex",
-  "  <script src=\"/shared/preview-guard.js?v=20261111v\"></script>\n",
+  "  <script src=\"/shared/preview-guard.js?v=20261112a\"></script>\n",
   "",
   1
  ],
  [
   "the guard is deferred",
   "portalindex",
-  "<script src=\"/shared/preview-guard.js?v=20261111v\">",
-  "<script defer src=\"/shared/preview-guard.js?v=20261111v\">",
+  "<script src=\"/shared/preview-guard.js?v=20261112a\">",
+  "<script defer src=\"/shared/preview-guard.js?v=20261112a\">",
   1
  ],
  [
   "the guard loads after portal code",
   "portalindex",
-  "  <script src=\"/shared/preview-guard.js?v=20261111v\"></script>\n",
-  "  <script>window.__x=1;</script>\n  <script src=\"/shared/preview-guard.js?v=20261111v\"></script>\n",
+  "  <script src=\"/shared/preview-guard.js?v=20261112a\"></script>\n",
+  "  <script>window.__x=1;</script>\n  <script src=\"/shared/preview-guard.js?v=20261112a\"></script>\n",
   1
  ],
  [

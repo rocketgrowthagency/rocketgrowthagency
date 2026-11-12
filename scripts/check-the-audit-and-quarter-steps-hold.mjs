@@ -86,7 +86,7 @@ const clientSiteUrl = make(fnText("clientSiteUrl"), {});
 
   const calls = [];
   let answer = null;
-  const env = { QUO_WEBHOOK_TOKEN: "fake-token", URL: "https://example.test", INTERNAL_FN_SECRET: "" };
+  const env = { QUO_WEBHOOK_TOKEN: "fake-token", URL: "https://example.test", INTERNAL_FN_SECRET: "fake-secret" };
   const cda = make(fnText("callDeployedAudit"), {
     process: { env },
     fetch: async (u, o) => { calls.push({ u: String(u), method: (o && o.method) || "GET" }); return /brain-record-audit/.test(u) ? res(200, "{}") : answer; },

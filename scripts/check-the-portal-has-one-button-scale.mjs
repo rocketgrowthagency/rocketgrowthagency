@@ -173,6 +173,8 @@ const EXEMPT = {
   "pm-modal-x": "a square ICON button with its size DECLARED (36×36, padding:0) — the popup's ✕ (\"an X on every popup\", step36 batch A, 2026-10-29), not a text control on the scale",
   "mc-more": "text link (padding:0, no border, link colour) — the managed list's \"+ N more pages\" under What RGA is doing (client_setup_bottom_v1, 2026-11-04)",
   "fct-qa": "a full-width ROW (the question beside its answer, border-top, width:100%) that opens the question to change it — About your business, done, managed (client_setup_bottom_v1, 2026-11-04); a row, not a button rung",
+  "nt-x": "text link (border:0, background:none, link colour, no horizontal padding) — the notices panel's \"Back to the list\" in its header (notices + comments, 2026-11-11)",
+  "pm-lk-o": "a toggle CHIP in a chip row (pill, aria-pressed), not a button rung — \"What you're part of\" on Places that link to you (tier3_best_in_class_v1 §8, 2026-11-11); it takes the chips' height",
   "pm-ex": "the example drawing beside a photo slot — the 64×48 picture IS the control (padding:0), not a text button (2026-10-09)",
 };
 {

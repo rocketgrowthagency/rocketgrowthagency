@@ -112,7 +112,7 @@ for (const [id, ok] of [["AbC_-/9", true], ["x y", false], ["<b>", false], ["", 
   route = async (url, init) => {
     if (url.startsWith("https://sb.test/auth/v1/user")) return res(200, { id: "u1", email: "owner@acme.test" });
     if (url.includes("/client_portal_access?")) return res(200, owner ? [{ client_id: "c" }] : []);
-    if (url.includes("/profiles?")) return res(200, [{ workspace_id: "w" }]);
+    if (url.includes("/profiles?")) return res(200, [{ workspace_id: "w", role: "owner" }]);
     if (url.includes("/clients?id=eq.")) return res(200, [{ id: "22222222-2222-2222-2222-222222222222", workspace_id: "w", business_name: "Acme", google_place_id: "pl1" }]);
     if (url.includes("/client_customer_lists?id=eq.") && (init.method || "GET") === "GET") return res(200, [list]);
     if (url.includes("/client_customer_lists?id=eq.") && init.method === "PATCH") { patched = JSON.parse(init.body).customers; return res(200, [{ customers: patched }]); }

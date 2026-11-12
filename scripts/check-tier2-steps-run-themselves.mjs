@@ -257,7 +257,10 @@ try {
   else { const rd = job.read({ contracts: { accepted: 1, waiting: 2, held: 0, manual: 1, failed: 0 }, categories: { added: 0, waiting: 0, failed: 1 }, errors: [] });
     if (rd.count !== 1 || !/1 accepted/.test(rd.note) || !/1 RGA's move/.test(rd.note)) fail(`System health doesn't say what the pass did (${JSON.stringify(rd)})`); }
   if (!SA.categoriesDue(Date.parse("2026-11-11T16:05:00Z")) || SA.categoriesDue(Date.parse("2026-11-11T16:20:00Z")) || SA.categoriesDue(Date.parse("2026-11-11T15:05:00Z"))) fail("the categories lane doesn't run once a day");
-  if (!/\/admin\/admin\.js\?v=20261111n/.test(IDX) || !/\/shared\/auto-accept\.js\?v=20261111n/.test(A) || !/\/shared\/form-settle\.js\?v=20261111n/.test(A) || !/\/shared\/citation-progress\.js\?v=20261111n/.test(A)) fail("a changed browser file kept its old ?v=");
+  // each file Tier 2 changed must carry Tier 2's ?v= or a LATER one (a later build bumps it again; a merge that puts back an older one is the regression)
+  const vOf = (src, file) => { const m = new RegExp(file.replace(/[./]/g, (c) => "\\" + c) + "\\?v=(\\d{8}[a-z]*)").exec(src); return m ? m[1] : ""; };
+  const atLeast = (v, min) => v.length >= 8 && (v.slice(0, 8) > min.slice(0, 8) || (v.slice(0, 8) === min.slice(0, 8) && v.slice(8) >= min.slice(8)));
+  if (![[IDX, "/admin/admin.js"], [A, "/shared/auto-accept.js"], [A, "/shared/form-settle.js"], [A, "/shared/citation-progress.js"]].every(([src, f]) => atLeast(vOf(src, f), "20261111n"))) fail("a changed browser file kept its old ?v=");
 } catch (e) { console.error(`⚠️  INDETERMINATE: ${String(e.stack || e.message).split("\n").slice(0, 3).join(" ")}`); process.exit(2); }
 if (F.length) { console.error(`❌ Tier 2 steps: ${F.length} regression(s)`); for (const x of F) console.error(`  · ${x}`); process.exit(1); }
 console.log("✅ Tier 2 steps run themselves with RGA's veto: a signed Standard Plan accepts itself after 15 minutes (claimed, said, emailed once; Hold stops it; every other plan waits for Accept with why); Setup moves on when Google found a service; Monthly blog posts start once per slot on the website autopilot; categories go on Google only through admin-gbp-categories once the client saw them (claimed first); form tracking settles by Analytics or the inbox answer, never over a lost test; Bing imports only when it copies the truth");

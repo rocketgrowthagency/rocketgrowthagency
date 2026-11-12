@@ -260,8 +260,8 @@
  [
   "email alone isn't a delivery (11-7)",
   "jobwatcher",
-  "if (logged || emailed) return { delivered: true, via, error: null };",
-  "if (logged) return { delivered: true, via, error: null };"
+  "if (logged || emailed || texted) return { delivered: true, via, error: null };",
+  "if (logged || texted) return { delivered: true, via, error: null };"
  ],
  [
   "the alert isn't emailed at all (11-7)",

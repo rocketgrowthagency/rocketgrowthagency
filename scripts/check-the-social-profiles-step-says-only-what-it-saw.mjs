@@ -20,7 +20,7 @@ globalThis.fetch = async (url, init = {}) => {
   if (u.startsWith("https://db.test")) {
     if (u.includes("/auth/v1/user")) return ok({ id: "u1", email: JSON.stringify(init.headers || {}).includes("rga") ? "someone@rocketgrowthagency.com" : "owner@sparks.test" });
     if (u.includes("/rest/v1/client_onboarding_records")) { if (m === "PATCH") { if (!DB.dropWrite) { DB.rec.data = JSON.parse(init.body).data; DB.writes++; } return ok(null, 204); } return ok([JSON.parse(JSON.stringify(DB.rec))]); }
-    if (u.includes("/rest/v1/profiles")) return ok([{ workspace_id: "w1" }]);
+    if (u.includes("/rest/v1/profiles")) return ok([{ workspace_id: "w1", role: "owner" }]);
     if (u.includes("/rest/v1/client_portal_access")) return ok(u.includes("owner%40sparks.test") ? [{ client_id: CID }] : []);
     if (u.includes("/rest/v1/clients")) return ok([DB.client]);
     if (u.includes("/rest/v1/client_monthly_records")) return ok([JSON.parse(JSON.stringify(DB.month))]);

@@ -46,7 +46,7 @@ globalThis.fetch = async (input, init = {}) => {
 };
 const load = (name) => { for (const k of Object.keys(req.cache)) if (k.startsWith(FNS_REAL)) delete req.cache[k]; return req(`./${name}`); };
 const CID = "11111111-2222-4333-8444-555555555555";
-const world = (task) => { db = { client_portal_access: [{ portal_email: "chris@rga.test", client_id: CID }], profiles: [{ id: "u1", workspace_id: "w1" }],
+const world = (task) => { db = { client_portal_access: [{ portal_email: "chris@rga.test", client_id: CID }], profiles: [{ id: "u1", workspace_id: "w1", role: "owner" }],
   clients: [{ id: CID, workspace_id: "w1", business_name: "Acme", primary_market: "Austin, TX" }],
   client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: { "m1.tracking.call_setup": task } } }], client_activity: [] }; };
 const T = () => db.client_onboarding_records[0].data.tasks["m1.tracking.call_setup"];
@@ -81,7 +81,7 @@ if (r.status !== 400) fail("an unknown check is accepted");
 const fm = await PROV.callrail.fetchMonth({ companyId: "C", month: "2026-10-01", end: "2026-10-31", key: "k", account: "A1" });
 if (fm.rings !== 3 || fm.calls !== 1 || fm.answered !== 2 || fm.missed !== 1 || fm.firstTime !== 2) fail(`CallRail's month detail is wrong (${JSON.stringify(fm)})`);
 const SY = read("netlify/functions/call-tracking-sync.js");
-if (!/data: \{ \.\.\.\(existing\.data \|\| \{\}\), calls: detail \}/.test(SY) || !/rule: `answered and \$\{CONNECTED_SECONDS\} seconds or more`/.test(SY)) fail("the sync doesn't store the call detail + rule on the monthly record");
+if (!/data: \{ \.\.\.\(existing\.data \|\| \{\}\), calls: \{ \.\.\.detail, month_tz: tz \}, calls_read: readOk \}/.test(SY) || !/rule: `answered and \$\{CONNECTED_SECONDS\} seconds or more`/.test(SY)) fail("the sync doesn't store the call detail + rule on the monthly record");
 const RP = read("portal/report/report.js");
 if (!/\["Call-button taps", current\.gbp_calls(?:, "gbp_calls")?\]/.test(RP) || !/tile\("Call-button taps on Google"/.test(RP) || !/\["First-time callers", (?:current\.data\.calls|c)\.first_time\]/.test(RP) || !/counted when \$\{/.test(RP)) fail("the report doesn't keep Google's taps, tracked calls (answered/missed/first-time) and its rule apart");
 if (/account in your name/.test(P + read("data/playbooks/client-steps.json"))) fail("a card still promises \"an account in your name\" (RGA's agency account — the number is theirs to keep)");

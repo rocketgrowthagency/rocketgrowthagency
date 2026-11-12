@@ -55,7 +55,7 @@ globalThis.fetch = async (input, init = {}) => {
   if (!u.startsWith(DB)) { W.realCalls.push(`${m} ${u}`); throw new Error(`a real address was called: ${u}`); }
   if (u.includes("/rest/v1/rga_google_credentials")) return res(200, W.gmail === "none" ? [] : [{ refresh_token: "plain-refresh", google_email: "hello@rocketgrowthagency.com", scopes: "https://www.googleapis.com/auth/gmail.send" }]);
   if (u.includes("/auth/v1/user")) return String((init.headers || {}).Authorization).includes("good-token") ? res(200, { id: "u1", email: "a@b.c" }) : res(401, {});
-  if (u.includes("/rest/v1/profiles")) return res(200, [{ workspace_id: "w1" }]);
+  if (u.includes("/rest/v1/profiles")) return res(200, [{ workspace_id: "w1", role: "owner" }]);
   if (u.includes("/rest/v1/clients")) return res(200, W.clients.slice(0, 1));
   if (u.includes("/rest/v1/client_activity")) {
     if (m === "POST") { const r = { id: `a${nextId++}`, ...JSON.parse(init.body) }; W.activity.push(r); return res(201, [r]); }

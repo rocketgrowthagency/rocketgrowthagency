@@ -467,7 +467,7 @@ for (const r of ["portal-step-recheck", "portal-book-kickoff", "cancel-kickoff-i
     log.push({ url, method, body: init.body || null });
     const j = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json" } });
     if (url.includes("/auth/v1/user")) return who === "nobody" ? j({ msg: "bad" }, 401) : j({ id: "u1", email: "staff@test" });
-    if (url.includes("/profiles?")) return j(who === "client" ? [] : [{ workspace_id: who === "other-staff" ? "ws-other" : "ws1" }]);
+    if (url.includes("/profiles?")) return j(who === "client" ? [] : [{ workspace_id: who === "other-staff" ? "ws-other" : "ws1", role: "owner" }]);
     if (url.includes("/client_portal_access")) return j(who === "client" ? [{ client_id: CID }] : []);
     if (/\/clients\?id=eq\.[^&]+&select=id,workspace_id$/.test(url)) return j([{ id: CID, workspace_id: "ws1" }]);
     if (url.includes("/client_google_oauth")) return j([{ client_id: CID, ...leak }]);

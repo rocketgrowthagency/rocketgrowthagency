@@ -38,7 +38,7 @@ globalThis.fetch = async (input, init = {}) => {
 };
 const load = (name) => { for (const k of Object.keys(req.cache)) if (k.startsWith(FNS_REAL)) delete req.cache[k]; return req(`./${name}`).handler; };
 const call = async (name, body, as = "owner@acme.test") => { who = as; const r = await load(name)({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, ...body }) }); let b = {}; try { b = JSON.parse(r.body || "{}"); } catch { /* */ } return { status: r.statusCode, body: b }; };
-const world = (task) => { db = { client_portal_access: [{ portal_email: "owner@acme.test", client_id: CID }], profiles: [{ id: "rga-u", workspace_id: "w1" }],
+const world = (task) => { db = { client_portal_access: [{ portal_email: "owner@acme.test", client_id: CID }], profiles: [{ id: "rga-u", workspace_id: "w1", role: "owner" }],
   clients: [{ id: CID, workspace_id: "w1", business_name: "Acme Plumbing", website_url: "https://acme.example" }],
   client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: task ? { "m1.access.website": task } : {} } }], client_activity: [] }; };
 const T = () => db.client_onboarding_records[0].data.tasks["m1.access.website"] || {};

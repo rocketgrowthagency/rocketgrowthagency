@@ -140,10 +140,10 @@
   1
  ],
  [
-  "the generator writes Q&A again",
-  "v2generate",
-  "3. \"gbp_posts\":",
-  "3. \"gbp_qa\": x\n4. \"gbp_posts\":",
+  "a function writes Q&A again",
+  "v2push",
+  "// v2-push-gbp-content — sync function.\n",
+  "// v2-push-gbp-content — sync function.\nconst QA_KEY = \"gbp_qa\";\n",
   1
  ],
  [
