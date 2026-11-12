@@ -40,5 +40,26 @@
   "requirePortalOwnerOrWorkspace: Auth.requirePortalOwnerOrWorkspace, requireWorkspaceForClient: Auth.requireWorkspaceForClient,",
   "requirePortalOwnerOrWorkspace: async () => ({}), requireWorkspaceForClient: async () => ({}),",
   1
+ ],
+ [
+  "the mid-month note's guard refusal is not returned",
+  "adminmidnotefn",
+  "const g = await guard(event, clientId); if (g.error) return g.error;",
+  "const g = await guard(event, clientId);",
+  1
+ ],
+ [
+  "the mid-month note's live handler passes its own guard",
+  "adminmidnotefn",
+  "exports.handler = (event) => handle(event);",
+  "exports.handler = (event) => handle(event, null, async () => ({}));",
+  1
+ ],
+ [
+  "portal-leads asks nobody (its auth default is not an _auth helper)",
+  "portalleads",
+  "auth: requirePortalOwnerOrWorkspace",
+  "auth: async () => ({})",
+  1
  ]
 ]

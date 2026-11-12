@@ -713,6 +713,7 @@ export const FILES = {
   portalnoticesfn: "netlify/functions/portal-notices.js",
   apcfn: "netlify/functions/approval-comments.js",
   midnotefn: "netlify/functions/_mid-note.js",
+  adminmidnotefn: "netlify/functions/admin-mid-note.js",   // the admin presses for the mid-month note (11-11), guard injected as handle()'s default
   noticessql: "docs/supabase/NOTICES_AND_COMMENTS_2026-11-11.sql",
   // tier3_best_in_class_v1 items 7, 6, 8 (approved 11-11): the client health view, the AI sample, the link pilot
   clienthealth: "shared/client-health.js",

@@ -273,6 +273,10 @@ function escapeAttribute(s){return escapeHtml(s);}\n`;
       }
       parts.unshift(dep);
       included.add(m[1]);
+      // 🔴 11-12: A FAILED RUN LEAVES ITS CONSTS BEHIND. When a const's initialiser throws (OB_PHASES reading CALL_NAMES before it
+      // was lifted), V8 keeps that name declared in the context, so the retry in the SAME context said "Identifier 'OB_PHASES' has
+      // already been declared" and the gate went INDETERMINATE. Every retry gets a fresh context, as addDep's already did.
+      ctx = makeCtx();
     }
   }
   console.error("⚠️  INDETERMINATE — gave up resolving the lift's dependency set.");

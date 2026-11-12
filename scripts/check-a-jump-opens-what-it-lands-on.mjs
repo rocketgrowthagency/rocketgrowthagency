@@ -47,7 +47,9 @@ const ctx = { escapeHtml: esc, escapeAttribute: esc, document: { addEventListene
 vm.createContext(ctx);
 let html;
 try {
-  vm.runInContext(`${card}\nthis.__build = buildPhotoUploadHtml;`, ctx);
+  // 11-10 call names + 11-11 call length: the block reads CALL_NAMES and rgaCallLength, which portal.js takes from shared/ (loaded first, like the page does)
+  for (const f of ["call-names.js", "call-length.js"]) vm.runInContext(fs.readFileSync(`${SITE}/shared/${f}`, "utf8"), ctx);
+  vm.runInContext(`const CALL_NAMES = globalThis.rgaCallNames.NAMES;\n${card}\nthis.__build = buildPhotoUploadHtml;`, ctx);
   html = ctx.__build("client-1", [{ id: "p", file_name: "a.jpg", category: "logo", publish_state: "published" }],
     { count: 20, groups: [{ name: "Logo", n: 1 }], items: [{ n: 1, do: "The logo", why: "" }] });
 } catch (e) {

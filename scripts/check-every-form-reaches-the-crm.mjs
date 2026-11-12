@@ -14,7 +14,9 @@
 import fs from "node:fs";
 import { createRequire } from "node:module";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
-const LIVE = process.env.FORM_CHECK_SITE || "https://rocketgrowthagency.com";
+// 🔴 11-12: the WWW address. The bare domain answers 308 → www, and a POST sent with redirect "manual" stops at that 308: the 11-11 night
+// run never reached a form (Netlify Forms shows no submission) and called every webhook broken. A redirect is now its own red (below).
+const LIVE = process.env.FORM_CHECK_SITE || "https://www.rocketgrowthagency.com";
 const req = createRequire(`${SITE}/netlify/functions/x.js`);
 const F = [], fail = (m) => F.push(m), ind = (m) => { console.error(`⚠️  INDETERMINATE — ${m}`); process.exit(2); };
 // the live read-back's own credentials are kept apart; the harness (part A) always runs on a fake database
@@ -85,6 +87,7 @@ async function live() {
     let sent;
     try { sent = await fetch(`${LIVE}${path}`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body, redirect: "manual" }); } catch (e) { fail(`${form}: could not submit (${e.message})`); continue; }
     if (sent.status >= 400) { fail(`${form}: the live form answered ${sent.status}`); continue; }
+    if (sent.status >= 300) { fail(`${form}: the live form answered ${sent.status} (a redirect to ${sent.headers.get("location") || "?"}): the submission never reached the form, so its webhook was not tested`); continue; }
     let row = null;
     for (let i = 0; i < 9 && !row; i++) {
       await new Promise((r) => setTimeout(r, 5000));

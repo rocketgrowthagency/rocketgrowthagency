@@ -25,6 +25,9 @@ const CHECKS = [
   [/(?:===|!==)\s*process\.env\.(?:INTERNAL_FN_SECRET|FGA_REPORT_INTERNAL_TOKEN|QUO_WEBHOOK_TOKEN)|process\.env\.(?:INTERNAL_FN_SECRET|FGA_REPORT_INTERNAL_TOKEN|QUO_WEBHOOK_TOKEN)\s*(?:===|!==)|token === INTERNAL_TOKEN|const token = process\.env\.FGA_REPORT_INTERNAL_TOKEN;[\s\S]{0,200}?!== token|(?:===|!==)\s*(?:INTERNAL_TOKEN|QUO_TOKEN|EXPECTED|expected|secret)\b/, "an internal secret (checked inbound)"],
   // a webhook secret counts only when it FAILS CLOSED (an unset secret must refuse, not wave everyone through)
   [/if \(!requiredSecret\) return/, "a webhook secret that fails closed"],
+  // 11-12: an _auth helper INJECTED as handle()'s default (so a test can pass a fake), awaited on the request before anything else, its refusal
+  // returned, and the live handler calling handle(event) with nothing that could replace it (admin-mid-note, portal-leads, 11-11)
+  [/async function handle\(event, (?:deps = null, guard = require(?:User|Workspace\w*|PortalOwner\w*)\)[\s\S]{0,400}?const (\w+) = await guard\(event, clientId\); if \(\1\.error\) return \1\.error;|deps = \{ [^}]*\bauth: require(?:User|Workspace\w*|PortalOwner\w*)\b[^}]*\}\)[\s\S]{0,400}?const (\w+) = await deps\.auth\(event, clientId\);\s*if \(\2\.error\) return \2\.error;)[\s\S]*\nexports\.handler = \(event\) => handle\(event\);/, "an _auth helper, injected as handle()'s default and awaited first"],
 ];
 // unauthenticated ON PURPOSE — a decision on the record, each with its reason
 const PUBLIC_BY_DESIGN = {

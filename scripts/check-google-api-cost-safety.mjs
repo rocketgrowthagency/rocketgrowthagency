@@ -138,6 +138,28 @@ const DECLARED = {
   },
   // 🔑 The slot engine (2026-09-25). Every availability question in the product goes through it —
   // the portal picker, the admin request list, and the sender's final "is it still free" check.
+  // ── integrations hardening + runbook 7b (approved 11-11), declared 11-12 by the night fixer after reading each file ──
+  //    🔒 none of them can spend: every Google read below is a free one, and a refusal is reported, never retried or answered with a quota raise
+  "cloud-billing-probe.js": {
+    perRun: "1 Place Details with FieldMask `id` (Google's IDs Only SKU, no charge; NOT a SearchText, so nothing from the 32-a-day Places budget) + 1 PageSpeed read of RGA's own homepage (free, quota)",
+    scheduled: "daily 17:10 UTC → 365 IDs-only reads + 365 PageSpeed reads a year, $0; a 429 is 'could not tell', never a reason to ask for more",
+    stamps: "nothing to repeat: one fixed place (Google's own sample id) and one fixed page, once a day; the run's answer goes to job-watcher",
+  },
+  "_integration-checks.js": {
+    perRun: "googleGrant only: 1 token refresh + 1 tokeninfo + 1 Calendar freeBusy (RGA's own calendar, the next hour) + 1 userinfo, all free (quota); placesBudget reads RGA's own Places ledger in the database, no Google call",
+    scheduled: "daily, through integration-watch (13:25 UTC) and budget-watch (13:50 UTC) → at most 4 free reads a day, 1,460 a year",
+    stamps: "each check writes its own System health row (_job-checkin finishParts); a refused read is an error that day, not a loop",
+  },
+  "integration-watch.js": {
+    perRun: "runs googleGrant once: the 4 free Google reads in _integration-checks.js (token, tokeninfo, freeBusy, userinfo)",
+    scheduled: "daily 13:25 UTC",
+    stamps: "a System health row per check (_job-checkin finishParts)",
+  },
+  "budget-watch.js": {
+    perRun: "no Google call of its own: its places-budget row reads RGA's Places ledger (_places-budget summary); it requires _integration-checks.js, which also holds the grant check it does not run",
+    scheduled: "daily 13:50 UTC",
+    stamps: "a System health row per budget (_job-checkin finishParts)",
+  },
   "_kickoff-slots.js": {
     perRun: "at most 1 Calendar freeBusy query per availability read — FREE (quota, not billed), and SKIPPED ENTIRELY when no access token is present",
     // 🔴 The ceiling is "how often does anyone open a time picker", not "how many clients exist".

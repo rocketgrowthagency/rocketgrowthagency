@@ -71,7 +71,7 @@ if (!/out\.push\(\{ ok: !\(c\.merge\.lost \|\| \[\]\)\.length, what: "Nothing tr
 if (!/rows\.push\(\["Linked to"/.test(PJ) || !/Your Google profile/.test(PJ) || !/apv-facts\$\{c\.merge \? " apv-facts3" : ""\}/.test(PJ) || !/SAY = \{ kept: "already there", added: "added", changed: "changed" \}/.test(PJ)) fail("the card doesn't say per detail whether it was already there, added or changed, or hides the Google profile link");
 { const at2 = AD.indexOf("const samePhone = "), src = at2 >= 0 ? AD.slice(at2, AD.indexOf("\n", at2)) : "";
   const digits = (x) => String(x || "").replace(/\D/g, ""); let samePhone = null; try { samePhone = new Function("digits", `${src}; return samePhone;`)(digits); } catch { samePhone = null; }
-  if (!samePhone || !samePhone("+1-424-242-2040", "(424) 242-2040") || !samePhone("+351 912 345 678", "912 345 678") || samePhone("(424) 242-2041", "(424) 242-2040") || samePhone("", "") || !/samePhone\(j\.telephone, cl\.primary_contact_phone\)/.test(AD))
+  if (!samePhone || !samePhone("+1-424-242-2040", "(424) 242-2040") || !samePhone("+351 912 345 678", "912 345 678") || samePhone("(424) 242-2041", "(424) 242-2040") || samePhone("", "") || !/samePhone\(j\.telephone, cl\.identity_phone\)/.test(AD))
     fail("'Matches your record' fails the same phone written with its country code (RGA's '+1-424-242-2040' vs '(424) 242-2040'), or passes a different one"); }
 if (/your name, phone, address and hours in its own format/.test(PB)) fail("'Why this helps' still promises an address the card leaves out");
 

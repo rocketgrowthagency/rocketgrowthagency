@@ -35,7 +35,7 @@ const IDS = ["m2.exec.review_push", "m2.snap.business_outcomes", "m2.exec.gbp_ph
 for (const id of IDS) if (!stepsById[id]) fail(`${id} isn't in the client's projection (client-steps.json)`);
 
 // ── lift ──
-const ctx = vm.createContext({ Date, JSON, Number, Set, Map, Array, String, Object, Math, RegExp, Intl, Boolean, parseInt, isNaN, console, CSS: { escape: (x) => String(x) }, document: { querySelectorAll: () => [] },
+const ctx = vm.createContext({ Date, JSON, Number, Set, Map, Array, String, Object, Math, RegExp, Intl, Boolean, parseInt, isNaN, console, CSS: { escape: (x) => String(x) }, document: { querySelectorAll: () => [], addEventListener() {} },
   escapeHtml: (x) => String(x ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])), escapeAttribute: (x) => String(x ?? "").replace(/"/g, "&quot;"),
   fmtDateShort: (x) => String(x || "").slice(0, 10), closeCallHtml: () => '<div class="pm-cc" data-closeout-call="c~m2"></div>', stepLockOf: (id, t) => STEP_LOCK.stepLock(id, t, {}) });
 try {

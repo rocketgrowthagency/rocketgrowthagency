@@ -31,6 +31,23 @@ const F = []; const fail = (m) => F.push(m);
 // How each stored failure is cleared once something succeeds. `clear` must match the file's code; `why` says why a
 // field never persists (response-only, or replaced whole on every run).
 const DECLARED = {
+  // 11-12 night fixer: five 11-11 writers, each read in its code before it was declared
+  // tier3 item 9: a failed profile-link read keeps the month's last good counts beside last_error; a later good read REPLACES ga4_campaigns whole
+  "_metrics.js": {
+    last_error: { clear: /else data\.ga4_campaigns = pc;/ },
+  },
+  "billing-daily-check.js": {
+    read_error: { why: "response only (the run's JSON answer), never stored on a record" },
+    stripe_error: { why: "a word inside the reason of an append-only client_activity row (that charge attempt's history), not a field on a record" },
+  },
+  // tier3 item 1: the lead rows' error rides on data.calls, which every sync REPLACES (calls: { ...detail }), and is undefined (dropped) when the save worked
+  "call-tracking-sync.js": {
+    lead_rows_error: { clear: /lead_rows_error: leads\.ok === false \? leads\.error : undefined/ },
+  },
+  // tier3 item 10b: Monthly 14's outcome_data is rebuilt on every confirmation; count_error is added only when that confirmation's read failed
+  "portal-step-input.js": {
+    count_error: { clear: /tasks\[stepId\]\.outcome_data = YN\.outcomeData\(p, parsed\.value, now\);\n\s*if \(!p\) tasks\[stepId\]\.outcome_data\.count_error = / },
+  },
   // master map Tier 2 (11-11): the first-invoice email that didn't go when a Standard Plan accepted itself. Written ONCE, inside the
   // `accepted` stamp of the same pass that moved the stage; nothing retries it (the client is past review, so the window is never read again)
   // and the client_activity row tells RGA to tell them by hand. There is no later success on the window to clear it.
