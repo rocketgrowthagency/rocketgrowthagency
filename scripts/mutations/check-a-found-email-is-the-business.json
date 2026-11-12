@@ -1,0 +1,51 @@
+[
+ [
+  "search words count as a name-match again",
+  "emailscraper2",
+  "  const tokens = businessNameTokens(businessName)\n    .filter((t) => !searchTokens.some((s) => sharedStart(t, s) >= Math.min(4, t.length, s.length)));",
+  "  const tokens = businessNameTokens(businessName);",
+  1
+ ],
+ [
+  "only exact search words are dropped, not their forms",
+  "emailscraper2",
+  ".filter((t) => !searchTokens.some((s) => sharedStart(t, s) >= Math.min(4, t.length, s.length)));",
+  ".filter((t) => !searchTokens.includes(t));",
+  1
+ ],
+ [
+  "word forms need a 6-letter shared start (dentists/dental leaks)",
+  "emailscraper2",
+  "sharedStart(t, s) >= Math.min(4, t.length, s.length)",
+  "sharedStart(t, s) >= Math.min(6, t.length, s.length)",
+  1
+ ],
+ [
+  "a government address is a contact again",
+  "emailvalidation",
+  "  if (GOVERNMENT_HOST_RE.test(host)) return 'government/regulator address, not the business';\n",
+  "",
+  1
+ ],
+ [
+  "only US .gov is caught",
+  "emailvalidation",
+  "const GOVERNMENT_HOST_RE = /(?:^|\\.)(?:gov|mil)(?:\\.[a-z]{2})?$|(?:^|\\.)(?:gouv|gob|govt|go)\\.[a-z]{2}$|(?:^|\\.)gc\\.ca$|\\.state\\.[a-z]{2}\\.us$/;",
+  "const GOVERNMENT_HOST_RE = /\\.gov$/;",
+  1
+ ],
+ [
+  "the gov rule swallows businesses with gov in the name",
+  "emailvalidation",
+  "const GOVERNMENT_HOST_RE = /(?:^|\\.)(?:gov|mil)(?:\\.[a-z]{2})?$|",
+  "const GOVERNMENT_HOST_RE = /gov|",
+  1
+ ],
+ [
+  "the theme demo address is kept again",
+  "emailvalidation",
+  "  'consultio.com',\n",
+  "",
+  1
+ ]
+]

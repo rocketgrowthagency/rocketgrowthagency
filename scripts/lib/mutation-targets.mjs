@@ -464,6 +464,8 @@ export const FILES = {
   videotostorage: "scraper:scripts/outreach-video-to-storage.mjs",   // rga_videos_to_storage_v1 (11-8): a new or rebuilt video to storage, read back
   onelead: "scraper:scripts/test-realtime-one-lead.sh",
   nightpipeline: "scraper:scripts/overnight-pipeline.sh",
+  emailscraper2: "scraper:step-2-email-scraper.mjs",   // check-a-found-email-is-the-business (11-12)
+  emailvalidation: "scraper:lib/email-validation.cjs",   // check-a-found-email-is-the-business (11-12)
   recorder3: "scraper:step-3-video-recorder.mjs",   // check-a-locked-screen-cannot-stop-a-video (11-12)
   nightrollup: "scraper:scripts/check-run-productivity.mjs",   // check-a-locked-screen-cannot-stop-a-video (11-12)
   videotemplate: "scraper:templates/video-landing.html",   // rga_video_address_v1 A (11-8): the outreach page template

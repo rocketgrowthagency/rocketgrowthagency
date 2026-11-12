@@ -420,7 +420,15 @@ async function discoverEmailViaSearch(siteHost, businessName, phone = '', search
     `${phoneDigits.slice(0,3)}.${phoneDigits.slice(3,6)}.${phoneDigits.slice(6)}`,
   ] : [];
 
-  const tokens = businessNameTokens(businessName);
+  // 🔴 2026-11-12 — the SEARCH's own words are not distinctive. STOP_WORDS knows plumbing/HVAC words only, so for
+  // "Pest control in El Segundo" the token "pest" made pestboard@dca.ca.gov a NAME-MATCH for every "… Pest …"
+  // firm (11-11). Whatever the trade or city, a word of the search (or its stem) never proves the email is theirs.
+  // Word FORMS too: "dentists" vs "dental", "lawyers" vs "law", "roofers" vs "roofing" share a start of 4 (or the
+  // whole shorter word).
+  const sharedStart = (a, b) => { let i = 0; while (i < a.length && i < b.length && a[i] === b[i]) i++; return i; };
+  const searchTokens = businessNameTokens(searchTerm);
+  const tokens = businessNameTokens(businessName)
+    .filter((t) => !searchTokens.some((s) => sharedStart(t, s) >= Math.min(4, t.length, s.length)));
   const bizLower = String(businessName || '').toLowerCase();
 
   // Free-mailbox domains — personal addresses where local-part is the only

@@ -840,6 +840,7 @@ run check-every-submission-is-recorded.mjs "every client submission is recorded 
 run check-a-retake-can-be-cleared.mjs "a photo Google asked to retake can be cleared by the client"
 run check-month-2-lives-in-the-monthly-record.mjs "a client's Month-2 answer lands in this month's monthly record, the one the admin and their portal read"
 run check-the-night-run-stops-before-morning.mjs "the nightly video run starts nothing after 04:00 and stops at 06:30, recording what it stopped"
+run check-a-found-email-is-the-business.mjs "a found email must be the business's: search words never name-match, regulators and theme demos are rejected"
 run check-a-locked-screen-cannot-stop-a-video.mjs "a locked Mac screen cannot stop a video (Maps frames fall back to the page), the N/3 WebMs line names the missing recording, the night roll-up reads tonight once"
 run check-netlify-credits-will-last.mjs "Netlify credits last until the cycle resets at the current deploy pace (5 outages from running out)"
 run acceptance-walk.mjs "every Month-1 step clicks through in admin + portal (read-only), both sides agree — report: website reports/acceptance/latest.md"
