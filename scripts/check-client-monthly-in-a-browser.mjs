@@ -53,6 +53,9 @@ let browser;
 try { browser = await chromium.launch({ headless: true }); } catch (e) { console.error("INDETERMINATE: no browser: " + e.message); process.exit(2); }
 const local = { "/portal/portal.js": "portal/portal.js", "/portal/portal.css": "portal/portal.css", "/portal/index.html": "portal/index.html", "/shared/client-monthly.js": "shared/client-monthly.js", "/shared/step-lock.js": "shared/step-lock.js", "/shared/portal-mode.js": "shared/portal-mode.js",
   "/shared/monthly-start.js": "shared/monthly-start.js", "/shared/monthly-sections.js": "shared/monthly-sections.js", "/shared/monthly-weekly.js": "shared/monthly-weekly.js", "/shared/monthly-monthly.js": "shared/monthly-monthly.js", "/shared/setup-fewer.js": "shared/setup-fewer.js", "/shared/call-length.js": "shared/call-length.js", "/data/playbooks/client-steps.json": "data/playbooks/client-steps.json" };
+// master audit #8 (11-11): EVERY shared module this checkout has is served from it. portal.js imports shared files the live site may not have yet
+// (metrics.js, leads.js, profile-visits.js ...); one missing import and the portal never finishes loading, which read as "flaky" instead of the build.
+for (const f of fs.readdirSync(path.join(SITE_DIR, "shared"))) if (/\.js$/.test(f)) local[`/shared/${f}`] = `shared/${f}`;
 const letterMod = letterHandler();
 let flaky = false;
 

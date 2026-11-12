@@ -1,0 +1,135 @@
+[
+ [
+  "change() compares a running month with a whole month",
+  "sharedmetrics",
+  "    if (!canCompare(cur, prior, now)) return null;\n    const c = num(curVal), p = num(priorVal);",
+  "    const c = num(curVal), p = num(priorVal);",
+  1
+ ],
+ [
+  "a month counts as complete before its last day is over",
+  "sharedmetrics",
+  "return end != null && t != null && t >= end;",
+  "return end != null && t != null && t >= end - 20 * 86400000;",
+  1
+ ],
+ [
+  "a gap month is taken as last month",
+  "sharedmetrics",
+  "    if (addMonths(c, -1) !== p) return false;\n",
+  "",
+  1
+ ],
+ [
+  "rankChange compares a running month",
+  "sharedmetrics",
+  "    if (!canCompare(cur, prior, now)) return null;\n    const c = num(curRank), p = num(priorRank);",
+  "    const c = num(curRank), p = num(priorRank);",
+  1
+ ],
+ [
+  "a running month is named as if it were over",
+  "sharedmetrics",
+  "return `so far in ${monthName(k)} · the full month arrives about ${shortDay(figuresArriveMs(k))}`;",
+  "return `in ${monthName(k)}`;",
+  1
+ ],
+ [
+  "the report opens on the newest record (the running month)",
+  "sharedmetrics",
+  "const cur = list.find((r) => isComplete(r, now)) || null;",
+  "const cur = list[0] || null;",
+  1
+ ],
+ [
+  "portal caDeltaHtml draws its own percent",
+  "portal",
+  "const c = MET().change(cur, prior, _caCmp.cur, _caCmp.prior, Date.now(), { lowerBetter, style: \"pct\" });",
+  "const c = cur == null || prior == null || !Number(prior) ? null : { better: cur > prior, flat: cur === prior, arrow: \"x\", words: Math.round(Math.abs((cur - prior) / prior) * 100) + \"% vs last month\" };",
+  1
+ ],
+ [
+  "portal Dashboard takes last month as the next row",
+  "portal",
+  "  const prior = (months || []).find((m) => MET().monthKey(m) === MET().addMonths(MET().monthKey(cur), -1)) || {};\n  const now = Date.now();",
+  "  const prior = (doneAt >= 0 ? months[doneAt + 1] : months && months[1]) || {};\n  const now = Date.now();",
+  1
+ ],
+ [
+  "portal KPI Snapshot hands a tile no months",
+  "portal",
+  "formatKpiDelta(current.total_calls, prior?.total_calls, cmp)",
+  "formatKpiDelta(current.total_calls, prior?.total_calls)",
+  1
+ ],
+ [
+  "portal formatKpiDelta ignores the two months",
+  "portal",
+  "const c = globalThis.rgaMetrics.change(current, prior, options.cur, options.prior, Date.now(),",
+  "const c = globalThis.rgaMetrics.change(current, prior, \"2026-01-01\", \"2025-12-01\", Date.now(),",
+  1
+ ],
+ [
+  "portal analytics takes last month as the next row",
+  "portal",
+  "_caCmp = { cur: first, prior: before };",
+  "_caCmp = { cur: first, prior: (months && months[1]) || null };",
+  1
+ ],
+ [
+  "a new arrow beside a prior value nobody reviewed",
+  "portal",
+  "function caRow(label, cur, prior) {",
+  "function caTrendX(cur, prior) { return cur > prior ? \"\\u25b2 up\" : \"\\u25bc down\"; }\nfunction caRow(label, cur, prior) {",
+  1
+ ],
+ [
+  "report page opens on the newest row",
+  "reportjs",
+  "const opensOn = picked.cur || monthlyRows[0] || null;",
+  "const opensOn = monthlyRows[0] || null;",
+  1
+ ],
+ [
+  "report page compares a running month",
+  "reportjs",
+  "const prior = before && M().canCompare(current, before, Date.now()) ? before : null;",
+  "const prior = before;",
+  1
+ ],
+ [
+  "report page spells the words itself",
+  "reportjs",
+  "Not compared: the months were counted differently",
+  "Not compared vs last month",
+  1
+ ],
+ [
+  "admin KPI grid computes its own percent",
+  "admin",
+  "    const c = M.change(value, prev, cur, prior, now, { lowerBetter, style: \"pct\" });",
+  "    const c = value != null && prev ? { better: value > prev, flat: value === prev, arrow: \"\", words: Math.abs((value - prev) / prev * 100).toFixed(0) + \"% from last month\" } : null;",
+  1
+ ],
+ [
+  "admin hands N/M in as a value",
+  "admin",
+  "tile(\"Keywords in top 3\", t3 ? t3.top3 : null, null,",
+  "tile(\"Keywords in top 3\", cur.keywords_top3_count != null ? `${cur.keywords_top3_count}/${cur.keywords_tracked_count || \"?\"}` : null, prior.keywords_top3_count,",
+  1
+ ],
+ [
+  "admin takes last month as the next row",
+  "admin",
+  "    state.kpiPrior = state.kpiCurrent ? months.find(",
+  "    state.kpiPrior = months[1] || null; const _k = state.kpiCurrent ? months.find(",
+  1
+ ],
+ [
+  "the email takes the newest earlier record as last month",
+  "monthlyreport",
+  "const prior = current ? sorted.find((r) => ym(r) === before) || {} : {};",
+  "const prior = current ? sorted.find((r) => ym(r) < want) || {} : {};",
+  1
+ ]
+]

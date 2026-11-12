@@ -89,7 +89,9 @@ if (/still open/i.test(rep.text) && !/carries into month 2/i.test(rep.text)) fai
   for (const id of ["m1.cit.priority_top10", "m1.cit.industry_specific", "m1.platform.yelp", "m1.platform.mentions", "m1.platform.bing_apple"]) T[id] = { status: "skipped", skipped_by: "rga", skipped_at: "2026-11-09T11:00:00Z", skip_reason: "Chris: sign-ups wait" };
   T["m1.web.blog_seed"] = { status: "skipped", skipped_by: "rga", skip_reason: "Nobody has time for blogs, Chris" };
   const NOW9 = new Date("2026-11-09T18:00:00Z");
-  const months = [{ reporting_month: "2026-09-01", gsc_clicks: 6, gbp_impressions: 60, gbp_calls: null, review_count: 0 }, { reporting_month: "2026-10-01", gsc_clicks: 11, gbp_impressions: 55, gbp_calls: null, review_count: 0 }];
+  // master audit #8 (11-11): Search clicks are compared as CALENDAR months (data.gsc_month, complete), never the rolling 28 days in gsc_clicks
+  const gm = (month, clicks) => ({ gsc_month: { month, clicks, impressions: null, complete: true } });
+  const months = [{ reporting_month: "2026-09-01", gsc_clicks: 6, gbp_impressions: 60, gbp_calls: null, review_count: 0, data: gm("2026-09-01", 6) }, { reporting_month: "2026-10-01", gsc_clicks: 11, gbp_impressions: 55, gbp_calls: null, review_count: 0, data: gm("2026-10-01", 11) }];
   const rep = MR.buildMonth1Report({ client: { business_name: "Rocket Plumbing" }, tasks: T, playbook: PB.month1, months, now: NOW9, kickoffAt: "2026-10-09T15:00:00Z", baseline: { reviews: 0, captured_at: "2026-10-09T10:00:00Z" } });
   const M = ME.buildMonth1Email({ rep, client: { primary_contact_name: "Dana Lee" }, now: NOW9 });
   const txt = M.lines.join("\n"), stored = { ...rep, comparisons: undefined, items: undefined };

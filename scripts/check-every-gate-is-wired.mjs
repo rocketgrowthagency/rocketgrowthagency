@@ -264,6 +264,8 @@ const NOT_PREFLIGHT = {
   //    accumulated unexcused, so this gate's own "nobody invokes these" list was crying wolf on 14
   //    gates that run daily. → feedback_a_new_gate_must_be_wired_or_excused
   'check-call-metrics-are-not-conflated.mjs': 'reporting-label gate; runs in daily-health-check.sh',
+  'check-a-running-month-is-never-compared.mjs': 'the WEBSITE repo\'s reporting (master audit #8, 11-11): every "vs last month" is worded in shared/metrics.js and drawn only between two complete months next to each other (portal, report page, admin, the email); static + shared/metrics.js and lifted portal producers on fixtures, self-proof on the before revision; run by daily-health-check.sh; it reads no video pipeline output.',
+  'check-one-leads-formula.mjs': 'the WEBSITE repo\'s reporting (master audit #8, 11-11): Leads are one formula (forms plus tracked calls over the same calendar month) and their value one formula on every surface; static + fixtures, self-proof on the before revision; run by daily-health-check.sh; it reads no video pipeline output.',
   'check-leads-match-the-provider.mjs': 'the WEBSITE repo\'s Leads to booked jobs (tier3_best_in_class_v1 §1, 11-11): provider adapters and the lead store on fakes, plus one read-only comparison of this month\'s lead rows in the database; run by daily-health-check.sh beside check-call-metrics-are-not-conflated; it reads no video pipeline output.',
   'check-call-tracking-path-is-whole.mjs': 'onboarding-path gate; runs in daily-health-check.sh',
   'check-client-boundary-is-declared.mjs': 'client-visibility gate; runs in daily-health-check.sh',

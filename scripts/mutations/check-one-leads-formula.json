@@ -1,0 +1,114 @@
+[
+ [
+  "a 28-day form count is added to a month of calls",
+  "sharedmetrics",
+  "    if (window !== \"month\") return { ...out, value: null, why: \"windows_differ\" };\n",
+  "",
+  1
+ ],
+ [
+  "unknown calls make a partial total",
+  "sharedmetrics",
+  "if (calls == null) return { ...out, value: null, why: \"calls_unknown\" };",
+  "if (calls == null) return { ...out, value: forms, why: null };",
+  1
+ ],
+ [
+  "a phone system's whole line counts as leads",
+  "sharedmetrics",
+  "    if (client.call_tracking_attributed === false) return false;\n",
+  "",
+  1
+ ],
+ [
+  "the month row wins over the client's own close rate",
+  "sharedmetrics",
+  "    if (t != null && t >= 1 && t <= 10) return { per10: t, source: \"client\" };\n",
+  "",
+  1
+ ],
+ [
+  "a measured close rate is ignored",
+  "sharedmetrics",
+  "    if (rows.length >= 2) {",
+  "    if (rows.length >= 99) {",
+  1
+ ],
+ [
+  "portal counts leads its own way",
+  "portal",
+  "  return globalThis.rgaMetrics.leadsOf(rec, client).value;",
+  "  return rec && rec.form_leads != null ? Number(rec.form_leads) + Number(rec.total_calls || 0) : null;",
+  1
+ ],
+ [
+  "report page makes a partial total",
+  "reportjs",
+  "  return L.value == null ? null : { total: L.value, forms: L.forms, calls: L.kind === \"forms+calls\" ? L.calls : null };",
+  "  const forms = num(current.form_leads), calls = num(current.total_calls); return forms == null && calls == null ? null : { total: (forms || 0) + (calls || 0), forms, calls };",
+  1
+ ],
+ [
+  "report page values leads from other inputs",
+  "reportjs",
+  "const LV = M().leadValueOf(current, client, series);",
+  "const LV = M().leadValueOf(current, {}, series);",
+  1
+ ],
+ [
+  "admin reads the stored total_leads",
+  "admin",
+  "  const leads = globalThis.rgaMetrics.leadsOf(cur, client).value;",
+  "  const leads = Number(cur.total_leads);",
+  1
+ ],
+ [
+  "the monthly tiles add the two numbers themselves",
+  "clientmonthly",
+  "    const LL = Met().leadsOf(row, L.callTracking === false ? { call_tracking_attributed: false } : {});",
+  "    const LL = { value: num(L.forms) != null && (L.callTracking === false || num(L.calls) != null) ? num(L.forms) + (L.callTracking === false ? 0 : num(L.calls)) : null, why: null };",
+  1
+ ],
+ [
+  "Organic sessions count Organic Social again",
+  "metricsjs",
+  "const ORGANIC_SEARCH = /^organic search$/i;",
+  "const ORGANIC_SEARCH = /organic/i;",
+  1
+ ],
+ [
+  "a contact click counts as a form sent",
+  "metricsjs",
+  "const NOT_A_SUBMISSION = /(start|click|view|open|tap|scroll|impression)/i;",
+  "const NOT_A_SUBMISSION = /(start)/i;",
+  1
+ ],
+ [
+  "forms are counted over 28 days again",
+  "metricsjs",
+  "let formSubmissions = await ga4FormSubmissions(url, accessToken, formsMonth || startDate, \"today\");",
+  "let formSubmissions = await ga4FormSubmissions(url, accessToken, startDate, \"today\");",
+  1
+ ],
+ [
+  "the stored total_leads fills unknown calls with 0",
+  "metricsjs",
+  "patch.total_leads = flagRow ? METRICS.leadsOf({ reporting_month: reportingMonth,",
+  "const trackedCalls = 0; patch.total_leads = flagRow ? ga4.formSubmissions + trackedCalls : METRICS.leadsOf({ reporting_month: reportingMonth,",
+  1
+ ],
+ [
+  "the email adds a partial total",
+  "monthlyreport",
+  "    const L = require(\"../../shared/metrics.js\").leadsOf(rec && rec.reporting_month ? rec : null, client);",
+  "    const L = { value: (Number(rec && rec.form_leads) || 0) + (Number(rec && rec.total_calls) || 0), forms: rec && rec.form_leads, calls: rec && rec.total_calls, kind: \"forms+calls\" };",
+  1
+ ],
+ [
+  "portal says forms come from organic search",
+  "portal",
+  "`Forms sent on your website${formsWin}, from any source (search, ads, social, direct).`",
+  "`People who filled out a form on your site from organic search.`",
+  1
+ ]
+]

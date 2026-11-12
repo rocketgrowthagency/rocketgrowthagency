@@ -34,12 +34,13 @@ const check = (ok, what, got) => {
 let chromium;
 try { ({ chromium } = await import("playwright")); } catch { console.log("⚠️  INDETERMINATE — playwright missing"); process.exit(2); }
 
-let reportJs, reportCss, reportHtml, googleLiveJs;
+let reportJs, reportCss, reportHtml, googleLiveJs, metricsJs;
 try {
   reportJs = fs.readFileSync(`${SITE}/portal/report/report.js`, "utf8");
   reportCss = fs.readFileSync(`${SITE}/portal/report/report.css`, "utf8");
   reportHtml = fs.readFileSync(`${SITE}/portal/report/index.html`, "utf8");
   googleLiveJs = fs.readFileSync(`${SITE}/shared/google-live.js`, "utf8");
+  metricsJs = fs.readFileSync(`${SITE}/shared/metrics.js`, "utf8");   // master audit #8: the report imports the one-definition module
 } catch (e) { console.log(`⚠️  INDETERMINATE — cannot read the report: ${e.message}`); process.exit(2); }
 
 // A stand-in for the Supabase client. It applies the filters the page really asks for, and an embedded row only carries the
@@ -98,7 +99,8 @@ async function render({ months, grid = [], client = {}, open, whyNow }) {
   const fix = {
     client: { ...CLIENT, ...client },
     client_portal_access: [{ id: "a1", client_id: "c1", portal_email: "t@example.com", invite_status: "active" }],
-    client_monthly_records: months.map((m) => ({ client_id: "c1", data: {}, ...m })),
+    // master audit #8 (11-11): a row as the pull writes it since then: its form count is the calendar month (data.ga4.forms_window), the window leads need
+    client_monthly_records: months.map((m) => ({ client_id: "c1", ...m, data: { ga4: { forms_window: "month", forms_month: String(m.reporting_month).slice(0, 10) }, ...(m.data || {}) } })),
     client_keyword_rankings: grid.map((g) => ({ client_id: "c1", ...g })),
     // the kickoff "why now" answer: undefined = the column is not there yet (the read errors), null/true/false = a row that has it
     clients: whyNow === undefined || whyNow === "missing" ? [] : [{ id: "c1", why_now_slow: whyNow }],
@@ -112,6 +114,7 @@ async function render({ months, grid = [], client = {}, open, whyNow }) {
     // report_live_google_30_day_v2: Google's numbers come from the one door. The fixture rows hold what Google "says": a value is "ok";
     // a null is whatever the row's __gstatus says (default could_not_read), so no test can pass by a stored column.
     if (p.endsWith("/shared/google-live.js")) return route.fulfill({ contentType: "text/javascript", body: googleLiveJs });
+    if (p.endsWith("/shared/metrics.js")) return route.fulfill({ contentType: "text/javascript", body: metricsJs });
     if (p.endsWith("/portal-google-numbers")) {
       const asked = JSON.parse(route.request().postData() || "{}").months || [];
       const COL = { calls: "gbp_calls", website_clicks: "gbp_website_clicks", directions: "gbp_directions", impressions: "gbp_impressions", searches_direct: "gbp_searches_direct", searches_discovery: "gbp_searches_discovery", actions: "gbp_actions", review_count: "review_count", new_reviews: "new_reviews", average_rating: "average_rating" };
@@ -145,7 +148,8 @@ async function render({ months, grid = [], client = {}, open, whyNow }) {
     const kpi = {};
     for (const k of d.querySelectorAll(".kpi")) {
       // textContent: CSS uppercases the labels on screen, and innerText returns them uppercased
-      kpi[k.querySelector(".kpi-lab").textContent.trim()] = {
+      // master audit #8: a Search Console tile names its window in brackets ("Seen in search (the 28 days to ...)"); the label is read without it
+      kpi[k.querySelector(".kpi-lab").textContent.trim().replace(/ \(.*\)$/, "")] = {
         val: k.querySelector(".kpi-val").textContent.trim(), chip: k.querySelector(".kpi-foot").textContent.trim(),
       };
     }
@@ -479,6 +483,7 @@ try {
       }
       if (u.includes("/rest/v1/clients")) return clientFlag === "fail" ? reply(500, {}) : reply(200, [{ call_tracking_attributed: clientFlag ?? null }]);
       if (u.includes("/rest/v1/client_state_snapshots")) return reply(200, []);
+      if (u.includes("/rest/v1/client_citations")) return reply(200, []);   // master audit #8: the nightly listings count
       if (u.includes("/rest/v1/client_monthly_records")) { const b = JSON.parse(opts.body); if (opts.method === "POST") { made = { id: "new", data: b.data, total_calls: null }; return reply(200, [made]); } writes.push(b); return reply(200, []); }   // monthly_v1: a missing month is made by openMonth (a POST), then this job PATCHes its numbers onto it
       throw new Error(`unexpected request: ${u}`);
     };
@@ -486,6 +491,7 @@ try {
     return { res, patch: writes[0] };
   };
   let s = await save({});
+  // master audit #8 (11-11): total_leads is the one leads formula (shared/metrics.js leadsOf). A client with no call tracking has form leads only.
   check(s.res.ok && s.patch?.total_leads === 3 && s.patch?.gbp_calls === 20, "a new month: total_leads is 3 forms, the 20 taps stay in gbp_calls", s.patch);
 
   s = await save({ existing: { id: "m1", data: { gbp: { calls: 50 } } } });
@@ -498,7 +504,7 @@ try {
   check(s.patch?.total_leads === 3, "a whole phone line's calls don't", s.patch?.total_leads);
 
   s = await save({ existing: { id: "m1", data: {}, total_calls: 40 }, clientFlag: "fail" });
-  check(s.patch?.total_leads === 3, "and if we can't read what kind of number it is, they don't either", s.patch?.total_leads);
+  check(s.patch?.total_leads === null, "and if we can't read what kind of number it is, they don't either (leads unknown, never forms + 40)", s.patch?.total_leads);
 
   // ── a month's form count is that month's, and a zero has to be earned (report_and_measurement_v1) ──
   // sess = rows the 28-day session query answers; wide = rows a 12-month session query would answer (it must never be asked
@@ -525,6 +531,7 @@ try {
       }
       if (u.includes("/rest/v1/clients")) return reply(200, [{ call_tracking_attributed: null }]);
       if (u.includes("/rest/v1/client_state_snapshots")) return reply(200, []);
+      if (u.includes("/rest/v1/client_citations")) return reply(200, []);   // master audit #8: the nightly listings count
       if (u.includes("/rest/v1/client_monthly_records")) { const b = JSON.parse(opts.body); if (opts.method === "POST") { made = { id: "new", data: b.data, total_calls: null }; return reply(200, [made]); } writes.push(b); return reply(200, []); }   // monthly_v1: a missing month is made by openMonth (a POST), then this job PATCHes its numbers onto it
       throw new Error(`unexpected request: ${u}`);
     };
@@ -551,19 +558,26 @@ try {
   check(!!fnSrc, "portal.js has portalMonthLeads", null);
   if (fnSrc) {
     // A lift of ONE pure function (the tile itself is looked at in a real browser); a harness can lie, so the source scan above stays.
-    const leads = new Function(`${fnSrc}; return portalMonthLeads;`)();
-    check(leads({ form_leads: 3, total_calls: 2, total_leads: 23 }, {}) === 5, "an old row (3 forms, 2 tracked calls, total_leads 23 with taps) reads 5", leads({ form_leads: 3, total_calls: 2, total_leads: 23 }, {}));
-    check(leads({ form_leads: 3, total_calls: null, total_leads: 23 }, { call_tracking_attributed: true }) === null, "calls never recorded: not available, never 3 and never 23", null);
-    check(leads({ form_leads: null, total_calls: 4 }, {}) === null, "forms never recorded: not available", null);
-    check(leads({ form_leads: 3, total_calls: 40 }, { call_tracking_attributed: false }) === 3, "a plain phone line's calls are not leads", null);
-    check(leads({ form_leads: 0, total_calls: 0 }, {}) === 0, "a recorded 0 and 0 is 0", null);
+    // master audit #8 (11-11): portalMonthLeads IS the one leads formula (shared/metrics.js leadsOf), so it is lifted with that module beside it.
+    // Forms and calls are added only over the SAME window: a row whose forms are the calendar month (data.ga4.forms_window "month") adds them; an older
+    // 28-day form count beside a month of calls is not added (null, never a mixed sum).
+    const MET = requireCjs(`${SITE}/shared/metrics.js`);
+    const leads = new Function("globalThis", `${fnSrc}; return portalMonthLeads;`)({ rgaMetrics: MET });
+    const MW = (o) => ({ reporting_month: "2026-09-01", data: { ga4: { forms_window: "month", forms_month: "2026-09-01" } }, ...o });
+    check(leads(MW({ form_leads: 3, total_calls: 2, total_leads: 23 }), {}) === 5, "a row (3 forms, 2 tracked calls, total_leads 23 with taps) reads 5, never 23", leads(MW({ form_leads: 3, total_calls: 2, total_leads: 23 }), {}));
+    check(leads({ reporting_month: "2026-09-01", form_leads: 3, total_calls: 2, total_leads: 23 }, {}) === null, "an old row whose forms are a 28-day window beside a month of calls is not added", null);
+    check(leads(MW({ form_leads: 3, total_calls: null, total_leads: 23 }), { call_tracking_attributed: true, kpi_config: { call_tracking: true } }) === null, "a tracked client's calls never recorded: not available, never 3 and never 23", null);
+    check(leads(MW({ form_leads: 3, total_calls: null, total_leads: 23 }), {}) === 3, "a client with no call tracking: the 3 form leads, never 23", null);
+    check(leads(MW({ form_leads: null, total_calls: 4 }), {}) === null, "forms never recorded: not available", null);
+    check(leads(MW({ form_leads: 3, total_calls: 40 }), { call_tracking_attributed: false }) === 3, "a plain phone line's calls are not leads", null);
+    check(leads(MW({ form_leads: 0, total_calls: 0 }), {}) === 0, "a recorded 0 and 0 is 0", null);
     check(leads(null, {}) === null && leads({}, {}) === null, "no row, no number", null);
   }
 
   // ── the report email: the same leads, and no admin-only number (report_and_measurement_v1) ──
   const mail = requireCjs(`${SITE}/netlify/functions/send-monthly-report.js`);
   const built = await mail.buildReport({ client: { business_name: "Test Plumbing", call_tracking_attributed: true, primary_contact_name: "Pat Lee" },
-    current: { reporting_month: "2026-09-01", form_leads: 3, total_calls: 2, total_leads: 23, gbp_calls: 20, ranking_position: 4.2, new_reviews: 1 },
+    current: { reporting_month: "2026-09-01", form_leads: 3, total_calls: 2, total_leads: 23, gbp_calls: 20, ranking_position: 4.2, new_reviews: 1, data: { ga4: { forms_window: "month", forms_month: "2026-09-01" } } },
     prior: { reporting_month: "2026-08-01", form_leads: 1, total_calls: null, total_leads: 9, gbp_calls: 7 } });
   const mailText = (built && `${built.html}\n${built.text}`.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")) || "";
   check(!!built && /Leads \(form submissions plus tracked calls\)/.test(mailText) && !/Total leads/.test(mailText) && !/\b23\b/.test(mailText), "the email counts leads as forms plus tracked calls (5), and never reads total_leads (23)", mailText.slice(0, 400));

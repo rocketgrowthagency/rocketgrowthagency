@@ -630,4 +630,6 @@ export const FILES = {
   midmonth: "netlify/functions/_mid-month-note.js",
   notesdraftfn: "netlify/functions/client-notes-draft.js",
   suggestedcall: "netlify/functions/_suggested-call.js",
+  // master audit #8 (11-11): one definition per number (check-a-running-month-is-never-compared, check-one-leads-formula)
+  sharedmetrics: "shared/metrics.js",
 };

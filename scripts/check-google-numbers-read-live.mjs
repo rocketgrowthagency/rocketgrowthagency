@@ -69,7 +69,7 @@ const run = (oauth = OAUTH, from = "2026-09-01", to = "2026-10-31", extra = {}) 
     if (sep.values.calls !== 29 || sep.status.calls !== "ok") fail(`a day Google returns with no value on a 200 isn't counted as 0 (calls ${sep.values.calls}, want 29)`);
     if (sep.values.website_clicks !== 30 || sep.values.directions !== 30) fail(`clicks/directions aren't summed per month (${sep.values.website_clicks}, ${sep.values.directions})`);
     if (sep.values.impressions !== 120) fail(`impressions aren't the four surfaces summed (${sep.values.impressions}, want 120)`);
-    if (sep.values.actions !== 29 + 30 || sep.status.actions !== "ok") fail(`actions isn't calls + website clicks (${sep.values.actions})`);
+    if (sep.values.actions !== 29 + 30 + 30 || sep.status.actions !== "ok") fail(`actions isn't calls + directions + website clicks, the memory project_kpis definition (master audit #8) (${sep.values.actions})`);
     if (oct.values.website_clicks !== 30) fail(`October should hold the 30 days Google answered (${oct.values.website_clicks})`);   // 10-01..10-30
     if (sep.values.searches_direct !== 30 || sep.values.searches_discovery !== 50) fail(`searches aren't split by the business name, with "under 15" keywords left out (${sep.values.searches_direct}/${sep.values.searches_discovery})`);
     // reviews by createTime, from all 3 pages, counting only what is on Google today
