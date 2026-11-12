@@ -357,10 +357,17 @@
   1
  ],
  [
-  "Monthly 15 loses the one list",
+  "Monthly 15 loses the one list before the links pilot",
   "adminjs",
-  "<div class=\"ob-mn-in15\">${mnHostHtml(Q2.ID.LINKS)}</div>",
-  "<div class=\"ob-mn-in15\"></div>",
+  "body: `<div class=\"ob-mn-in15\">${mnHostHtml(Q2.ID.LINKS)}</div>`, say: \"\" };",
+  "body: `<div class=\"ob-mn-in15\"></div>`, say: \"\" };",
+  1
+ ],
+ [
+  "Monthly 15 loses the one list in the links pilot",
+  "adminjs",
+  "${hours}</div><div class=\"ob-mn-in15\">${mnHostHtml(Q2.ID.LINKS)}</div>`",
+  "${hours}</div><div class=\"ob-mn-in15\"></div>`",
   1
  ],
  [

@@ -345,7 +345,9 @@ try {
   { const va = (/import "\/shared\/mentions\.js\?v=([0-9a-z]+)"/.exec(adm) || [])[1], vp = (/import "\/shared\/mentions\.js\?v=([0-9a-z]+)"/.exec(por) || [])[1];
     if (!va || !vp || va !== vp || va === "20261111x") fail(`8: admin and portal don't import shared/mentions.js at the same moved buster (${va} / ${vp})`); }
   if (!/step === "m1\.platform\.mentions" \? mnHostHtml\(step\)/.test(adm)) fail("8: admin step 55 doesn't draw the one list");
-  if (!/mnHostHtml\(Q2\.ID\.LINKS\)/.test(adm)) fail("8: Monthly 15 doesn't draw the one list");
+  // 11-11: Monthly 15 now has two bodies (before the links pilot, and in it): EVERY list slot must hold the one list, and there must be one
+  { const slots = adm.match(/<div class="ob-mn-in15">[^<]*?<\/div>|<div class="ob-mn-in15">\$\{[^}]*\}<\/div>/g) || [];
+    if (!slots.length || slots.some((s) => !/mnHostHtml\(Q2\.ID\.LINKS\)/.test(s))) fail(`8: Monthly 15 doesn't draw the one list in every body (${slots.length} slot(s))`); }
   if ((por.match(/\$\{ogMnHost\(cid\)\}/g) || []).length < 5) fail("8: an Ongoing work layout is missing the Where you're mentioned card");
   // 11-11: one pinned string broke the day another build moved the page (main went to ...mj, then ...nb). Whether a buster MOVED with its file is
   // check-every-cache-buster-moved-with-its-file's job (against origin/main); here: both pages load their script with a buster at all.
