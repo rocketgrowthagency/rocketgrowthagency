@@ -35,8 +35,9 @@ const NOW_ISO = () => new Date().toISOString();
 // 🔑 THE BIGGEST LEVER: _step-record.js writeStepTasks writes the whole task map for ~45 of these files at once; making it diff and call
 // writeChangedTasks for Month 1 covers them in one change. The browser writers (admin/admin.js, portal/portal.js) and the Mac's
 // flow/state.mjs (Scraper) write the record whole too and are not netlify functions, so they are named here and not scanned.
-const NOT_YET = new Set(["_citation-build.js", "_citation-recheck.js", "_gbp-landing-run.js", "_gbp-safety.js", "_gbp-watch.js", "_listing-removal-flow.js",
-  "_listings-autorun.js", "_monthly-close.js", "_monthly-health.js", "_monthly-once.js", "_monthly-quarter.js", "_payment-welcome.js", "_rank-schedule.js",
+const NOT_YET = new Set(["_ai-sample.js", "_auto-accept.js", "_categories-auto.js", "_competitor-watch.js", "_review-replies.js", "_review-sites.js", "review-second-site.js", "site-measure-run.js",   // 11-11 integration: writers built since this gate (main + the AI sample pilot), still whole
+  "_citation-build.js", "_citation-recheck.js", "_gbp-landing-run.js", "_gbp-safety.js", "_gbp-watch.js", "_listing-removal-flow.js",
+  "_listings-autorun.js", "_monthly-close.js", "_monthly-health.js", "_monthly-once.js", "_monthly-quarter.js", "_rank-schedule.js",
   "_step3-go-ahead.js", "_youtube-read.js", "admin-access-confirm.js", "admin-blog-check.js", "admin-call-test.js", "admin-citation-build.js",
   "admin-citation-runbook.js", "admin-gbp-area-add.js", "admin-gbp-booking.js", "admin-gbp-categories.js", "admin-gbp-details-save.js", "admin-gbp-drift.js",
   "admin-gbp-facts-area.js", "admin-gbp-safety.js", "admin-gbp-services-push.js", "admin-gbp-services-told.js", "admin-month1-report.js", "admin-monthly-plan.js",

@@ -70,7 +70,7 @@ for (const f of files) {
   let src; try { src = fs.readFileSync(f.abs, "utf8"); } catch { continue; }
   for (const i of deletes(src, "clients")) fail(`2: ${f.tag} ${f.rel}:${lineOf(src, i)} deletes a client: archive it instead (clients.archived_at)`);
   for (const i of deletes(src, "client_contracts")) {
-    const ok = f.tag === "website" && f.rel === "admin/admin.js" && /if \(c\.status !== "voided"\) \{\s*rgaAlert\("Only voided contracts can be deleted\. Void it first\."\);\s*return;\s*\}/.test(src.slice(Math.max(0, i - 900), i));
+    const ok = f.tag === "website" && f.rel === "admin/admin.js" && /if \(c\.status !== "voided"\) \{\s*rgaAlert\("Only voided contracts can be deleted\. Void it first\."(?:, \{[^}]*\})?\);\s*return;\s*\}/.test(src.slice(Math.max(0, i - 900), i));
     if (f.tag === "website" && f.rel === "admin/admin.js") seen.contract++;
     if (!ok) fail(`2: ${f.tag} ${f.rel}:${lineOf(src, i)} deletes a contract (only admin.js's voided-contract delete, checked first, may)`);
   }
@@ -80,7 +80,8 @@ for (const f of files) {
     const reset = f.tag === "website" && f.rel === "scripts/reset-test-client.mjs" && /for \(const clientId of TEST_IDS\)/.test(src.slice(0, i));
     if (f.tag === "website" && f.rel === "netlify/functions/admin-record-cancellation.js") seen.cancel++;
     if (f.tag === "website" && f.rel === "scripts/reset-test-client.mjs") seen.reset++;
-    if (!cancel && !reset) fail(`2: ${f.tag} ${f.rel}:${lineOf(src, i)} deletes an invoice (only the cancellation's upcoming invoices and the test-client reset may)`);
+    const twin = f.tag === "website" && f.rel === "netlify/functions/billing-daily-check.js" && /^\/client_invoices\?id=eq\.\$\{t\.id\}&status=eq\.upcoming`/.test(at);   // the duplicate of the next UPCOMING invoice a race left (oldest kept)
+    if (!cancel && !reset && !twin) fail(`2: ${f.tag} ${f.rel}:${lineOf(src, i)} deletes an invoice (only the cancellation's upcoming invoices and the test-client reset may)`);
   }
 }
 if (!seen.contract || !seen.cancel || !seen.reset) { console.error(`⚠️  INDETERMINATE: the delete scan did not find the allowed deletes it knows exist (${JSON.stringify(seen)}): the pattern is blind`); process.exit(2); }
@@ -137,7 +138,7 @@ try {
   if (d.status !== 200 || !d.body.deduped) fail(`3d: a redelivered finished event must be deduped (${JSON.stringify(d.body)})`);
   if (log.patches.slice(before).some((x) => x.body.processed !== undefined)) fail("3d: a duplicate delivery rewrote the finished event");
   // e: the ledger write never fails the payment path
-  if (!/async function markEvent\(eventId, fields\) \{[\s\S]{0,900}?\} catch \(e\) \{[\s\S]{0,200}?return false;/.test(read("netlify/functions/stripe-webhook.js"))) fail("3e: marking the event must never throw (a ledger write may not turn a payment into a 500)");
+  if (!/async function markEvent\(evt, ledger, error\) \{[\s\S]{0,900}?\} catch \(e\) \{[\s\S]{0,300}?console\.warn/.test(read("netlify/functions/stripe-webhook.js"))) fail("3e: marking the event must never throw (a ledger write may not turn a payment into a 500)");
 } catch (e) { console.error(`⚠️  INDETERMINATE (3): ${String(e.stack || e.message).split("\n").slice(0, 2).join(" ")}`); process.exit(2); }
 
 if (F.length) { console.error(`❌ a contract, an invoice or a client can be deleted, or a Stripe event isn't finished (${F.length}):`); for (const x of F) console.error(`  · ${x}`); process.exit(1); }
