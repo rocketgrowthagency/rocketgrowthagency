@@ -826,6 +826,7 @@ run check-no-client-record-was-lost.mjs "NO CLIENT RECORD WAS LOST: every record
 run check-client-dedupe-gate.mjs       "an archived client cannot be silently re-created"
 run retry-place-id-backfill.mjs        "every client has a Google place id (strongest dedupe key)"
 run check-the-review-count-is-read.mjs "the review count is read from the client's own Google first, and an unread client fails"
+run check-rating-history-is-written.mjs "the rating history: one client_gbp_snapshots row a day for every active connected client, from the cloud metrics job; a Google refusal is said, never written (master map 11-11)"
 run refresh-review-metrics.mjs        "review counts observed daily (velocity needs a series)"
 run refresh-pagespeed.mjs             "PageSpeed refreshed (background; verified by snapshot)" status
 run check-report-matches-the-mockup.mjs "the client report has not drifted from its approved design"

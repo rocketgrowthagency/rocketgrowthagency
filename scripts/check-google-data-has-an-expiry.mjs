@@ -39,6 +39,8 @@ const IDS = new Set([...P.TARGETS.map((t) => t.id), P.MONTHLY.id, ...K.GOOGLE_JS
 const INVENTORY = {
   "_metrics.js": "covered:monthly_google_numbers",
   "refresh-review-metrics.js": "covered:reviews,review_replies",
+  // 11-11 master map Tier 1: the daily rating + review count row in client_gbp_snapshots (check-rating-history-is-written)
+  "_gbp-snapshot.js": "covered:profile_snapshots",
   "deep-assess-client.js": "covered:profile",
   "v2-gbp-profile.js": "covered:onboarding_gbp_profile",
   "nap-and-review-audit.js": "none:the saved line carries the verdict and the vertical's median only, no Google figure of the client's",

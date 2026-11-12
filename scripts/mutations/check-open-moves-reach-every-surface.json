@@ -6,7 +6,7 @@
  ["RGA-only steps reach the client", "openmoves", "    else if (visible.has(m.step_id)) out.push(pick(m, m.step_id, m.kind));", "    else out.push(pick(m, m.step_id, m.kind));"],
  ["Remind me later is ignored", "openmoves", "!s.clientOptional && !rgaCard && !month1Work && !(t.later && t.later.until && Date.parse(t.later.until) > Date.parse(now))", "!s.clientOptional && !rgaCard && !month1Work"],
  ["no start date reads as late", "openmoves", "  m.late = !!due && Date.parse(due) < t;", "  m.late = !due || Date.parse(due) < t;"],
- ["a picked call time is not RGA's to confirm", "openmoves", "if (k && k.status === \"requested\") out.push(", "if (false) out.push("],
+ ["a picked call time is not RGA's to confirm", "openmoves", "if (ks.requested) out.push(", "if (false) out.push("],
  ["the morning email comes when nothing is due", "morningfn", "  if (!late.length && !today.length) return null;\n", "\n"],
  ["the queue reads the walk's test clients", "adminopenmovesfn", "or=(source.is.null,source.not.like.test:*)`;", "`;"],
  ["the portal gets the full list (RGA's wording + ids)", "portalopenmovesfn", "const moves = clientMoves(openMoves({ playbooks: PLAYBOOKS, data: (row && row.data) || {}, mode }), PLAYBOOKS);", "const moves = openMoves({ playbooks: PLAYBOOKS, data: (row && row.data) || {}, mode });"],
@@ -37,5 +37,8 @@
  ["New message goes", "admin", "${m.kind === \"client_request\" ? \"New message · \" : \"\"}", "", 1],
  ["For your approval's badge never counts", "portal", "  if (fyaBadge) { fyaBadge.textContent = String(open.length); fyaBadge.hidden = open.length === 0; }", "  if (fyaBadge) { fyaBadge.textContent = \"0\"; fyaBadge.hidden = true; }", 1],
  ["For your approval drops out of the menu", "portalindex", "For your approval<span class=\"portal-nav-badge\" id=\"fyaBadge\" hidden>0</span></a>", "For your approval</a>", 1],
- ["step 4 drops RGA's promise date", "portal", "${byHand.late ? \" · taking longer than promised\" : byHand.due ? ` · by ${escapeHtml(monthDay(byHand.due))}` : \"\"}", "", 1]
+ ["step 4 drops RGA's promise date", "portal", "${byHand.late ? \" · taking longer than promised\" : byHand.due ? ` · by ${escapeHtml(monthDay(byHand.due))}` : \"\"}", "", 1],
+ ["booked stops reading admin 6's booking (only a status word no writer sets)", "setupsplit", "booked: held || b.status === \"done\" || inv.status === \"booked\"", "booked: held || inv.status === \"booked\"", 1],
+ ["the kickoff move goes back to the invite's status word", "openmoves", "else if (!ks.booked) out.push(", "else if (!k || ![\"booked\", \"held\", \"requested\"].includes(k.status)) out.push(", 1],
+ ["a reopened booking is never the client's again", "openmoves", "else if (!ks.booked) out.push(", "else if (false) out.push(", 1]
 ]

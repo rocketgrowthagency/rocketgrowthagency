@@ -594,4 +594,6 @@ export const FILES = {
   mentionsportalfn: "netlify/functions/portal-mentions.js",
   mentionscheck: "netlify/functions/mentions-check.js",
   mentionssql: "docs/supabase/CLIENT_MENTIONS_2026-11-11.sql",
+  // 11-11 master map Tier 1: the daily rating snapshot (client_gbp_snapshots); setupsplit is above
+  gbpsnapshot: "netlify/functions/_gbp-snapshot.js",
 };

@@ -65,6 +65,13 @@ if (run(allDone()).length) fail(`a client with every step finished still has ope
   if (!m || m.owner !== "rga" || m.kind !== "confirm_call" || m.days !== OM.CONFIRM_DAYS) fail("a picked kickoff time is not RGA's move to confirm in 1 business day");
   const b = find(run(t, { kickoff_invite: { status: "booked" } }), "m1.kickoff.call");
   if (b) fail("a BOOKED kickoff still shows as an open move");
+  // 🔒 master map Tier 1 (11-11): a REAL booking. send-kickoff-invite writes no `status` on the invite stamp; it marks admin 6 (m1.close.kickoff_invite)
+  // done. Booked is that fact (shared/setup-split.js kickoffState), so the client no longer owes "Book the kickoff call" while the call waits to be held.
+  const tb = allDone(); delete tb["m1.kickoff.call"]; tb["m1.close.kickoff_invite"] = { status: "done", auto_result: { confirmed_at: "2026-10-22T09:00:00Z" } };
+  if (find(run(tb, { kickoff_invite: { event_id: "ev1", start: "2026-10-29T17:00:00Z", sent_at: "2026-10-22T09:00:00Z" } }), "m1.kickoff.call", "client")) fail("a kickoff RGA confirmed (admin 6 done, the invite stamp as the confirm writes it) is still listed as the client's 'Book the kickoff call'");
+  // a declined RSVP or a cancel reopens admin 6: the client books again
+  const tr = allDone(); delete tr["m1.kickoff.call"]; tr["m1.close.kickoff_invite"] = { status: "pending" };
+  if (!find(run(tr, { kickoff_invite: { event_id: "ev1", start: "2026-10-29T17:00:00Z", rsvp: "declined" } }), "m1.kickoff.call", "client")) fail("a kickoff admin 6 reopened (declined or cancelled) is not the client's 'Book the kickoff call' again");
 }
 // 4 · an open client step: theirs, since its last prerequisite / the kickoff / the listing clear — never earlier
 {

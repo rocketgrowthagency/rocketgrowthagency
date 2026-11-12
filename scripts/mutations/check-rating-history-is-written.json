@@ -1,0 +1,114 @@
+[
+ [
+  "a Google refusal is written as zero reviews",
+  "gbpsnapshot",
+  "if (!r.ok) return { measured: false, said: `Google refused the review read",
+  "if (!r.ok) return { measured: true, review_count: 0, rating: null, said: `Google refused the review read",
+  1
+ ],
+ [
+  "a refused pull is read as nothing to reuse",
+  "gbpsnapshot",
+  "if (errors && errors.gbp_reviews) return { measured: false,",
+  "if (false) return { measured: false,",
+  1
+ ],
+ [
+  "a failed sign-in is not a refusal",
+  "gbpsnapshot",
+  "try { token = await d.token(); } catch (e) { m = { measured: false,",
+  "try { token = await d.token(); } catch (e) { token = null; m = null && { measured: false,",
+  1
+ ],
+ [
+  "today's row is not looked for",
+  "gbpsnapshot",
+  "if (Array.isArray(have) && have.length) return { already: true, date };",
+  "",
+  1
+ ],
+ [
+  "the write is not an upsert on the day's key",
+  "gbpsnapshot",
+  "?on_conflict=client_id,snapshot_date,source",
+  "",
+  1
+ ],
+ [
+  "the pull's numbers are thrown away (a second Google call)",
+  "gbpsnapshot",
+  "let m = pulled ? fromPull(pulled.gbp, pulled.errors) : null;",
+  "let m = null;",
+  1
+ ],
+ [
+  "zero reviews on a 200 is not measured",
+  "gbpsnapshot",
+  "? Number(j.totalReviewCount) : 0,",
+  "? Number(j.totalReviewCount) : null,",
+  1
+ ],
+ [
+  "the write is not read back",
+  "gbpsnapshot",
+  "if (!got || Number(got.review_count) !== m.review_count || String(got.snapshot_date).slice(0, 10) !== date) return { error: \"the snapshot did not read back after the write\" };",
+  "",
+  1
+ ],
+ [
+  "archived clients are snapshotted",
+  "gbpsnapshot",
+  "!!c && c.status !== \"archived\" && !c.archived_at &&",
+  "!!c &&",
+  1
+ ],
+ [
+  "test clients are snapshotted",
+  "gbpsnapshot",
+  "&& !String(c.source || \"\").startsWith(\"test:\");",
+  ";",
+  1
+ ],
+ [
+  "a client with no profile connected is not skipped",
+  "gbpsnapshot",
+  "if (!parent) return { skipped: \"no Google profile connected\" };",
+  "",
+  1
+ ],
+ [
+  "a client with no GA4 or Search Console gets no snapshot",
+  "metricsdaily",
+  "      await snapshotFor(oauth, null);\n",
+  "",
+  1
+ ],
+ [
+  "the run's reply drops the snapshots",
+  "metricsdaily",
+  ", rating_snapshots: ratingSnapshots });",
+  " });",
+  1
+ ],
+ [
+  "inactive clients are not filtered out",
+  "metricsdaily",
+  "if (!activeIds || !activeIds.has(oauth.client_id)) return null;",
+  "if (!activeIds) return null;",
+  1
+ ],
+ [
+  "System health's note drops the refusal",
+  "jobmanifest",
+  "${rs.refused ? `, ${rs.refused} refused by Google` : \"\"}",
+  "",
+  1
+ ],
+ [
+  "the snapshots stop expiring",
+  "gbppurge",
+  "{ id: \"profile_snapshots\", short: \"profile snapshots\", label: \"Profile snapshots\", table: \"client_gbp_snapshots\", dateCol: \"snapshot_date\", filter: \"\" },",
+  "",
+  1
+ ]
+]

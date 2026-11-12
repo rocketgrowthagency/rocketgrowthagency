@@ -111,6 +111,25 @@ function checkTree(root, label) {
   if (!allSkipped.complete || allSkipped.rows.some((r) => r.state !== "skipped" || !r.waits || !r.back) || SS.whatWaits(allSkipped).length !== 3) fail("every Getting started step skipped: Setup is not complete, or a skip does not say what waits and offer a way back");
   if (!/Give access/.test(allSkipped.rows[1].back)) fail("a skipped website step has no 'Give access' way back");
   if (gs({}).complete || gs({}).done !== 0) fail("nothing done reads as complete");
+  // 🔒 master map Tier 1 (11-11): BOOKED vs HELD. Getting started 1 is done once the call is BOOKED (admin 6, m1.close.kickoff_invite, done when RGA
+  // confirms the time); admin 7 (m1.kickoff.call) stays open until the call is HELD. The invite stamp below is the shape the confirm really writes (no status).
+  if (typeof SS.kickoffState !== "function") fail("shared/setup-split.js has no kickoffState: booked and held have no one reader");
+  else {
+    const pend = T({ "m1.kickoff.call": { status: "pending" } }), stamp = { event_id: "ev1", start: "2026-11-05T17:00:00Z", sent_at: "2026-11-02T15:00:00Z" };
+    const booked = gs({ ...pend, "m1.close.kickoff_invite": { status: "done", auto_result: { confirmed_at: "2026-11-02T15:00:00Z" } } }, { invite: stamp });
+    if (booked.rows[0].state !== "done" || !booked.complete) fail(`a call RGA confirmed (admin 6 done) does not finish Getting started 1: ${booked.rows[0].state}`);
+    const ks = SS.kickoffState({ tasks: { ...pend, "m1.close.kickoff_invite": { status: "done" } }, kickoffInvite: stamp });
+    if (!ks.booked || ks.held) fail(`booked reads as held (admin 7 must stay open until the call is held): ${JSON.stringify(ks)}`);
+    const reopened = gs({ ...pend, "m1.close.kickoff_invite": { status: "pending" } }, { invite: { ...stamp, rsvp: "declined" } });
+    if (reopened.rows[0].state !== "open") fail("a booking admin 6 reopened (a declined RSVP or a cancel) still finishes Getting started 1");
+    const heldOnly = gs({ ...T(), "m1.close.kickoff_invite": { status: "pending" } });
+    if (heldOnly.rows[0].state !== "done" || !SS.kickoffState({ tasks: T() }).held) fail("a call already held does not count as booked");
+    // the skip and its Undo still work on the client's own id
+    const skippedPend = gs({ ...pend, "m1.kickoff.call": { status: "skipped", skipped_by: "client", skip_reason: "no time" } });
+    if (skippedPend.rows[0].state !== "skipped" || !skippedPend.rows[0].back) fail("a skipped kickoff with nothing booked does not read skipped with a way back");
+    const undone = gs({ ...pend, "m1.kickoff.call": { status: "pending", skip_prev: null } });
+    if (undone.rows[0].state !== "open") fail("an undone kickoff skip does not read open again");
+  }
   if (SS.GETTING_STARTED.includes("m1.call.close")) fail("the close-out call is in Getting started");
 
   // ── 4 · review asks ──

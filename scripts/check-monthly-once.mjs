@@ -217,6 +217,18 @@ const SESS = [
   if (/nothing changed/.test(JSON.stringify(chg.rows)) || !/changed: Yellow Pages/.test(chg.rows[0].line)) fail("9b a changed link is named");
   const zero = rd({ total: 0, read: 0, changed: [], failed: [] });
   if (/nothing changed/.test(JSON.stringify(zero.rows))) fail("9b no links recorded is never nothing changed");
+  // 🔒 master map Tier 1 (11-11): NOTHING TO READ SETTLES THE MONTH (RGA, Nov 2026: link_reads 0 of 0, no status, waiting for ever). The re-read ran and
+  // the record holds no live listing link, and no listing check ran or went live: done, labeled "Nothing to read". A failed read or an unread count never is.
+  const empty = O.listingsView({ month: MONTH, checked: null, live: 0, later: [], on: false, reads: { at: "2026-11-10T14:20:30Z", total: 0, read: 0, changed: [], failed: [] } });
+  if (!empty.done || empty.label !== "Nothing to read" || !/No live listing links recorded yet/.test(JSON.stringify(empty.rows)) || /nothing changed/.test(JSON.stringify(empty.rows))) fail(`9c no live listing link to re-read must settle as "Nothing to read": ${JSON.stringify({ done: empty.done, label: empty.label })}`);
+  const emptyUnread = O.listingsView({ month: MONTH, checked: null, live: null, later: [], on: false, reads: { at: "2026-11-10T14:20:30Z", total: 0, read: 0, changed: [], failed: [] } });
+  if (emptyUnread.done) fail("9c nothing to re-read but the live count unread must not settle (an unknown is not an answer)");
+  const noRead = O.listingsView({ month: MONTH, checked: null, live: 0, later: [], on: false });
+  if (noRead.done || noRead.label === "Nothing to read") fail("9c with no re-read this month (or a failed one) the step must not settle");
+  const lastMonth = O.listingsView({ month: MONTH, checked: null, live: 0, later: [], on: false, reads: { at: "2026-10-09T06:00:00Z", total: 0, read: 0, changed: [], failed: [] } });
+  if (lastMonth.done) fail("9c last month's empty re-read must not settle this month");
+  const badTotal = O.listingsView({ month: MONTH, checked: null, live: 0, later: [], on: false, reads: { at: "2026-11-10T14:20:30Z", total: null, read: 0, changed: [], failed: [] } });
+  if (badTotal.done) fail("9c a re-read with no count must not settle as nothing to read");
   const old = O.listingsView({ month: MONTH, checked: "2026-08-04T13:40:00Z", live: 0, later: [], on: true, reads: { at: "2026-10-09T06:00:00Z", total: 5, read: 5, changed: [], failed: [] } });
   if (/re-read/.test(JSON.stringify(old.rows))) fail("9b a read from another month is not this month's");
   // the rule fails on today's live state (no re-read exists): the old card never says how many links were read

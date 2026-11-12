@@ -362,5 +362,33 @@
   "\"m2.exec.listing_upkeep\", \"m2.exec.profile_watch\", \"m2.exec.tracking_check\"] },",
   "\"m2.exec.listing_upkeep\"] },",
   1
+ ],
+ [
+  "nothing to read never settles Monthly 13 (RGA's 0 of 0, no status)",
+  "monthlyonce",
+  " || nothing);",
+  ");",
+  1
+ ],
+ [
+  "an unread live count settles as nothing to read",
+  "monthlyonce",
+  "const nothing = !ran && live === 0 && !unread && !!lr && lr.total === 0;",
+  "const nothing = !ran && !!lr && lr.total === 0;",
+  1
+ ],
+ [
+  "a missing re-read count settles as nothing to read",
+  "monthlyonce",
+  "&& !!lr && lr.total === 0;",
+  "&& !!lr && !(Number(lr.total) > 0);",
+  1
+ ],
+ [
+  "nothing to read is labeled Checked",
+  "monthlyonce",
+  "label: nothing ? \"Nothing to read\" : done ? \"Checked\" : \"Waiting\"",
+  "label: done ? \"Checked\" : \"Waiting\"",
+  1
  ]
 ]
