@@ -18,7 +18,7 @@ import { createRequire } from "node:module";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
 const F = []; const fail = (m) => F.push(m);
-Object.assign(process.env, { SUPABASE_URL: "https://sb.test", SUPABASE_SERVICE_ROLE_KEY: "k", SUPABASE_ANON_KEY: "a", QUO_WEBHOOK_TOKEN: "t", INTERNAL_FN_SECRET: "s" });
+Object.assign(process.env, { SUPABASE_URL: "https://sb.test", SUPABASE_SERVICE_ROLE_KEY: "k", SUPABASE_ANON_KEY: "a", QUO_WEBHOOK_TOKEN: "t", INTERNAL_FN_SECRET: "t" });
 let route = null;
 globalThis.fetch = async (url, init = {}) => route(String(url), init);
 const req = createRequire(`${SITE}/netlify/functions/`);
@@ -121,7 +121,7 @@ async function morning(source) {
     if (url.includes("client_state_snapshots")) return res(200, []);
     return res(404, "not faked: " + url);
   };
-  const out = await RM.handler({ queryStringParameters: { token: "t", clientId: "c1" } });
+  const out = await RM.handler({ headers: { "x-internal-secret": "t" }, queryStringParameters: { token: "t", clientId: "c1" } });
   return { rec, body: JSON.parse(out.body) };
 }
 let mo = await morning(null);

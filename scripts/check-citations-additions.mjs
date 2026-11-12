@@ -17,7 +17,7 @@ import { createRequire } from "node:module";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
 const F = []; const fail = (m) => F.push(m);
-Object.assign(process.env, { SUPABASE_URL: "https://sb.test", SUPABASE_SERVICE_ROLE_KEY: "k", QUO_WEBHOOK_TOKEN: "t", GOOGLE_OAUTH_CLIENT_ID: "i", GOOGLE_OAUTH_CLIENT_SECRET: "s" });
+Object.assign(process.env, { SUPABASE_URL: "https://sb.test", SUPABASE_SERVICE_ROLE_KEY: "k", QUO_WEBHOOK_TOKEN: "t", INTERNAL_FN_SECRET: "t", GOOGLE_OAUTH_CLIENT_ID: "i", GOOGLE_OAUTH_CLIENT_SECRET: "s" });
 let route = null; const seen = [];
 globalThis.fetch = async (url, init = {}) => { seen.push(String(url)); if (/serpapi\.com\/search/.test(String(url))) { fail(`a paid search was made: ${String(url).slice(0, 80)}`); return res(500, {}); } return route(String(url), init); };
 const req = createRequire(`${SITE}/netlify/functions/`);
@@ -127,7 +127,7 @@ async function nap({ client, rows, rowsStatus = 200, pages, site = "<html>no lin
     if (pages[url]) { const p = pages[url]; return p.throw ? Promise.reject(new Error(p.throw)) : res(p.status || 200, p.body == null ? goodPage : p.body); }
     return res(404, "not faked: " + url);
   };
-  const out = await CA.handler({ queryStringParameters: { token: "t", clientId: "c1", dry: "1" } });
+  const out = await CA.handler({ headers: { "x-internal-secret": "t" }, queryStringParameters: { token: "t", clientId: "c1", dry: "1" } });
   return JSON.parse(out.body);
 }
 const CUR = "[v2-listing-shape] 2026-10-20 — listing found at x", OLD = "citation audit 2026-10-07 — listing found by site: search";

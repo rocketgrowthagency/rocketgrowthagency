@@ -1,0 +1,44 @@
+[
+ [
+  "the step cuts to 747 and adds ... again",
+  "sa_flowexec",
+  "    if (!out.text) return { summary: out.said, outcome: \"indeterminate\" };\n    return { summary:",
+  "    if (!out.text) return { summary: out.said, outcome: \"indeterminate\" };\n    out.text = out.text.length > 700 ? out.text.slice(0, 697) + \"...\" : out.text;\n    return { summary:"
+ ],
+ [
+  "no fitting sentence still saves a broken draft",
+  "sa_gbpdesc",
+  "  if (best < 0) return null;",
+  "  if (best < 0) return head.slice(0, limit).trim();"
+ ],
+ [
+  "a long draft is not asked for again",
+  "sa_gbpdesc",
+  "  const second = String(await ask(",
+  "  const second = first || String(await ask("
+ ],
+ [
+  "an abbreviation counts as a sentence end",
+  "sa_gbpdesc",
+  "    if (m[0][0] === \".\" && (/^[A-Z][a-z]?$/.test(word) || /^(St|Dr|Mr|Mrs|Ms|Inc|Co|Ltd|Jr|Sr|Ave|Blvd|Rd|No|vs|etc)$/i.test(word) || /^[a-z]/.test(next))) continue;",
+  ""
+ ],
+ [
+  "a cut-off draft counts as fitting",
+  "sa_gbpdesc",
+  "return !TRUNCATED.test(s) && s.trim().length <= limit",
+  "return s.trim().length <= limit"
+ ],
+ [
+  "the cut is the first sentence, not the last that fits",
+  "sa_gbpdesc",
+  "    best = end;",
+  "    if (best < 0) best = end;"
+ ],
+ [
+  "the step saves the raw draft instead of the fitted one",
+  "sa_flowexec",
+  "outcome_data: { draft: out.text } };",
+  "outcome_data: { draft: String(out.text || \"\") + \" (draft)\" } };"
+ ]
+]

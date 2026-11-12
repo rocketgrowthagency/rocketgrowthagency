@@ -16,7 +16,7 @@ const F = []; const fail = (m) => F.push(m);
 
 let route = null;
 globalThis.fetch = async (url, init = {}) => route(String(url), init);
-Object.assign(process.env, { SUPABASE_URL: "https://sb.test", SUPABASE_SERVICE_ROLE_KEY: "k", QUO_WEBHOOK_TOKEN: "t", GOOGLE_PLACES_API_KEY: "p" });
+Object.assign(process.env, { SUPABASE_URL: "https://sb.test", SUPABASE_SERVICE_ROLE_KEY: "k", QUO_WEBHOOK_TOKEN: "t", INTERNAL_FN_SECRET: "t", GOOGLE_PLACES_API_KEY: "p" });
 let H;
 try { H = createRequire(`${SITE}/netlify/functions/`)("./refresh-review-metrics.js").handler; }
 catch (e) { console.error(`⚠️  INDETERMINATE — the refresher did not load: ${e.message}`); process.exit(2); }
@@ -36,7 +36,7 @@ async function run({ connected, v4, places, snapStatus = 201 }) {
     if (url.includes("places.googleapis.com")) return res(...places);
     return res(404, { error: "no route " + url });
   };
-  const r = await H({ queryStringParameters: { token: "t" } });
+  const r = await H({ headers: { "x-internal-secret": "t" }, queryStringParameters: { token: "t" } });
   return { out: JSON.parse(r.body), calls };
 }
 const DENIED = [403, { error: { code: 403, message: "The caller does not have permission", status: "PERMISSION_DENIED" } }];

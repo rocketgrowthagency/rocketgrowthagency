@@ -634,7 +634,13 @@ const NOT_PREFLIGHT = {
   'check-airtable-calls-will-last.mjs': 'the checkers (11-11): this month\'s metered Airtable calls (output/airtable-calls.log) forecast against the plan cap, red at 80%; self-test on a fixture log; runs in daily-health-check.sh.',
   'check-no-gate-flips.mjs': 'the checkers (11-11): no gate flipped pass and fail more than twice in 7 days (output/gate-verdicts.jsonl); self-test on a fixture log; runs in daily-health-check.sh.',
   'check-backups-leave-the-building.mjs': 'the checkers (11-11): the LaCie copies\' status files and Supabase\'s own backups (Management API, read-only) are fresh; unreadable = INDETERMINATE; self-test on fixtures; runs in daily-health-check.sh.',
-  'check-no-one-is-staff-by-accident.mjs': 'the 11-11 database lockdown: is_internal_user() allow-lists roles, the role guard trigger exists, no public-role policy is true (Management API read-only SQL), and the portal client reads no staff rows and is refused role owner; rules self-tested; runs in daily-health-check.sh.',
+  'check-no-one-is-staff-by-accident.mjs': 'the 11-11 database lockdown: is_internal_user() allow-lists roles, the role guard trigger exists, no public-role policy is true (Management API read-only SQL), and the portal client reads no staff rows and is refused role owner, and the role guard refuses a workspace on insert (read from its text, no probe); rules self-tested; runs in daily-health-check.sh.',
+  'check-sign-ups-are-closed.mjs': 'security 11-11 gate: a typed email never becomes an account; runs in daily-health-check.sh',
+  'check-no-secret-in-a-query-string.mjs': 'security 11-11 gate: no secret in a web address; runs in daily-health-check.sh',
+  'check-every-model-call-is-metered.mjs': 'content and AI 11-11 gate: every model call is a ledger row, key and month checked daily; runs in daily-health-check.sh',
+  'check-a-gbp-description-ends-on-a-sentence.mjs': 'content and AI 11-11 gate: the Google description is never cut mid-sentence; runs in daily-health-check.sh',
+  'check-gbp-words-need-the-clients-approval.mjs': 'content and AI 11-11 gate: Google description, services and details need the client approval; runs in daily-health-check.sh',
+  'check-the-dead-content-engine-stays-gone.mjs': 'content and AI 11-11 gate: the dead content engine and the best-inference line stay gone; runs in daily-health-check.sh',
 };
 
 if (!fs.existsSync(PIPELINE)) fail('overnight-pipeline.sh not found.');

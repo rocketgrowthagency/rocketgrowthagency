@@ -91,7 +91,7 @@ const pg = (path, o = {}) => ({ url: origin + path, status: 200, noindexBy: [], 
   const SRC = read("netlify/functions/ai-readiness-audit.js");
   if (/faq_content|FAQPage|QAPage/.test(strip(SRC))) fail("the readiness audit still has a FAQ-schema line");
   if (/83\s*%|71\s*%|6%\s*→|\b45%|brightlocal_lcrs/i.test(SRC)) fail("the readiness audit's header still quotes the mislabeled figures");
-  Object.assign(process.env, { SUPABASE_URL: "https://sb.test", SUPABASE_SERVICE_ROLE_KEY: "k", QUO_WEBHOOK_TOKEN: "t", GOOGLE_OAUTH_CLIENT_ID: "i", GOOGLE_OAUTH_CLIENT_SECRET: "s" });
+  Object.assign(process.env, { SUPABASE_URL: "https://sb.test", SUPABASE_SERVICE_ROLE_KEY: "k", QUO_WEBHOOK_TOKEN: "t", INTERNAL_FN_SECRET: "t", GOOGLE_OAUTH_CLIENT_ID: "i", GOOGLE_OAUTH_CLIENT_SECRET: "s" });
   const run = async (client, html) => {
     globalThis.fetch = async (url) => {
       url = String(url);
@@ -101,7 +101,7 @@ const pg = (path, o = {}) => ({ url: origin + path, status: 200, noindexBy: [], 
       return res(200, html);
     };
     const AI = req("./ai-readiness-audit.js");
-    const out = await AI.handler({ queryStringParameters: { token: "t", clientId: "c1", dry: "1" } });
+    const out = await AI.handler({ headers: { "x-internal-secret": "t" }, queryStringParameters: { token: "t", clientId: "c1", dry: "1" } });
     return JSON.parse(out.body);
   };
   const page = (o) => `<html><body><h1>${o.name}</h1><p>Call ${o.phone}</p>${o.ld || ""}</body></html>`;
@@ -137,7 +137,7 @@ const pg = (path, o = {}) => ({ url: origin + path, status: 200, noindexBy: [], 
   if (none.ok !== false || none.readiness_score != null) fail("a client with no website was given a result or a score");
   // unreachable site is not a pass
   globalThis.fetch = async (url) => { url = String(url); if (url.includes("/rest/v1/clients?")) return res(200, [{ id: "c1", workspace_id: "w", business_name: "X", website_url: "https://x.test" }]); if (url.includes("client_google_oauth")) return res(200, []); throw new Error("down"); };
-  const down = JSON.parse((await req("./ai-readiness-audit.js").handler({ queryStringParameters: { token: "t", clientId: "c1", dry: "1" } })).body);
+  const down = JSON.parse((await req("./ai-readiness-audit.js").handler({ headers: { "x-internal-secret": "t" }, queryStringParameters: { token: "t", clientId: "c1", dry: "1" } })).body);
   if (down.ok !== false) fail("a site that could not be fetched produced a result");
 }
 
