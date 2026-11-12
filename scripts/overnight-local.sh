@@ -562,10 +562,10 @@ else RECOVERY_DEADLINE_EPOCH="$DEADLINE" bash scripts/recovery-rounds.sh "$LOG" 
 # Digital Imaging Center was live and 6/6-verified with no Airtable record at all — a full build
 # (scrape → capture → voiceover → branding → deploy) that can never produce an email.
 # Reported, NEVER fatal: this is post-hoc reconciliation, and aborting a finished night helps nobody.
-echo ">>> orphan check: deployed videos with no lead behind them" | tee -a "$LOGFILE"
-node scripts/check-orphan-videos.mjs 2>&1 | tee -a "$LOGFILE"; _orc=${PIPESTATUS[0]}
+echo ">>> orphan check: deployed videos with no lead behind them" | tee -a "$LOG"
+node scripts/check-orphan-videos.mjs 2>&1 | tee -a "$LOG"; _orc=${PIPESTATUS[0]}
 if [ "${_orc:-0}" -ne 0 ]; then
-  echo ">>> ⚠️  orphaned videos found — builds that can never be emailed. See the list above." | tee -a "$LOGFILE"
+  echo ">>> ⚠️  orphaned videos found — builds that can never be emailed. See the list above." | tee -a "$LOG"
 fi
 
 # 🔴 PRODUCTIVITY CHECK (2026-08-21) — "the run ran, but did it PRODUCE anything?"
