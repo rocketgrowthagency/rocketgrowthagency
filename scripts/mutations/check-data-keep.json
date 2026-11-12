@@ -230,8 +230,8 @@
  [
   "the frozen copy drops the html",
   "monthlyclosesrv",
-  "subject: draft.subject, html: draft.html, text: draft.text } });\n      result.frozen",
-  "subject: draft.subject, text: draft.text } });\n      result.frozen"
+  "subject: mail.subject, html: mail.html, text: mail.text } });\n      result.frozen",
+  "subject: mail.subject, text: mail.text } });\n      result.frozen"
  ],
  [
   "a failed freeze can break the send",

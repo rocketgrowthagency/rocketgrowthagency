@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // check-phase1-get-started.mjs — 2026-10-20, approved phase1_get_started_v1 (final review R3). Chris: "all approved… make sure
 // they integrate with admin and database too". RUNS the server code on fakes and pins, for client steps 1–6:
-//   1 kickoff  — "Booked" until the call is held (never Done on a diarised call); the agenda email is OFF unless
-//                KICKOFF_AGENDA_EMAIL=on, goes 12–30 h before a confirmed call once, and promises nothing
+//   1 kickoff  — "Booked" until the call is held (never Done on a diarised call); the agenda rides in the ONE day-before email (the 24-hour
+//                reminder, 11-11 master client-messages decision 2), once per booking, and promises nothing
 //   2 verify   — the code goes on Google's own screen (typing it here is a fold, not the way); the filming guide covers a
 //                storefront AND a service-area business; categories don't publish while Google reviews
 //   4 facts    — ONE core change per week: a save writes phone OR website, queues the other 7 days on, a save inside the window
@@ -26,19 +26,30 @@ const A = Object.fromEntries([...PB.month1, ...PB.month2plus].map((s) => [s.id, 
 // ── 1 · kickoff
 if (!/booked && held \? \{ cls: "done", text: "Done" \}/.test(P) || !/: booked \? \{ cls: "rga booked", text: "Booked" \}/.test(P)) fail("step 1: a confirmed call reads Done before it's held (want Booked until the outcome or recap)");
 if (!/kickoffBooked && !isDone \? \{ text: "Booked", cls: "rga booked" \}/.test(P)) fail("step 1: the row's own pill doesn't say Booked for a confirmed call");
-const N = load("notify-step-open.js");
+// 🔒 11-11 (master client-messages decision 2): ONE email the day before the kickoff. The agenda (approved phase1_get_started_v1) rides in the
+// 24-hour reminder (_call-reminders.reminderEmail, sent once per booking by call-reminders' claim), its words kept; notify-step-open no longer
+// sends a second "Tomorrow" email. The 1-hour email and the texts stay as they were.
+const CR = load("_call-reminders.js");
 const NOW = Date.parse("2026-10-20T15:00:00Z"), at = (h) => new Date(NOW + h * 3600000).toISOString();
-const on = { KICKOFF_AGENDA_EMAIL: "on" };
-const cases = [["off by default", { kickoff_invite: { event_id: "e", start: at(20) } }, {}, false], ["confirmed, 20 h out", { kickoff_invite: { event_id: "e", start: at(20) } }, on, true],
-  ["only requested", { kickoff_invite: { start: at(20) } }, on, false], ["already sent", { kickoff_invite: { event_id: "e", start: at(20), agenda_sent_at: "x" } }, on, false],
-  ["held", { kickoff_invite: { event_id: "e", start: at(20), call_outcome: "held" } }, on, false], ["3 days out", { kickoff_invite: { event_id: "e", start: at(72) } }, on, false], ["2 h out", { kickoff_invite: { event_id: "e", start: at(2) } }, on, false]];
-for (const [name, data, env, want] of cases) if (N.agendaDue(data, NOW, env) !== want) fail(`step 1 agenda: "${name}" → ${!want}, want ${want}`);
-const mail = N.buildAgendaEmail({ business_name: "Rocket Plumbing", primary_contact_name: "Ana Lee", primary_contact_phone: "+1 424 555 0142", website_url: "https://www.rocketplumbing.com/", primary_market: "Culver City, CA" }, { start: at(20), client_tz: "America/Los_Angeles" });
-if (!/Hi Ana,/.test(mail.markup) || !/Name: Rocket Plumbing/.test(mail.markup) || !/Phone: \(424\) 555-0142/.test(mail.markup) || !/Website: rocketplumbing\.com/.test(mail.markup) || !/Reply to this email/.test(mail.markup)) fail("step 1 agenda: the email doesn't carry the found facts to check and the reply line");
+const kick = { kind: "kickoff", status: "booked", starts_at: at(20), created_at: at(-72) };
+const facts = CR.kickoffFacts({ business_name: "Rocket Plumbing", identity_phone: "+1 424 555 0142", website_url: "https://www.rocketplumbing.com/" });
+const mail = CR.reminderEmail(kick, "email_24h", { business: "Rocket Plumbing", name: "Ana Lee", theirTz: "America/Los_Angeles", joinLink: "https://meet.google.com/x", forClient: true, agendaFacts: facts });
+if (!/^Tomorrow: your kickoff call with Rocket Growth Agency$/.test(mail.subject)) fail(`step 1 agenda: the day-before email isn't the one reminder ("${mail.subject}")`);
+if (!/Hi Ana,/.test(mail.markup) || !/Name: Rocket Plumbing/.test(mail.markup) || !/Phone: \(424\) 555-0142/.test(mail.markup) || !/Website: rocketplumbing\.com/.test(mail.markup) || !/Reply to this email with anything you'd like to add/.test(mail.markup)) fail("step 1 agenda: the day-before email doesn't carry the found facts to check and the reply line");
+for (const item of CR.KICKOFF_AGENDA) if (!mail.markup.includes(item)) fail(`step 1 agenda: the day-before email lost an agenda item ("${item}")`);
+if (!/A reminder that your kickoff call for Rocket Plumbing is /.test(mail.markup) || !/If this time no longer works/.test(mail.markup)) fail("step 1 agenda: the merged email lost the reminder's own words");
 if (/guarantee|#1|rank(ing)? (in|on) \d|promise/i.test(mail.markup)) fail("step 1 agenda: the email promises a result");
-const noSite = N.buildAgendaEmail({ business_name: "X" }, { start: at(20) });
+const noSite = CR.reminderEmail(kick, "email_24h", { business: "X", name: "", theirTz: "America/Los_Angeles", forClient: true, agendaFacts: CR.kickoffFacts({ business_name: "X" }) });
 if (/Website:|Phone:|undefined|NaN/.test(noSite.markup)) fail("step 1 agenda: missing facts print as empty lines / undefined");
-if (!/if \(agendaDue\(data\)\) \{[\s\S]{0,700}agenda_sent_at: new Date\(\)\.toISOString\(\)[\s\S]{0,200}await writeTasks\(rec\.id, data, tasks\);[\s\S]{0,60}stamp first/.test(NSO)) fail("step 1 agenda: the sweep doesn't stamp before it sends");
+const hour = CR.reminderEmail(kick, "email_1h", { business: "X", name: "Ana", theirTz: "America/Los_Angeles", forClient: true, agendaFacts: facts });
+if (/What we'll cover|What we found about your business/.test(hour.markup)) fail("step 1 agenda: the 1-hour email repeats the agenda (it rides in the day-before email only)");
+for (const kind of ["walkthrough", "m1_review", "monthly", "quarterly"]) {
+  const o = CR.reminderEmail({ ...kick, kind, rsvp: "accepted" }, "email_24h", { business: "X", name: "Ana", theirTz: "America/Los_Angeles", forClient: true, agendaFacts: facts });
+  if (/What we'll cover|What we found about your business/.test(o.markup)) fail(`step 1 agenda: the ${kind} reminder carries the kickoff's agenda`);
+}
+if (/Tomorrow: your kickoff call \(agenda\)|function agendaDue\(|function buildAgendaEmail\(/.test(NSO.split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n"))) fail("step 1 agenda: notify-step-open sends its own agenda email again: two \"Tomorrow\" emails the day before the kickoff");
+const CRJ = read("netlify/functions/call-reminders.js");
+if (!/agendaFacts: who\.facts/.test(CRJ) || !/identity_phone,website_url/.test(CRJ)) fail("step 1 agenda: call-reminders doesn't hand the client's facts to the day-before email");
 // ── 2 · verify
 if (!/Enter Google's code on Google, not here\./.test(P) || !/href="https:\/\/business\.google\.com\/"[^>]*>Enter it on Google ↗/.test(P)) fail("step 2: the code isn't sent to Google's own screen");
 if (!/function gvCodeFallbackHtml\(\) \{\s*return `<details class="pm-gv-other">/.test(P)) fail("step 2: typing the code here isn't behind a fold (it must not be the way)");
@@ -106,4 +117,4 @@ if (!/if \(stepId === STEP\.SERVICES\) \{[\s\S]{0,200}now\.on/.test(WATCH) || !/
 if (!/"m1\.gbp\.services_products": "Services on Google/.test(ADM)) fail("step 6: admin row 32 isn't a Google row");
 if (!/function svcFormHtml\(now, had/.test(P) || !/const picked = new Set\(Array\.isArray\(had\) \? had : \[\.\.\.onG, \.\.\.sug\]\)/.test(P) || !/Untick anything you don't offer/.test(P)) fail("step 6: the portal card is gone, or ticks Google's other services for them");
 if (F.length) { console.error("🔴 Phase 1 (steps 1–6) regressed:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log("✅ Phase 1 holds: kickoff Booked until held + agenda off-until-approved, once, no promises · code typed on Google, film guide for both kinds, categories held while verifying · one core change a week (queued, window, RGA too, nightly sends) · Looks right = the client's own · step 6 = Google's services + theirs kept + RGA's draft, written in Google's shape, on every layer");
+console.log("✅ Phase 1 holds: kickoff Booked until held + the agenda in the one day-before email, once, no promises · code typed on Google, film guide for both kinds, categories held while verifying · one core change a week (queued, window, RGA too, nightly sends) · Looks right = the client's own · step 6 = Google's services + theirs kept + RGA's draft, written in Google's shape, on every layer");

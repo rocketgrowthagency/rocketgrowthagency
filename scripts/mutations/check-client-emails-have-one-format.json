@@ -145,5 +145,40 @@
   "        if (!small) { const v",
   "        if (false) { const v",
   1
+ ],
+ [
+  "E3 service ended goes back to a bare body",
+  "offboardconfirm",
+  "sendAsRga({ supa, to: draft.to, subject, markup: text,",
+  "sendAsRga({ supa, to: draft.to, subject, body: text,",
+  1
+ ],
+ [
+  "E3 service ended shows the sign-in address again",
+  "offboardconfirm",
+  "\">> [Sign in to download your files](https://www.rocketgrowthagency.com/client-login/)\"",
+  "\"Sign in at https://www.rocketgrowthagency.com/client-login/ to download them.\"",
+  1
+ ],
+ [
+  "E3 service ended signs by hand again",
+  "offboardconfirm",
+  "\"Thank you for working with us.\"].join(\"\\n\");",
+  "\"Thank you for working with us.\", \"\", \"Rocket Growth Agency\"].join(\"\\n\");",
+  1
+ ],
+ [
+  "the day-50 note signs by hand again",
+  "onbnotes",
+  "+ `Reply to this email and we will set up a call.`;",
+  "+ `Reply to this email and we will set up a call.\\n\\nTalk soon,\\nRocket Growth Agency`;",
+  1
+ ],
+ [
+  "the notice acknowledgment sends a bare body",
+  "noticeack",
+  "const out = await deps.send({ to, subject: m.subject, markup: m.markup,",
+  "const out = await deps.send({ to, subject: m.subject, body: m.markup,",
+  1
  ]
 ]

@@ -143,7 +143,7 @@ if (!/localStorage\.setItem\(key, d\.open \? "1" : "0"\)/.test(portal)) fail("an
 const nightly = read("netlify/functions/metrics-daily-refresh.js"), cb = read("netlify/functions/oauth-google-callback.js");
 if (!/step_id: "m1\.gbp\.photos"/.test(nightly) || !/const due = /.test(nightly)) fail("the nightly refresh no longer builds a missing photo list");
 if (!/!picked && nowType && builtType && nowType !== builtType/.test(nightly)) fail("the nightly refresh no longer follows a changed Google category (or ignores RGA's pick)");
-if (!/sendWelcomeEmail\(supaUrl, supaKey, clientId\);[\s\S]{0,900}step_id: "m1\.gbp\.photos"/.test(cb)) fail("connecting Google no longer builds the client's photo list");
+if (!/(?:send|queue)WelcomeEmail\(supaUrl, supaKey, clientId\);[\s\S]{0,900}step_id: "m1\.gbp\.photos"/.test(cb)) fail("connecting Google no longer builds the client's photo list");
 if (!/if \(inSlots && !rgaPicked\)/.test(runner) || !/draft_shape: cur, outcome: "manual_required"/.test(runner)) fail("a rebuild can switch the list under photos already in its slots");
 
 if (F.length) { console.error("🔴 the photo lists drifted from the researched ones:"); for (const f of F) console.error("   · " + f); process.exit(1); }

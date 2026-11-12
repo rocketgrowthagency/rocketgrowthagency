@@ -109,7 +109,34 @@ try {
   if (sigCount(html) !== 1) fail(`the branded email must carry the sign-off once (found ${sigCount(html)})`);
 } catch (e) { console.error(`⚠️  INDETERMINATE — shared/email-doc.js did not load: ${e.message}`); process.exit(2); }
 if (/label: "Pay in your portal"/.test(C.invoice)) fail("the invoice twin says \"Pay in your portal\" even when the card is charged automatically — use the email's own action");
-if (!/subject: `Receipt for invoice \$\{ref\} — \$\{amount\}`/.test(C.invoice)) fail("the receipt subject is not \"Receipt for invoice <ref> — <amount>\"");
+// 11-11 (master client-messages, no em dash in client text): the receipt subject is "Receipt for invoice <ref>: <amount>"
+if (!/subject: `Receipt for invoice \$\{ref\}: \$\{amount\}`/.test(C.invoice)) fail("the receipt subject is not \"Receipt for invoice <ref>: <amount>\"");
+
+// ── 8. (11-11, master client-messages E3 + decisions 1, 4, 7) the end-of-service confirmation, the payment welcome, the notice acknowledgment
+// and the notes RGA approves are LETTER MARKUP through the one sender: no bare body, no raw address, no hand-written sign-off ──
+{
+  const off = noComments(read("netlify/functions/admin-offboarding-confirm.js"));
+  const call = (off.match(/sendAsRga\(\{[^}]*\}\)/) || [""])[0];
+  if (!call) fail("admin-offboarding-confirm: no sendAsRga call found");
+  else if (!/\bmarkup:/.test(call) || /\bbody:/.test(call)) fail("admin-offboarding-confirm (E3 service ended): sends a bare body: it must pass markup: so it gets the one format and the one sign-off");
+  let OC; try { OC = require(`${SITE}/netlify/functions/admin-offboarding-confirm.js`); } catch (e) { console.error(`⚠️  INDETERMINATE — admin-offboarding-confirm did not load: ${e.message}`); process.exit(2); }
+  const dr = OC.draftFor({ primary_contact_name: "Pat Lee", primary_contact_email: "pat@x.test" }, { ends_on: "2026-12-11", items: [{ key: "gbp", label: "Removed us from your Google profile", status: "done", evidence: "read back", at: "2026-12-12T10:00:00Z" }] });
+  const l = L.letter(dr.body);
+  if (l.html.replace(/<[^>]+>/g, " ").includes("rocketgrowthagency.com/client-login")) fail("E3 service ended: the sign-in link shows as an ADDRESS in the email: write [words](link)");
+  if (/\n\s*Rocket Growth Agency\s*$/.test(dr.body) || sigCount(l.text) !== 1) fail(`E3 service ended: a hand-written sign-off, or the one sign-off is not there exactly once (found ${sigCount(l.text)})`);
+  const pwSrc = noComments(read("netlify/functions/_payment-welcome.js")), qSrc = noComments(read("netlify/functions/_client-email-queue.js")), ackSrc = noComments(read("netlify/functions/_notice-ack.js"));
+  for (const [name, src] of [["the payment welcome", pwSrc], ["the notes RGA approves (queue)", qSrc], ["the notice acknowledgment", ackSrc]]) {
+    // its send call (sendAsRga directly, or through its deps.send, whose real wiring is sendAsRga) must carry markup:, never a body:
+    const calls = (src.match(/(?:sendAsRga|deps\.send)\(\{[^}]*\}\)/g) || []).filter((c) => !/^sendAsRga\(\{ supa, \.\.\.m \}\)$/.test(c));   // the deps wiring passes the call through
+    if (!calls.length || calls.some((c) => !/\bmarkup:/.test(c) || /\bbody:/.test(c)) || (/deps\.send\(/.test(src) && !/send: \(m\) => require\("\.\/_gmail"\)\.sendAsRga\(/.test(src))) fail(`${name}: does not send letter markup through sendAsRga`);
+  }
+  const ON = require(`${SITE}/netlify/functions/_onboarding-notes.js`);
+  for (const d of [ON.firstWeekDraft({ primary_contact_name: "Pat", business_name: "Acme" }, { lines: [{ text: "Your main category on Google is Plumber.", source: "Read from your Google profile" }] }), ON.day50Draft({ primary_contact_name: "Pat" }, { day: 52, done: ["Categories"], terms_sentence: null })]) {
+    if (!d || !d.markup) { fail("a note RGA approves (first week / day 50) is not letter markup"); continue; }
+    if (/Talk soon|\nRocket Growth Agency\s*$/.test(d.markup)) fail(`"${d.subject}": a hand-written sign-off: the letter adds the one sign-off`);
+    if (sigCount(L.letter(d.markup).text) !== 1) fail(`"${d.subject}": the one sign-off is not there exactly once`);
+  }
+}
 if (/geo-grid/.test(C.report)) fail("the monthly report email says \"geo-grid\" — say \"map coverage\"");
 if (/Hi \$\{esc\(first\)\}, \$\{intro\}/.test(C.report) && /const intro = `Here's/.test(C.report)) fail("the monthly report reads \"Hi Pat, Here's\" — lower-case after the comma");
 // 11-11: every call's title is now built by ONE function, callTitle(name, biz) (call_names_v1), so the "×" is looked for inside it too;

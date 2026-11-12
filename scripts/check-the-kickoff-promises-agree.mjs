@@ -44,7 +44,7 @@ if (/report arrives by email/.test(agenda + recap) && !/\[functions\."send-month
 if (/Friday/i.test(agenda) || /Friday/i.test(recap)) fail("the kickoff script or recap promises something on a Friday — nothing sends on Fridays");
 // 4
 if (/kickoffAgreedBy\(/.test(code) || /by Sunday/.test(code)) fail("a computed weekday (kickoffAgreedBy / \"by Sunday\") is back in the kickoff");
-if (!/const y = kickoffCallObj\(\)\.yes\[r\.id\];/.test(recap) || !/y \? ` — by \$\{y\.by\}/.test(recap)) fail("the recap no longer reads back each item's own agreed date");
+if (!/const y = kickoffCallObj\(\)\.yes\[r\.id\];/.test(recap) || !/y \? `, by \$\{y\.by\}/.test(recap)) fail("the recap no longer reads back each item's own agreed date");
 
 if (F.length) { console.error("🔴 the kickoff's promises disagree:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ the kickoff's promises agree: one timeline, every cadence is a scheduled job, per-item agreed dates in the recap");

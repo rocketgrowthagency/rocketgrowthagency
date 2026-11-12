@@ -104,8 +104,8 @@
  [
   "the invoice email says cancelled again",
   "invoiceemail",
-  "nothing is canceled and nothing is lost",
-  "nothing is cancelled and nothing is lost"
+  "Nothing is canceled and nothing is lost: it just goes on hold",
+  "Nothing is cancelled and nothing is lost: it just goes on hold"
  ],
  [
   "the texts are promised whether or not texting is on",

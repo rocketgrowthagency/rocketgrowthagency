@@ -24,10 +24,10 @@
   "Phone checked"
  ],
  [
-  "the step notices compare against the contact's cell",
-  "notifystepopen",
-  ": (client.identity_phone || \"\")",
-  ": (client.identity_phone || client.primary_contact_phone || \"\")"
+  "the kickoff email's facts fall back to the contact's cell",
+  "schedulev6remind",
+  "const d = String((client && client.identity_phone) || \"\")",
+  "const d = String((client && (client.identity_phone || client.primary_contact_phone)) || \"\")"
  ],
  [
   "the tracked-call 400 loses its question",
@@ -38,7 +38,7 @@
  [
   "account health shows a contact's cell",
   "aicheck",
-  "Business phone not on file \u00b7 Add it",
+  "Business phone not on file · Add it",
   "The record has none to compare"
  ],
  [

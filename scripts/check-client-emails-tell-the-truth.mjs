@@ -38,6 +38,9 @@ for (const beta of [false, true]) {
     let m;
     try { m = ctx.mf(stage, { first: "Sam", kickoffWhen: null, beta }); } catch (e) { F(`${stage} (beta=${beta}) threw: ${e.message}`); continue; }
     if (stage === "stage_4_onboarding") { if (m) F(`the stage-4 automatic email is back (beta=${beta}) — it said nothing was needed while the kickoff was still to book; the step-1 welcome email is the one email at that moment`); continue; }
+    // 🔒 11-11 (master client-messages decision 1): C6 is retired for a PAYING client; the payment welcome (_payment-welcome.js) is the one
+    // email at first payment, so the truths stage 3 had to tell a paying client are checked on THAT email below
+    if (stage === "stage_3_setup" && !beta) { if (m) F("the paying client's stage-3 email (C6) is back: at first payment they'd get three emails again, two asking the same thing"); continue; }
     if (!m) { F(`${stage} (beta=${beta}) sends nothing — it must`); continue; }
     rendered++;
     const all = `${m.subject}\n${m.body}`;
@@ -49,6 +52,20 @@ for (const beta of [false, true]) {
     }
   }
 }
-console.log(`  ${rendered} stage emails rendered (paid + beta)`);
+// the paying client's email at first payment: the payment welcome, rendered through the real buildWelcome
+try {
+  const { createRequire } = await import("node:module");
+  const PW = createRequire(import.meta.url)(`${SITE}/netlify/functions/_payment-welcome.js`);
+  for (const on of [false, true]) {
+    const w = PW.buildWelcome({ nowMs: Date.parse("2026-11-11T18:00:00Z"), tz: "America/Los_Angeles", env: on ? { STEP_REMINDERS_EMAIL: "on" } : {}, first: "Sam" });
+    const all = `${w.subject}\n${w.markup}`;
+    rendered++;
+    if (LIE.test(all)) F(`the payment welcome claims nothing more is needed: "${(all.match(LIE) || [""])[0]}"`);
+    if (!/payment went through|payment received/i.test(all)) F("a paying client is not told their payment was received (the payment welcome)");
+    if (!/kickoff/i.test(w.markup)) F("the payment welcome does not say the kickoff booking comes next (C6 said it; C6 is retired)");
+    if (!/no access to your website/i.test(w.markup)) F("the payment welcome lost C6's truth about Google access: it gives no access to their website");
+  }
+} catch (e) { console.error(`⚠️  INDETERMINATE — the payment welcome did not render: ${e.message}`); process.exit(2); }
+console.log(`  ${rendered} stage emails rendered (paid + beta, and the payment welcome)`);
 if (fails.length) { console.error("🔴 a client email says something untrue:"); for (const f of fails) console.error("   · " + f); process.exit(1); }
 console.log("✅ every stage email tells the truth: no \"nothing needed\", stage 4 retired, beta never told it paid");

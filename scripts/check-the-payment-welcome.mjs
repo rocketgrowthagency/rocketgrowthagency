@@ -15,6 +15,12 @@ const F = [], fail = (m) => F.push(m);
 const CID = "11111111-1111-4111-8111-111111111111", WS = "22222222-2222-4222-8222-222222222222";
 const SUBJECT = "You're set. Here's what happens next";
 const LINE1 = "Thanks, your payment went through. The next step is connecting your Google Business Profile, which takes about two minutes in your portal.";
+// 🔒 11-11 (master client-messages decision 1): C6 "Payment received, connect Google next" is retired for a paying client, so this ONE email
+// carries what C6 said (the greeting, what Google access does and does not do, the connect link, what happens next), with one set of facts.
+const BODY = (first) => `Hi ${first},\n\n${LINE1}\n\n`
+  + "It's one Google sign-in. It lets us read your Analytics and Search Console and manage your Google Business Profile for you. It gives us no access to your website.\n\n"
+  + ">> [Connect Google in your portal](https://www.rocketgrowthagency.com/portal/)\n\n"
+  + "## What happens next\nOnce it's connected you'll get one more email to book your kickoff call, and we start on the foundation work: your Google profile and the pages that support it.";
 
 // ── the fake world ──────────────────────────────────────────────────────────────────────────────
 let db, mails, gmailStatus, oauthStatus, lockStatus, calls;
@@ -61,15 +67,21 @@ globalThis.fetch = async (u, init = {}) => {
 Object.assign(process.env, { SUPABASE_URL: "https://supa.test", SUPABASE_SERVICE_ROLE_KEY: "k", STRIPE_WEBHOOK_SECRET: "whsec_t", STRIPE_SECRET_KEY: "sk", INTERNAL_FN_SECRET: "s", URL: "https://site.test", GOOGLE_CLIENT_ID: "x", GOOGLE_CLIENT_SECRET: "y", RGA_GOOGLE_CLIENT_ID: "x", RGA_GOOGLE_CLIENT_SECRET: "y" });
 delete process.env.RGA_SUPPRESS_CLIENT_EMAIL; delete process.env.STEP_REMINDERS_EMAIL; delete process.env.STRIPE_TEST_CLIENT_IDS; delete process.env.STRIPE_WEBHOOK_SECRET_TEST;
 const req = createRequire(`${SITE}/netlify/functions/x.js`);
-let PW, WH;
-try { PW = req(`${SITE}/netlify/functions/_payment-welcome.js`); WH = req(`${SITE}/netlify/functions/stripe-webhook.js`); }
+let PW, WH, Q;
+try { PW = req(`${SITE}/netlify/functions/_payment-welcome.js`); WH = req(`${SITE}/netlify/functions/stripe-webhook.js`); Q = req(`${SITE}/netlify/functions/_client-email-queue.js`); }
 catch (e) { console.error(`⚠️  INDETERMINATE: ${e.message}`); process.exit(2); }
 const quiet = async (fn) => { const k = ["log", "warn", "error"], old = k.map((x) => console[x]); k.forEach((x) => { console[x] = () => {}; }); try { return await fn(); } finally { k.forEach((x, i) => { console[x] = old[i]; }); } };
-let nEvt = 0;
+let nEvt = 0, heldBack = 0;
+// 🔒 11-11 (master client-messages decision 3): the payment QUEUES the welcome for the hold window; the queue's sweep sends it. Each delivery here
+// is the webhook, then (unless told not to) the sweep run 11 minutes later, so every hold is checked: right after the payment, nothing has gone.
 const deliver = async (type, object, opts = {}) => {
   const id = opts.id || `evt_${++nEvt}`, payload = JSON.stringify({ id, type, livemode: opts.livemode !== false, data: { object } }), t = Math.floor(Date.now() / 1000);
   const sig = crypto.createHmac("sha256", "whsec_t").update(`${t}.${payload}`).digest("hex");
-  return quiet(() => WH.handler({ httpMethod: "POST", headers: { "stripe-signature": `t=${t},v1=${sig}` }, body: payload }));
+  const before = mails.length;
+  const r = await quiet(() => WH.handler({ httpMethod: "POST", headers: { "stripe-signature": `t=${t},v1=${sig}` }, body: payload }));
+  if (mails.filter((m) => m.includes(SUBJECT)).length > mails.slice(0, before).filter((m) => m.includes(SUBJECT)).length) heldBack++;
+  if (opts.sweep !== false) await quiet(() => Q.sweep({ ...Q.realDeps(), now: () => new Date(Date.now() + 11 * 60000).toISOString() }));
+  return r;
 };
 const pi = (x = {}) => ({ id: "pi_1", amount_received: 125000, metadata: { client_id: CID, kind: "first_invoice", invoice_num: "1" }, ...x });
 const rec = () => db.client_onboarding_records[0].data;
@@ -81,12 +93,14 @@ const LOCK = () => db.stripe_webhook_events.filter((e) => String(e.stripe_event_
 // ── 1 · the words ───────────────────────────────────────────────────────────────────────────────
 {
   const NOV1 = Date.parse("2026-11-01T18:00:00Z");
-  const off = PW.buildWelcome({ nowMs: NOV1, tz: "America/Los_Angeles", env: {} });
+  const off = PW.buildWelcome({ nowMs: NOV1, tz: "America/Los_Angeles", env: {}, first: "Pat" });
   if (off.subject !== SUBJECT) fail(`the subject isn't the approved one: "${off.subject}"`);
-  if (off.markup !== LINE1) fail("with reminders off, the body isn't exactly the approved sentence");
+  if (off.markup !== BODY("Pat")) fail("with reminders off, the body isn't exactly the approved words (C7 carrying C6's facts)");
   if (/remind|connected by/i.test(off.markup) || off.reminder_on) fail("with reminders off, the email still mentions a reminder");
-  const on = PW.buildWelcome({ nowMs: NOV1, tz: "America/Los_Angeles", env: { STEP_REMINDERS_EMAIL: "on" } });
-  if (on.markup !== `${LINE1}\n\nIf it isn't connected by Friday, Nov 6, we'll send you one reminder.`) fail("with reminders on, the two approved sentences aren't exact (Nov 1 should name Friday, Nov 6)");
+  if (/about a minute/.test(off.markup)) fail("the welcome says \"about a minute\" (C6's fact): one set of facts says about two minutes");
+  if (PW.buildWelcome({ nowMs: NOV1, tz: "America/Los_Angeles", env: {} }).markup !== BODY("there")) fail("with no first name, the greeting isn't \"Hi there,\"");
+  const on = PW.buildWelcome({ nowMs: NOV1, tz: "America/Los_Angeles", env: { STEP_REMINDERS_EMAIL: "on" }, first: "Pat" });
+  if (on.markup !== `${BODY("Pat")}\n\nIf it isn't connected by Friday, Nov 6, we'll send you one reminder.`) fail("with reminders on, the approved words aren't exact (Nov 1 should name Friday, Nov 6)");
   if (on.reminder_on !== "2026-11-06") fail(`the stored reminder date isn't the one the email names: ${on.reminder_on}`);
   const later = PW.buildWelcome({ nowMs: Date.parse("2026-12-30T18:00:00Z"), tz: "America/Los_Angeles", env: { STEP_REMINDERS_EMAIL: "on" } });
   if (!later.markup.includes("Monday, Jan 4") || later.reminder_on !== "2027-01-04") fail(`the date is typed or doesn't cross a year: ${later.markup}`);
@@ -102,8 +116,15 @@ const LOCK = () => db.stripe_webhook_events.filter((e) => String(e.stripe_event_
 // ── 2 · the first payment, end to end through the real webhook ──────────────────────────────────
 {
   reset();
+  // the hold: right after the payment nothing has gone, the email waits in the queue; the sweep after the window sends it
+  const r0 = await deliver("payment_intent.succeeded", pi(), { id: "evt_first", sweep: false });
+  if (r0.statusCode !== 200) fail(`the webhook answered ${r0.statusCode} on a first payment`);
+  if (welcomes() !== 0) fail("the welcome went the moment the payment landed: it must wait out the hold window (RGA can Hold it)");
+  if (!db.client_activity.some((a) => a.kind === "client_email_queued" && a.payload && a.payload.key === "payment_welcome")) fail("the payment didn't queue the welcome");
+  await quiet(() => Q.sweep({ ...Q.realDeps(), now: () => new Date(Date.now() + 2 * 60000).toISOString() }));
+  if (welcomes() !== 0) fail("the sweep sent the welcome before its hold window ran out");
   const r = await deliver("payment_intent.succeeded", pi(), { id: "evt_first" });
-  if (r.statusCode !== 200) fail(`the webhook answered ${r.statusCode} on a first payment`);
+  if (r.statusCode !== 200) fail(`the webhook answered ${r.statusCode} on a redelivered first payment`);
   if (welcomes() !== 1) fail(`a first payment sent ${welcomes()} welcome emails`);
   const mail = mails.find((m) => m.includes(SUBJECT)) || "";
   if (!mail.includes(LINE1)) fail("the email that went out doesn't hold the approved sentence");
@@ -211,6 +232,20 @@ const noWelcome = async (name, setup, check) => { reset(); await setup(); const 
   if (!stored) fail("with reminders on, the reminder date isn't on the record, so nothing can keep the promise");
 }
 
+// ── 5b · the sender's OWN guards (11-11): the queue's sweep calls sendOnce, so its guards must hold on their own, not only behind queueOnce's ──
+{
+  const direct = async (name, setup, a = {}) => { reset(); setup(); await quiet(() => PW.sendOnce({ clientId: CID, ...a })); if (mails.length) fail(`${name}: sendOnce sent it`); };
+  await direct("a test client (sendOnce itself)", () => { db.clients[0].source = "test:walk"; });
+  await direct("a test-mode payment (sendOnce itself)", () => {}, { livemode: false });
+  await direct("suppression (sendOnce itself)", () => {}, { suppress: true });
+  reset();
+  await quiet(() => PW.sendOnce({ clientId: CID }));
+  const n1 = welcomes(); delete rec().stage_notifications;
+  await quiet(() => PW.sendOnce({ clientId: CID }));
+  if (n1 !== 1 || welcomes() !== 1) fail("with the record not saved yet, sendOnce's lock didn't hold: a second welcome went");
+  if (activity("payment_welcome_failed").length) fail("a welcome that's already out reads as a failure on the client's record (the taken lock must read as already sent)");
+}
+
 // ── 6 · the wiring ──────────────────────────────────────────────────────────────────────────────
 {
   const code = (s) => s.split("\n").filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join("\n");
@@ -219,9 +254,13 @@ const noWelcome = async (name, setup, check) => { reset(); await setup(); const 
   if (!/client\.client_portal_stage === "stage_2_payment"\) await paymentWelcome\(clientId, pi\.livemode\)/.test(pia)) fail("the inline payment path doesn't call the welcome on the first payment only");
   if (pia.indexOf("await paymentWelcome") < pia.indexOf("send-invoice-email")) fail("the welcome runs before the receipt, so a slow send could cost the receipt");
   const fnw = wh.slice(wh.indexOf("async function paymentWelcome"));
-  if (!/try \{ await require\("\.\/_payment-welcome"\)\.sendOnce/.test(fnw) || !/suppress: process\.env\.RGA_SUPPRESS_CLIENT_EMAIL === "1"/.test(fnw)) fail("the webhook's call isn't wrapped in a try, or doesn't forward suppression");
+  // 11-11: both payment paths QUEUE it (queueOnce); the queue's sweep sends it through sendOnce
+  if (!/try \{ await require\("\.\/_payment-welcome"\)\.queueOnce/.test(fnw) || !/suppress: process\.env\.RGA_SUPPRESS_CLIENT_EMAIL === "1"/.test(fnw)) fail("the webhook's call isn't wrapped in a try, or doesn't forward suppression");
   const rp = code(read("netlify/functions/admin-record-payment.js"));
-  if (!/if \(advanced\) \{\s*try \{ await require\("\.\/_payment-welcome"\)\.sendOnce/.test(rp)) fail("a payment recorded by hand doesn't get the welcome, or a failure could fail the recording");
+  if (!/if \(advanced\) \{\s*try \{ await require\("\.\/_payment-welcome"\)\.queueOnce/.test(rp)) fail("a payment recorded by hand doesn't get the welcome, or a failure could fail the recording");
+  const qsrc = code(read("netlify/functions/_client-email-queue.js"));
+  if (!/it\.kind === "payment_welcome"[\s\S]{0,200}require\("\.\/_payment-welcome"\)\.sendOnce\(/.test(qsrc)) fail("the queue's sweep doesn't send a queued welcome through sendOnce");
+  if (heldBack) fail(`${heldBack} delivery(ies) sent the welcome inside the webhook itself, with no hold window`);
   const ns = code(read("netlify/functions/notify-step-open.js"));
   const remBlock = ns.slice(ns.indexOf("if (REM.enabled()) {"), ns.indexOf("const nud = await nudgesFor(client, tasks)"));
   if (!/PW\.connectReminderDue\(data, today\)/.test(remBlock)) fail("nothing sends the reminder the email promises");

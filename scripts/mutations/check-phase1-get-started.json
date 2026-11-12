@@ -7,10 +7,24 @@
   1
  ],
  [
-  "the agenda email sends without Chris's switch",
+  "the agenda drops out of the day-before email",
+  "schedulev6remind",
+  "  const agenda = call.kind === \"kickoff\" && forClient ? agendaBlock(agendaFacts || []) : \"\";",
+  "  const agenda = \"\";",
+  1
+ ],
+ [
+  "the agenda comes back as its own second Tomorrow email",
   "notifystepopen",
-  "  if (env.KICKOFF_AGENDA_EMAIL !== \"on\") return false;",
-  "  if (false) return false;",
+  "async function writeTasks(recId, data, tasks) {",
+  "function buildAgendaEmail(c) { return { subject: \"Tomorrow: your kickoff call (agenda)\" }; }\nasync function writeTasks(recId, data, tasks) {",
+  1
+ ],
+ [
+  "the day-before email loses the client's facts",
+  "schedulev6remfn",
+  "agendaFacts: who.facts || null",
+  "agendaFacts: null",
   1
  ],
  [

@@ -16,7 +16,7 @@
  [
   "the recap loses the per-item date",
   "admin",
-  "    return [`- ${what}${y ? ` — by ${y.by}.` : \".\"} [${ACTION[r.id] || \"Open it in your portal\"}](${PORTAL}#step-${r.id})`];",
+  "    return [`- ${what}${y ? `, by ${y.by}.` : \".\"} [${ACTION[r.id] || \"Open it in your portal\"}](${PORTAL}#step-${r.id})`];",
   "    return [`- ${what}. [${ACTION[r.id] || \"Open it in your portal\"}](${PORTAL}#step-${r.id})`];",
   1
  ],

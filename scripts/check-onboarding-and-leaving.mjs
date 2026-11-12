@@ -240,7 +240,11 @@ const tz = "America/New_York", told = Date.parse("2026-11-02T15:00:00Z");   // a
   // the draft's function and its click handler, up to the next card (a fixed 4000-character window went blind when the function grew past it)
   { const A = read("admin/admin.js"), a = A.indexOf("function notesDraftHtml"), b = A.indexOf("function rowStepCardsHtml", a);
     if (a < 0 || b < 0) { console.error("⚠️  INDETERMINATE — notesDraftHtml / rowStepCardsHtml moved"); process.exit(2); }
-    if (!/Open as a Gmail draft/.test(A) || /Send (it|now)/i.test(A.slice(a, b))) fail("the note drafts offer a send button, not a draft"); }
+    // 🔒 11-11 (master client-messages decision 4): the notes are PRODUCT messages now: RGA presses Send, a dialog names who it goes to and shows
+    // the email, it goes through the one sender (admin-client-email) and the client keeps a copy. Never a Gmail compose window again.
+    const R = A.slice(a, b);
+    if (/mail\.google\.com\/mail\/\?view=cm/.test(R) || /Open as a Gmail draft/.test(R)) fail("the notes are still a Gmail draft a person sends by hand (the product never knows it went)");
+    if (!/data-ob-draft-send=/.test(R) || !/rgaDialog\(\{[\s\S]{0,400}tone: "outward"/.test(R) || !/\/\.netlify\/functions\/admin-client-email/.test(R)) fail("a note isn't sent on RGA's press, after a dialog that names the client, through admin-client-email"); }
 }
 
 // ── 7 · the Cancel card ──

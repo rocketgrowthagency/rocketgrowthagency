@@ -94,7 +94,7 @@ for (const [tier, addons, pt] of CASES) {
 
 // wiring
 const N = code(read("netlify/functions/notify-client-stage.js"));
-if (!/const msg = messageFor\(stage, \{ first, kickoffWhen, beta, amount \}\);/.test(N)) F("the stage email is no longer given the invoice amount");
+if (!/const msg = messageFor\(stage, \{ first, kickoffWhen, beta, amount(?:, hasCard)? \}\);/.test(N)) F("the stage email is no longer given the invoice amount");
 if (!/cg\.dfyHalf\(signedContract\)[\s\S]{0,200}cg\.firstInvoiceAmount\(signedContract\.tier/.test(N)) F("the stage email's amount is not computed by the charge's own helpers");
 const S = code(read("netlify/functions/send-confirmation-email.js"));
 if (!/if \(isAgreementSend\) \{\s*data\.agreement_email = /.test(S)) F("the agreement email writes step 1 again — it would block the welcome email");
@@ -118,7 +118,7 @@ const BAL = code(read("netlify/functions/admin-send-balance-invoice.js"));
 if (!/invoice_num: 2, amount/.test(BAL) || !/const amount = dfyHalf\(contract\);/.test(BAL)) F("the balance invoice is not invoice #2 at dfyHalf");
 if (!/String\(inv1\.status\)\.toLowerCase\(\) !== "paid"/.test(BAL)) F("the balance invoice can open before the deposit is paid");
 const OC = code(read("netlify/functions/oauth-google-callback.js"));
-if (!/await notifyClientStage\(clientId, "stage_4_onboarding"\);\s*await sendWelcomeEmail\(supaUrl, supaKey, clientId\);/.test(OC)) F("connecting Google no longer sends the welcome email (the stage-3 email promises it)");
+if (!/await notifyClientStage\(clientId, "stage_4_onboarding"\);\s*await (?:send|queue)WelcomeEmail\(supaUrl, supaKey, clientId\);/.test(OC)) F("connecting Google no longer sends the welcome email (the stage-3 email promises it)");
 if (!/kind: "welcome_email_failed"/.test(OC)) F("a failed automatic welcome email is no longer recorded on the client");
 const CG = code(read("netlify/functions/contract-generate.js"));
 if (/Client has committed to a/.test(CG) || /-month commitment<\/strong>/.test(CG)) F("the 3-Month agreement calls itself a commitment again");

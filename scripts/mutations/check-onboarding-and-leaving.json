@@ -260,8 +260,8 @@
  [
   "the day-50 note claims movement",
   "onbnotes",
-  "Still to come: any movement in map positions.",
-  "Positions have moved up."
+  "## Still to come\\nAny movement in map positions.",
+  "## Still to come\\nPositions have moved up."
  ],
  [
   "the drafts go to the client too",
@@ -270,10 +270,16 @@
   "if (true) out.drafts"
  ],
  [
-  "the note drafts get a send button",
+  "the notes go back to a hand-sent Gmail draft",
   "admin",
-  "data-ob-draft-open=\"${kind}\">Open as a Gmail draft",
-  "data-ob-draft-open=\"${kind}\">Send it now"
+  "act: `<button type=\"button\" class=\"admin-button\" data-ob-draft-send=\"${kind}\">Send</button>` });",
+  "act: `<a class=\"admin-button\" href=\"https://mail.google.com/mail/?view=cm&fs=1\">Open as a Gmail draft</a>` });"
+ ],
+ [
+  "a note sends with no dialog naming the client",
+  "admin",
+  "  const edited = await rgaDialog({ kind: \"prompt\", inputType: \"textarea\", tone: \"outward\", areaFont: \"page\",\n    title: `Send ${(state.selectedClient",
+  "  const edited = d.markup; void ({ kind: \"prompt\", inputType: \"textarea\", areaFont: \"page\",\n    title: `Send ${(state.selectedClient"
  ],
  [
   "the standard terms stop being read from the plan",

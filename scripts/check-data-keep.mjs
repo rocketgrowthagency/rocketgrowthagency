@@ -203,7 +203,7 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
   const m = fs.readFileSync(`${SITE}/netlify/functions/_monthly-close.js`, "utf8");
   const sendAt = m.lastIndexOf("d.gmail({ workspaceId"), rawAt = m.indexOf('source: "monthly-report"');
   ok(rawAt > sendAt && sendAt > 0, "(6) the report isn't saved as sent AFTER it is sent");
-  ok(/gmail_message_id: sent\.id \|\| null, subject: draft\.subject, html: draft\.html, text: draft\.text \} \}\);\s*\n\s*result\.frozen/.test(m), "(6) what's frozen isn't the subject, html and text that went out");
+  ok(/gmail_message_id: sent\.id \|\| null, subject: mail\.subject, html: mail\.html, text: mail\.text \} \}\);\s*\n\s*result\.frozen/.test(m), "(6) what's frozen isn't the subject, html and text that went out");
   ok(/try \{\s*\n\s*const frozenCopy = await d\.saveRaw/.test(m) && /result\.frozen = frozenCopy\.ok/.test(m) && /catch \(e\) \{ rethrowBugs\(e\); result\.frozen = \{ ok: false/.test(m), "(6) a failed freeze can break the send or goes unrecorded");
   ok(/j\.frozen && j\.frozen\.ok === false/.test(fs.readFileSync(`${SITE}/admin/admin.js`, "utf8")), "(6) the admin doesn't say when a sent report's safety copy was not saved");
 }

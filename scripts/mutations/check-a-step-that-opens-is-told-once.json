@@ -93,8 +93,8 @@
  [
   "the client can't see it in the thread",
   "thread",
-  "\"step_nudge_sent\", \"step_open_sent\"]",
-  "\"step_nudge_sent\"]",
+  "\"step_nudge_sent\", \"step_open_sent\", \"rga_note_sent\"]",
+  "\"step_nudge_sent\", \"rga_note_sent\"]",
   1
  ],
  [

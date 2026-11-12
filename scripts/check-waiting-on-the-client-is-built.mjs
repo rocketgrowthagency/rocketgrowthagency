@@ -67,12 +67,12 @@ vm.runInContext(`${srcSince}\n${srcDraft}\nthis.since = stepWaitingSince; this.d
 // 2 · the nudge draft
 {
   const o = { flowId: "m1.gbp.photos", clientLabel: "Provide 20+ business photos" };
-  // 🔄 2026-10-09 (client_emails_one_format_v1): short subjects — "Your photos — 19 to go"; the body states the
+  // 🔄 2026-10-09 (client_emails_one_format_v1): short subjects ("Your photos: 19 to go" since 11-11, no em dash in client text); the body states the
   // record's own numbers. A measurement without a noun still carries its count.
   const m = ctx.draft(o, { detected: { n: 1, threshold: 20, noun: "photo", evidence: "Your Google Business Profile has 1 photo — 20 are needed." } });
-  if (m.subject !== "Your photos — 19 to go") F(`measured subject was "${m.subject}"`);
+  if (m.subject !== "Your photos: 19 to go") F(`measured subject was "${m.subject}"`);
   const mn = ctx.draft(o, { detected: { n: 3, threshold: 5 } });
-  if (!/— 2 to go$/.test(mn.subject) || !mn.body.includes("3 of the 5")) F(`a measurement with no noun lost its count: "${mn.subject}"`);
+  if (!/, 2 to go$/.test(mn.subject) || !mn.body.includes("3 of the 5")) F(`a measurement with no noun lost its count: "${mn.subject}"`);
   if (!m.body.startsWith("Hi Dana,")) F("the nudge does not greet the contact by first name");
   if (!m.body.includes("1 of the 20 photos")) F("the nudge does not carry the measurement's own numbers");
   if (!m.body.includes("/portal/#step-m1.gbp.photos")) F("the nudge does not link to the step itself");

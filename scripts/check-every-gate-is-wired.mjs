@@ -138,6 +138,8 @@ const NOT_PREFLIGHT = {
   'check-photo-lists-are-the-researched-ones.mjs': 'static + render: the photo shot lists and how they reach the client; runs in daily-health-check.sh — copy cannot make a video unsafe',
   'check-a-photo-preview-says-when-it-fails.mjs': 'static: the portal photo preview fails loudly; runs in daily-health-check.sh — copy cannot make a video unsafe',
   'check-client-emails-have-one-format.mjs': 'static + render: the format of client emails; runs in daily-health-check.sh — copy cannot make a video unsafe',
+  'check-client-emails-have-no-em-dash.mjs': 'render + static (11-11): no em dash in the WEBSITE repo\'s client emails, on fakes (nothing sent); runs in daily-health-check.sh. Copy cannot make a video unsafe',
+  'check-client-messages-build.mjs': 'the WEBSITE repo\'s client-messages build (11-11: hold window, per-occurrence notices, notes, notice acknowledgment, report check-in) on fakes, nothing sent; runs in daily-health-check.sh. It reads no video pipeline output',
   'check-the-kickoff-promises-agree.mjs': 'static: the kickoff script, the recap and the schedules agree; runs in daily-health-check.sh — copy cannot make a video unsafe',
   'check-the-kickoff-agrees-on-every-surface.mjs': 'runs every kickoff state through every surface (admin + portal) in a vm; runs in daily-health-check.sh — a call card cannot make a video unsafe',
   'check-the-audit-report-is-fresh-and-in-hand.mjs': 'pins the client report build/refresh wiring and its cost bounds; runs in daily-health-check.sh — reports are not videos',

@@ -621,4 +621,13 @@ export const FILES = {
   flipslib: "scraper:scripts/lib/gate-flips.mjs",
   backuplib: "scraper:scripts/lib/backup-judge.mjs",
   mockuplib: "scraper:scripts/lib/mockup-match.mjs",
+  // master client-messages (11-11, check-client-emails-have-no-em-dash + check-client-messages-build): the hold-and-undo queue, its sweep and RGA's
+  // presses, the notice acknowledgment, the mid-month note, the notes drafter, the report's check-in time
+  emailqueue: "netlify/functions/_client-email-queue.js",
+  emailqueuefn: "netlify/functions/client-email-queue.js",
+  clientemailfn: "netlify/functions/admin-client-email.js",
+  noticeack: "netlify/functions/_notice-ack.js",
+  midmonth: "netlify/functions/_mid-month-note.js",
+  notesdraftfn: "netlify/functions/client-notes-draft.js",
+  suggestedcall: "netlify/functions/_suggested-call.js",
 };

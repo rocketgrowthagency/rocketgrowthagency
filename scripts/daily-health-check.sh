@@ -577,6 +577,8 @@ run check-the-kickoff-promises-agree.mjs "the call script and the recap promise 
 run check-client-emails-have-one-format.mjs "every client email: letter markup, links as words, one sign-off, American copy"
 run check-client-emails-have-no-em-dash.mjs "no em dash in client text: every client email rendered (subject, twin, HTML), every other producer scanned, every sender covered (11-11)"
 run check-client-messages-build.mjs "client messages (11-11): C6 retired, late notices + disconnects once per occurrence, the hold window with Hold/Send/Drop, notes on RGA's press, the notice acknowledged, the report proposes a check-in"
+run check-client-emails-have-no-em-dash.mjs "no em dash in client text: every client email rendered (subject, twin, HTML), every other producer scanned, every sender covered (11-11)"
+run check-client-messages-build.mjs "client messages (11-11): C6 retired, late notices + disconnects once per occurrence, the hold window with Hold/Send/Drop, notes on RGA's press, the notice acknowledged, the report proposes a check-in"
 run check-a-photo-preview-says-when-it-fails.mjs "a photo preview that cannot load says so, never a silent grey square"
 run check-photo-lists-are-the-researched-ones.mjs "the photo shot lists are the researched ones for each trade; unknown categories pick nothing"
 run check-the-portal-shows-the-trades-own-list.mjs "each trade's client sees its own photo list in the portal (real runner + real renderer)"
