@@ -1,0 +1,10 @@
+[
+ ["a switched-off call email goes", "schedulev6remfn", "      if (!may.send) {\n", "      if (false) {\n", 1],
+ ["a switched-off call text goes", "schedulev6remfn", "if (!mayT.send) {", "if (false) {", 1],
+ ["unreadable settings claim the reminder", "schedulev6remfn", "      if (may.retry) { out.prefsUnread++; continue; }\n", "", 1],
+ ["unreadable settings are read as on", "noticesfn", "if (p.state === \"error\") return { send: false, retry: true,", "if (false) return { send: false, retry: true,", 1],
+ ["the gate ignores an off switch", "noticesshared", "return on === false ? { send: false,", "return false ? { send: false,", 1],
+ ["the photos reminder ignores its switch", "notifystepopen", "else if (!(await may(\"photos_later\")).send) {", "else if (false) {", 1],
+ ["the step reminder ignores its switch", "notifystepopen", "if (dueR.length && !mR.send)", "if (false)", 1],
+ ["the hour-before reminder answers to the day-before switch", "schedulev6remfn", "const REMINDER_KIND = { email_24h: \"call_day_before\", email_1h: \"call_hour_before\",", "const REMINDER_KIND = { email_24h: \"call_day_before\", email_1h: \"call_day_before\",", 1]
+]

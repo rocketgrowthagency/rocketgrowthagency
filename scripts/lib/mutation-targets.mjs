@@ -694,4 +694,11 @@ export const FILES = {
   startasclientfn: "netlify/functions/start-as-client.js",
   leadcrmfn: "netlify/functions/_lead-crm.js",
   outreachgs: "docs/apps-scripts/gmail-to-airtable.gs",
+  // card_notice_designs_v1 (11-11): the client's notice list, reminder switches, approval comments, the mid-month note
+  noticesshared: "shared/notices.js",
+  noticesfn: "netlify/functions/_notices.js",
+  portalnoticesfn: "netlify/functions/portal-notices.js",
+  apcfn: "netlify/functions/approval-comments.js",
+  midnotefn: "netlify/functions/_mid-note.js",
+  noticessql: "docs/supabase/NOTICES_AND_COMMENTS_2026-11-11.sql",
 };

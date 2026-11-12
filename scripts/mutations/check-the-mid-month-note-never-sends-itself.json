@@ -1,0 +1,10 @@
+[
+ ["Approve sends without the dialog", "midnotefn", "if (confirm !== true) return fail(409,", "if (false) return fail(409,", 1],
+ ["Approve sends without a staff sign-in", "midnotefn", "if (!by || !/@/.test(String(by))) return fail(403,", "if (false) return fail(403,", 1],
+ ["the morning run sends", "midnotefn", "  return build({ clientId, month, deps: d, rec, client });\n}", "  const b = await build({ clientId, month, deps: d, rec, client }); await approveSend({ clientId, month, by: \"auto@rga.test\", confirm: true, deps: d }); return b;\n}", 1],
+ ["the send goes before the approval is written", "midnotefn", "const ok = await d.writeMonth(rec, { ...(rec.data || {}), mid_note: approved });", "const ok = true;", 1],
+ ["a held note sends", "midnotefn", "if (!(note.status === \"draft\" || (retry && note.status === \"failed\"))) return fail(409,", "if (false) return fail(409,", 1],
+ ["the admin's Approve skips the outward dialog", "adminjs", "tone: \"outward\", title: `Send the mid-month note to", "tone: \"routine\", title: `Send the mid-month note to", 1],
+ ["the morning run approves", "morningrun", "return MN.morning({ clientId, month, deps: MN.defaultDeps() });", "return MN.approveSend({ clientId, month, deps: MN.defaultDeps(), by: \"a@b\", confirm: true });", 1],
+ ["the draft day ignores the weekend", "midnotefn", "if (w === 6) d.setUTCDate(17); else if (w === 0) d.setUTCDate(16);", "", 1]
+]

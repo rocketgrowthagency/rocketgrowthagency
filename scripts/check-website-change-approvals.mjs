@@ -171,7 +171,7 @@ for (const [re, what] of [
   [/How it looks in Google/, "the Google preview"], [/data-ib-gp="now"[\s\S]{0,200}data-ib-gp="after"/, "the Google preview's Now / After switch"],
   [/<b>Nothing visible changes<\/b>/, "code changes as plain tiles"], [/Show the code \(for your developer\)/, "Show the code"],
   [/<b>Why this helps<\/b>/, "Why this helps"], [/data-ib-do="approved">\$\{IB_ICON\.check\}/, "Approve this change"],
-  [/data-ib-ask>\$\{IB_ICON\.msg\}Ask for a change/, "Ask for a change (note in place)"],
+  [/data-ib-ask>\$\{IB_ICON\.msg\}Change<\/button>/, "Change (note in place; card_notice_designs_v1 renamed Ask for a change, 11-11)"],
   [/change_v: box\.getAttribute\("data-ib-v"\)/, "the version sent back with the answer"],
   [/grp\("", "What RGA did", D,/, "What RGA did (the list; v5 dropped the separate timeline, 10-28)"], [/Ask to undo/, "Ask to undo"],
   [/Nothing changes on your site until you approve\./, "the promise line under the decision"],

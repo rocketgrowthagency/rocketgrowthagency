@@ -1,0 +1,12 @@
+[
+ ["a request posts as RGA", "apcfn", "const role = action === \"post\" ? \"client\" : \"rga\";", "const role = b.author_role === \"rga\" ? \"rga\" : action === \"post\" ? \"client\" : \"rga\";", 1],
+ ["a client can reply as RGA", "apcfn", "const g = action === \"post\" ? await guard.requirePortalOwner(event, clientId) : await guard.requireWorkspaceForClient(event, clientId);", "const g = await guard.requirePortalOwnerOrWorkspace(event, clientId);", 1],
+ ["RGA's reply skips the dialog", "apcfn", "if (role === \"rga\" && b.confirm !== true) return json(409", "if (false) return json(409", 1],
+ ["a decided item takes comments", "apcfn", "if (role === \"client\" && await (deps.decided || decided)(supa, clientId, kind, itemId)) return", "if (false) return", 1],
+ ["the reply email isn't M9", "apcfn", "notice: { clientId, code: \"M9\"", "notice: { clientId, code: \"M8\"", 1],
+ ["a comment's To do row is on RGA's 2 days", "adminopenmovesfn", "days: OM.CONFIRM_DAYS, minutes: null, due,", "days: OM.RGA_DAYS, minutes: null, due,", 1],
+ ["a Change note makes a second To do row", "adminopenmovesfn", "const open = NT.unanswered(list.filter((x) => !x.is_change));", "const open = NT.unanswered(list);", 1],
+ ["RGA's reply doesn't clear the row", "noticesshared", "else if (c.author_role === \"rga\") firstOpen = null;", "", 1],
+ ["Messages loses approval comments", "adminmessagesfn", "kind.in.(client_message,rga_reply,rga_alert,approval_comment,approval_reply)", "kind.in.(client_message,rga_reply,rga_alert)", 1],
+ ["a Change note is a second store", "portaldeliv", "is_change: true, words: note.trim()", "is_change: false, words: note.trim()", 1]
+]
