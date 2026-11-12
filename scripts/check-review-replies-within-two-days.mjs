@@ -335,7 +335,7 @@ async function portalPress(world, body) {
   const pc = (p.match(/closest\("\[data-rr-approve-client\][\s\S]{0,2400}/) || [""])[0];
   if (!/const busy = \(on\) => \{ b\.disabled = on; b\.classList\.toggle\("is-busy", on\);/.test(pc) || !/busy\(true\);\s*try \{/.test(pc)) fail("13 the client's Approve and Save must spin while they work (is-busy on the pressed button, set before the request)");
   for (const [f, re, min] of [["admin/admin.js", /shared\/review-replies\.js\?v=(\w+)/, "20261111y"], ["portal/portal.js", /shared\/review-replies\.js\?v=(\w+)/, "20261111y"]]) { const m = re.exec(read(f)); if (!m || m[1] < min) fail(`13 ${f} must load shared/review-replies.js at ?v=${min} or later`); }
-  for (const [f, re] of [["admin/index.html", /admin\.js\?v=(\w+)/], ["portal/index.html", /portal\.js\?v=(\w+)/]]) { const m = re.exec(read(f)); if (!m || m[1] < "20261111y") fail(`13 ${f} must load the new build (?v=20261111y or later)`); }
+  for (const [f, re] of [["admin/index.html", /admin\.js\?v=(\w+)/], ["portal/index.html", /portal\.js\?v=(\w+)/]]) { const m = re.exec(read(f)); if (!m || m[1] < "20261111p") fail(`13 ${f} must load the new build (?v=20261111p or later)`); }
   const strip = (s) => s.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   if (/—/.test(strip(read("shared/review-replies.js")))) fail("13 no em dash in text a person reads (shared/review-replies.js)");
   if (/Write ONE reply per review[\s\S]{0,400}REVIEW n \\u2192 REPLY[\s\S]{0,800}"m2\.exec\.review_responses"/.test(fe) || !/"m2\.exec\.review_responses": async[\s\S]{0,1400}tickClient\(/.test(fe)) fail("13 the Monthly 4 runner must be one tick of the watch, not the old batch draft");
