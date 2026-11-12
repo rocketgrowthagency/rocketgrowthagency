@@ -12,6 +12,7 @@
 //   5 admin row 8 shows our check + the client's answer and flags a "no"; the sent card names the designer, never "Another / not sure"
 //   2026-10-30 night fixer: the client's card lifts the card system (csBlock) + the plan-card pieces; "With RGA" = the blue system card + ONE blue status row (client_step03_access_v1)
 //   exit 0 holds · 1 regressed · 2 code moved
+import { adminCardLift } from "./lib/admin-card-lift.mjs";   // card_notice_designs_v1 §1 (11-11): admin cards draw through shared/admin-card.js
 import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
@@ -336,7 +337,7 @@ const actx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttrib
 vm.runInContext(`${(A.match(/^const STEP_EMAIL_IDS = [^\n]*;$/m) || [""])[0].replace(/^const /, "var ")} var mailWhen = (x) => String(x || "");`, actx);
 for (const n of ["accDetectAdminHtml", "accessAdminHtml", "stepEmailBar", "accInviteLinkHtml"]) vm.runInContext(fnSrc(A, n), actx);
 vm.runInContext(`var RGA_ACCESS_ACCOUNT = "access@x";`, actx);
-vm.runInContext(`${A.slice(A.indexOf("function acCardHtml("), A.indexOf("\n}\n", A.indexOf("function acCardHtml(")) + 2)} ${fnSrc(A, "acDueChip")} ${["acMono", "acConsent", "acSite", "GH_MONO", "mvDay", "mvDueDays"].map((n) => { const at = A.search(new RegExp(`^const ${n} = `, "m")); if (at < 0) return ""; const eol = A.indexOf("\n", at); const first = A.slice(at, eol); return (first.trimEnd().endsWith("{") ? A.slice(at, A.indexOf("\n};", at) + 3) : first).replace(/^const /, "var "); }).join("\n")} var movesForSelected = () => null;`, actx);   // row 8's one card (admin_action_card_and_row8_v1)
+vm.runInContext(`${adminCardLift(SITE, A)}\n${A.slice(A.indexOf("function acCardHtml("), A.indexOf("\n}\n", A.indexOf("function acCardHtml(")) + 2)} ${fnSrc(A, "acDueChip")} ${["acMono", "acConsent", "acSite", "GH_MONO", "mvDay", "mvDueDays"].map((n) => { const at = A.search(new RegExp(`^const ${n} = `, "m")); if (at < 0) return ""; const eol = A.indexOf("\n", at); const first = A.slice(at, eol); return (first.trimEnd().endsWith("{") ? A.slice(at, A.indexOf("\n};", at) + 3) : first).replace(/^const /, "var "); }).join("\n")} var movesForSelected = () => null;`, actx);   // row 8's one card (admin_action_card_and_row8_v1)
 const row = (c) => vm.runInContext(`accessAdminHtml(${JSON.stringify({ status: "in_progress", client_input: c })})`, actx);
 const no = row(ci2);
 if (!/Our site check:<\/b> Wix · 1 sign/.test(no) || !/is-check/.test(no) || !/<b>Check first:<\/b> the client said no and picked Squarespace/.test(no)) fail("admin row 8 doesn't flag a \"No\" (our check vs the client's pick)");
@@ -347,10 +348,10 @@ if (!/What our check saw<\/b> \(RGA only\)/.test(row({ via: "invite", platform: 
 if (!/from a saved copy \(2025-09-09\), their site blocks automatic checks/.test(ar)) fail("admin row 8 doesn't say the result came from a saved copy (and why)");
 const rowT = (t) => vm.runInContext(`accessAdminHtml(${JSON.stringify(t)})`, actx);
 const ask8 = rowT({ status: "in_progress", check_request: { asked_at: "2026-10-22T23:00:00Z", reason: "blocked", site: "acme.example" } });
-if (!/Your move · check their site/.test(ask8) || !/data-ob-acc-plat/.test(ask8) || !/data-ob-acc-rgacheck/.test(ask8) || !/acme\.example blocks automatic checks/.test(ask8)) fail("admin row 8 doesn't give RGA the check (why · Open · builder picker · Tell the client)");
+if (!/>Your move<\/span>[\s\S]*?class="ob-card-d">Check their site</.test(ask8) || !/data-ob-acc-plat/.test(ask8) || !/data-ob-acc-rgacheck/.test(ask8) || !/acme\.example blocks automatic checks/.test(ask8)) fail("admin row 8 doesn't give RGA the check (why · Open · builder picker · Tell the client)");
 const told8 = rowT({ status: "pending", check_request: { asked_at: "2026-10-22T23:00:00Z", reason: "blocked", site: "acme.example" }, rga_check: { platform: "wordpress", by: "chris@rocketgrowthagency.com", at: "2026-10-22T23:30:00Z" } });
 if (!/Client's move/.test(told8) || !/We checked your website: it's on WordPress/.test(told8) || !/Draft — not sent/.test(told8)) fail("after Tell the client, row 8 doesn't show the client's move + the email as a DRAFT (never auto-sent)");
-if (!/<dt>Consent<\/dt><dd>✓ given by owner@acme\.test · /.test(row({ via: "invite", platform: "wix", platform_source: "chosen", consent: { by: "owner@acme.test", at: "2026-10-23T16:42:10Z", promise: "2026-10-23b" } }))) fail("admin row 8 doesn't show the client's consent (who · when · promise)");
+if (!/<span class="l">Consent<\/span><span class="v">✓ given by owner@acme\.test · /.test(row({ via: "invite", platform: "wix", platform_source: "chosen", consent: { by: "owner@acme.test", at: "2026-10-23T16:42:10Z", promise: "2026-10-23b" } }))) fail("admin row 8 doesn't show the client's consent (who · when · promise)");
 if (!/Custom-coded · hosted on Netlify/.test(row({ via: "invite", platform: "custom", platform_source: "detected_confirmed", detected: { status: "ok", platform: "custom", signs: 1, host: "netlify", answer: "yes" } }))) fail("admin row 8 doesn't say where a developer-built site is hosted");
 const dz = row({ via: "designer", platform: "other", platform_source: "designer_credit", detected: { status: "ok", platform: null, signs: 0, designer: "Exposure", designer_answer: "yes" } });
 if (!/footer credits <b>Exposure<\/b> \(client: they manage it\)/.test(dz)) fail("admin row 8 doesn't show the designer credit the client confirmed");

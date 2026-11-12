@@ -201,7 +201,7 @@ if (has(SC, "photosReadBack", "the photo read-back")) {
   const RAN = "2026-11-06T19:31:00Z";
   // 1 · ready
   let h = card({ status: "in_progress" });
-  if (!/Your move · draft it/.test(h) || !/5 of the 6 photos on their website have no description/.test(h) || !/<b>Home<\/b> 3 of 4/.test(h) || !/read Nov 6 · 2 pages/.test(h) || !/⚡ Draft this for me/.test(h) || !/Icons and decorations are left out/.test(h)) fail(`state 1 (ready) isn't drawn from the latest read: ${h.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 200)}`);
+  if (!/>Your move<\/span>[\s\S]*?class="ob-card-when"><span class="ob-card-d">Draft it<\/span> · /.test(h) || !/5 of the 6 photos on their website have no description/.test(h) || !/<b>Home<\/b> 3 of 4/.test(h) || !/read Nov 6 · 2 pages/.test(h) || !/⚡ Draft this for me/.test(h) || !/Icons and decorations are left out/.test(h)) fail(`state 1 (ready) isn't drawn from the latest read: ${h.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 200)}`);
   never(h, "state 1");
   // 2 · drafting
   h = card({ status: "in_progress", started_at: new Date(Date.now() - 20000).toISOString(), ran_at: "2026-11-05T10:00:00Z", auto_result: { summary: "old" } });
@@ -212,7 +212,7 @@ if (has(SC, "photosReadBack", "the photo read-back")) {
     { src: "https://joes.test/p/heater.png", page: "https://joes.test/services/", page_label: "Services", where: "Drain cleaning", kind: "photo", before: "photo", after: "", why: "unclear" }] };
   const t3 = { status: "in_progress", ran_at: RAN, started_at: "2026-11-06T19:30:00Z", outcome: "draft_ready", auto_result: { summary: "3 photo descriptions drafted", outcome_data: { photo_check: { state: "drafted", pages: 3, photos: 7, missing: 3, at: RAN }, photo_draft: draft } } };
   h = card(t3);
-  if (!/Your move · check and send/.test(h) || !/3 photo descriptions/.test(h) || !/Today: <s>no description<\/s>/.test(h) || !/Today: “IMG_4471”/.test(h) || !/<b>Ours:<\/b> Two plumbers/.test(h) || !/data-ob-img-edit="0"/.test(h)
+  if (!/>Your move<\/span>[\s\S]*?class="ob-card-when"><span class="ob-card-d">Check and send/.test(h) || !/3 photo descriptions/.test(h) || !/Today: <s>no description<\/s>/.test(h) || !/Today: “IMG_4471”/.test(h) || !/<b>Ours:<\/b> Two plumbers/.test(h) || !/data-ob-img-edit="0"/.test(h)
     || !/Couldn't tell what this shows; write it yourself/.test(h) || !/data-ob-img-send>Send<\/button>/.test(h) || !/Goes to their For your approval as one website change/.test(h) || !/>Draft again<\/button>/.test(h) || !/<img class="ob-img-th" src="https:\/\/cdn\.joes\.test\/p\/crew\.jpg\?w=1200"/.test(h)) fail("state 3 (check and send) isn't one line per photo with its thumbnail, Today, Ours, Edit, Send and Draft again");
   never(h, "state 3");
   if (pill(t3) !== "Your move") fail(`state 3's row pill reads "${pill(t3)}"`);
@@ -244,7 +244,7 @@ if (has(SC, "photosReadBack", "the photo read-back")) {
   // C: some pages wouldn't open: named, never Done
   const tC = { status: "in_progress", ran_at: RAN, auto_result: { outcome_data: { photo_check: { state: "couldnt", why: "some_pages", pages: 261, pages_found: 261, pages_unread: 12, photos: 14, missing: 0, at: RAN, unread_pages: [{ url: "https://joes.test/blog/a/", why: "timeout" }, { url: "https://joes.test/blog/b/", why: "http_404" }] } } } };
   h = card(tC);
-  if (!/Not every page read/.test(h) || !/12 of their 261 pages wouldn't open/.test(h) || !/The 249 that opened have every photo described/.test(h) || !/<summary>See them<\/summary>/.test(h) || !/joes\.test\/blog\/a\/<\/a> <span class="ob-ac-mut">didn't answer in time/.test(h) || !/answered 404/.test(h) || !/>Try again<\/button>/.test(h)) fail("state C (some pages wouldn't open) isn't the card that names them, with Try again");
+  if (!/Not every page read/.test(h) || !/12 of their 261 pages wouldn't open/.test(h) || !/The 249 that opened have every photo described/.test(h) || !/<summary>See them<\/summary>/.test(h) || !/joes\.test\/blog\/a\/<\/a> <span class="ob-card-mut">didn't answer in time/.test(h) || !/answered 404/.test(h) || !/>Try again<\/button>/.test(h)) fail("state C (some pages wouldn't open) isn't the card that names them, with Try again");
   if (pill(tC) !== "Needs a look") fail(`state C's row pill reads "${pill(tC)}"`);
   h = card({ status: "in_progress", ran_at: RAN, auto_result: { outcome_data: { photo_check: { state: "couldnt", why: "blocked", at: RAN } } } });
   if (!/Couldn't check/.test(h) || !/Their website didn't let us read its pages/.test(h) || !/It blocks automatic visits\. Nothing was drafted\./.test(h) || !/>Try again<\/button>/.test(h)) fail("state 5b (couldn't check) isn't the grey card with Try again");

@@ -534,8 +534,8 @@
  [
   "a different card design",
   "admin",
-  "`<div class=\"ob-zc${cls ? ` ${cls}` : \"\"}\"${attrs}>",
-  "`<div class=\"ob-gcard ${cls}\"${attrs}>",
+  "=> adminCard({ tone: cls, label: escapeHtml(pill), tile: icon,",
+  "=> gcardHtml({ tone: cls, label: escapeHtml(pill), tile: icon,",
   1
  ],
  [

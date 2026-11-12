@@ -10,6 +10,7 @@
 //     (.pm-cs-seat → csSt rga "You asked: “…”" · when · Cancel; RGA's reply = the same row with That's sorted ✓), and the foot's lock reads
 //     just "Locked" (client_step03_access_v1) — "Nothing changes until we've talked" is said ONCE, by the row. Other steps keep the band.
 // Point it at a copy with APPROVAL_ARCHIVE_SITE_DIR. exit 0 holds · 1 regressed · 2 code moved
+import { adminCardLift } from "./lib/admin-card-lift.mjs";   // card_notice_designs_v1 §1 (11-11): admin cards draw through shared/admin-card.js
 import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
@@ -99,7 +100,7 @@ if (!/isDone && !askLk(?: && !fwMoved && !ccAgreed && !rgaSkipped)?(?: && \(!og 
   const aline = (n) => { const m = A.match(new RegExp(`^const ${n} = [^\\n]*;$`, "m")); if (!m) { console.error(`⚠️  INDETERMINATE — admin ${n} moved`); process.exit(2); } return m[0].replace(/^const /, "var "); };
   const ax = vm.createContext({ escapeHtml: (x) => String(x ?? "").replace(/</g, "&lt;"), escapeAttribute: (x) => String(x ?? ""), adminGcardWhen: () => "Oct 27, 2:55 PM",
     state: { selectedClient: { id: "c1", business_name: "Acme Plumbing" }, onboardingData: {} }, globalThis: { rgaStepLock: { stepLock: () => ({ why: "x", edit: "request" }) } }, Date });
-  vm.runInContext(`${afn("acCardHtml")}\n${afn("admAskOf")}\n${afn("adminAskHtml")}\n${aline("ASK_TILE")}`, ax);
+  vm.runInContext(`${adminCardLift(SITE)}\n${afn("acCardHtml")}\n${afn("admAskOf")}\n${afn("adminAskHtml")}\n${aline("ASK_TILE")}`, ax);
   const ask = (t) => vm.runInContext(`admAskOf(${JSON.stringify(t)})`, ax), card = (t) => vm.runInContext(`adminAskHtml("m1.access.website", ${JSON.stringify(t)}, admAskOf(${JSON.stringify(t)}))`, ax);
   const FL = { status: "done", client_flagged: { at: "2026-10-27T21:55:00Z", note: "Checking TEST" } };
   if (!ask(FL) || ask(FL).kind !== "wrong" || ask({ status: "done" }) !== null) fail("admin can't tell a finished step has an open ask (flag / change request)");
@@ -119,7 +120,7 @@ if (!/isDone && !askLk(?: && !fwMoved && !ccAgreed && !rgaSkipped)?(?: && \(!og 
   // whole card again inside itself (title twice, a box in a box)
   { const AC = read("admin/admin.css");
     if (!/\.ob-unlock:not\(\[open\]\) \{ gap:0; \}/.test(AC)) fail("a closed \"Unlock for the client…\" is taller than the buttons beside it (it sits out of line)");
-    if (!/\.ob-ac-mini > \.ob-gq \{ margin:0; padding:0; \}/.test(AC) || !/\.ob-ac-mini > \.ob-gq > \.ob-ac > \.ob-ac-h \{ display:none; \}/.test(AC)) fail("opening row 8's one line draws the card again inside it (title twice, a box in a box)"); }
+    if (!/\.ob-ac-mini > \.ob-gq \{ margin:0; padding:0; \}/.test(AC) || !/\.ob-ac-mini > \.ob-gq > \.ob-card > \.ob-card-h \{ display:none; \}/.test(AC)) fail("opening row 8's one line draws the card again inside it (title twice, a box in a box)"); }
   // Chris 10-27 "reply button doesnt work": Reply jumped to a step inside a FOLDED (finished) phase — nothing to land on
   { const rv = afn("revealStep");
     if (!/const ph = el\.closest\("\.ob-phase:not\(\.open\)"\); if \(ph\) ph\.querySelector\("\[data-ob-phase-toggle\]"\)\?\.click\(\);/.test(rv)) fail("revealStep doesn't unfold a folded phase (Reply / Open step land on nothing)");

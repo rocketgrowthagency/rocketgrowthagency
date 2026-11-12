@@ -30,8 +30,8 @@
  [
   "sent loses its checks",
   "admin",
-  "      body: `<div class=\"ob-ac-in\">${wcLabelHtml(c)}</div>` + wcLoopHtml(task, c, st, gh) + wcWhatHtml(task, c, false),",
-  "      body: `<div class=\"ob-ac-in\">${wcLabelHtml(c)}</div>` + wcWhatHtml(task, c, false),",
+  "      body: `<div class=\"ob-card-in\">${wcLabelHtml(c)}</div>` + wcLoopHtml(task, c, st, gh) + wcWhatHtml(task, c, false),",
+  "      body: `<div class=\"ob-card-in\">${wcLabelHtml(c)}</div>` + wcWhatHtml(task, c, false),",
   1
  ],
  [
@@ -65,7 +65,7 @@
  [
   "the edit form is a box again",
   "admincss",
-  ".ob-wc-f.ob-wc-ed { border:0; padding:0; background:none; border-radius:0; margin:0 14px 12px 62px; }\n",
+  ".ob-wc-f.ob-wc-ed { border:0; padding:0; background:none; border-radius:0; margin:0 16px 12px; }\n",
   "",
   1
  ],
@@ -94,7 +94,7 @@
   "sent goes grey again (the 'over' colour)",
   "admin",
   "    return wrap(acCardHtml({ tone: \"rga\", tile, label: \"With the client · in their For your approval\"",
-  "    return wrap(acCardHtml({ tone: \"wait\", tile, label: \"With the client · in their For your approval\"",
+  "    return wrap(acCardHtml({ state: \"skipped\", tone: \"rga\", tile, label: \"With the client · in their For your approval\"",
   1
  ],
  [
@@ -262,7 +262,7 @@
   "the live card's link loses its eye (back to Open the page ↗)",
   "admin",
   "right: url && !(c && c.removes_page) ? `<a class=\"admin-button admin-button-secondary ob-wc-view\" href=\"${escapeAttribute(url)}\" target=\"_blank\" rel=\"noopener\">${WC_EYE}View page</a>`",
-  "right: url && !(c && c.removes_page) ? `<a class=\"admin-button admin-button-secondary ob-ac-txt\" href=\"${escapeAttribute(url)}\" target=\"_blank\" rel=\"noopener\">Open the page ↗</a>`",
+  "right: url && !(c && c.removes_page) ? `<a class=\"admin-button admin-button-secondary\" href=\"${escapeAttribute(url)}\" target=\"_blank\" rel=\"noopener\">Open the page ↗</a>`",
   1
  ],
  [
@@ -394,8 +394,8 @@
  [
   "the proof ask is gone",
   "admin",
-  "<button type=\"button\" class=\"admin-button admin-button-secondary\" data-ob-wc-proofask>Ask the client for one real result</button>",
-  "",
+  "true]])}<button type=\"button\" class=\"admin-button admin-button-secondary\" data-ob-wc-proofask>Ask the client for one real result</button></div>`;",
+  "true]])}</div>`;",
   1
  ],
  [

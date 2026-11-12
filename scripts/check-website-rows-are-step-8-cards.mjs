@@ -10,6 +10,7 @@
 //   · the old always-open form and the Drafted/Sent trail are gone; nothing on the card is a box inside a box
 //   · the row's one chip: Draft ready · With the client · Publish · Live · Already right · Not proven
 // Point it at a copy with APPROVAL_ARCHIVE_SITE_DIR. exit 0 holds · 1 regressed · 2 code moved / no Chrome.  --shots=<dir> saves a PNG per state.
+import { adminCardLift } from "./lib/admin-card-lift.mjs";   // card_notice_designs_v1 §1 (11-11): admin cards draw through shared/admin-card.js
 import fs from "node:fs";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
@@ -19,7 +20,7 @@ const fn = (name) => { const at = A.indexOf(`function ${name}(`); if (at < 0) { 
   let d = 0, i = A.indexOf("{", A.indexOf(")", at)); for (; i < A.length; i++) { if (A[i] === "{") d++; else if (A[i] === "}" && --d === 0) break; } return A.slice(A.lastIndexOf("\n", at) + 1, i + 1); };
 const line = (re, what) => { const m = A.match(re); if (!m) { console.error(`⚠️  INDETERMINATE — ${what} moved`); process.exit(2); } return m[0]; };
 if (/function wcTrailHtml\(/.test(A)) fail("the old Drafted / Sent / … trail is back on the website rows");
-const code = [line(/^const WC_TILE = [^\n]*;$/m, "WC_TILE"), line(/^const WC_KIND = [^\n]*;$/m, "WC_KIND"), "const wcDraftCache = new Map();",
+const code = [adminCardLift(SITE, A), line(/^const WC_TILE = [^\n]*;$/m, "WC_TILE"), line(/^const WC_KIND = [^\n]*;$/m, "WC_KIND"), "const wcDraftCache = new Map();",
   line(/^const wcEditing = new Set\(\);[^\n]*$/m, "wcEditing"), line(/^const wcPrefilling = new Set\(\);[^\n]*$/m, "wcPrefilling"),
   line(/^const wcStepDef = [^\n]*;$/m, "wcStepDef"), line(/^const wcTitleOf = [^\n]*;$/m, "wcTitleOf"), line(/^const wcDay = [^\n]*;$/m, "wcDay"),
   line(/^const acDay = [^\n]*;$/m, "acDay"), line(/^const acCk = [^\n]*;$/m, "acCk"),
@@ -139,7 +140,7 @@ try {
       if (sc.edit) api.wcEditing.add(`c1:${H}`);
       const el = document.getElementById("h"); el.innerHTML = api.siteChangeAdminHtml(sc.id || H, sc.task);
       const vis = (q) => [...el.querySelectorAll(q)].filter((x) => x.offsetParent !== null);
-      const nested = [...el.querySelectorAll(".ob-ac form, .ob-ac .ob-wc-line")].some((x) => { const s = getComputedStyle(x); return parseFloat(s.borderTopWidth) > 0 && s.borderTopStyle !== "none" && s.backgroundColor !== "rgba(0, 0, 0, 0)"; });
+      const nested = [...el.querySelectorAll(".ob-card form, .ob-card .ob-wc-line")].some((x) => { const s = getComputedStyle(x); return parseFloat(s.borderTopWidth) > 0 && s.borderTopStyle !== "none" && s.backgroundColor !== "rgba(0, 0, 0, 0)"; });
       // the pill helper on a hostile sentence: the text around it is escaped, a name inside another name never splits it
       const pillT = api.ghPillText("<img src=x> by acme into acme/site", [["acme", "login"], ["acme/site", "repo"]]);
       if (sc.gh && sc.task.publish_pr) state.onboardingData.tasks["m1.access.publish_test"] = sc.task;   // the footer's "Last merged here"
@@ -159,9 +160,9 @@ try {
         chg: (() => { if (!sc.gh) return ""; const w = state.onboardingData.tasks["m1.access.website"]; w.change_request = { note: "We moved our website to a different place", at: "2026-10-28T23:00:00Z" };
           const d = document.createElement("div"); d.innerHTML = api.ghBandHtml({ match: true, checked_at: "2026-10-28T20:00:00Z", rows: [] }); delete w.change_request; return d.textContent.replace(/\s+/g, " "); })(), lh: rowSmall ? parseFloat(getComputedStyle(rowSmall).lineHeight) / parseFloat(getComputedStyle(rowSmall).fontSize) : 0 };
       return { panel, pillT, text: el.textContent.replace(/\s+/g, " "), html: el.innerHTML, buttons: vis("button, a.admin-button").map((b) => b.textContent.trim()), inputs: vis("input:not([type=hidden]), select").length,
-        textareas: vis("textarea").length, label: (el.querySelector(".ob-ac-st") || {}).textContent || "", pill: (api.wcRowPill(H, sc.task) || {}).text || "", nested, cards: el.querySelectorAll(".ob-ac").length, checks: el.querySelectorAll(".ob-ac-ck li").length,
-        loop: [...el.querySelectorAll(".ob-wc-loop li")].map((li) => li.className), tone: (el.querySelector(".ob-ac") || {}).className || "",
-        rawInside: !!el.querySelector(".ob-ac > .ob-wc-raw"), rawOutside: !!el.querySelector(".ob-wc > .ob-wc-raw"),
+        textareas: vis("textarea").length, label: [(el.querySelector(".ob-card-w") || {}).textContent || "", (el.querySelector(".ob-card-when") || {}).textContent || ""].filter(Boolean).join(" · "), pill: (api.wcRowPill(H, sc.task) || {}).text || "", nested, cards: el.querySelectorAll(".ob-card").length, checks: el.querySelectorAll(".ob-ac-ck li").length,
+        loop: [...el.querySelectorAll(".ob-wc-loop li")].map((li) => li.className), tone: (el.querySelector(".ob-card") || {}).className || "",
+        rawInside: !!el.querySelector(".ob-card > .ob-wc-raw"), rawOutside: !!el.querySelector(".ob-wc > .ob-wc-raw"),
         loopOneRow: (() => { const l = el.querySelector(".ob-wc-loop"); if (!l) return null; const t = [...l.children].map((x) => Math.round(x.getBoundingClientRect().top)); return new Set(t).size === 1; })(),
         // 10-28 (Chris, 10:09): every stop's name sits on one line across the trip, whatever the length of its note
         proofUnk: el.querySelectorAll(".ob-proof-r.unk").length,
@@ -177,20 +178,20 @@ for (const [n, o] of Object.entries(out)) { if (o.cards !== 1) fail(`${n}: not O
 for (const n of ["autoQueued", "autoNotProven", "autoScheduled", "autoFixed", "autoCheckFailed", "autoFailedTwice"]) if (out[n].buttons.some((b) => /^⚡|Draft/.test(b))) fail(`${n}: a step that runs itself still has a Run / Draft button (${out[n].buttons})`);
 if (!/Runs itself · drafts itself shortly/.test(out.autoQueued.label) || out.autoQueued.pill !== "Drafts itself") fail(`auto queued: not "Runs itself · drafts itself shortly" / "Drafts itself" (${out.autoQueued.label} · ${out.autoQueued.pill})`);
 has("autoNotProven", /ticked done before every website change went through approval[\s\S]*drafts itself again within 10 minutes/, "a step ticked before approvals doesn't say it drafts itself again");
-if (!/^Runs itself · goes to the client Nov 7, \d{1,2}( |:)/.test(out.autoScheduled.label) && !/^Runs itself · goes to the client Nov [78],/.test(out.autoScheduled.label)) fail(`auto scheduled: the label isn't "Runs itself · goes to the client <day, time>" (${out.autoScheduled.label})`);
+if (!/^RGA working · Runs itself · goes to the client Nov 7, \d{1,2}( |:)/.test(out.autoScheduled.label) && !/^RGA working · Runs itself · goes to the client Nov [78],/.test(out.autoScheduled.label)) fail(`auto scheduled: the label isn't "Runs itself · goes to the client <day, time>" (${out.autoScheduled.label})`);
 if (["Hold", "Edit the lines", "Send now"].some((b) => !out.autoScheduled.buttons.includes(b)) || out.autoScheduled.buttons.includes("Send for approval")) fail(`auto scheduled: not Hold · Edit the lines · Send now (${out.autoScheduled.buttons})`);
 has("autoScheduled", /every check passed\. It goes to their For your approval on Nov \d+, \d{1,2}[^.]* unless you hold it/, "the scheduled card doesn't say when it goes unless held");
 has("autoFixed", /every check passed\. It fixed one thing by itself: took out “same-day start available”/, "a draft the system fixed by itself doesn't say what it took out");
 if (!/^Goes out /.test(out.autoScheduled.pill)) fail(`auto scheduled: the row's chip isn't "Goes out <day>" (${out.autoScheduled.pill})`);
 if (!out.autoScheduled.rawInside || out.autoScheduled.rawOutside) fail("the run's raw output isn't inside the card");
-if (!/Your move · a check failed/.test(out.autoCheckFailed.label) || !/a guarantee we can't back[\s\S]*Nothing was sent\. Edit the lines, then send\./.test(out.autoCheckFailed.text) || !out.autoCheckFailed.buttons.includes("Edit the lines") || out.autoCheckFailed.pill !== "Check failed") fail("a failed check isn't RGA's move with the reason and Edit the lines");
+if (!/Your move · a check failed/i.test(out.autoCheckFailed.label) || !/a guarantee we can't back[\s\S]*Nothing was sent\. Edit the lines, then send\./.test(out.autoCheckFailed.text) || !out.autoCheckFailed.buttons.includes("Edit the lines") || out.autoCheckFailed.pill !== "Check failed") fail("a failed check isn't RGA's move with the reason and Edit the lines");
 if (!/\$\{\(\) => \{\n\s*\/\/ 🔒 admin_steps_43_44_v1/.test(A) && !/Waits for step \$\{escapeHtml\(bNo1\)\}/.test(A)) fail("a waiting website step's row says \"Locked · until step N · title\" instead of \"Waits for step N\"");
 if (!/label: `Runs itself · waits for \$\{no \? `step \$\{escapeHtml\(no\)\}` : "an earlier step"\}`/.test(A) || !/is \$\{theirs\}\$\{fmWhy\}/.test(A)) fail("the waiting card doesn't name the step by number and whose move it is");
-if (!/Your move · the check needs you/.test(out.autoCheck.label) || !/The check found: Mobile PSI[\s\S]*Write the change with Edit the lines/.test(out.autoCheck.text) || out.autoCheck.buttons.some((b) => /^⚡|Draft/.test(b))) fail("a check that found something isn't \"the check needs you\" with what it found");
-if (!/Your move · the draft didn't come out right/.test(out.autoFailedTwice.label) || !/It won't draft again by itself/.test(out.autoFailedTwice.text) || out.autoFailedTwice.pill !== "Your move") fail("a draft that failed twice isn't RGA's move with its reason");
+if (!/Your move · the check needs you/i.test(out.autoCheck.label) || !/The check found: Mobile PSI[\s\S]*Write the change with Edit the lines/.test(out.autoCheck.text) || out.autoCheck.buttons.some((b) => /^⚡|Draft/.test(b))) fail("a check that found something isn't \"the check needs you\" with what it found");
+if (!/Your move · the draft didn't come out right/i.test(out.autoFailedTwice.label) || !/It won't draft again by itself/.test(out.autoFailedTwice.text) || out.autoFailedTwice.pill !== "Your move") fail("a draft that failed twice isn't RGA's move with its reason");
 if (!out.draftit.buttons.includes("⚡ Draft this for me") || out.draftit.textareas) fail("draft it: no ⚡ Draft this for me, or the empty form is open before there's a draft");
 has("notproven", /Done, but not proven/, "a September tick with nothing on record reads as Done"); if (out.notproven.pill !== "Not proven") fail("not proven: the row's chip still says Done");
-has("ready", /Your move · review the draft/, "the draft isn't \"review the draft\"");
+if (!/Your move · review the draft/i.test(out.ready.label)) fail("ready: " + "the draft isn't \"review the draft\"");
 if (out.ready.buttons.filter((b) => b === "Send for approval").length !== 1 || !out.ready.buttons.includes("Edit the lines") || !out.ready.buttons.includes("Nothing needs changing…")) fail(`draft ready: not ONE Send for approval + Edit the lines + Nothing needs changing (${out.ready.buttons})`);
 if (out.ready.textareas || out.ready.inputs) fail("draft ready: shows form boxes before you press Edit");
 if (!/Rank Higher on Google Maps[\s\S]*→[\s\S]*Local SEO That Puts Your Business on the Map/.test(out.ready.text)) fail("draft ready: the lines aren't Now → After");
@@ -198,20 +199,20 @@ has("ready", /says “Guarantee”: a guarantee we can't back/, "\"60-Day Guaran
 has("failed", /The draft didn't come out right/, "a failed draft doesn't say so"); has("stale", /Reading the draft…/, "a reading of an OLDER run is shown over the new draft (10-28: \"didn't come out right\" over a good draft)"); has("unread", /Couldn't read the draft/, "a draft we couldn't LOAD is called a bad draft"); if (!out.unread.buttons.includes("Try again") || /didn't come out right/.test(out.unread.text)) fail("couldn't read: no Try again, or it says the draft is bad"); if (!out.failed.buttons.includes("⚡ Draft again")) fail("a failed draft has no Draft again");
 if (out.editing.inputs) fail(`editing: shows ${out.editing.inputs} Kind / Where / address input(s) (the step sets them)`);
 if (out.editing.textareas !== 3 || !/Now: “Rank Higher on Google Maps/.test(out.editing.text) || !out.editing.buttons.includes("Save and send for approval") || !out.editing.buttons.includes("Cancel")) fail("editing: not one box per line with today's words above it, Save and send + Cancel");
-has("drafted", /Your move · send it/, "a saved draft isn't \"send it\"");
+if (!/Your move · send it/i.test(out.drafted.label)) fail("drafted: a saved draft isn't \"send it\"");
 // 🔄 approval_tab_and_sent_card_v1 (10-28): the checks became the whole trip — every state shows every stop, the current one marked
 const loopIs = (name, want, why) => { const got = (out[name].loop || []).join(","); if (got !== want.join(",")) fail(`${name}: the trip reads [${got}], should be [${want.join(",")}] — ${why}`); if (out[name].loopOneRow === false) fail(`${name}: the trip wraps onto two rows at 1000px`); if (out[name].loopLevel === false) fail(`${name}: the stops' names don't sit level (a 2-line note pushes its neighbours — Chris 10-28 10:09)`); };
 has("sent", /With the client · in their For your approval/, "sent isn't \"With the client · in their For your approval\""); loopIs("sent", ["done", "done", "now", "", ""], "drafted · sent ticked, the client's approval current (blue)");
-if (/\bwait\b/.test(out.sent.tone) || /\byou\b/.test(out.sent.tone)) fail(`sent: the card is "${out.sent.tone}" — with the client is BLUE (state system decision 1), never the grey "over"`);
+if (!/\both\b/.test(out.sent.tone) || /\b(wait|you|over)\b/.test(out.sent.tone)) fail(`sent: the card is "${out.sent.tone}" — with the client is BLUE (state system decision 1), never the grey "over"`);
 if (!out.sent.buttons.includes("Take it back to edit")) fail("sent: no Take it back to edit"); if (out.sent.pill !== "With the client") fail("sent: chip isn't \"With the client\"");
 for (const k of Object.keys(out)) if (/\b1 (files|lines|pages)\b/.test(out[k].text)) fail(`${k}: says "1 files/lines/pages"`);
 has("ghSent", /Adding a page/, "the sent card loses its label"); loopIs("ghSent", ["done", "done", "now", "", "", ""], "built · sent ticked, approves current, then pull request · merge · live");
 has("ghSent", /Built[\s\S]*1 file[\s\S]*Sent[\s\S]*Approves it[\s\S]*Pull request[\s\S]*Merge[\s\S]*Live, read back/, "the six stops aren't named in order");
 has("ghSent", /Built from\s*their live homepage's design · fingerprint 201cd46c \(27\.8 KB\), frozen when they approve/, "the facts don't show the fingerprint and size");
 if (!out.ghSent.buttons.includes("Preview page")) fail("ghSent: no Preview page"); has("ghSent", /See their card, word for word/, "their card isn't one click away");
-loopIs("ghApproved", ["done", "done", "done", "you", "", ""], "approved → the pull request is RGA's move (amber)"); has("ghApproved", /Your move · open the pull request/, "approved on GitHub isn't \"Your move · open the pull request\""); if (!out.ghApproved.buttons.includes("Open the pull request")) fail("ghApproved: no Open the pull request");
+loopIs("ghApproved", ["done", "done", "done", "you", "", ""], "approved → the pull request is RGA's move (amber)"); if (!/Your move · open the pull request/i.test(out.ghApproved.label)) fail("ghApproved: " + "approved on GitHub isn't \"Your move · open the pull request\""); if (!out.ghApproved.buttons.includes("Open the pull request")) fail("ghApproved: no Open the pull request");
 // 🔄 merge_without_the_browser_v1 (10-28): RGA merges on the server by default — never the browser's GitHub account
-loopIs("ghPr", ["done", "done", "done", "done", "you", ""], "the pull request is open → RGA merges it for the client (amber)"); has("ghPr", /Your move · merge it for the client/, "an open pull request isn't \"Your move · merge it for the client\""); if (!out.ghPr.buttons.includes("Merge #14 for the client") || !out.ghPr.buttons.includes("View on GitHub ↗")) fail("ghPr: no Merge #14 for the client / View on GitHub");
+loopIs("ghPr", ["done", "done", "done", "done", "you", ""], "the pull request is open → RGA merges it for the client (amber)"); if (!/Your move · merge it for the client/i.test(out.ghPr.label)) fail("ghPr: " + "an open pull request isn't \"Your move · merge it for the client\""); if (!out.ghPr.buttons.includes("Merge #14 for the client") || !out.ghPr.buttons.includes("View on GitHub ↗")) fail("ghPr: no Merge #14 for the client / View on GitHub");
 loopIs("ghPrClient", ["done", "done", "done", "done", "now", ""], "the client chose to merge → theirs on GitHub (blue)"); has("ghPrClient", /With the client · merge #14 on GitHub/, "the client-merges path isn't \"With the client · merge #14 on GitHub\""); if (out.ghPrClient.buttons.some((b) => /for the client|for them/.test(b))) fail("ghPrClient: RGA offers to merge although the client chose to");
 loopIs("ghMerged", ["done", "done", "done", "done", "done", "you"], "merged → Mark live is RGA's move"); has("ghMerged", /Merged #14/, "a merged pull request isn't said"); has("ghMerged", /for the client, after their approval/, "RGA's merge isn't recorded as for the client, after their approval"); if (!out.ghMerged.buttons.includes("Mark live")) fail("ghMerged: no Mark live");
 has("changes", /The client asked for a change/, "the client's ask isn't shown"); has("changes", /Keep the button as See Where You Rank Free/, "their words are missing"); if (!out.changes.buttons.includes("Edit and send again")) fail("the client's ask has no Edit and send again");
@@ -278,7 +279,7 @@ if (!/Already shows for these searches/.test(out.pageFlags.text) || !/No competi
 if (!/No proof yet/.test(out.pageReady.text) || !out.pageReady.buttons.includes("Ask the client for one real result")) fail("a page with no proof doesn't offer the ask");
 if (!/<del>Why hvac lose<\/del>/.test(out.pageEdit.html) || !/The page:/.test(out.pageEdit.text) || /class="ob-wc-rev"/.test(out.pageEdit.html)) fail("an edit to a page they have isn't Now → After on that page");
 // ── draft_review_v1 (website_system_v2 build 7) ──
-has("pageReady", /Your move · review the draft/, "a page draft isn't \"review the draft\"");
+if (!/Your move · review the draft/i.test(out.pageReady.label)) fail("pageReady: a page draft isn't \"review the draft\"");
 for (const [re, what] of [[/Its address\/electrician-springfield-il\/ · beside their 2 Springfield pages/, "the address + what it sits beside"], [/Title 39 of 65 characters, names Springfield/, "the title's measured length and what it names"], [/Description 61 of 160 characters/, "the description's measured length"],
   [/Written for 2 searches from the locked plan/, "the searches"], [/2 links · 3 areas · 2 questions/, "the counts (3 areas from a comma list, 2 questions)"], [/2 files change/, "the files"], [/How it looks in Google/, "the Google preview"], [/Your electrician in Springfield/, "the headline as it reads"], [/We also work on small shops\./, "the second paragraph as it reads"], [/How we work/, "how we work"], [/Do you pull permits\?/, "the questions"]])
   if (!re.test(out.pageReady.text)) fail(`the page review doesn't show ${what}`);

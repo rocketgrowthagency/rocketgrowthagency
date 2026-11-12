@@ -36,7 +36,7 @@ try {
   const kept = SC.cleanChange("m1.web.service_location_matrix", { kind: "visible", page_url: "https://a.test/x/", edits_page: true, files: [{ path: "x/index.html", action: "edit" }], items: [{ label: "Line 1", why: "a heading with a trade or acronym in lowercase", before: "cpas in town", after: "CPAs in town" }] });
   const it = ((kept.change || kept).items || [])[0] || {};
   if (it.label !== "Line 1" || it.why !== "a heading with a trade or acronym in lowercase") fail(`saving drops RGA's reason, or the label changes (${JSON.stringify(it)})`);
-  if (!/\$\{i\.why \? ` <small class="ob-ac-mut">\(\$\{escapeHtml\(i\.why\)\}\)<\/small>` : ""\}/.test(A)) fail("admin no longer shows RGA's reason by the line");
+  if (!/\$\{i\.why \? ` <small class="ob-card-mut">\(\$\{escapeHtml\(i\.why\)\}\)<\/small>` : ""\}/.test(A)) fail("admin no longer shows RGA's reason by the line");
   // #1: the end date only, never the trail
   if (!/const \{ audit_log, \.\.\.safe \} = c;/.test(PGC) || !/notice_ends_on: \(notice && notice\.ends_on\) \|\| null/.test(PGC)) fail("the portal gets the audit trail, or not the standing notice's end date");
   const pse = lift(P, "portalServiceEnded");

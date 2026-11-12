@@ -11,6 +11,7 @@
 //   · Read only → Ask the client to switch to Write; key not set up → Check again + Confirm access by hand (the manual path)
 //   · other builders: Open <builder>'s invite in access@ → Gmail as access@, searched for that builder
 // Point it at a copy with APPROVAL_ARCHIVE_SITE_DIR. exit 0 holds · 1 regressed · 2 code moved / no Chrome
+import { adminCardLift } from "./lib/admin-card-lift.mjs";   // card_notice_designs_v1 §1 (11-11): admin cards draw through shared/admin-card.js
 import fs from "node:fs";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
@@ -23,7 +24,7 @@ const objBlock = (start, what) => { const at = A.indexOf(start); if (at < 0) { c
 const hStart = A.indexOf('document.addEventListener("click", async (ev) => {\n  const b = ev.target.closest && ev.target.closest("[data-ob-gh-check]');
 if (hStart < 0) { console.error("⚠️  INDETERMINATE — the GitHub card's click handler moved"); process.exit(2); }
 const handler = A.slice(hStart, A.indexOf("\n});\n", hStart) + 4);
-const code = [line(/^const G_ICON = [^\n]*;$/m, "G_ICON"), line(/^const OB_WEB_TILE = [^\n]*;/m, "OB_WEB_TILE"), line(/^const RGA_ACCESS_GITHUB = "[^"]+";/m, "RGA_ACCESS_GITHUB"),
+const code = [adminCardLift(SITE, A), line(/^const G_ICON = [^\n]*;$/m, "G_ICON"), line(/^const OB_WEB_TILE = [^\n]*;/m, "OB_WEB_TILE"), line(/^const RGA_ACCESS_GITHUB = "[^"]+";/m, "RGA_ACCESS_GITHUB"),
   line(/^const GH_MONO = [^\n]*;$/m, "GH_MONO"), line(/^const GH_PERM = [^\n]*;$/m, "GH_PERM"), "const ghState = {};",
   fn("adminGoogleCardHtml"), fn("acCardHtml"), fn("acDueChip"), line(/^const acConsent = [^\n]*;$/m, "acConsent"), line(/^const acSite = [^\n]*;$/m, "acSite"), line(/^const GH_DOMAIN = [^\n]*;$/m, "GH_DOMAIN"),
   line(/^const mvDay = [^\n]*;$/m, "mvDay"), line(/^const mvDueDays = [^\n]*;$/m, "mvDueDays"),
@@ -88,7 +89,7 @@ try {
     const gh = els.find((e) => e.t === "Open on GitHub ↗"); if (!gh || gh.href !== "https://github.com/rocketgrowthagency/rga-website/invitations" || gh.target !== "_blank") fail(`Open on GitHub doesn't open the repo's invitations in a new tab (${gh && gh.href})`);
     const wix = els.find((e) => /invite in access@/.test(e.t)); if (!wix || !/authuser=access%40rocketgrowthagency\.com#search\/wix\+newer_than%3A14d/.test(wix.href)) fail(`the other builders' link isn't access@'s Gmail searched for the builder (${wix && wix.href})`);
     if (!(await p.evaluate(() => /Due today/.test(document.getElementById("host").textContent)))) fail("row 8's card doesn't show the move's promise (Due today) from the open-moves list");
-    if (!(await p.evaluate(() => [...document.querySelectorAll("#host .ob-ac-foot button, #host .ob-ac-foot a")].some((e) => e.textContent.trim() === "Accept and confirm access")))) fail("Accept and confirm access isn't inside the card's own footer");
+    if (!(await p.evaluate(() => [...document.querySelectorAll("#host .ob-card-f button, #host .ob-card-f a")].some((e) => e.textContent.trim() === "Accept and confirm access")))) fail("Accept and confirm access isn't inside the card's own footer");
     await clickText(p, "Accept and confirm access");
     const r = (await reqs(p)).find((x) => x.body.action === "github_accept"); if (!r || String(r.body.invitation_id) !== "991" || r.body.client_id !== CID) fail(`Accept and confirm access doesn't send github_accept with the invite's id (${JSON.stringify(r)})`);
     if (await p.evaluate(() => window.SNAP) !== 1) fail("a confirmed accept doesn't take the before-snapshot");

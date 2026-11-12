@@ -11,6 +11,7 @@
 //     facts, the service area as one chip row right after the name, a covered place says where ("Mar Vista in Los Angeles"); the
 //     lock line's own "Need a change? ›" is hidden (Change something opens it)
 // Point it at a copy with APPROVAL_ARCHIVE_SITE_DIR. exit 0 holds · 1 regressed · 2 code moved
+import { adminCardLift } from "./lib/admin-card-lift.mjs";   // card_notice_designs_v1 §1 (11-11): admin cards draw through shared/admin-card.js
 import fs from "node:fs";
 import { pathToFileURL } from "node:url";
 import vm from "node:vm";
@@ -27,7 +28,7 @@ const parts = ["ZC_DAYS", "zcClock", "zcSpan", "hoursDoneCardHtml", "description
 if (parts.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a step 33/34 card moved (${parts.findIndex((x) => !x)})`); process.exit(2); }
 const ctx = { escapeHtml: esc, escapeAttribute: esc, OL_G: "<svg data-g></svg>", adminGcardMaps: () => '<a class="ob-gcard-maps">See it on Google Maps ↗</a>',
   adminGcardWhen: (iso) => (iso ? "Oct 29, 3:30 AM" : "") };
-vm.createContext(ctx); ctx.clientStepWhere = (o) => (o && o.clientStepNo != null ? `step ${o.clientStepNo}` : null); /* managed_admin_v1: admin.js names a step by the client mode; these cards are drawn for a client with none */  vm.runInContext(parts.join("\n") + "\nthis.hours = hoursDoneCardHtml; this.desc = descriptionDoneCardHtml; this.descOn = descriptionOnGoogle;", ctx);
+vm.createContext(ctx); vm.runInContext(adminCardLift(SITE, AJS), ctx); ctx.clientStepWhere = (o) => (o && o.clientStepNo != null ? `step ${o.clientStepNo}` : null); /* managed_admin_v1: admin.js names a step by the client mode; these cards are drawn for a client with none */  vm.runInContext(parts.join("\n") + "\nthis.hours = hoursDoneCardHtml; this.desc = descriptionDoneCardHtml; this.descOn = descriptionOnGoogle;", ctx);
 const wk = (o, c) => ({ open: o, close: c }), DAYS = { mon: wk("09:00", "18:00"), tue: wk("09:00", "18:00"), wed: wk("09:00", "18:00"), thu: wk("09:00", "18:00"), fri: wk("09:00", "18:00"), sat: { closed: true }, sun: { closed: true } };
 const g34 = { state: "on_google", at: "2026-10-29T10:30:00Z", before: { days: DAYS }, after: { days: DAYS }, renewed_to: "2026-12-25",
   special: { sent: [{ name: "Thanksgiving", date: "2026-11-26" }, { name: "Christmas Eve", date: "2026-12-24" }, { name: "Christmas Day", date: "2026-12-25" }], kept: [] } };
@@ -58,10 +59,10 @@ if (!/const doneBtn = zcWaits \|\| siteStep (\|\| o\.flowId === GL_STEP )?(\|\| 
   fail("step 37: a website step's row still offers Mark step complete");
 
 // ── admin: steps 29 · 30 · 31 — the result first ──────────────────────────────────────────────────
-{ const p3 = ["ZC_FOLD_T", "ZC_LIST", "ZC_PLAIN", "zcPlainTitle", "zcFixAct", "zcCatPlan", "citationsCardHtml", "fixPlanCardHtml", "categoriesCardHtml"].map((n) => lift(AJS, n));
+{ const p3 = ["ZC_FOLD_T", "ZC_LIST", "ZC_PLAIN", "zcPlainTitle", "zcFixAct", "zcCatPlan", "citationsCardHtml", "fixPlanClientRowsHtml", "fixPlanCardHtml", "categoriesCardHtml"].map((n) => lift(AJS, n));
   if (p3.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a step 29/30/31 card moved (${p3.findIndex((x) => !x)})`); process.exit(2); }
   const c3 = { escapeHtml: esc, escapeAttribute: esc, OL_G: "<svg></svg>", adminGcardWhen: (iso) => (iso ? "Sep 14, 7:52 PM" : "") };
-  vm.createContext(c3); c3.clientStepWhere = (o) => (o && o.clientStepNo != null ? `step ${o.clientStepNo}` : null); /* managed_admin_v1: admin.js names a step by the client mode; these cards are drawn for a client with none */  vm.runInContext(p3.join("\n") + "\nthis.cit = citationsCardHtml; this.plan = fixPlanCardHtml; this.cat = categoriesCardHtml;", c3);
+  vm.createContext(c3); vm.runInContext(adminCardLift(SITE, AJS), c3); c3.clientStepWhere = (o) => (o && o.clientStepNo != null ? `step ${o.clientStepNo}` : null); /* managed_admin_v1: admin.js names a step by the client mode; these cards are drawn for a client with none */  vm.runInContext(p3.join("\n") + "\nthis.cit = citationsCardHtml; this.plan = fixPlanCardHtml; this.cat = categoriesCardHtml;", c3);
   const DIRS = ["Yelp", "Better Business Bureau", "Facebook", "Angi", "Thumbtack", "Nextdoor", "Apple Maps", "Bing Places"];
   const cit = { outcome_data: { citations_held: 0, fixes: [{ id: "cit.linked_from_site", fix: "Site links to its own directory profiles", why: "links to NONE of the 8 tracked directories. Linking your own profiles corroborates them." }],
     checks: [...DIRS.map((d, i) => ({ id: `cit.d${i}`, label: `${d} citation`, pass: null })), { id: "cit.linked_from_site", label: "Site links to its own directory profiles", pass: false }] } };
@@ -108,7 +109,7 @@ if (!/if \(step && step\.obj && ZC_CARD_STEPS\.has\(step\.obj\.flowId\)/.test(AJ
   const p4 = ["zcSvcNames", "servicesCardHtml"].map((n) => lift(AJS, n));
   if (p4.some((x) => !x)) { console.error("⚠️  INDETERMINATE — step 32's card moved"); process.exit(2); }
   const c4 = { escapeHtml: esc, escapeAttribute: esc, OL_G: "<svg></svg>", adminGcardWhen: () => "Sep 15, 10:15 AM" };
-  vm.createContext(c4); c4.clientStepWhere = (o) => (o && o.clientStepNo != null ? `step ${o.clientStepNo}` : null); /* managed_admin_v1: admin.js names a step by the client mode; these cards are drawn for a client with none */  vm.runInContext(p4.join("\n") + "\nthis.svc = servicesCardHtml;", c4);
+  vm.createContext(c4); vm.runInContext(adminCardLift(SITE, AJS), c4); c4.clientStepWhere = (o) => (o && o.clientStepNo != null ? `step ${o.clientStepNo}` : null); /* managed_admin_v1: admin.js names a step by the client mode; these cards are drawn for a client with none */  vm.runInContext(p4.join("\n") + "\nthis.svc = servicesCardHtml;", c4);
   const h32 = c4.svc({ approval: { decision: "approved", at: "2026-09-15T17:15:46Z", approved_content: "services:\n  - displayName: Google Business Profile Optimization\n  - displayName: Local SEO Audit\n" } });
   if (!/Approved by the client Sep 15 · 2 services/.test(h32) || (h32.match(/data-zc-svc-name=/g) || []).length !== 2) fail("step 32: the approved list isn't shown whole");
   if (!/data-zc-svc-push disabled>Put them on Google/.test(h32) || !/Keeps every service already on Google/.test(h32) || !/Do it in Google Business Profile instead/.test(h32)) fail("step 32: Put them on Google (disabled until Google is read), the keep-their-own line or the escape hatch is missing");
@@ -140,14 +141,14 @@ const ACSS5 = () => fs.readFileSync(`${process.env.APPROVAL_ARCHIVE_SITE_DIR || 
     { id: "b", shot_n: 2, category: "cover", publish_state: "published", storage_path: "c", pushed_at: NOW5, gbp_media_name: "upload-name" }];
   const SECOND_LOGO_RULE = await import(pathToFileURL(`${SITE}/shared/photo-second-logo.js`).href);
   const c5 = { escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", photoReviewCount: () => 0, PHOTO_KIND_LABEL: { cover: "Cover", logo: "Logo" }, photosOfClient: () => photos5, photoReviewHtml: () => ({ get rgaN() { return c5.rv; }, reviewN: c5.rv || 0, html: c5.rv ? "<div class=pr-card>BLOCK</div>" : "", existingHtml: "<div>OLDCOPY</div>" }), photoCountable: () => 1, photoListedNames: SECOND_LOGO_RULE.photoListedNames, photoLiveByLine: SECOND_LOGO_RULE.photoLiveByLine, photoOnlyVisible: SECOND_LOGO_RULE.photoOnlyVisible, photoShortfall: SECOND_LOGO_RULE.photoShortfall, photoMissingFromList: SECOND_LOGO_RULE.photoMissingFromList, state: { selectedClient: { identity_phone: "(424) 242-2040" } } };
-  vm.createContext(c5); c5.clientStepWhere = (o) => (o && o.clientStepNo != null ? `step ${o.clientStepNo}` : null); /* managed_admin_v1: admin.js names a step by the client mode; these cards are drawn for a client with none */  vm.runInContext(p5.join("\n") + "\nthis.ws = photosWaitState; this.ph = photosWaitCardHtml;", c5);
+  vm.createContext(c5); vm.runInContext(adminCardLift(SITE, AJS), c5); c5.clientStepWhere = (o) => (o && o.clientStepNo != null ? `step ${o.clientStepNo}` : null); /* managed_admin_v1: admin.js names a step by the client mode; these cards are drawn for a client with none */  vm.runInContext(p5.join("\n") + "\nthis.ws = photosWaitState; this.ph = photosWaitCardHtml;", c5);
   const G = [["Logo", 1, "PROFILE"], ["Cover", 1, "COVER"], ["Exterior", 3, "EXTERIOR"], ["Interior", 3, "INTERIOR"], ["Team", 5, "TEAMS"], ["At work", 7, "AT_WORK"]];
   const items = G.flatMap(([g, n, k]) => Array.from({ length: n }, () => ({ group: g, google: k })));
   const task = { status: "pending", draft_shape: { items: items.map((x, i) => ({ ...x, n: i + 1 })), storefront: false }, detected: { n: 1, have: { PROFILE: 1 }, items: [] }, later: { reminded_at: "2026-10-23T21:40:18Z", followup_told_at: "2026-10-26T21:40:37Z" },
     photo_kept: { x: { at: "2026-10-16T01:58:45Z" } } };
   const h = c5.ph(task, { clientStepNo: 10, clientLabel: "Provide 20+ business photos" });
   // 🔒 admin_step38_review_v2 (approved Chris 10-31): real photos, a Sent line, one count, no Call them, no green
-  if (!/2 of 20 photos added · 1 sent today/.test(h) || !/<b>1<\/b> \/ 20 on Google/.test(h) || !/Client's move · late/.test(h)) fail("step 38: the header (photos added · sent today · on Google) is wrong");
+  if (!/2 of 20 photos added · 1 sent today/.test(h) || !/<b>1<\/b> \/ 20 on Google/.test(h) || !/>Client's move<\/span><span class="ob-card-chip late">Late</.test(h)) fail("step 38: the header (photos added · sent today · on Google) is wrong");
   if (!/Client portal step 10, Provide 20\+ business photos/.test(h)) fail("step 38: the client's step is missing");
   if (!/Logo <i>1\/1<\/i>/.test(h) || !/Cover <i>1\/1<\/i>/.test(h) || !/At work <i>0\/7<\/i>/.test(h) || (h.match(/class="ob-zc-slot( pic)?"/g) || []).length !== 20 || (h.match(/class="ob-zc-slot pic"/g) || []).length !== 2) fail("step 38: the shot list by group, or the 20 slots with real photos, are wrong");
   if (/ob-zc-chip ok|ob-zc-slot on/.test(h)) fail("step 38: a chip or tile goes green or blue-with-a-tick, not the real photo");
@@ -174,7 +175,7 @@ if (!/const ZC_NO_HAND_DONE = new Set\(\["m1\.gbp\.attributes", "m1\.gbp\.bookin
 { const p2 = ["ZC_CLIENT_ASK", "zcClientAskHtml", "bk36Card"].map((n) => lift(AJS, n));
   if (p2.some((x) => !x)) { console.error("⚠️  INDETERMINATE — the client's-move card moved"); process.exit(2); }
   const c2 = { escapeHtml: esc, escapeAttribute: esc, OL_G: "<svg></svg>", CLIENT_GBP_STEPS: { "m1.gbp.attributes": "What's true of the business (Google details)", "m1.gbp.booking_link": "Booking link" } };
-  vm.createContext(c2); c2.clientStepWhere = (o) => (o && o.clientStepNo != null ? `step ${o.clientStepNo}` : null); /* managed_admin_v1: admin.js names a step by the client mode; these cards are drawn for a client with none */  vm.runInContext(p2.join("\n") + "\nthis.ask = zcClientAskHtml;", c2);
+  vm.createContext(c2); vm.runInContext(adminCardLift(SITE, AJS), c2); c2.clientStepWhere = (o) => (o && o.clientStepNo != null ? `step ${o.clientStepNo}` : null); /* managed_admin_v1: admin.js names a step by the client mode; these cards are drawn for a client with none */  vm.runInContext(p2.join("\n") + "\nthis.ask = zcClientAskHtml;", c2);
   const a = c2.ask("m1.gbp.attributes", "c1", { clientStepNo: 8, clientLabel: "Confirm what's true of your business" }), b = c2.ask("m1.gbp.booking_link", "c1", { clientStepNo: 9, clientLabel: "Add your booking link" });
   if (!/Client portal step 8, "Confirm what&#39;s true of your business"|Client portal step 8, "Confirm what's true of your business"/.test(a)) fail("step 35: the client's step isn't named by its playbook number and title");
   if (!/data-task-set="m1\.gbp\.attributes" data-task-status="skipped">Skip this step…/.test(a)) fail("steps 35/36: Skip isn't the quiet link in the card");

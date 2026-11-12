@@ -244,7 +244,7 @@ ok(/gsCategoryCardsHtml\(items, clientId\)/.test(adm), "step 31 doesn't draw the
 const blockOf = (s, a, b) => { const i = s.indexOf(a), j = s.indexOf(b, i); return i < 0 || j < 0 ? "" : s.slice(i, j); };
 const gsBlock = blockOf(adm, "const GS_FACTS", "function adminGoogleCardHtml(");
 ok(gsBlock.length > 2000, "the admin block moved");
-ok(/class="ob-zc\$\{cls/.test(gsBlock) && !/ob-gcard/.test(gsBlock), "the admin cards aren't the one admin card");
+ok(/^const gsCard = [^\n]*=> adminCard\(/m.test(gsBlock) && !/ob-gcard/.test(gsBlock), "the admin cards aren't the one admin card");   // card_notice_designs_v1 §1: shared/admin-card.js
 ok(!/—/.test(gsBlock), "an em dash in the admin cards");
 ok(!/#[0-9a-f]{3,8}\b/i.test(gsBlock.replace(/&#\d+;/g, "")), "a colour picked in the admin cards");
 ok(/plan\.rows\.some\(\(r\) => !r\.done\)\) return after/.test(gsBlock), "the scan-first card shows while a look is open");

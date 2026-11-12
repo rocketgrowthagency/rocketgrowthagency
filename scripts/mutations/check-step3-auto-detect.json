@@ -206,7 +206,7 @@
 [
 "the email isn't a draft",
 "admin",
-"body: `<div class=\"ob-ac-in\">${stepEmailBar(mail, t, { flowId: \"m1.access.website\" })}</div>` }));",
+"body: `<div class=\"ob-card-in\">${stepEmailBar(mail, t, { flowId: \"m1.access.website\" })}</div>` }));",
 "body: \"\" }));"
 ],
 [

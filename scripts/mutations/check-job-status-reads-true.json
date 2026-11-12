@@ -182,8 +182,8 @@
  [
   "the card: not set up reads all clear",
   "admin",
-  "if (d.table_ready !== true) { pill = \"Not set up yet\"; title = \"System health isn't set up yet\"; }",
-  "if (d.table_ready !== true) { cls = \"ok\"; pill = \"All clear\"; }"
+  "if (d.table_ready !== true) { cls = \"locked\"; pill = \"Not set up yet\"; title = \"System health isn't set up yet\"; }",
+  "if (d.table_ready !== true) { cls = \"done\"; pill = \"All clear\"; }"
  ],
  [
   "the card: one unknown doesn't stop all clear",
@@ -206,8 +206,8 @@
  [
   "the card: a failed read reads as loading forever",
   "admin",
-  "if (o.loading) return `<div class=\"ob-zc\">",
-  "if (true) return `<div class=\"ob-zc\">"
+  "if (o.loading) return card(\"rga\", \"\", \"Reading the jobs…\", \"\");",
+  "if (true) return card(\"rga\", \"\", \"Reading the jobs…\", \"\");"
  ],
  [
   "the card: unknown gets the OK look",
@@ -230,14 +230,14 @@
  [
   "the card: other screens show every row",
   "admin",
-  "if (!o.full) return `<div class=\"ob-zc ${cls}\">",
-  "if (false) return `<div class=\"ob-zc ${cls}\">"
+  "if (!o.full) return card(cls, pill, title, right, {",
+  "if (false) return card(cls, pill, title, right, {"
  ],
  [
   "the card: the footer control goes",
   "admin",
-  "<div class=\"ob-zc-f\">${check}<span class=\"ob-zc-note\">A check-in means",
-  "<div class=\"ob-zc-f\"><span class=\"ob-zc-note\">A check-in means"
+  "foot: `${check}<span class=\"ob-zc-note\">A check-in means",
+  "foot: `<span class=\"ob-zc-note\">A check-in means"
  ],
  [
   "the card: a job's error isn't escaped",

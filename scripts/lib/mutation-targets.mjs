@@ -640,4 +640,6 @@ export const FILES = {
   suggestedcall: "netlify/functions/_suggested-call.js",
   // master audit #8 (11-11): one definition per number (check-a-running-month-is-never-compared, check-one-leads-formula)
   sharedmetrics: "shared/metrics.js",
+  // card_notice_designs_v1 §1 (11-11): THE ONE ADMIN CARD renderer (check-one-admin-card)
+  admincard: "shared/admin-card.js",
 };

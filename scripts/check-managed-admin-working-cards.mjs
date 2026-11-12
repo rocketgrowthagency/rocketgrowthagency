@@ -23,6 +23,7 @@
 //     never calls the Google write; clear works; the push adds the told services to the approved ones and still keeps what is on Google.
 //   · COPY: US English, no em dashes, no emoji, never the owner's first name.
 // Exit 0 = holds · 1 = broken · 2 = can't tell.
+import { adminCardLift } from "./lib/admin-card-lift.mjs";   // card_notice_designs_v1 §1 (11-11): admin cards draw through shared/admin-card.js
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
@@ -38,7 +39,7 @@ const RUNNER_SELF = (() => { const out = new Set(["m1.audit.citations"]); const 
   for (const f of ["steps-57-64", "monthly-monthly", "monthly-close", "monthly-quarter", "monthly-health"]) { try { const box = { module: { exports: {} } }; new Function("module", "globalThis", fs.readFileSync(`${site}/shared/${f}.js`, "utf8"))(box.module, {}); for (const id of box.module.exports.SELF || []) out.add(id); } catch { /* none */ } }
   return out; })();
 const MONTHLY_REDRAWN = (id) => /^m2\./.test(id);
-const CHANGED_ON_PURPOSE = new Set(["m1.review.system", "m1.review.response", "m1.brand.youtube_setup", "m1.gbp.knowledge_panel", "m1.handoff.month2"]);
+const CHANGED_ON_PURPOSE = new Set(["m1.review.system", "m1.review.response", "m1.brand.youtube_setup", "m1.gbp.knowledge_panel", "m1.handoff.month2", "m1.web.gbp_landing_page"]);   // 11-11 card_notice_designs_v1 §1: its card (gsCard) is the one admin card now, in every mode
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const OLD_REV = "d658cfce";
 const F = [], fail = (m) => F.push(m);
@@ -73,6 +74,8 @@ const VS = "m1.gbp.verify", FS = "m1.gbp.business_facts", PS = "m1.strategy.keyw
 const TITLES = { [VS]: "Ensure GBP is claimed + verified", [FS]: "Match business facts to Google", [PS]: "Lock the keyword plan", [SS]: "Add services + products", [TS]: "Set up form tracking" };
 const OPTIONS = [{ key: "g:job_type_id:drain_cleaning", label: "Drain cleaning", kind: "google" }, { key: "g:job_type_id:leak_repair", label: "Leak repair", kind: "google" }, { key: "f:sewer-lines", label: "Sewer lines", kind: "suggested" }, { key: "f:mine", label: "Already on Google", kind: "yours" }];
 
+// the one admin card (card_notice_designs_v1 §1): what the old pill said = the label words opening the when line, or the band word itself
+const pillOf = (W) => ((W.q(".ob-card-d") || W.q(".ob-card-w") || {}).textContent || "");
 function world({ mode = "managed", tasks = {}, src = AJS } = {}) {
   const dom = new JSDOM(`<!doctype html><body><div id="host"></div></body>`, { runScripts: "outside-only", url: "https://admin.test/" });
   const w = dom.window, host = w.document.getElementById("host");
@@ -101,10 +104,11 @@ function world({ mode = "managed", tasks = {}, src = AJS } = {}) {
   w.eval(fs.readFileSync(path.join(SITE, "shared/portal-mode-words.js"), "utf8"));
   const MG = mgBlock(src), ROW = rowFn(src), KIND = kindBlock(src), SEE = seeFn(src), WHERE = whereFn(src);
   const lifted = [MG, src === AJS ? NEWMW : "", src === AJS ? RUNS : "", src === AJS ? MOWN : "", ROW, KIND, SEE, WHERE].join("\n");
-  const names = [...new Set([...lifted.matchAll(/(?<![.\w])([A-Za-z_]\w*)\(/g)].map((m) => m[1]))].filter((n) => !/^(mg|mw)[A-Z]/.test(n) && !/^(if|for|function|return|clientStepWhere|injectSeeClientLinks|stepKind|kindTag|rowStepCardsHtml|wcRunsItself|monthlyOwn)$/.test(n) && !(n in w));
+  const names = [...new Set([...lifted.matchAll(/(?<![.\w])([A-Za-z_]\w*)\(/g)].map((m) => m[1]))].filter((n) => !/^(mg|mw)[A-Z]/.test(n) && !/^(adminCard|if|for|function|return|clientStepWhere|injectSeeClientLinks|stepKind|kindTag|rowStepCardsHtml|wcRunsItself|monthlyOwn)$/.test(n) && !(n in w));
   w.eval([...new Set([...ROW.matchAll(/(?<![.\w"'])([A-Z][A-Z0-9_]{2,})\b(?!["'])/g)].map((m) => m[1]))].filter((n) => !/^(MG_|MW_|KIND)/.test(n)).map((n) => `var ${n} = "__stub_${n}__";`).join("\n"));
   w.eval(names.map((n) => `var ${n} = function ${n}() { return "[${n}]"; };`).join("\n"));
   w.eval(`var renderOnboardingChecklist = () => window.__redraw(); var reloadScopeAndRerender = async () => window.__redraw(); var mergeStepTasks = (t) => { Object.assign(state.onboardingData.tasks, t); };`);
+  if (/^function adminCard\(o\)/m.test(src)) w.eval(adminCardLift(SITE, src));
   w.eval(`${lifted}\nwindow.__x = { mgOn, rowStepCardsHtml, kindTag, stepKind, injectSeeClientLinks, clientStepWhere, KIND, mwOwns: typeof mwOwns === "function" ? mwOwns : null };`);
   let which = VS;
   w.__redraw = () => { host.innerHTML = w.__x.rowStepCardsHtml({ flowId: which, clientLabel: "x", t: TITLES[which] || "" }, { task: st.onboardingData.tasks[which] }); };
@@ -185,13 +189,13 @@ try {
     must(W.log.every((c) => c.body.action === "status"), "27: something other than a status read was sent");
     track(W); }
   { const W = world({ tasks: {} }); W.srv["/portal-gbp-verify"] = () => [200, { ok: true, facts: { verified: true }, verify: { options: [] } }]; W.show(VS); await W.wait();
-    must(/Verified/.test(W.text()) && !W.q('[data-step-nudge]'), "27: verified isn't drawn as verified with nothing to ask"); must(W.q(".ob-zc-pill").textContent === "Verified", "27: the pill of a verified profile doesn't say Verified"); }
+    must(/Verified/.test(W.text()) && !W.q('[data-step-nudge]'), "27: verified isn't drawn as verified with nothing to ask"); must(pillOf(W) === "Verified", "27: the pill of a verified profile doesn't say Verified"); }
   { const W = world({ tasks: {} }); W.srv["/portal-gbp-verify"] = () => [200, { ok: true, facts: {}, verify: {} }]; W.show(VS); await W.wait();
     must(!/Not verified/.test(W.text()) && /did not say whether/.test(W.text()), "27: a missing answer is drawn as 'not verified' (absence must not read as a value)");
-    must(W.q(".ob-zc-pill").textContent === "Not known", `27: the pill of an unknown status says ${W.q(".ob-zc-pill").textContent}, not Not known`); }
+    must(pillOf(W) === "Not known", `27: the pill of an unknown status says ${pillOf(W)}, not Not known`); }
   { const W = world({ tasks: {} }); W.srv["/portal-gbp-verify"] = () => [200, { ok: false, who: "rga", error: "We couldn't reach your Google profile just now." }]; W.show(VS); await W.wait();
     must(/couldn't reach/.test(W.text()) && !!W.q("[data-mw-retry]") && !/Verified/.test(W.text().replace(/Ensure GBP is claimed \+ verified/, "")), "27: a failed read isn't shown with Try again");
-    must(W.q(".ob-zc-pill").textContent === "Couldn't read", `27: the pill of a failed read says ${W.q(".ob-zc-pill").textContent}, not Couldn't read`); }
+    must(pillOf(W) === "Couldn't read", `27: the pill of a failed read says ${pillOf(W)}, not Couldn't read`); }
 
   // ═══ 4 · STEP 28 · BUSINESS FACTS ═══════════════════════════════════════════════════════════════════════════════
   const DRIFT = [{ field: "main_category", saved: "Plumber", google: "Water heater installation" }, { field: "phone", saved: "(555) 010-2288", google: "(555) 010-2299" }, { field: "name", saved: "Acme Plumbing LLC", google: "Acme Plumbing" }];
@@ -227,7 +231,7 @@ try {
   for (const [status, re, pill] of [["with_rga", /A person changes this one in Google/, "Your move"], ["needs_rga", /did not go on Google: Google said no/, "Your move"], ["waiting", /The nightly check sends it to Google/, "Approved"], ["approved", /being sent to Google/, "Approved"], ["asked", /Waiting: the client decides on/, "Waiting on the client"]]) {
     const W = world({ tasks: {} }); W.srv["/core-change"] = () => [200, { ok: true, items: [{ id: "a", kind: "proposal", field: "phone", to: "(555) 010-2288", status, said: "Google said no" }], drift: [DRIFT[1]] }]; W.show(FS); await W.wait();
     must(re.test(W.text()) && !W.q('[data-mw-propose="phone"]'), `28: an open question in state ${status} isn't said as the record has it, or offers a second Propose`);
-    must(W.q(".ob-zc-pill").textContent === pill, `28: the pill for an open ${status} question says ${W.q(".ob-zc-pill").textContent}, not ${pill}`);
+    must(pillOf(W) === pill, `28: the pill for an open ${status} question says ${pillOf(W)}, not ${pill}`);
     if (status !== "asked") must(!/Waiting: the client/.test(W.text()), `28: an approved (${status}) change reads as waiting on the client`); }
 
   // ═══ 5 · STEP 19 · KEYWORD PLAN ═════════════════════════════════════════════════════════════════════════════════

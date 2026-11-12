@@ -17,6 +17,7 @@
 // 🔴 WHY: the owner, 11-6: "all recommendations should be built into the system/portal ... runs automated with all recommendations (for ALL
 // BUSINESSES) not just for specific case of RGA." The old step read ONE keyword, exact match, found nothing for RGA and said "Choose by hand".
 // Exit 0 pass · 1 fail · 2 cannot tell.
+import { adminCardLift } from "./lib/admin-card-lift.mjs";   // card_notice_designs_v1 §1 (11-11): admin cards draw through shared/admin-card.js
 import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
@@ -390,7 +391,7 @@ const lift = () => {
   const box = { state: { selectedClient: { id: CID, website_url: "https://acme-plumbing.com/" } }, timers: 0, console, URL };
   box.setTimeout = () => { box.timers++; };
   vm.createContext(box);
-  vm.runInContext(`${src}\n;globalThis.__gl = { gbpLandingAdminHtml, _glAuto, _glEditing };`, box);
+  vm.runInContext(`${adminCardLift(SITE, admin)}\n${src}\n;globalThis.__gl = { gbpLandingAdminHtml, _glAuto, _glEditing };`, box);
   return box;
 };
 let box = null;
@@ -406,13 +407,13 @@ if (box) {
   const base = (x, name) => { no(x, /Choose by hand|Mark step complete|Read Search Console\b(?! for)/, `${name}: an old control is back`); no(x, />\s*Send\s*</, `${name}: Send is drawn, with no approval path behind it`); };
   // A: homepage, matches
   const A = draw({ status: "done", landing: { choice: "homepage", url: "https://acme-plumbing.com/", reason: "no_data", by: "system", read_at: at, saved_at: at, evidence: ev({ clicks: 0, impressions: 0 }), google: { state: "matches", shows: "https://www.acme-plumbing.com/?utm_source=google", at } } });
-  has(A, ".ob-zc.ok", "A"); say(A, /Done/, "A has no Done"); say(A, /The Google profile links to the homepage/, "A's title"); say(A, /no searches yet for their 4 plan keywords/, "A's reason");
+  has(A, ".ob-card.ok", "A"); say(A, /Done/, "A has no Done"); say(A, /The Google profile links to the homepage/, "A's title"); say(A, /no searches yet for their 4 plan keywords/, "A's reason");
   say(A, /ON GOOGLE NOW\s*acme-plumbing\.com · matches/, "A's Google line"); say(A, /Change…/, "A has no Change…"); base(A, "A");
   // B: another page wins, Google shows the homepage
   const B = draw({ status: "done", landing: { choice: "page", url: "https://acme-plumbing.com/services/drain-cleaning/", reason: "page_wins", by: "system", read_at: at, saved_at: at, evidence: ev(), google: { state: "differs", shows: "https://acme-plumbing.com/", at } } });
   say(B, /Your move/, "B isn't RGA's move"); say(B, /The Google profile should link to \/services\/drain-cleaning\//, "B's title"); say(B, /It earned 31 of the 40 clicks for their 4 plan keywords in the last 90 days\. The homepage earned 6\./, "B's reason");
   say(B, /isn't built yet/, "B must say the send for approval isn't built"); has(B, "[data-gl-keep-home]", "B has no Keep the homepage"); say(B, /Keep the homepage/, "B's Keep"); base(B, "B");
-  if (B.d.querySelector(".ob-zc.ok")) F("B is drawn as Done");
+  if (B.d.querySelector(".ob-card.ok")) F("B is drawn as Done");
   // C: Search Console couldn't be read
   const C = draw({ status: "done", landing: { choice: "homepage", url: "https://acme-plumbing.com/", reason: "unknown", by: "system", saved_at: at, read_at: at, evidence: ev(), google: { state: "matches", shows: "https://acme-plumbing.com/", at } } });
   say(C, /The Google profile links to the homepage, for now/, "C's title"); say(C, /Search Console couldn't be read/, "C's reason"); base(C, "C");
@@ -421,7 +422,7 @@ if (box) {
   no(U, /matches/, "a website link we couldn't read is drawn as matching"); say(U, /Couldn't read the profile's website link/, "an unread Google link must say so");
   // D: no website
   const D = draw({ status: "skipped", landing: { choice: null, url: null, reason: "no_site", by: "system", saved_at: at, evidence: ev() } });
-  has(D, ".ob-zc.off", "D"); say(D, /Skipped/, "D's pill"); say(D, /No website on file, so nothing to link to/, "D's title"); base(D, "D");
+  has(D, ".ob-card.over", "D"); say(D, /Skipped/, "D's pill"); say(D, /No website on file, so nothing to link to/, "D's title"); base(D, "D");
   // E: the monthly read raised a page
   const E = draw({ status: "done", landing: { choice: "homepage", url: "https://acme-plumbing.com/", reason: "no_data", by: "system", saved_at: at, read_at: at, evidence: ev(), google: { state: "matches", shows: "https://acme-plumbing.com/", at } },
     landing_raise: { url: "https://acme-plumbing.com/services/drain-cleaning/", at, evidence: ev() } });
