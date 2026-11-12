@@ -1,0 +1,7 @@
+[
+ ["a stale LaCie copy reads as fresh", "backuplib", "  if (age > LACIE_MAX_H) return { state: \"red\",", "  if (age > LACIE_MAX_H * 10) return { state: \"red\",", 2],
+ ["a failed LaCie run reads as fresh", "backuplib", "  if (status.ok !== true) return { state: \"red\",", "  if (false) return { state: \"red\",", 2],
+ ["no status file reads as fresh (an absence is not a value)", "backuplib", "  if (!status || typeof status !== \"object\") return { state: \"unknown\",", "  if (!status || typeof status !== \"object\") return { state: \"ok\",", 2],
+ ["a failed Supabase backup counts as completed", "backuplib", "body.backups.filter((b) => String(b.status).toUpperCase() === \"COMPLETED\")", "body.backups.filter((b) => true)", 2],
+ ["an unreadable Supabase answer reads as no backups at all (red, not could-not-tell)", "backuplib", "  if (!body || !Array.isArray(body.backups)) return { state: \"unknown\",", "  if (!body || !Array.isArray(body.backups)) return { state: \"red\",", 2]
+]

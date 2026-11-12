@@ -1,0 +1,6 @@
+[
+ ["last month's calls are counted in this month", "airtablelib", "const start = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1), end", "const start = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0), end", 2],
+ ["a busier last week no longer raises the pace", "airtablelib", "const perDay = Math.max(mtd / daysIn, week / Math.min(7, daysIn));", "const perDay = mtd / daysIn;", 2],
+ ["the forecast forgets what is already spent", "airtablelib", "const projected = Math.round(mtd + perDay * daysLeft);", "const projected = Math.round(perDay * daysLeft);", 2],
+ ["the meter's calls are read from the wrong field", "airtablelib", "\\bcalls=(\\d+)\\b", "\\bwrite=(\\d+)\\b", 2]
+]

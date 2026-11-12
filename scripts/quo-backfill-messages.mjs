@@ -34,10 +34,12 @@ try { (await import('dotenv')).config({ path: path.join(SCRAPER, '.env') }); } c
 const QUO = process.env.QUO_API_KEY;
 const AT_KEY = process.env.AIRTABLE_API_KEY;
 const AT_BASE = process.env.AIRTABLE_BASE_ID;
-const HOOK_TOKEN = process.env.QUO_WEBHOOK_TOKEN || 'c7c76352b117e69f98cd74cd7afd8833ef886529ad36b6e8';
+// 🔴 11-11 (check-no-secret-value-anywhere): the token's value was written here as a fallback; it comes from .env only now
+const HOOK_TOKEN = process.env.QUO_WEBHOOK_TOKEN || '';
 const HOOK = `https://www.rocketgrowthagency.com/.netlify/functions/quo-call-webhook?token=${HOOK_TOKEN}`;
 
 if (!QUO)    { console.error('✗ QUO_API_KEY not set'); process.exit(2); }
+if (!HOOK_TOKEN) { console.error('✗ QUO_WEBHOOK_TOKEN not set'); process.exit(2); }
 if (!AT_KEY || !AT_BASE) { console.error('✗ Airtable creds not set'); process.exit(2); }
 
 const H = { Authorization: QUO };

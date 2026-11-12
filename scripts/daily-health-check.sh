@@ -50,6 +50,16 @@ job_checkin_finish() {
   [ -n "$JOB_REACHED_END" ] && ok=1
   [ "$ok" = 1 ] || err="It stopped before the end (exit $rc)"
   [ "${UNRUNNABLE:-0}" -gt 0 ] && err="${UNRUNNABLE:-0} gates could not launch"
+  # 🔒 11-11 (checkers, Chris approved the master map): THE REDS REACH CHRIS. Every red and could-not-tell gate is written to
+  # website reports/daily-health/<date>.md, and N red is this job's ERROR, so System health reads "Failed" and the job-watcher emails
+  # hello@. Before: 20 reds on 11-11 sat in /tmp and gate-verdicts.jsonl while the card said "Ran". Gate: check-daily-reds-reach-chris.
+  local report=""
+  report=$(node scripts/write-daily-health-report.mjs --verdicts "${RUN_VERDICTS:-/dev/null}" --ok "${OK:-0}" --fail "${FAIL:-0}" --indet "${INDET:-0}" --threw "${THREW:-0}" --reached "${JOB_REACHED_END:-}" 2>/dev/null) || report=""
+  if [ "$ok" = 1 ] && [ "${FAIL:-0}" -gt 0 ]; then
+    ok=0
+    err="${FAIL:-0} red$([ "${INDET:-0}" -gt 0 ] && printf ' · %s could not tell' "${INDET:-0}"): $(awk -F'\t' '$1=="red"{print $2}' "${RUN_VERDICTS:-/dev/null}" 2>/dev/null | awk '!s[$0]++' | head -4 | sed 's/\.mjs$//' | paste -sd, - | sed 's/,/, /g')${report:+ · see $report}"
+  fi
+  rm -f "${RUN_VERDICTS:-}" 2>/dev/null
   node scripts/job-checkin.mjs finish daily-health-check --ok "$ok" --count "${OK:-0}" --note "${OK:-0} checks healthy · ${FAIL:-0} red · ${INDET:-0} could not tell" --error "$err" || true
 }
 trap job_checkin_finish EXIT
@@ -61,6 +71,11 @@ node scripts/job-checkin.mjs start daily-health-check || true
 VERDICT_LOG="output/gate-verdicts.jsonl"
 mkdir -p output
 record_verdict() { printf '{"gate":"%s","exit":%s,"at":"%s"}\n' "$1" "$2" "$(date -u +%FT%TZ)" >> "$VERDICT_LOG"; }
+# 🔒 11-11: THIS RUN'S VERDICTS, ONE LINE EACH (verdict · gate · what it guards · its first failing line). The finish writes them into
+# website reports/daily-health/<date>.md and names the reds in the System health error. A later line for the same gate wins (the
+# skipped-then-retried live gates). Tab-separated; a tab or newline inside a field is flattened.
+RUN_VERDICTS=$(mktemp)
+note_verdict() { printf '%s\t%s\t%s\t%s\n' "$1" "$2" "$(printf '%s' "$3" | tr '\t\n' '  ')" "$(printf '%s' "$4" | tr '\t\n' '  ' | cut -c1-240)" >> "$RUN_VERDICTS"; }
 
 QUIET=0; [ "${1:-}" = "--quiet" ] && QUIET=1
 FAIL=0; INDET=0; OK=0
@@ -89,7 +104,7 @@ ALERT_FILE="$ALERT_DIR/HEALTH-CHECK-CANNOT-RUN.md"
 # to only one of them is how half a fix ships.
 classify() {
   local script="$1" rc="$2" what="$3" mode="$4" out="$5"
-  if [ "$rc" -eq 0 ]; then OK=$((OK+1)); say "  ✅ $(printf '%-38s' "$script") $what"; return; fi
+  if [ "$rc" -eq 0 ]; then OK=$((OK+1)); note_verdict ok "$script" "$what" ""; say "  ✅ $(printf '%-38s' "$script") $what"; return; fi
   if [ "$rc" -eq 127 ]; then
     UNRUNNABLE=$((UNRUNNABLE+1))
     printf "  ⛔ %-38s COULD NOT RUN — %s\n" "$script" "$(printf '%s' "$out" | head -1)"
@@ -97,16 +112,19 @@ classify() {
   fi
   if [ "$rc" -eq 2 ]; then
     INDET=$((INDET+1))
+    note_verdict indeterminate "$script" "$what" "$(printf '%s' "$out" | grep -E '✗|Error|error|INDETERMINATE' | head -1)"
     printf "  ⚠️  %-38s INDETERMINATE — %s\n" "$script" "$what"
     printf '%s' "$out" | grep -E '✗|Error|error' | head -2 | sed 's/^/        /'
     return
   fi
   if [ "$mode" = "status" ]; then
+    note_verdict ok "$script" "$what" ""
     say "  ℹ️  $(printf '%-38s' "$script") ongoing state, not a fault"
     [ "$QUIET" -eq 1 ] || printf '%s' "$out" | tail -2 | sed 's/^/        /'
     return
   fi
   FAIL=$((FAIL+1))
+  note_verdict red "$script" "$what" "$(printf '%s' "$out" | grep -E '✗|🔴' | head -1)"
   printf "  🔴 %-38s %s\n" "$script" "$what"
   printf '%s' "$out" | grep -E '✗|🔴' | head -3 | sed 's/^/        /'
 }
@@ -120,7 +138,7 @@ say() { [ "$QUIET" -eq 1 ] || printf "%s\n" "$1"; }
 # changing that would misalign every existing line.
 run_args() {
   local script="$1" args="$2" what="$3" mode="${4:-abort}"
-  if [ ! -f "scripts/$script" ]; then printf "  ✗  %-38s MISSING\n" "$script"; FAIL=$((FAIL+1)); return; fi
+  if [ ! -f "scripts/$script" ]; then printf "  ✗  %-38s MISSING\n" "$script"; FAIL=$((FAIL+1)); note_verdict red "$script" "$what" "the gate file is missing"; return; fi
   local out rc
   out=$(node "scripts/$script" $args 2>&1); rc=$?
   record_verdict "$script" "$rc"
@@ -129,7 +147,7 @@ run_args() {
 
 run() {
   local script="$1" what="$2" mode="${3:-abort}"
-  if [ ! -f "scripts/$script" ]; then printf "  ✗  %-38s MISSING\n" "$script"; FAIL=$((FAIL+1)); return; fi
+  if [ ! -f "scripts/$script" ]; then printf "  ✗  %-38s MISSING\n" "$script"; FAIL=$((FAIL+1)); note_verdict red "$script" "$what" "the gate file is missing"; return; fi
   local out rc
   # ═══════════════════════════════════════════════════════════════════════════════════════════════
   # 🔴🔴 ONE GATE HUNG AND THE WHOLE SWEEP STOPPED (2026-10-06). `check-no-tab-flashes-a-wrong-answer`
@@ -156,6 +174,7 @@ run() {
   grep -qE "SUPABASE_URL|SUPABASE_SERVICE_ROLE_KEY|_admin-session|rocketgrowthagency\.com" "scripts/$script" 2>/dev/null && is_live=1
   # 🔇 11-6: a QUIET PERIOD (scripts/db-quiet-until.txt, Free plan egress over its 5 GB until Nov 18): no live gate runs, each says why
   if [ -n "$is_live" ] && QUIET_WHY=$(node scripts/lib/db-quiet.mjs 2>/dev/null); then
+    note_verdict indeterminate "$script" "$what" "skipped: $QUIET_WHY"
     printf "  ⚠️  %-38s SKIPPED — %s\n" "$script" "$QUIET_WHY"; INDET=$((INDET+1))
     return
   fi
@@ -175,7 +194,7 @@ run() {
       fi
     fi
     if [ -n "$DB_STOPPED" ]; then
-      printf "  ⚠️  %-38s SKIPPED — the clients' database is struggling (%s); not adding load\n" "$script" "$DB_STOPPED"; INDET=$((INDET+1))
+      printf "  ⚠️  %-38s SKIPPED — the clients' database is struggling (%s); not adding load\n" "$script" "$DB_STOPPED"; INDET=$((INDET+1)); note_verdict indeterminate "$script" "$what" "skipped: the clients' database is struggling ($DB_STOPPED)"
       [ -n "$RETRY_PASS" ] || printf '%s\t%s\t%s\n' "$script" "$what" "$mode" >> "$SKIPPED_LIVE"
       return
     fi
@@ -214,6 +233,7 @@ run() {
     printf "       %s\n" "$(printf '%s' "$out" | grep -m1 -E '^[A-Za-z]*Error: ' | cut -c1-150)"
     printf "       Fix the gate. Until then nothing is checking: %s\n" "$what"
     THREW=$((THREW+1))
+    note_verdict threw "$script" "$what" "$(printf '%s' "$out" | grep -m1 -E '^[A-Za-z]*Error: ' | cut -c1-200)"
     record_verdict "$script" "2"
     return
   fi
@@ -379,6 +399,8 @@ run check-client-steps-explain-themselves.mjs "no client step offers instruction
 run check-we-only-name-tools-we-use.mjs "no client-facing copy names a tool we decided against"
 run check-call-metrics-are-not-conflated.mjs "GBP calls and tracked calls are shown separately"
 run check-leads-match-the-provider.mjs "tier3 item 1 (11-11): the lead rows equal the provider's own count of 30-second calls (CallRail, Quo, CTM, WhatConverts on fakes + this month's rows live), last 4 digits only, no lead twice, a day not read is never 0, cost per booked job only with a booked job, Quo = the business line, client_leads RLS in its SQL; fails on --against=f113d9c5"
+run check-a-running-month-is-never-compared.mjs "master audit #8 (11-11): a running month is never one side of a change: every 'vs last month' is worded in shared/metrics.js and drawn only between two complete months next to each other (portal Dashboard, map rank, KPI Snapshot, report page, admin KPI grid, the email); fails on c2f47e76"
+run check-one-leads-formula.mjs "master audit #8 (11-11): Leads = forms plus tracked calls over the same calendar month (or null with a reason) and their value one formula from the client's own numbers, on every surface; organic = Organic Search; a click is not a form; fails on c2f47e76"
 run check-the-monthly-report-reads-true.mjs "the monthly report's numbers and sentences match their inputs, and a tap is never a lead"
 run check-admin-step-text-reads-true.mjs "the admin step text carries no invented number, login ask, old cadence or terminal command, in both sources"
 run check-no-duplicate-call-rows.mjs "one call, one log row, one lead"
@@ -553,6 +575,8 @@ run check-airtable-calls-are-metered.mjs "every scheduled job meters its Airtabl
 run check-outreach-emails-went-out.mjs "the cold-outreach emails actually went out on the last weekday (Apps Script runs outside every machine we check)"
 run check-the-kickoff-promises-agree.mjs "the call script and the recap promise the same timeline and only cadences that are scheduled"
 run check-client-emails-have-one-format.mjs "every client email: letter markup, links as words, one sign-off, American copy"
+run check-client-emails-have-no-em-dash.mjs "no em dash in client text: every client email rendered (subject, twin, HTML), every other producer scanned, every sender covered (11-11)"
+run check-client-messages-build.mjs "client messages (11-11): C6 retired, late notices + disconnects once per occurrence, the hold window with Hold/Send/Drop, notes on RGA's press, the notice acknowledged, the report proposes a check-in"
 run check-a-photo-preview-says-when-it-fails.mjs "a photo preview that cannot load says so, never a silent grey square"
 run check-photo-lists-are-the-researched-ones.mjs "the photo shot lists are the researched ones for each trade; unknown categories pick nothing"
 run check-the-portal-shows-the-trades-own-list.mjs "each trade's client sees its own photo list in the portal (real runner + real renderer)"
@@ -614,7 +638,7 @@ run check-the-video-move-is-safe.mjs "rga_videos_to_storage_v1 (11-8): outreach 
 run check-the-site-is-published-one-way.mjs "rga_videos_to_storage_v1 (11-8): nothing publishes RGA's site around deploy-site.sh; its GitHub mode waits for that commit's build and verifies by content; new and rebuilt videos go to storage first"
 run check-every-outreach-video-plays.mjs "rga_videos_to_storage_v1 (11-8): every outreach video plays from file storage at its own address, full size, read LIVE; taken-down videos stay blocked"
 run check-the-host-builds-rgas-changes.mjs "website_access_host_builds_v1 (11-8): setup proves the client's host builds RGA's changes (hidden test PR, the host's own GitHub report); a refusal offers merge-myself or add-RGA and blocks only while RGA merges"
-run check-rga-acts-through-its-app.mjs "rga_github_app_v1 (11-8): RGA changes a client repository through its own GitHub app when installed (Netlify builds bot commits on every plan), else the RGA Admin key"
+run check-rga-acts-through-its-app.mjs "rga_github_app_v1 (11-8): RGA changes a client repository through its own GitHub app when installed (Netlify builds bot commits on every plan); no app = no key, said as not installed (the RGA Admin key is retired for repository work, 11-11)"
 run check-a-client-installs-rgas-app.mjs "client_github_app_install_v1 (11-8): a client installs RGA's GitHub app from their portal; a signed state, GitHub confirms the install, only the repository that IS their website is recorded (via github_app, read back), else nothing written"
 run check-website-access-gaps.mjs "website_access_gaps_v1 (11-8): a removed app is noticed in two reads and recorded; website work waits until access is proven; admin names who acts; the app removes itself only from this client's own repositories"
 run check-the-access-test-runs-itself.mjs "auto_access_test_v1 (11-8): the access test is approved in the click that gives access (Install card / consent tick, word for word) and then drafts, sends, approves, publishes and comes down by itself; old consents never count"
@@ -641,9 +665,9 @@ run check-every-outreach-link-resolves.mjs "11-10: every page link the outreach 
 run check-admin-dashboard-opens-on-itself.mjs "admin_dashboard_top_v2 (11-9): the admin Dashboard opens on itself: no to-do card above it, System health on its own tab, the Blog card on its client's Website Work tab, the blog's presses counted once (To do rows + one Dashboard line)"
 run check-client-monthly.mjs "client_monthly_v1 (11-9): the client's monthly side: between months (any kickoff day, a skipped report, any timezone), posts chosen never a fixed 4, the next step reads the same open steps as Ongoing work, the Month 1 letter in client words with its window or no baseline line, month rows numbered and closed by the morning run; fails on the before state"
 run check-one-current-month.mjs "master map Tier 1 (11-11): ONE current month: one rule (shared/month-now.js) read by the portal, the admin, admin-months, _step-record and the hand-off; the morning run writes only to that month (between months: replies only, in Month 2); monthly work only in the month row; retired ids acted on by no code; Stage 6 starts by itself at Month 4"
+run check-review-replies-within-two-days.mjs "tier3 item 2 (11-11): Monthly 4 review replies within 1 to 2 days: read every 2 hours 7 AM to 7 PM their time, drafted the same hour, 4/5 stars post on RGA's OK under the default choice, 1 to 3 stars only on the client's, read back, retried to 5 then said, late rows in To do, no templated replies (fakes only)"
 run check-a-spam-report-has-evidence.mjs "tier3 item 4 (11-11): Monthly 9 competitor watch: a flag carries its evidence and scan date (any trade, any country), no website = can't compare, no report without evidence, changed/gone only from a later full scan, the client never told a listing was removed or shown a reported one, no search made (fakes only)"
 run check-review-requests-never-ask-on-yelp.mjs "tier3 item 5 (11-11, extends check-no-review-gating): a second review site only from the allow-list with its rules page read in the last 12 months, Yelp never (by key and host), a failed page check = Google only, one message with the same links for every customer (fakes only)"
-run check-review-replies-within-two-days.mjs "tier3 item 2 (11-11): Monthly 4 review replies within 1 to 2 days: read every 2 hours 7 AM to 7 PM their time, drafted the same hour, 4/5 stars post on RGA's OK under the default choice, 1 to 3 stars only on the client's, read back, retried to 5 then said, late rows in To do, no templated replies (fakes only)"
 run check-tier2-steps-run-themselves.mjs "master map Tier 2 (11-11): a signed Standard Plan accepts itself after 15 minutes (RGA can Hold); Setup moves on when Google found a service; Monthly blog posts on the website autopilot; categories only through admin-gbp-categories once the client saw them; form tracking settles itself; Bing imports only when it copies the truth"
 run check-setup-vs-month1.mjs "setup_vs_month1_v1 (11-10): Setup is Getting started (3 steps, each skippable with a reason and Undo; Setup complete = those 3 done or skipped, never RGA's own tasks); Month 1 work is the first month card (reviews optional with first-review wording, videos counted only on the client's own channel, call-tracking choice, close-out call at the end); a client's unanswered question is a late RGA To do row after 2 business days; fails on the build's before state"
 run check-portal-has-no-em-dash.mjs "11-10: no em dash in any text a client can read in the portal (strings, templates, toasts, stage labels, index.html, portal.css); an empty number tile is the en dash; fails on the build's before state (153 hits at 87c6fdbe)"
@@ -655,9 +679,10 @@ run check-dialog-tone.mjs "admin dialogs wear the right kind: a redirect to Goog
 run check-business-phone-never-a-contact-cell.mjs "business_phone_only_v1 (11-11): the business phone is identity_phone; a contact's cell never stands in for it (duplicate cleanup, account health, step notices, call tracking, end of service)"
 run check-twin-suppress-job.mjs "11-11 opted-out twins: the website's daily lead-twin-suppress (13:00 UTC, before the 7 AM Pacific send) suppresses a live lead sharing a website or inbox with an opted-out one, by check-duplicate-identity-leads' exact rule; set-only, cap 50 (51 = none + an error), platform and free-mail domains skipped, TWIN_SUPPRESS=0 off, a refusal is its System health error; fixtures only"
 run check-places-cap-is-said.mjs "11-11 Places SearchText 32/day (never raised): every caller asks the shared daily budget first (map ranking, then the profile watch, then free audits, then the backfills), and Google's 429 is said and recorded, never read as not found / not ranked / no hours; fixtures only"
+run check-integrations-are-watched-from-the-cloud.mjs "integrations_hardening_v1 (11-11): RGA's Google grant probed daily with no send (red admin banner when it breaks), sign-in links made without email, every Anthropic call metered (out of credit said), budgets orange at 80% / red at 95%, Stripe ledger + Quo key + Supabase advisor on a Netlify schedule, the RGA Admin key only in the invite accept; fakes only, proven against c8cdb169"
 run check-call-names.mjs "call_names_v1 (11-10): the six call names (Intro call, Audit walkthrough, Kickoff call, Month 1 review, Monthly check-in, Quarterly review) everywhere a person reads, no close-out or bare Call 1 / Call 2, internal ids unchanged"
-run check-one-wording-per-fact.mjs "master map 11-11 (decisions 1-5 + Tier 1 wording): one wording per fact in client text: the monthly check-in is about 20 minutes (we hold 30) from the ONE call-length setting every booking path reads; photos done at 3 of each kind, 20 the goal; first reviews ask at least 1, aim for 5, sent to the 5 most recent; the win story quarterly; one video from two scripts, about 60 seconds, no editing promised; canceled; texts promised only when on"
 run check-master-sop-is-current.mjs "master SOP 11-11 (reference_master_sop): the website's docs/master-sop never goes stale: the steps data is the playbook + managed steps + closing list + stages exactly, every scheduled job is in the checkers schedule, every table named in code is in the database area once its data lands, an approved area has its artifact URL, SOP.md / index.html / chapters.json equal a rebuild from today's data, the data lives in one place, /docs/* is 404; could-not-tell until website branch master-sop is merged"
+run check-one-wording-per-fact.mjs "master map 11-11 (decisions 1-5 + Tier 1 wording): one wording per fact in client text: the monthly check-in is about 20 minutes (we hold 30) from the ONE call-length setting every booking path reads; photos done at 3 of each kind, 20 the goal; first reviews ask at least 1, aim for 5, sent to the 5 most recent; the win story quarterly; one video from two scripts, about 60 seconds, no editing promised; canceled; texts promised only when on"
 run check-monthly-close.mjs "monthly_s5_close_v1 (11-9): Close the month: freeze (not given never 0, the 30-day rule), the letter from the frozen record refuses a missing number, send (named confirm, kept, listed in the portal, test to the admin only), NOTHING sends by itself (the 5th builds only), the To do on the 5th, the optional call + Quarterly review, send/skip then open next then close this"
 run check-monthly-once.mjs "monthly_s3_monthly_v1 (11-9): Once a month: the merges (no dangling id), no Run button or hand tick, scans compared like for like, numbers not measured never 0, new competitor flagged, site health says what it did not check, blog 0 is fine, focus work settles from its tied steps, listing upkeep from the jobs, the settle proves before it writes, the morning run starts monthly replies on a new review"
 run check-step58-reads-youtube.mjs "step58_youtube_readback_v1 (11-9): admin step 58 reads the channel description back from YouTube (API key, no sign-in): a match finishes the step by itself, a difference is RGA's move beside what YouTube has, a read that cannot be made says why and is never matches or missing, Pasted only while there is no key, Check now read back, the morning run is a free read, Copy is exactly what Studio takes"
@@ -841,6 +866,22 @@ run check-admin-tabs-render.mjs       "every admin tab renders for a signed-in a
 run check-app-pages-boot.mjs          "admin, portal and the homepage actually come up in a browser"
 run check-playbook-renders.mjs         "the playbook actually renders in a browser"
 
+# 🔒 11-11 THE CHECKERS (master map approved, Chris: "every step with no checker gets one"): the checks that keep every other check honest
+say ""
+say "── the checkers: nothing red, stray or unseen without Chris hearing (11-11) ──"
+run check-daily-reds-reach-chris.mjs "every red gate reaches Chris: the morning, rehearsal and night runs say N red as a System health error, and the morning lists them in reports/daily-health/<date>.md"
+run check-every-mac-job-checks-in.mjs "every com.rga.* job on this Mac is on System health and posts a start and a finish"
+run check-every-step-names-its-gate.mjs "every step (playbook, end of service, stages) is named by at least one scheduled gate"
+run check-the-audit-and-quarter-steps-hold.mjs "admin 12, 14, 30 and Monthly 15, 17: their real runners on fakes read the page, say indeterminate rather than invent, never call a partial read clean"
+run check-no-secret-value-anywhere.mjs "no secret VALUE sits in either repo, memory, reports or the /tmp logs (compared by hash, only key names printed)"
+run check-every-cache-buster-moved-with-its-file.mjs "every admin/portal/shared browser file changed since the last deploy has its ?v= moved too"
+run check-no-dormant-tables.mjs "every database table is read or written by code, or kept on purpose with a reason"
+run check-no-dormant-exports.mjs "every function exported from shared/, admin/ and portal/ has a caller, or is kept with a reason"
+run check-airtable-calls-will-last.mjs "this month's Airtable calls are forecast against the plan's cap (red at 80%)"
+run check-no-gate-flips.mjs "no gate flipped pass and fail more than twice in 7 days (a flaky gate is worse than a failing one)"
+run check-no-one-is-staff-by-accident.mjs "a client is never staff and can't make itself staff: is_internal_user() allow-lists roles, the role guard trigger is on profiles, no public-role policy is true; the portal client reads no staff rows and is refused role owner (11-11 lockdown)"
+run check-backups-leave-the-building.mjs "the LaCie backup is fresh and Supabase's own backups are on record (could not read = could not tell, never green)"
+
 # 🔴 AUDIT 10-31: WHAT THE DATABASE MADE US SKIP GETS ONE MORE RUN, 15 MINUTES LATER (the review read, PageSpeed and the place ids are in here too)
 if [ -s "$SKIPPED_LIVE" ]; then
   say ""
@@ -881,7 +922,7 @@ if [ -n "${QUO_WEBHOOK_TOKEN:-}" ] || grep -q '^QUO_WEBHOOK_TOKEN' .env 2>/dev/n
     say "  ✅ wrote ${_w} lead(s) this run (found ${_f:-0})"
     if [ "${_pstop:-}" = "refused" ] || { [ -z "${_pstop:-}" ] && echo "$_r" | grep -q 'Quota exceeded'; }; then
       say "  🔴 Google REFUSED a Places lookup (its daily limit): ${_pwhy:-Quota exceeded} — client-facing lookups are refused too until midnight Pacific"
-      INDET=$((INDET+1))
+      INDET=$((INDET+1)); note_verdict indeterminate "gbp-hours-backfill" "the GBP hours backfill" "Google refused a Places lookup: ${_pwhy:-Quota exceeded}"
     elif [ "${_pstop:-}" = "budget" ]; then
       say "     stopped at its share of the daily Places budget; client work keeps the rest (${_pwhy:0:160})"
     fi
@@ -942,7 +983,7 @@ const d=await r.json(); if(Array.isArray(d)) console.log(d.map(c=>c.id).filter(B
 done
 if [ "$_brain_fail" -gt 0 ]; then
   printf "  🔴 brain recorded for %s client(s), %s FAILED — the brain will read stale tomorrow\n" "$_brain_n" "$_brain_fail"
-  FAIL=$((FAIL+1))
+  FAIL=$((FAIL+1)); note_verdict red "brain-record-audit" "the brain is re-recorded after the snapshots" "brain recorded for ${_brain_n} client(s), ${_brain_fail} FAILED"
 else
   say "  ✅ brain re-recorded for ${_brain_n} client(s) (the snapshot above invalidated it)"
 fi

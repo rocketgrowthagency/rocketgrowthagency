@@ -1,0 +1,8 @@
+[
+ ["the allow-list test is flipped (a deny-list passes again, 11-10 HOLE 1)", "staffrules", "  if (/<>|!=|\\bnot\\s+in\\b|\\bis\\s+distinct\\s+from\\b/i.test(sql)) p.push(", "  if (false) p.push(", 2],
+ ["the allow-list itself is no longer required", "staffrules", "  if (!/\\bin\\s*\\(\\s*'[a-z_]+'(\\s*,\\s*'[a-z_]+')*\\s*\\)/i.test(sql)) p.push(", "  if (false) p.push(", 2],
+ ["the guard trigger is no longer required (11-10 HOLE 2)", "staffrules", "  if (!t) return [\"the trigger profiles_guard_role_trg is gone: a user can give themselves a staff role\"];", "  if (!t) return [];", 2],
+ ["a `true` policy for a public role is accepted", "staffrules", "    const open = String(r.qual).trim() === \"true\" || String(r.with_check).trim() === \"true\";", "    const open = false;", 2],
+ ["a client given role owner reads as refused", "staffrules", "  else if (insert.code !== \"P0001\") p.push(", "  else if (false) p.push(", 2],
+ ["a client reading staff rows is let through", "staffrules", "    else if (counts[t] > 0) p.push(", "    else if (counts[t] > 99) p.push(", 2]
+]

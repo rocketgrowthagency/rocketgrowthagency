@@ -608,4 +608,17 @@ export const FILES = {
   reviewsites: "netlify/functions/_review-sites.js",
   reviewsitesdata: "data/review-sites.json",
   reviewsecondfn: "netlify/functions/review-second-site.js",
+  // 11-11 checkers build (master map approved): the runs that check everything, the report the morning reds land in, and the gates' own logic
+  rehearsal: "scraper:scripts/rehearse-night-run.sh",
+  dailyreport: "scraper:scripts/write-daily-health-report.mjs",
+  delivguard: "scraper:scripts/daily-deliverability-guard.sh",
+  eosgate: "scraper:scripts/check-end-of-service-runs-itself.mjs",
+  secretlib: "scraper:scripts/lib/secret-scan.mjs",
+  cachebusterlib: "scraper:scripts/lib/cache-buster.mjs",
+  staffrules: "scraper:scripts/lib/staff-rules.mjs",
+  dormantlib: "scraper:scripts/lib/dormant-exports.mjs",
+  airtablelib: "scraper:scripts/lib/airtable-forecast.mjs",
+  flipslib: "scraper:scripts/lib/gate-flips.mjs",
+  backuplib: "scraper:scripts/lib/backup-judge.mjs",
+  mockuplib: "scraper:scripts/lib/mockup-match.mjs",
 };

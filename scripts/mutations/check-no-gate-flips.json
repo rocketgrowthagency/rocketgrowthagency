@@ -1,0 +1,6 @@
+[
+ ["a flip is never counted", "flipslib", "    if (last !== null && exit !== last) n++;", "    if (false) n++;", 2],
+ ["a could-not-tell counts as a side (a blind run reads as a flip)", "flipslib", "    if (exit !== 0 && exit !== 1) continue;", "", 2],
+ ["old verdicts are judged as this week's", "flipslib", "if (!v.gate || !Number.isFinite(at) || at < from || at > nowMs) continue;", "if (!v.gate || !Number.isFinite(at)) continue;", 2],
+ ["the threshold drops to one flip", "flipslib", "    if (flips > max) out.push(", "    if (flips > 1) out.push(", 2]
+]

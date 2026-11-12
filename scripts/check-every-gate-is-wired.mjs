@@ -230,7 +230,7 @@ const NOT_PREFLIGHT = {
   'check-booked-and-accepted-are-different-words.mjs': 'admin/portal copy gate; runs in daily-health-check.sh — a contradicting status line cannot make a video unsafe',
   'check-a-reschedule-never-looks-like-a-first-booking.mjs': 'admin-UI gate; runs in daily-health-check.sh — kickoff card copy cannot make a video unsafe',
   'check-an-abandoned-oauth-grant-is-never-silent.mjs': 'admin+portal gate; runs in daily-health-check.sh — a silent OAuth abandonment cannot make a video unsafe',
-  'check-live-matches-the-approved-mockup.mjs': 'NO PAIRS since 2026-10-15: its only pair (client_setup_steps_v2) was superseded by Chris\'s approval of setup_numbers_in_order_v1, now held by check-setup-steps-read-in-order. Add a pair to revive it.',
+  'check-live-matches-the-approved-mockup.mjs': 'REVIVED 11-11 (checkers build), data-driven from steps.json governing mockups + reports/mockups: the live admin and portal (every write blocked) against each approved mockup\'s wording, a drift ratchet (scripts/mockup-match-baseline.json); runs every night in nightly-full-check.sh, not the daily run, to spare production',
   'check-no-new-dormant-css.mjs':             'stylesheet-hygiene gate; runs in daily-health-check.sh — an unmatched CSS rule cannot make a video unsafe',
   'check-archived-clients-excluded.mjs': 'admin-UI gate; runs in daily-health-check.sh — client lifecycle state cannot make a video unsafe',
   'check-status-tools-see-the-run.mjs': 'diagnostic-layer gate; runs in daily-health-check.sh — it EXECUTES the status tools, too slow for per-run pre-flight',
@@ -617,6 +617,19 @@ const NOT_PREFLIGHT = {
   'check-reminder-texts.mjs': 'holds the reminder text path in the WEBSITE call-reminders (11-11); run by daily-health-check.sh.',
   'check-inbound-sms-flowing.mjs': 'third-party webhook subscription state, not code health; surfaced via operational drift (3f2). Must never block a build — an unregistered SMS event has nothing to do with tonight\'s videos',
   'check-apps-script-paste-owed.mjs': 'deployment state of a DIFFERENT repo (the website .gs files vs the live Apps Script projects); surfaced via operational drift (3f). Must not block a scraper build — an unpasted auto-reply script has nothing to do with tonight\'s videos',
+  // ── the checkers (11-11, master map approved: "every step with no checker gets one"), each with a mutation suite ──
+  'check-daily-reds-reach-chris.mjs': 'the checkers (11-11, master map approved): the morning, rehearsal and night runs say N red as a System health error and the morning writes reports/daily-health/<date>.md; static + each runner\'s own finish run against a fake check-in server; runs in daily-health-check.sh; it reads no video pipeline output.',
+  'check-every-mac-job-checks-in.mjs': 'the checkers (11-11): every com.rga.* LaunchAgent is a Mac job on the website _job-manifest and its script posts a start and a finish; files + the Mac\'s plists only; runs in daily-health-check.sh.',
+  'check-every-step-names-its-gate.mjs': 'the checkers (11-11): every playbook, end-of-service and stage step id is named by a gate a scheduled runner runs; static; runs in daily-health-check.sh.',
+  'check-the-audit-and-quarter-steps-hold.mjs': 'the checkers (11-11): the real runners of admin 12, 14, 30 and Monthly 15, 17 (flow-execute.js) on fakes only; runs in daily-health-check.sh; it reads no video pipeline output.',
+  'check-no-secret-value-anywhere.mjs': 'the checkers (11-11): both repos, memory, reports and /tmp logs scanned for a secret VALUE by hash (names + file:line only), self-test on a planted fake secret; runs in daily-health-check.sh; a leak in a log cannot make a video unsafe.',
+  'check-every-cache-buster-moved-with-its-file.mjs': 'the checkers (11-11): every admin/portal/shared file changed since origin/main has a moved ?v=; git + files, self-test on fixtures; runs in daily-health-check.sh.',
+  'check-no-dormant-tables.mjs': 'the checkers (11-11): every table in the SQL files and the live schema (Management API, read-only) is named by code or kept with a reason; runs in daily-health-check.sh.',
+  'check-no-dormant-exports.mjs': 'the checkers (11-11): every function exported from shared/, admin/ and portal/ has a caller, or is kept / on the 11-11 backlog; static, self-test on fixtures; runs in daily-health-check.sh.',
+  'check-airtable-calls-will-last.mjs': 'the checkers (11-11): this month\'s metered Airtable calls (output/airtable-calls.log) forecast against the plan cap, red at 80%; self-test on a fixture log; runs in daily-health-check.sh.',
+  'check-no-gate-flips.mjs': 'the checkers (11-11): no gate flipped pass and fail more than twice in 7 days (output/gate-verdicts.jsonl); self-test on a fixture log; runs in daily-health-check.sh.',
+  'check-backups-leave-the-building.mjs': 'the checkers (11-11): the LaCie copies\' status files and Supabase\'s own backups (Management API, read-only) are fresh; unreadable = INDETERMINATE; self-test on fixtures; runs in daily-health-check.sh.',
+  'check-no-one-is-staff-by-accident.mjs': 'the 11-11 database lockdown: is_internal_user() allow-lists roles, the role guard trigger exists, no public-role policy is true (Management API read-only SQL), and the portal client reads no staff rows and is refused role owner; rules self-tested; runs in daily-health-check.sh.',
 };
 
 if (!fs.existsSync(PIPELINE)) fail('overnight-pipeline.sh not found.');

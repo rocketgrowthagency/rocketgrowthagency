@@ -1,0 +1,8 @@
+[
+ ["the deliverability guard comes off the list (11-11: it ran unseen by System health)", "jobmanifest", "  { job: \"deliverability-guard\", label: \"Deliverability guard\", cron: \"0 6 * * *\", plist: \"com.rga.deliverability-guard\",", "  { job: \"deliverability-guard-x\", label: \"Deliverability guard\", cron: \"0 6 * * *\", plist: \"com.rga.deliverability-guard-x\","],
+ ["the rehearsal's row names a plist that is not its own", "jobmanifest", "plist: \"com.rga.night-rehearsal\"", "plist: \"com.rga.night-rehearsals\""],
+ ["the blog engine stops posting its start", "dripcontent", "node \"$_BLOG_DIR/scripts/job-checkin.mjs\" start blog-engine || true", "true"],
+ ["the night build finishes under a name not on the list", "overnightlocal", "job-checkin.mjs\" finish overnight-build", "job-checkin.mjs\" finish overnight-builds"],
+ ["the deliverability guard stops posting its start", "delivguard", "node scripts/job-checkin.mjs start deliverability-guard || true", "true"],
+ ["the rehearsal stops posting its finish", "rehearsal", "  node scripts/job-checkin.mjs finish night-rehearsal", "  true scripts/job-checkin.mjs finish-not night-rehearsal"]
+]

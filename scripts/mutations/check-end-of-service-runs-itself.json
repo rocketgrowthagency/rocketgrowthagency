@@ -145,5 +145,11 @@
   "    const files = n.files_ready ? csEv(",
   "    const files = true ? csEv(",
   1
+ ],
+ [
+  "an eleventh closing line appears that no offboarding step id names (11-11 checkers)",
+  "closinglist",
+  "  { key: \"refund\", when: \"end\", auto: false,",
+  "  { key: \"keys\", when: \"end\", auto: false, label: \"Hand back the keys\", detail: \"x\" },\n  { key: \"refund\", when: \"end\", auto: false,"
  ]
 ]

@@ -1,0 +1,6 @@
+[
+ ["a changed file under its old ?v= is let through", "cachebusterlib", "      if (oldV.has(r.asset) && oldV.get(r.asset).has(r.v)) stale.push(", "      if (false) stale.push(", 2],
+ ["the rule asks the wrong question (unchanged files flagged, changed ones passed)", "cachebusterlib", "      if (a0 == null || a1 == null || a0 === a1) continue;", "      if (a0 == null || a1 == null || a0 !== a1) continue;", 2],
+ ["a relative import is resolved from the site root", "cachebusterlib", "path.posix.join(path.posix.dirname(fromFile), raw)", "path.posix.join(\".\", raw)", 2],
+ ["stylesheets (href=) are no longer read", "cachebusterlib", "(?:\\b(?:src|href)\\s*=", "(?:\\b(?:src)\\s*=", 2]
+]

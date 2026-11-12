@@ -27,6 +27,16 @@ SCRAPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRAPER_DIR"
 DATE_STAMP=$(date +%Y-%m-%d)
 LOG="/tmp/overnight-local-${DATE_STAMP}.log"
+# 🔒 SYSTEM HEALTH (checkers build 11-11, master map approved): the 9 PM build says it ran, so "it never started" is seen (it fired
+# every night unseen by System health before). The run is wrapped (it runs itself once more under RGA_CHECKIN_WRAPPED), so its own EXIT
+# traps stay exactly as they are and the finish still gets the run's real exit code. Video is PARKED, so a skipped night (exit 0) is a
+# normal finish, never an alert; a run that crashes (non-zero) is "Failed". Never breaks the run. Gate: check-every-mac-job-checks-in.
+if [ -z "${RGA_CHECKIN_WRAPPED:-}" ]; then
+  node "$SCRAPER_DIR/scripts/job-checkin.mjs" start overnight-build || true
+  RGA_CHECKIN_WRAPPED=1 bash "$SCRAPER_DIR/scripts/overnight-local.sh" "$@"; _rc=$?
+  node "$SCRAPER_DIR/scripts/job-checkin.mjs" finish overnight-build --ok "$([ "$_rc" -eq 0 ] && echo 1 || echo 0)" --note "exit $_rc (video parked: a skipped night is not an error)" --error "$([ "$_rc" -eq 0 ] || echo "The night run stopped with exit $_rc; see $LOG")" || true
+  exit "$_rc"
+fi
 
 # STALE-CAPTURE REAPER (2026-07-27) — self-heal before starting. A hung step-3 on
 # 2026-07-27 orphaned its Chrome/ffmpeg; those held a pipe open and wedged the run

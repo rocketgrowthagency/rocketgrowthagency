@@ -26,6 +26,22 @@ DATE_STAMP=$(date +%Y-%m-%d)
 LOG="/tmp/deliverability-guard-${DATE_STAMP}.log"
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 
+# 🔒 SYSTEM HEALTH (checkers build 11-11, master map approved): the 06:00 guard says it ran, and what it guards is its ERROR, so the
+# job-watcher emails hello@: the verification system regressed (no sweep ran), the send engine lost its one-email-per-inbox guard,
+# or deliverability is RED. Before: a macOS notification at best, and not on System health at all. Never breaks the guard.
+# Gate: check-every-mac-job-checks-in.
+GUARD_ERR=""; GUARD_REACHED_END=""
+guard_err() { GUARD_ERR="${GUARD_ERR:+$GUARD_ERR · }$1"; }
+guard_checkin_finish() {
+  local rc=$? ok=0
+  [ -n "$GUARD_REACHED_END" ] && ok=1
+  [ "$ok" = 1 ] || guard_err "It stopped before the end (exit $rc)"
+  [ -n "$GUARD_ERR" ] && ok=0
+  node scripts/job-checkin.mjs finish deliverability-guard --ok "$ok" --note "health=${HEALTH:-?}" --error "$GUARD_ERR" || true
+}
+trap guard_checkin_finish EXIT
+node scripts/job-checkin.mjs start deliverability-guard || true
+
 echo "=== deliverability guard START $(date) ===" | tee -a "$LOG"
 
 # 0) REGRESSION GUARD (locked 2026-07-07): verify the whole email-verification system is intact —
@@ -35,6 +51,7 @@ echo ">>> verification-system self-check" | tee -a "$LOG"
 node scripts/check-verification-system.mjs 2>&1 | tee -a "$LOG" | tail -3
 if [ "${PIPESTATUS[0]}" -ne 0 ]; then
   echo "!!! VERIFICATION SYSTEM REGRESSION — deliverability guard ABORTED (no sweep, no sends touched)." | tee -a "$LOG"
+  guard_err "The email verification system regressed (check-verification-system), so no mailbox sweep ran"
   exit 1
 fi
 
@@ -84,6 +101,7 @@ echo ">>> daily action report" | tee -a "$LOG"
 node scripts/daily-action-report.mjs 2>&1 | tee -a "$LOG"
 
 if [ "$HEALTH" = "3" ]; then
+  guard_err "Deliverability is RED (bounce rate); the Apps Script auto-pause should have fired"
   echo "!!! DELIVERABILITY RED — the Apps Script auto-pause should have fired. Investigate the bounce source before resuming." | tee -a "$LOG"
 elif [ "$HEALTH" = "2" ]; then
   echo ">>> DELIVERABILITY AMBER — swept dead mailboxes; monitor. If it climbs, the Apps Script auto-pauses at RED." | tee -a "$LOG"
@@ -109,10 +127,14 @@ node scripts/audit-failed-videos.mjs 2>&1 | tee -a "$LOG" || true
 #    (a) assert the send engine still has the one-first-email-per-inbox guard (catches a stale .gs paste);
 #    (b) surface any live shared-inbox duplicate leads (DRY — the send-time guard blocks them regardless).
 echo ">>> send-dedup guard (one first-email per inbox)" | tee -a "$LOG"
-if ! node scripts/check-send-dedup-guard.mjs 2>&1 | tee -a "$LOG"; then
+# 🔴 11-11: `if ! node … | tee` read TEE's exit (no pipefail here), so a lost guard never reached this branch. The gate's own exit now.
+node scripts/check-send-dedup-guard.mjs 2>&1 | tee -a "$LOG"
+if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+  guard_err "The send engine lost its one-first-email-per-inbox guard (check-send-dedup-guard)"
   osascript -e 'display notification "Send engine lost the one-email-per-inbox guard — re-paste gmail-to-airtable.gs" with title "🚨 RGA: dedup guard missing" sound name "Sosumi"' 2>/dev/null
 fi
 echo ">>> live duplicate-inbox check (should be 0)" | tee -a "$LOG"
 node scripts/dedup-existing-leads.mjs 2>&1 | tail -1 | tee -a "$LOG" || true
 
 echo "=== deliverability guard DONE $(date) — health=$HEALTH ===" | tee -a "$LOG"
+GUARD_REACHED_END=1

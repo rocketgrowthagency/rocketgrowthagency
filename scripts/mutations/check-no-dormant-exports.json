@@ -1,0 +1,6 @@
+[
+ ["a helper nothing calls is let through", "dormantlib", "      if (!elsewhere) out.push(", "      if (false) out.push(", 2],
+ ["a constant is judged as a function", "dormantlib", "      if (n.length < 3 || !isFunction(src, n)) continue;", "      if (n.length < 3) continue;", 2],
+ ["an export's own shorthand entry counts as a use", "dormantlib", "(re0.test(part) ? \"\" :", "(false ? \"\" :", 2],
+ ["a new helper is exported and never called", "clientkit", "export { escapeHtml,", "export function neverCalledAnywhere11() { return 1; }\nexport { escapeHtml,"]
+]

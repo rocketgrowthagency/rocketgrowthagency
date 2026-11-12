@@ -42,7 +42,17 @@ for (const [name, cron] of scheduled) {
   if (!j) F.push(`${name} is scheduled (${cron}) and isn't on the job list, so nothing would notice if it stopped`);
   else if (j.cron !== cron) F.push(`${name}: the list says ${j.cron}, its schedule says ${cron}, so it would read late or early`);
 }
-for (const j of net) if (!scheduled.has(j.job) && !j.off) F.push(`${j.job} is on the list but nothing schedules it: it would read late forever`);
+for (const j of net) if (!scheduled.has(j.job) && !j.off && !j.part_of) F.push(`${j.job} is on the list but nothing schedules it: it would read late forever`);
+// 🔒 ONE RUN, SEVERAL ROWS (integrations_hardening_v1, 11-11): a `part_of` line is one check inside its parent's run. Its parent must be on the
+// list and scheduled, on the same cron (or the part reads late or early), and a part is never scheduled on its own.
+for (const j of net.filter((x) => x.part_of)) {
+  const p = net.find((x) => x.job === j.part_of);
+  if (!p) F.push(`${j.job} is part of ${j.part_of}, which isn't on the list: nothing would run it`);
+  else if (p.part_of) F.push(`${j.job}: its parent ${p.job} is itself a part, and only a scheduled job can run parts`);
+  else if (p.cron !== j.cron) F.push(`${j.job}: the list says ${j.cron}, its parent ${p.job} runs ${p.cron}, so it would read late or early`);
+  if (!scheduled.has(j.part_of)) F.push(`${j.job} is part of ${j.part_of}, and nothing schedules ${j.part_of}: it would read late forever`);
+  if (scheduled.has(j.job)) F.push(`${j.job} is a part of ${j.part_of} and also scheduled on its own: one or the other`);
+}
 // 🔒 OFF ON PURPOSE must be true: a job marked off that something still schedules would run with the card saying it doesn't (the owner 11-7).
 for (const j of JOBS) if (j.off) {
   if (scheduled.has(j.job)) F.push(`${j.job} is marked off on purpose, and ${scheduled.get(j.job)} still schedules it: take the schedule out, or take \`off\` off the list`);
@@ -56,6 +66,12 @@ for (const j of JOBS) {
 
 // ── (2) wrapped ─────────────────────────────────────────────────────────────────────────────────────────────────────
 for (const j of net) {
+  if (j.part_of) {
+    // a part's row is written by its parent's wrapper (_job-checkin finishParts), from the reply the parent's file builds under the part's name
+    const pt = read(`${fnDir}/${j.part_of}.js`);
+    if (pt == null || !pt.includes(`"${j.job}"`)) F.push(`${j.job}: its parent ${j.part_of}.js never reports it, so its row would always say "didn't report this check"`);
+    continue;
+  }
   const t = read(`${fnDir}/${j.job}.js`);
   if (t == null) { F.push(`${j.job}: no function file`); continue; }
   const assigns = [...t.matchAll(/^exports\.handler\s*=\s*(.*)$/gm)];
@@ -80,7 +96,9 @@ const plistCron = (file) => {
   return `${c.Minute ?? 0} ${c.Hour ?? "*"} ${c.Day ?? "*"} ${c.Month ?? "*"} ${c.Weekday ?? "*"}`;
 };
 const AGENTS = path.join(os.homedir(), "Library/LaunchAgents");
-const SCRIPT = { "client-data-backup": "scripts/backup-client-data.mjs", "lacie-backup": "scripts/backup-lacie.sh", "daily-health-check": "scripts/daily-health-check.sh", "nightly-full-check": "scripts/nightly-full-check.sh", "weekly-audit": "scripts/weekly-audit.sh" };
+const SCRIPT = { "client-data-backup": "scripts/backup-client-data.mjs", "lacie-backup": "scripts/backup-lacie.sh", "daily-health-check": "scripts/daily-health-check.sh", "nightly-full-check": "scripts/nightly-full-check.sh", "weekly-audit": "scripts/weekly-audit.sh",
+  // 11-11 checkers build: the four Mac jobs that check or publish things (check-every-mac-job-checks-in holds every plist to the list)
+  "deliverability-guard": "scripts/daily-deliverability-guard.sh", "blog-engine": "scripts/drip-content.sh", "night-rehearsal": "scripts/rehearse-night-run.sh", "overnight-build": "scripts/overnight-local.sh" };
 for (const j of mac) {
   const live = `${AGENTS}/${j.plist}.plist`, src = `${path.dirname(HERE)}/scripts/launchd/${j.plist}.plist`;
   const installed = fs.existsSync(live);

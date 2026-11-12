@@ -1,0 +1,5 @@
+[
+ ["a new table that nothing reads or writes", "jobsql", "alter table public.job_checkins enable row level security;", "create table if not exists public.never_read_by_anything (id int);\nalter table public.job_checkins enable row level security;"],
+ ["the only reader of blog_events is removed (the event calendar)", "blogadm", "io.tryRead(`/blog_events?select=on_date,to_date,kind,label", "io.tryRead(`/blog_things?select=on_date,to_date,kind,label"],
+ ["a kept table is renamed, so its keep entry is stale and the new name is dormant", "blogsql", "create table if not exists public.blog_worked (", "create table if not exists public.blog_worked_v2 ("]
+]

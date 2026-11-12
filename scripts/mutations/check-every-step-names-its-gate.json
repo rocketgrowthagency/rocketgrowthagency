@@ -1,0 +1,6 @@
+[
+ ["the gate aimed at admin 12/14/30 and Monthly 15/17 is unwired from the morning run", "dailyhealth", "run check-the-audit-and-quarter-steps-hold.mjs ", "run check-the-audit-steps-moved.mjs "],
+ ["an end-of-service line loses its gate (11-11: all ten had none)", "eosgate", "\"offboarding.refund\", ", ""],
+ ["a step is renamed and no gate follows it", "playbookclient", "\"id\": \"m2.exec.local_pr\",", "\"id\": \"m2.exec.local_press\","],
+ ["a new end-of-service line appears with no gate", "closinglist", "  { key: \"refund\", when: \"end\", auto: false,", "  { key: \"keys\", when: \"end\", auto: false, label: \"Hand back the keys\", detail: \"x\" },\n  { key: \"refund\", when: \"end\", auto: false,"]
+]

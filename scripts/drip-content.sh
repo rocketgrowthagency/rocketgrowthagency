@@ -12,6 +12,17 @@
 
 set -u
 
+# 🔒 SYSTEM HEALTH (checkers build 11-11, master map approved): the 09:00 blog engine says it ran (it was not on System health). The
+# HOLD below is a normal finish (exit 0, "Held"); a run that fails (its site gates refuse, a generator fails) is "Failed", so the
+# job-watcher emails it. Never breaks the job. Gate: check-every-mac-job-checks-in.
+_BLOG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+blog_checkin_finish() {
+  local rc=$?
+  node "$_BLOG_DIR/scripts/job-checkin.mjs" finish blog-engine --ok "$([ "$rc" -eq 0 ] && echo 1 || echo 0)" --note "$([ -z "${RGA_ALLOW_TEMPLATE_DRIP:-}" ] && echo "Held (Chris 10-31): nothing published" || echo "exit $rc")" --error "$([ "$rc" -eq 0 ] || echo "The blog engine stopped with exit $rc; see /tmp/rga-drip-content-$(date +%Y-%m-%d).log")" || true
+}
+trap blog_checkin_finish EXIT
+node "$_BLOG_DIR/scripts/job-checkin.mjs" start blog-engine || true
+
 # 🔴 HOLD (Chris approved 10-31, blog_cleanup_v1): no new template posts or pages. 102 of the 118 posts follow one outline with nothing first-hand, the pattern Google's scaled-content policy
 # describes, and this job can publish and deploy by itself. It stays loaded and exits here until the new blog system replaces it (project_additions_map). To lift: delete this block, on Chris's say.
 if [ -z "${RGA_ALLOW_TEMPLATE_DRIP:-}" ]; then echo "HOLD: the blog drip is stopped (Chris 10-31). Nothing published."; exit 0; fi

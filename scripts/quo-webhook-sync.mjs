@@ -39,8 +39,9 @@ const APPLY = process.argv.includes('--apply');
 try { (await import('dotenv')).config({ path: path.join(SCRAPER, '.env') }); } catch {}
 
 const KEY = process.env.QUO_API_KEY;
-const WEBHOOK_TOKEN = process.env.QUO_WEBHOOK_TOKEN
-  || 'c7c76352b117e69f98cd74cd7afd8833ef886529ad36b6e8';
+// 🔴 11-11 (check-no-secret-value-anywhere): the token's value was written here as a fallback; it comes from .env only now
+const WEBHOOK_TOKEN = process.env.QUO_WEBHOOK_TOKEN || '';
+if (!WEBHOOK_TOKEN) { console.error('✗ QUO_WEBHOOK_TOKEN not set'); process.exit(2); }
 const TARGET_URL = `https://www.rocketgrowthagency.com/.netlify/functions/quo-call-webhook?token=${WEBHOOK_TOKEN}`;
 const WANT = ['call.completed', 'message.received', 'message.delivered'];
 

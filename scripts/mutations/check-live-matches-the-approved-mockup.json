@@ -1,0 +1,6 @@
+[
+ ["the mock screen's buttons are no longer read", "mockuplib", "/<(h[34]|button|summary)\\b[^>]*>", "/<(h[34]|summary)\\b[^>]*>", 2],
+ ["the mockup's own furniture (Why, Option, notes) is compared as product words", "mockuplib", "if (t.length >= 3 && t.length <= 80 && !CHROME.test(t)) out.add(t);", "if (t.length >= 3 && t.length <= 80) out.add(t);", 2],
+ ["a mockup whose wording left the screen is never a drop", "mockuplib", "    if (r.ratio < baseline[id] - tol) drops.push(", "    if (r.ratio < baseline[id] - 1) drops.push(", 2],
+ ["case and spacing make a present word read as missing", "mockuplib", "(live.includes(norm(p)) ? found : missing)", "(live.includes(p) ? found : missing)", 2]
+]

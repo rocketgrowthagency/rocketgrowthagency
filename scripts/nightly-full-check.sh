@@ -26,12 +26,15 @@ H=$(date +%H); if [ "${FORCE:-}" != "1" ] && [ "$H" -ge 7 ] && [ "$H" -lt 21 ]; 
 
 # 🔒 SYSTEM HEALTH (approved admin_system_health_v1, Chris 10-31): this job says it ran, after the guards above (a refused start isn't a run). Reaching the
 # end counts as having run whatever the verdict: red items live in the morning report. Dying partway is "Failed". The script always exits 0.
-JOB_REACHED_END=""; JOB_NOTE=""
+JOB_REACHED_END=""; JOB_NOTE=""; JOB_RED=""
 job_checkin_finish() {
   local rc=$? ok=0 err=""
   [ "${DRY:-}" = "1" ] && return 0
   [ -n "$JOB_REACHED_END" ] && ok=1
   [ "$ok" = 1 ] || err="It stopped before the end (exit $rc)"
+  # 🔒 11-11 (checkers): a night where not everything held is this job's ERROR, never "Ran", so the job-watcher emails it. JOB_RED names
+  # what stayed red. Gate: check-daily-reds-reach-chris.
+  if [ "$ok" = 1 ] && [ -n "${JOB_RED:-}" ]; then ok=0; err="$JOB_RED"; fi
   node "$SCR/scripts/job-checkin.mjs" finish nightly-full-check --ok "$ok" --note "$JOB_NOTE" --error "$err" || true
 }
 trap 'job_checkin_finish; rm -rf "$LOCK"' EXIT
@@ -89,6 +92,15 @@ for g in check-the-daily-check-is-alive.mjs check-the-monthly-report-opens-the-c
   fi
 done
 
+# 🔒 11-11 (checkers build, master map approved): the live admin and portal against every step's approved mockup, EVERY night (not in
+# the daily run, to spare production). Read-only: every write the pages try is blocked. A drift, or a night it could not tell, is red.
+for g in check-live-matches-the-approved-mockup.mjs; do
+  if ! (cd "$SCR" && set -a && { . ./.env >/dev/null 2>&1 || true; } && set +a && node scripts/$g) > "$RAW/$g.txt" 2>&1; then
+    EVERY_NIGHT_RED="$EVERY_NIGHT_RED $g"
+    { echo; echo "## Every-night check: $g"; head -45 "$RAW/$g.txt"; } >> "$OUT"
+  fi
+done
+
 FIXED=""
 # 🔒 HELD UNTIL THE USAGE RESET (Chris 10-31, "do recomended"): the fixer is a full Opus session, up to 250 turns, and the weekly Claude limit was at 75%. The check still runs and reports; only the
 # automatic fixing waits. Lifts itself Wed Nov 4 at 6 PM. To end it sooner, or to hold again, change this one date.
@@ -127,6 +139,11 @@ else
 fi
 if grep -q "FAILED" "$FINAL"; then JOB_NOTE="Not everything held; see the morning report"; else JOB_NOTE="Everything held${FIXED:+ after the night fixer}"; fi
 [ -z "$EVERY_NIGHT_RED" ] || VERDICT="$VERDICT **Red every-night checks:$EVERY_NIGHT_RED.**"
+# what stayed red, for System health: the full check's failed items and the every-night checks (never "Ran" when anything is red)
+_red_items=$(grep -E "^(❌|⚠️)" "$FINAL" | wc -l | tr -d ' ')
+if grep -q "FAILED" "$FINAL" || [ -n "$EVERY_NIGHT_RED" ]; then
+  JOB_RED="Not everything held: ${_red_items} item(s) red or could not tell$([ -n "$EVERY_NIGHT_RED" ] && printf '; every-night red:%s' "$EVERY_NIGHT_RED"). See website reports/full-check/$(date +%Y)/$DAY.md"
+fi
 # ── 6 · the morning summary goes to the top ──────────────────────────────────────────────────────
 { echo "## Morning summary"; echo "- $VERDICT"; [ -n "$FIXED" ] && grep -A40 "^## Morning summary (fixer)" "$RAW/fixer.txt" | tail -n +2 | head -40; echo; cat "$OUT"; } > "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
 JOB_REACHED_END=1

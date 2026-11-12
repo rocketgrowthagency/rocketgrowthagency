@@ -34,6 +34,11 @@ try {
   if (CL.markEvent({ key: "site", status: "na", note: "x", auto: true }) !== null) fail("the system can mark a line 'not applicable'");
   const auto = st([], "2026-11-10").items.filter((i) => i.auto).map((i) => i.key).join();
   if (auto !== "files,phone,stop,site,gbp,google,figures") fail(`the lines that run themselves aren't the approved ones (${auto})`);
+  // 🔒 11-11 (checkers build): the ten end-of-service steps by their master-map ids, in order. A line added, renamed or dropped fails here,
+  // and this is the scheduled gate that names every offboarding.<line> step (check-every-step-names-its-gate holds that each step has one).
+  const STEP_IDS = ["offboarding.files", "offboarding.phone", "offboarding.stop", "offboarding.site", "offboarding.gbp", "offboarding.google", "offboarding.figures", "offboarding.accounts", "offboarding.refund", "offboarding.confirm"];
+  const lineIds = st([], "2026-11-10").items.map((i) => `offboarding.${i.key}`).join();
+  if (lineIds !== STEP_IDS.join()) fail(`the closing list's lines aren't the ten end-of-service steps (${lineIds})`);
 
   // ── each line against fakes ──
   const mk = (o = {}) => {

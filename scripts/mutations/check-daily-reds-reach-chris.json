@@ -1,0 +1,14 @@
+[
+ ["the morning finish says OK over red gates (11-11: 20 reds, the card said Ran)", "dailyhealth", "  if [ \"$ok\" = 1 ] && [ \"${FAIL:-0}\" -gt 0 ]; then\n    ok=0", "  if [ \"$ok\" = 1 ] && [ \"${FAIL:-0}\" -gt 99999 ]; then\n    ok=0"],
+ ["the morning finish stops writing the day's report", "dailyhealth", "  report=$(node scripts/write-daily-health-report.mjs --verdicts", "  report=$(true scripts/write-daily-health-report.mjs --verdicts"],
+ ["a red gate is counted but not recorded", "dailyhealth", "  note_verdict red \"$script\" \"$what\" \"$(printf '%s' \"$out\" | grep -E '✗|🔴' | head -1)\"", "  :"],
+ ["a could-not-tell gate is counted but not recorded", "dailyhealth", "    note_verdict indeterminate \"$script\" \"$what\" \"$(printf '%s' \"$out\" | grep -E '✗|Error|error|INDETERMINATE' | head -1)\"", "    :"],
+ ["the error stops naming the red gates", "dailyhealth", "awk -F'\\t' '$1==\"red\"{print $2}'", "awk -F'\\t' '$1==\"nothing\"{print $2}'"],
+ ["the report writer drops the could-not-tell list", "dailyreport", "...(unk.length ? unk.map((r) => line(r, \"⚠️\")) : [\"- None.\"]),", "\"- None.\","],
+ ["the report writer lets the first verdict win (a retried pass listed as skipped)", "dailyreport", "    last.set(gate, { verdict, gate, what: what.trim(), detail: detail.trim() });   // the later line wins", "    if (!last.has(gate)) last.set(gate, { verdict, gate, what: what.trim(), detail: detail.trim() });"],
+ ["the report writer drops the detail line", "dailyreport", "${r.detail ? `\\n  - ${r.detail.replace(/`/g, \"'\")}` : \"\"}", ""],
+ ["a red rehearsal checks in as OK (11-10)", "rehearsal", "  if [ \"$ok\" = 1 ] && [ \"$FAIL\" != \"0\" ]; then ok=0;", "  if false; then ok=0;"],
+ ["the rehearsal stops checking in", "rehearsal", "trap job_checkin_finish EXIT\nnode scripts/job-checkin.mjs start night-rehearsal || true", "true"],
+ ["a red night checks in as Ran", "nightlyfull", "  if [ \"$ok\" = 1 ] && [ -n \"${JOB_RED:-}\" ]; then ok=0; err=\"$JOB_RED\"; fi", "  :"],
+ ["the night never names what stayed red", "nightlyfull", "if grep -q \"FAILED\" \"$FINAL\" || [ -n \"$EVERY_NIGHT_RED\" ]; then\n  JOB_RED=", "if false; then\n  JOB_RED="]
+]

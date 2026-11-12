@@ -32,8 +32,24 @@ export AIRTABLE_METER_JOB="night-rehearsal"
 set -uo pipefail
 cd "$(dirname "$0")/.."
 FAIL=0
+FAILED_LINES=""
 pass(){ echo "  ✅ $*"; }
-fail(){ echo "  ❌ $*"; FAIL=1; }
+fail(){ echo "  ❌ $*"; FAIL=1; FAILED_LINES="${FAILED_LINES:+$FAILED_LINES · }$(printf '%s' "$*" | head -1 | cut -c1-120)"; }
+
+# 🔒 SYSTEM HEALTH (checkers build 11-11, master map approved): the 19:00 rehearsal says it ran, and a RED rehearsal is its ERROR, so
+# the job-watcher emails hello@ before the 9 PM run refuses to start (11-10: it refused, and the rehearsal's red reached no one; it
+# lived in /tmp/rga-night-rehearsal.out.log only). Reaching the end with every phase green is OK; red phases are named in the error;
+# dying partway is "It stopped before the end". It never breaks the rehearsal. Gate: check-daily-reds-reach-chris.
+JOB_REACHED_END=""
+job_checkin_finish() {
+  local rc=$? ok=0 err=""
+  [ -n "$JOB_REACHED_END" ] && ok=1
+  [ "$ok" = 1 ] || err="It stopped before the end (exit $rc)"
+  if [ "$ok" = 1 ] && [ "$FAIL" != "0" ]; then ok=0; err="Rehearsal red, the 9 PM run would stop: ${FAILED_LINES}"; fi
+  node scripts/job-checkin.mjs finish night-rehearsal --ok "$ok" --note "$([ "$FAIL" = "0" ] && echo "Every phase passed" || echo "Some phases failed")" --error "$err" || true
+}
+trap job_checkin_finish EXIT
+node scripts/job-checkin.mjs start night-rehearsal || true
 phase(){ echo; echo "── $* ──"; }
 
 # ── PHASE A: can every stage even load? ───────────────────────────────────────────────────────
@@ -172,17 +188,23 @@ STRAY=$(find "output/Step 2" -maxdepth 1 -name "$(date +%F)_*only*step-2*.csv" 2
 # Match the ACTUAL stage/runner processes only. A bare substring match also hits log-watchers, tails and
 # this script's own subshell, which reports a phantom "already running" — a false alarm in a pre-flight is
 # how a real one gets ignored.
-if pgrep -f "node .*step-[0-9b.]*-.*\.mjs" >/dev/null 2>&1 || pgrep -f "bash .*overnight-(local|pipeline)\.sh" >/dev/null 2>&1; then
+# 🔴 11-11: the stage is a FILE NAMED step-N-… (its path starts with it or has a / before it). "node .*step-" also matched a gate
+# like check-managed-step-4-photos.mjs that another session was running, and read it as a pipeline already running.
+if pgrep -f "node (.*/)?step-[0-9b.]*-[^/ ]*\.mjs" >/dev/null 2>&1 || pgrep -f "bash .*overnight-(local|pipeline)\.sh" >/dev/null 2>&1; then
   fail "a pipeline process is ALREADY running — the night run refuses to start:"
-  pgrep -fl "node .*step-[0-9b.]*-.*\.mjs|bash .*overnight-(local|pipeline)\.sh" | head -2 | cut -c1-110 | sed 's/^/       /'
+  pgrep -fl "node (.*/)?step-[0-9b.]*-[^/ ]*\.mjs|bash .*overnight-(local|pipeline)\.sh" | head -2 | cut -c1-110 | sed 's/^/       /'
 else
   pass "no stale pipeline processes"
 fi
 { [ -f output/STOP-OVERNIGHT ] || [ -f STOP-OVERNIGHT ]; } && fail "a STOP-OVERNIGHT flag is present — the run will stop early" || pass "no stop flag"
-launchctl list 2>/dev/null | grep -q "com.rga.overnight-build" \
+# 🔴 11-11: `launchctl list | grep -q` under pipefail failed when grep quit early and launchctl took SIGPIPE ("NOT loaded" while it was).
+# The list is read whole first, then searched.
+_ll=$(launchctl list 2>/dev/null)
+grep -q "com.rga.overnight-build" <<<"$_ll" \
   && pass "launchd job loaded (fires 21:00)" || fail "launchd job com.rga.overnight-build NOT loaded"
 
 echo
+JOB_REACHED_END=1
 if [ "$FAIL" = "0" ]; then
   echo "════ REHEARSAL PASSED — the night run should work ════"
   exit 0
