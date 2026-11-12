@@ -640,4 +640,9 @@ export const FILES = {
   suggestedcall: "netlify/functions/_suggested-call.js",
   // master audit #8 (11-11): one definition per number (check-a-running-month-is-never-compared, check-one-leads-formula)
   sharedmetrics: "shared/metrics.js",
+  // 11-11 tier3 items 9 + 10 (tier3_best_in_class_v1 s9, s10a, s10b): the campaign tag and the profile's two counters, the client's fix plan, Your numbers pre-filled
+  profilevisits: "shared/profile-visits.js",
+  fixplanclient: "shared/fix-plan-client.js",
+  portalfixplanfn: "netlify/functions/portal-fix-plan.js",
+  yournumbers: "shared/your-numbers.js",
 };

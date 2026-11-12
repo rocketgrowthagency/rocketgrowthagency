@@ -1,0 +1,80 @@
+[
+ [
+  "the client gets the whole fix (its id and anything else on it)",
+  "fixplanclient",
+  "fixes: (v.fixes || []).map((f) => ({ n: f.n, title: f.title, small: f.small, status: f.status, step: f.step, at: f.at || null })) };",
+  "fixes: v.fixes || [] };"
+ ],
+ [
+  "a fix with no client words is shown in our words",
+  "fixplanclient",
+  "if (!w) { missing.push(String((r && r.id) || \"\")); return; }",
+  "if (!w) { fixes.push({ n: fixes.length + 1, id: r.id, title: r.title, small: r.evidence, status: \"rga\", step: null }); return; }"
+ ],
+ [
+  "a ranking-weight percentage reaches client text",
+  "fixplanclient",
+  "Google PageSpeed scored it ${n} of 100${on(r)}.",
+  "Google PageSpeed scored it ${n} of 100, about 32% of ranking${on(r)}."
+ ],
+ [
+  "the client's order isn't admin's",
+  "fixplanclient",
+  "const recs = got.plan.recommendations || got.plan.fixes || [], fixes = [], missing = [];",
+  "const recs = [...(got.plan.recommendations || got.plan.fixes || [])].reverse(), fixes = [], missing = [];"
+ ],
+ [
+  "Your part ignores the portal's mode",
+  "fixplanclient",
+  "return { status: (clientSteps || CLIENT_STEPS).has(w.step) ? \"you\" : \"rga\", at: null };",
+  "return { status: CLIENT_STEPS.has(w.step) ? \"you\" : \"rga\", at: null };"
+ ],
+ [
+  "the map rank fix stops being ongoing",
+  "fixplanclient",
+  "if (w.ongoing) return { status: \"ongoing\", at: null };",
+  "if (false) return { status: \"ongoing\", at: null };"
+ ],
+ [
+  "a surface not assessed is no longer said as not checked",
+  "fixplanclient",
+  "const not_checked = [...new Set((got.plan.not_assessed || []).map((s) => SURFACE_WORDS[s]).filter(Boolean))];",
+  "const not_checked = [];"
+ ],
+ [
+  "admin 30's Missing words row stays calm with a fix missing words",
+  "fixplanclient",
+  "bad: v.missing.length > 0 },",
+  "bad: false },"
+ ],
+ [
+  "the door sends the full view (ids and the missing list) to the client",
+  "portalfixplanfn",
+  "return FP.forClient(FP.clientPlan({ tasks, snapshot: (snaps && snaps[0]) || null, clientSteps }));",
+  "return FP.clientPlan({ tasks, snapshot: (snaps && snaps[0]) || null, clientSteps });"
+ ],
+ [
+  "the stored snapshot is never used when the task holds no plan",
+  "portalfixplanfn",
+  "snapshot: (snaps && snaps[0]) || null, clientSteps",
+  "snapshot: null, clientSteps"
+ ],
+ [
+  "admin 30 stops saying what the client sees",
+  "adminjs",
+  "${fixPlanClientRowsHtml({",
+  "${(() => \"\")({"
+ ],
+ [
+  "the preview guard forgets the new read",
+  "previewguard",
+  "\"portal-fix-plan\": { host: \"[data-fix-plan]\"",
+  "\"portal-fix-planx\": { host: \"[data-fix-plan]\""
+ ],
+ [
+  "the portal never asks for the plan",
+  "portal",
+  "loadFixPlan(row.client?.id || row.client_id);   // tier3",
+  "void 0;   // tier3"
+ ]
+]

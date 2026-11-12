@@ -1,0 +1,74 @@
+[
+ [
+  "a month not read is summed as 0 (a partial sum in the box)",
+  "yournumbers",
+  "if (missing.length) return { value: null, missing, state: \"blank\" };",
+  "if (missing.length) return { value: vals.reduce((a, b) => a + (b || 0), 0), missing, state: \"blank\" };"
+ ],
+ [
+  "the quarter includes the month the client is asked in",
+  "yournumbers",
+  "[3, 2, 1].map",
+  "[2, 1, 0].map"
+ ],
+ [
+  "a blank count is put in the box as 0",
+  "yournumbers",
+  "calls: p.calls.value == null ? \"\" : String(p.calls.value)",
+  "calls: String(p.calls.value || 0)"
+ ],
+ [
+  "booked jobs are pre-filled though call marks aren't built",
+  "yournumbers",
+  "booked: { value: null, state: \"not_built\", missing: [], why: BOOKED_NOT_BUILT },",
+  "booked: { value: 0, state: \"counted\", missing: [], why: \"From the leads you marked\" },"
+ ],
+ [
+  "the count is overwritten by what the client confirmed",
+  "yournumbers",
+  "const counted = { calls: p ? p.calls.value : null, form_leads: p ? p.form_leads.value : null, booked: null };",
+  "const counted = { calls: conf(\"calls\"), form_leads: conf(\"form_leads\"), booked: null };"
+ ],
+ [
+  "admin calls a client's change confirmed",
+  "yournumbers",
+  ": v === n ? `${v} confirmed` : `client changed it to ${v}`;",
+  ": `${v} confirmed`;"
+ ],
+ [
+  "the server takes the count from the page",
+  "stepinputfn",
+  "tasks[stepId].outcome_data = YN.outcomeData(p, parsed.value, now);",
+  "tasks[stepId].outcome_data = YN.outcomeData(body.counted || p, parsed.value, now);"
+ ],
+ [
+  "the server reads the ask month too",
+  "stepinputfn",
+  "reporting_month=in.(${q.months.join(\",\")})",
+  "reporting_month=in.(${[...q.months, askMonth].join(\",\")})"
+ ],
+ [
+  "Monthly 14 still asks average job value instead of revenue",
+  "playbooksjson",
+  "\"key\": \"revenue\",",
+  "\"key\": \"avg_job_value\","
+ ],
+ [
+  "Not sure doesn't save (it isn't a submit, so it never spins either)",
+  "portal",
+  "data-in-submit data-yn-notsure>Not sure<",
+  "data-yn-notsure>Not sure<"
+ ],
+ [
+  "the card isn't handed the month records",
+  "portal",
+  "records: monthlyRecords || [], oauth: oauth || null",
+  "records: [], oauth: oauth || null"
+ ],
+ [
+  "the report's This quarter block drops revenue",
+  "monthlyquarter",
+  "revenue = got(\"revenue\")",
+  "revenue = null"
+ ]
+]

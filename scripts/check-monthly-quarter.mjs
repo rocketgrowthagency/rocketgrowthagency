@@ -110,7 +110,8 @@ const task = (f, id) => f.store[id] || {};
   if (!/Reported by them/.test(JSON.stringify(yes.rows)) || !yes.done) fail("3 their answer is labeled as theirs");
   const cl = PB.month2plus.find((s) => s.id === ID.OUTCOMES), fields = ((cl.clientInput || {}).fields || []);
   if (!fields.every((x) => x.allowNotSure)) fail("3 every field accepts \"Not sure\"");
-  if (!fields.some((x) => /About how many jobs came from Google this quarter\?/.test(x.label))) fail("3 the portal asks the approved question");
+  // tier3 item 10b (approved tier3_best_in_class_v1 s10b, 11-11) replaced the one question with the pre-filled card: calls, form leads, booked jobs, revenue
+  if (fields.map((x) => x.key).join() !== "calls,form_leads,jobs_from_leads,revenue") fail("3 the portal asks the approved numbers (calls, form leads, booked jobs, revenue)");
   const blk = Q.blockOf({ tasks: { [ID.OUTCOMES]: { client_input: { not_sure: ["jobs_from_leads", "avg_job_value"] } } }, monthNumber: 3 });
   if (blk) fail("3 a \"not sure\" answer puts nothing in the report");
   const b2 = Q.blockOf({ tasks: { [ID.OUTCOMES]: { client_input: { jobs_from_leads: "12" } } }, monthNumber: 3 });

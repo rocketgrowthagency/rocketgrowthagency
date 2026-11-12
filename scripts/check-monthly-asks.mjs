@@ -40,7 +40,7 @@ if (!/Ask every customer from the period, not only the happy ones/.test(P)) fail
 // ── 17
 const b = A["m2.snap.business_outcomes"] || {};
 const keys = (b.clientInput?.fields || []).map((f) => f.key);
-if (!b.clientQuarterly || keys.join() !== "jobs_from_leads,avg_job_value" || !(b.clientInput.fields || []).every((f) => f.allowNotSure)) fail("step 17: the numbers aren't two quarterly fields that allow Not sure");
+if (!b.clientQuarterly || keys.join() !== "calls,form_leads,jobs_from_leads,revenue" || !(b.clientInput.fields || []).every((f) => f.allowNotSure)) fail("step 17: the numbers aren't the four quarterly fields (tier3 10b: calls, form leads, booked jobs, revenue) that allow Not sure");
 if ((A["m2.report.generate"]?.dependsOn || []).includes("m2.snap.business_outcomes") || /id: "m2\.report\.generate"[^\n]*\n\s*type: "[a-z]+", dependsOn: \[[^\]]*"m2\.snap\.business_outcomes"/.test(M2)) fail("step 17: the monthly report waits on the client's numbers again");
 if (!/if \(f\.allowNotSure && notSure\.includes\(f\.key\)\) \{ out\.not_sure = /.test(INP)) fail("step 17: Not sure isn't stored as an answer (it could read as 0)");
 for (const [iso, want] of [["2026-10-20T12:00:00Z", "2027-01-01"], ["2026-12-31T12:00:00Z", "2027-01-01"], ["2026-01-15T12:00:00Z", "2026-04-01"], ["2026-03-31T12:00:00Z", "2026-04-01"]])
