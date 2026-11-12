@@ -72,8 +72,8 @@
  [
   "the invoice twin says Pay in your portal again",
   "invoiceemail",
-  "      cta: { url: PORTAL, label: t.cta },\n    }),\n  };\n}",
-  "      cta: { url: PORTAL, label: \"Pay in your portal\" },\n    }),\n  };\n}",
+  ">> [${t.cta}](${PORTAL})",
+  ">> [Pay in your portal](${PORTAL})",
   1
  ],
  [
@@ -179,6 +179,20 @@
   "noticeack",
   "const out = await deps.send({ to, subject: m.subject, markup: m.markup,",
   "const out = await deps.send({ to, subject: m.subject, body: m.markup,",
+  1
+ ],
+ [
+  "the first-payment letter leaves the one format",
+  "invoiceemail",
+  "return { subject: \"Payment received, connect Google next\", ...letter(markup, { doc }), firstPayment: true };",
+  "return { subject: \"Payment received, connect Google next\", html: markup, text: markup, firstPayment: true };",
+  1
+ ],
+ [
+  "the notes RGA approves go out as a bare body",
+  "emailqueue",
+  "to, subject: it.subject, markup: it.markup, suppress,",
+  "to, subject: it.subject, body: it.markup, suppress,",
   1
  ]
 ]

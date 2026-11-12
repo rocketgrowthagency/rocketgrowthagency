@@ -6,8 +6,8 @@
  ["the termination letter has no words", "notifystage", "case \"billing_terminated\":", "case \"billing_terminated_x\":", 1],
  ["the ending notice stops citing Section 11", "notifystage", "your agreement ends for non-payment (Section 11).", "your agreement ends for non-payment.", 1],
  ["the ending notice gets an em dash", "notifystage", "this is my written notice under your agreement:", "this is my written notice — under your agreement:", 1],
- ["the notices ignore the suppression flag", "notifystage", "if (_suppress) {", "if (false) {", 1],
- ["a second late invoice shares the first one's record", "notifystage", "const slot = noticeKey ? `${stage}#${noticeKey}` : stage;", "const slot = stage;", 1],
+ ["the notices ignore the suppression flag", "notifystage", "    if (suppress) {\n      console.log(`[suppressed] would email", "    if (false) {\n      console.log(`[suppressed] would email", 1],
+ ["a second late invoice shares the first one's record", "notifystage", "return k ? `${stage}#${k}` : stage; };", "return stage; };", 1],
  ["the nightly job stops alerting RGA when an account ends", "dailybillingfn", "kind: \"account_ended\"", "kind: \"payment_failed\"", 1],
  ["the nightly job names no end day", "dailybillingfn", "{ end_on: R.endOn({ dueYmd: invoice.due_date, endingNoticeAt: todayYmd }) }", "{ end_on: null }", 1]
 ]

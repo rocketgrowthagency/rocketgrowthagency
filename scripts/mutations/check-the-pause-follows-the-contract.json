@@ -14,24 +14,24 @@
   1
  ],
  [
-  "the end on day 30 with no pause notice",
+  "the end on the same day its written ending notice goes",
   "billingrules",
-  "if (d > LADDER.END_AFTER_DAYS_LATE && pausedNoticeAt && businessYmd(pausedNoticeAt) < businessYmd(todayYmd)) return",
-  "if (d >= LADDER.END_AFTER_DAYS_LATE) return",
+  "byNotice = addDays(n, 1);",
+  "byNotice = addDays(n, 0);",
   1
  ],
  [
   "the end on the same day the pause notice goes",
   "billingrules",
-  " && pausedNoticeAt && businessYmd(pausedNoticeAt) < businessYmd(todayYmd)) return",
-  " && pausedNoticeAt) return",
+  " && businessYmd(todayYmd) >= e && businessYmd(pausedNoticeAt) < businessYmd(todayYmd))",
+  " && businessYmd(todayYmd) >= e)",
   1
  ],
  [
   "the pause ignores 'more than fifteen days late'",
   "billingrules",
-  "return byNotice > byLate ? byNotice : byLate;",
-  "return byNotice;",
+  "byLate = addDays(due, LADDER.PAUSE_AFTER_DAYS_LATE + 1);\n    return byNotice > byLate ? byNotice : byLate;",
+  "byLate = addDays(due, LADDER.PAUSE_AFTER_DAYS_LATE + 1);\n    return byNotice;",
   1
  ],
  [
@@ -72,15 +72,15 @@
  [
   "notify-client-stage ignores the invoice key (once per client for life)",
   "notifystage",
-  "const slot = noticeKey ? `${stage}#${noticeKey}` : stage;",
-  "const slot = stage;",
+  "return k ? `${stage}#${k}` : stage; };",
+  "return stage; };",
   1
  ],
  [
   "the written notice names no day",
   "notifystage",
-  "const msg = messageFor(stage, { first, kickoffWhen, beta, amount, pauseOn });",
-  "const msg = messageFor(stage, { first, kickoffWhen, beta, amount });",
+  "amount, hasCard, pauseOn, endOn: dayLabel(facts.end_on)",
+  "amount, hasCard, endOn: dayLabel(facts.end_on)",
   1
  ],
  [

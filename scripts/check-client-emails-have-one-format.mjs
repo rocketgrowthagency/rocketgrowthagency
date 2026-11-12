@@ -62,6 +62,16 @@ const S = {
   callpurpose: read("netlify/functions/_call-purpose.js"),
 };
 const C = Object.fromEntries(Object.entries(S).map(([k, v]) => [k, noComments(v)]));
+// every `name({ ... })` call in a source, braces balanced (a call may carry a nested object, e.g. notice: { clientId, code })
+const callsOf = (src, name) => {
+  const out = [], re = new RegExp(`${name.replace(/[.$]/g, "\\$&")}\\(\\{`, "g");
+  for (let m; (m = re.exec(src));) {
+    let depth = 0, i = m.index + m[0].length - 1;
+    for (; i < src.length; i++) { if (src[i] === "{") depth++; else if (src[i] === "}" && --depth === 0) break; }
+    out.push(src.slice(m.index, i + 2));
+  }
+  return out;
+};
 if (!/markup != null\) \{ const l = require\("\.\/_letter"\)\.letter\(markup/.test(C.gmail) || !/toRaw\(\{[^}]*\bhtml\b/.test(C.gmail)) fail("_gmail.sendAsRga no longer renders markup through the letter and sends the HTML");
 for (const k of ["recap", "step", "reply"]) {
   const call = (C[k].match(/sendAsRga\(\{[\s\S]*?\}\)/) || [""])[0];
@@ -108,15 +118,16 @@ try {
   const html = doc.buildBrandedEmail({ title: "T", intro: "Hi", bodyHtml: "<p>x</p>" });
   if (sigCount(html) !== 1) fail(`the branded email must carry the sign-off once (found ${sigCount(html)})`);
 } catch (e) { console.error(`⚠️  INDETERMINATE — shared/email-doc.js did not load: ${e.message}`); process.exit(2); }
-if (/label: "Pay in your portal"/.test(C.invoice)) fail("the invoice twin says \"Pay in your portal\" even when the card is charged automatically — use the email's own action");
+if (/label: "Pay in your portal"|\[Pay in your portal\]/.test(C.invoice)) fail("the invoice twin says \"Pay in your portal\" even when the card is charged automatically — use the email's own action");
 // 11-11 (master client-messages, no em dash in client text): the receipt subject is "Receipt for invoice <ref>: <amount>"
-if (!/subject: `Receipt for invoice \$\{ref\}: \$\{amount\}`/.test(C.invoice)) fail("the receipt subject is not \"Receipt for invoice <ref>: <amount>\"");
+if (!/(?:subject: |const subject = )`Receipt for invoice \$\{ref\}: \$\{amount\}`/.test(C.invoice)) fail("the receipt subject is not \"Receipt for invoice <ref>: <amount>\"");
 
-// ── 8. (11-11, master client-messages E3 + decisions 1, 4, 7) the end-of-service confirmation, the payment welcome, the notice acknowledgment
-// and the notes RGA approves are LETTER MARKUP through the one sender: no bare body, no raw address, no hand-written sign-off ──
+// ── 8. (11-11, master client-messages E3 + decisions 4, 7) the end-of-service confirmation, the notice acknowledgment and the notes RGA
+// approves are LETTER MARKUP through the one sender: no bare body, no raw address, no hand-written sign-off. (The first payment is ONE
+// letter, the receipt for invoice #1, rendered through letter() in send-invoice-email: _payment-welcome.js only supplies its next step.) ──
 {
   const off = noComments(read("netlify/functions/admin-offboarding-confirm.js"));
-  const call = (off.match(/sendAsRga\(\{[^}]*\}\)/) || [""])[0];
+  const call = callsOf(off, "sendAsRga")[0] || "";
   if (!call) fail("admin-offboarding-confirm: no sendAsRga call found");
   else if (!/\bmarkup:/.test(call) || /\bbody:/.test(call)) fail("admin-offboarding-confirm (E3 service ended): sends a bare body: it must pass markup: so it gets the one format and the one sign-off");
   let OC; try { OC = require(`${SITE}/netlify/functions/admin-offboarding-confirm.js`); } catch (e) { console.error(`⚠️  INDETERMINATE — admin-offboarding-confirm did not load: ${e.message}`); process.exit(2); }
@@ -125,9 +136,11 @@ if (!/subject: `Receipt for invoice \$\{ref\}: \$\{amount\}`/.test(C.invoice)) f
   if (l.html.replace(/<[^>]+>/g, " ").includes("rocketgrowthagency.com/client-login")) fail("E3 service ended: the sign-in link shows as an ADDRESS in the email: write [words](link)");
   if (/\n\s*Rocket Growth Agency\s*$/.test(dr.body) || sigCount(l.text) !== 1) fail(`E3 service ended: a hand-written sign-off, or the one sign-off is not there exactly once (found ${sigCount(l.text)})`);
   const pwSrc = noComments(read("netlify/functions/_payment-welcome.js")), qSrc = noComments(read("netlify/functions/_client-email-queue.js")), ackSrc = noComments(read("netlify/functions/_notice-ack.js"));
-  for (const [name, src] of [["the payment welcome", pwSrc], ["the notes RGA approves (queue)", qSrc], ["the notice acknowledgment", ackSrc]]) {
+  if (/sendAsRga|users\/me\/messages\/send/.test(pwSrc)) fail("_payment-welcome.js sends its own email again: the first payment is one letter, the receipt (send-invoice-email)");
+  if (!/\.\.\.letter\(markup, \{ doc \}\), firstPayment: true/.test(C.invoice)) fail("the first-payment letter is not rendered through letter() (the one format)");
+  for (const [name, src] of [["the notes RGA approves (queue)", qSrc], ["the notice acknowledgment", ackSrc]]) {
     // its send call (sendAsRga directly, or through its deps.send, whose real wiring is sendAsRga) must carry markup:, never a body:
-    const calls = (src.match(/(?:sendAsRga|deps\.send)\(\{[^}]*\}\)/g) || []).filter((c) => !/^sendAsRga\(\{ supa, \.\.\.m \}\)$/.test(c));   // the deps wiring passes the call through
+    const calls = [...callsOf(src, "sendAsRga"), ...callsOf(src, "deps.send")].filter((c) => !/^sendAsRga\(\{ supa, \.\.\.m \}\)$/.test(c));   // the deps wiring passes the call through
     if (!calls.length || calls.some((c) => !/\bmarkup:/.test(c) || /\bbody:/.test(c)) || (/deps\.send\(/.test(src) && !/send: \(m\) => require\("\.\/_gmail"\)\.sendAsRga\(/.test(src))) fail(`${name}: does not send letter markup through sendAsRga`);
   }
   const ON = require(`${SITE}/netlify/functions/_onboarding-notes.js`);

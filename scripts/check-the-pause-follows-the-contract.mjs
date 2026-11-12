@@ -63,7 +63,7 @@ const DAY = 86400000;
 // ── 2 · the ladder, by the agreement ────────────────────────────────────────────────────────────────────────────────────────
 {
   const due = "2026-03-01", day = (n) => R.addDays(due, n), at = (n) => `${day(n)}T18:00:00Z`;
-  const L = (n, w = null, p = null) => R.ladder({ dueYmd: due, todayYmd: day(n), warningNoticeAt: w, pausedNoticeAt: p });
+  const L = (n, w = null, p = null, e = null) => R.ladder({ dueYmd: due, todayYmd: day(n), warningNoticeAt: w, pausedNoticeAt: p, endingNoticeAt: e });
   for (const n of [0, 3, 7]) if (L(n).billingStatus !== "active") fail(`day ${n} is not active`);
   if (L(8).billingStatus !== "overdue" || L(8).notice !== "billing_overdue") fail("day 8 doesn't send the past-due email");
   if (L(15).notice !== "billing_warning" || L(15).billingStatus !== "warning") fail("day 15 doesn't send the written pause notice");
@@ -72,10 +72,13 @@ const DAY = 86400000;
   if (L(20, at(15)).billingStatus !== "paused" || L(20, at(15)).pauseOn !== day(20)) fail("a notice on day 15 doesn't pause on day 20");
   if (L(21, at(17)).billingStatus !== "warning" || L(22, at(17)).billingStatus !== "paused") fail("a notice on day 17 doesn't pause on day 22");
   if (L(15, at(5)).billingStatus !== "warning" || L(16, at(5)).billingStatus !== "paused") fail("an early notice pauses before the invoice is MORE than 15 days late");
-  if (L(30, at(15), at(20)).billingStatus !== "paused") fail("day 30 ends the agreement (it must be MORE than 30)");
-  if (L(31, at(15), at(20)).billingStatus !== "terminated") fail("day 31 after a delivered pause notice doesn't end it");
+  if (L(30, at(15), at(20), at(25)).billingStatus !== "paused") fail("day 30 ends the agreement (it must be MORE than 30)");
+  // Section 11 "after written notice" (master plans-and-emails decision 8, 11-11): the end needs the written ENDING notice too, from day 25
+  { const s = L(31, at(15), at(20)); if (s.billingStatus !== "paused" || s.notice !== "billing_ending") fail("day 31 with no written ending notice ends the agreement (or sends no ending notice)"); }
+  if (L(31, at(15), at(20), at(25)).billingStatus !== "terminated") fail("day 31 after the delivered pause and ending notices doesn't end it");
   if (L(40, at(15)).billingStatus !== "paused") fail("the agreement ends with no pause notice delivered");
-  if (L(40, at(15), at(40)).billingStatus !== "paused") fail("the agreement ends on the same day the pause notice went (not AFTER it)");
+  if (L(40, at(15), at(40), at(25)).billingStatus !== "paused") fail("the agreement ends on the same day the pause notice went (not AFTER it)");
+  if (L(40, at(15), at(20), at(40)).billingStatus !== "paused") fail("the agreement ends on the same day its written ending notice went (not AFTER it)");
   // the dates are calendar days in business time, not UTC midnights
   if (R.pauseOn({ dueYmd: due, noticeAt: "2026-03-16T07:30:00Z" }) !== day(20)) fail("a notice sent at 11:30 PM Pacific counts as the next day");
   // on or after
@@ -141,9 +144,14 @@ const ago = (days) => new Date(Date.now() - days * DAY).toISOString();
   seedLate({ daysLate: 40, billing: "paused", notes: { "billing_warning#inv3": { sent_at: ago(25) } } });
   await run();
   if (W.db.clients[0].billing_status !== "paused") fail(`day 40 with no pause notice yet ended the agreement ("${W.db.clients[0].billing_status}")`);
+  // day 40 with the pause notice but no written ending notice: the ending notice goes, nothing ends today (Section 11, decision 8)
   seedLate({ daysLate: 40, billing: "paused", notes: { "billing_warning#inv3": { sent_at: ago(25) }, "billing_paused#inv3": { sent_at: ago(20) } } });
   await run();
-  if (W.db.clients[0].billing_status !== "terminated") fail("day 40 after a delivered pause notice did not end the agreement");
+  if (W.db.clients[0].billing_status !== "paused") fail(`day 40 with no written ending notice yet ended the agreement ("${W.db.clients[0].billing_status}")`);
+  if (!notices("billing_ending").length) fail("day 40 after a delivered pause notice sends no written ending notice");
+  seedLate({ daysLate: 40, billing: "paused", notes: { "billing_warning#inv3": { sent_at: ago(25) }, "billing_paused#inv3": { sent_at: ago(20) }, "billing_ending#inv3": { sent_at: ago(10) } } });
+  await run();
+  if (W.db.clients[0].billing_status !== "terminated") fail("day 40 after the delivered pause and ending notices did not end the agreement");
 
   // a SECOND late invoice gets its own written notice (the old lifetime key said "already sent")
   seedLate({ daysLate: 16, notes: { billing_warning: { sent_at: ago(90) }, "billing_warning#inv2": { sent_at: ago(60) }, billing_overdue: { sent_at: ago(95) } } });

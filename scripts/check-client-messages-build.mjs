@@ -7,16 +7,19 @@
 // lifetime); no written acknowledgment when a client gives notice; no hold-and-undo window on any automatic stage email, though the never-email
 // rule's own note asks for one; the first-week and day-50 notes hand-sent from Gmail; the monthly report never proposing the check-in.
 // HOLDS (each by running the real module; nothing is sent, the database and Google are fakes):
-//   1. C6 retired for a paying client (beta keeps theirs); stage 3 for a paying client sends nothing
-//   2. R4-R6 and C11 keyed per OCCURRENCE (invoice / connection): two occurrences = two keys; no occurrence = refused, never keyed by the stage;
-//      the callers pass it (billing-daily-check: the invoice, WITH the internal secret; disconnect: the removed connection, only when one was removed)
+//   1. C6 retired for a paying client (beta keeps theirs); stage 3 for a paying client sends nothing (the first payment is ONE letter, the receipt)
+//   2. R4-R6, R8, R9 and C11 keyed per OCCURRENCE with the ONE scheme, `${stage}#${key}` (main's billing build: inv3; the removed connection):
+//      two occurrences = two keys; no key = refused, never keyed by the stage; the callers pass it (billing-daily-check: the invoice, WITH the
+//      internal secret; disconnect: the removed connection, only when one was removed)
 //   3. the HOLD: an event email is queued, not sent; the sweep sends nothing before the window, sends once after it, never twice; Hold stops it
-//      for good (until RGA's Send); Drop means never; a note (press) is never sent by the sweep; a mid-month note (design pending) is never listed;
-//      two sweeps claiming at once send ONE; a failed one is re-armed by the next event; the To do rows say Hold / Send / Drop
+//      for good (until RGA's Send); Drop means never; a note (press) is never sent by the sweep; the queue takes no mid-month note and no
+//      payment welcome (reconciled 11-11); two sweeps claiming at once send ONE; a failed one is re-armed by the next event; the To do rows say
+//      Hold / Send / Drop; the billing ladder's written notices are NOT held (billing-daily-check acts only on a notice it proved delivered)
 //   4. the notice acknowledgment: the notice date, the end date, the last bill (or "nothing more"), the 5-business-day promise; a withdrawn
 //      notice is not acknowledged; the client's own notice queues it (portal-cancel), keyed to that notice
 //   5. the notes RGA approves: letter markup, drafted into To do (client-notes-draft), sent through the queue on RGA's press, kept in the portal
-//      thread (rga_note_sent); the mid-month note says what was done, nothing when nothing was
+//      thread (rga_note_sent); the ONE mid-month note is _mid-note.js (its own Approve / Edit / Hold card): _mid-month-note.js is gone and
+//      client-notes-draft drafts no mid-month note
 //   6. the monthly report proposes ONE check-in time at send (the same slot rule as the portal's "RGA recommends"); no time = the report as built,
 //      no mark left; the kept copy is the copy sent
 //   7. the wiring: both jobs scheduled in netlify.toml and on System health's job list; admin To do has Hold / Send / Drop on the queue's rows
@@ -40,22 +43,27 @@ const quiet = async (fn) => { const k = ["log", "warn", "error"], old = k.map((x
 // ── 1 · C6 retired for a paying client ──
 const N = load("notify-client-stage.js");
 if (typeof N.messageFor !== "function" || typeof N.keyFor !== "function" || typeof N.deliver !== "function") IND("notify-client-stage no longer exports messageFor / keyFor / deliver");
-if (N.messageFor("stage_3_setup", { first: "Pat", beta: false, amount: 625 })) fail("C6 is back for a paying client: three emails at first payment again (the payment welcome is the one email)");
-if (!N.messageFor("stage_3_setup", { first: "Pat", beta: true })) fail("a BETA client lost their stage-3 email: they never pay, so the payment welcome never reaches them");
+if (N.messageFor("stage_3_setup", { first: "Pat", beta: false, amount: 625 })) fail("C6 is back for a paying client: more than one email at first payment again (the first-payment letter is the one email)");
+if (!N.messageFor("stage_3_setup", { first: "Pat", beta: true })) fail("a BETA client lost their stage-3 email: they never pay, so the first-payment letter never reaches them");
 
 // ── 2 · per occurrence ──
-for (const st of ["billing_overdue", "billing_warning", "billing_paused", "google_disconnected"]) {
-  if (N.keyFor(st, "inv-1") === N.keyFor(st, "inv-2")) fail(`${st}: two occurrences share one key, so the second is never emailed`);
-  if (N.keyFor(st, "inv-1") === st) fail(`${st}: keyed by the stage name for the client's lifetime`);
+for (const st of ["billing_overdue", "billing_warning", "billing_paused", "billing_ending", "billing_terminated", "google_disconnected"]) {
+  if (!N.PER_OCCURRENCE.has(st)) fail(`${st} is not emailed once per occurrence`);
+  if (N.keyFor(st, "inv1") === N.keyFor(st, "inv2")) fail(`${st}: two occurrences share one key, so the second is never emailed`);
+  if (N.keyFor(st, "inv1") === st) fail(`${st}: keyed by the stage name for the client's lifetime`);
 }
-if (N.keyFor("stage_1b_admin_review", "x") !== "stage_1b_admin_review") fail("a once-per-client stage email is keyed per occurrence (it could go twice)");
-{ const r = await quiet(() => N.deliver({ clientId: "c", stage: "billing_overdue", occurrence: null }));
-  if (r.statusCode !== 400) fail(`a per-occurrence stage with no occurrence was not refused (HTTP ${r.statusCode}): it would be keyed for the lifetime again`); }
-{ const B = code(read("netlify/functions/billing-daily-check.js")), blk = B.slice(B.indexOf("/.netlify/functions/notify-client-stage"), B.indexOf("/.netlify/functions/notify-client-stage") + 500);
-  if (!/occurrence: invoice\.id/.test(blk)) fail("billing-daily-check doesn't key the notice to the invoice (occurrence)");
-  if (!/"x-internal-secret": process\.env\.INTERNAL_FN_SECRET/.test(blk)) fail("billing-daily-check calls notify-client-stage without the internal secret: it answers 401 and no overdue notice ever goes");
+// ONE scheme (main's billing build, master audit #9): the record is `${stage}#${key}`, the name billing-daily-check and the portal banner read
+if (N.keyFor("billing_warning", "inv3") !== "billing_warning#inv3") fail(`the notice record is "${N.keyFor("billing_warning", "inv3")}", not billing_warning#inv3 (a second keying scheme the ladder doesn't read)`);
+if (N.keyFor("stage_1b_admin_review", null) !== "stage_1b_admin_review") fail("a once-per-client stage email is keyed per occurrence (it could go twice)");
+{ const r = await quiet(() => N.deliver({ clientId: "c", stage: "billing_overdue", key: null }));
+  if (r.statusCode !== 400) fail(`a per-occurrence stage with no key was not refused (HTTP ${r.statusCode}): it would be keyed for the lifetime again`); }
+{ const B = code(read("netlify/functions/billing-daily-check.js")), at = B.indexOf("async function sendBillingNotice"), blk = at < 0 ? "" : B.slice(at, at + 900);
+  if (!blk) IND("billing-daily-check has no sendBillingNotice");
+  if (!/key: R\.noticeKey\(invoice\.invoice_num\)/.test(blk)) fail("billing-daily-check doesn't key the notice to the invoice");
+  if (!/headers: INTERNAL\(\)/.test(blk) || !/const INTERNAL = \(\) => \(\{ "Content-Type": "application\/json", "x-internal-secret": process\.env\.INTERNAL_FN_SECRET/.test(B)) fail("billing-daily-check calls notify-client-stage without the internal secret: it answers 401 and no overdue notice ever goes");
+  if ((B.match(/\/\.netlify\/functions\/notify-client-stage/g) || []).length !== 1) fail("billing-daily-check calls notify-client-stage from more than one place (a second notice path beside sendBillingNotice)");
   const D = code(read("netlify/functions/oauth-google-disconnect.js"));
-  if (!/occurrence: lost\.id \|\| lost\.connected_at/.test(D) || !/if \(lost\) try \{/.test(D) || !/Prefer: "return=representation"/.test(D)) fail("the disconnect email isn't keyed to the connection removed, or goes when nothing was removed"); }
+  if (!/key: lost\.id \|\| lost\.connected_at/.test(D) || !/if \(lost\) try \{/.test(D) || !/Prefer: "return=representation"/.test(D)) fail("the disconnect email isn't keyed to the connection removed, or goes when nothing was removed"); }
 
 // ── 3 · the hold ──
 const Q = load("_client-email-queue.js");
@@ -122,9 +130,11 @@ const world = () => {
   let words = null; const d2 = { ...W.d, dispatch: async (it) => { words = it.markup; W.sent.push(it.key); return { result: "sent" }; } };
   await Q.sendOne({ clientId: C, key: "first_week", by: "chris@rga", words: { subject: "What we found in your first week", markup: "Hi Pat, edited." } }, d2);
   if (words !== "Hi Pat, edited.") fail("RGA's edited words were not the ones sent");
-  // design pending: kept, never listed
-  await Q.enqueue({ clientId: C, key: "mid_month:2026-11", kind: "mid_month", mode: "press", subject: "x", markup: "y", design_pending: true }, W.d);
-  if (Q.movesOf(Q.fold(W.rows), { now: W.d.now() }).some((m) => m.email.key === "mid_month:2026-11")) fail("the mid-month note shows in To do before its design is drawn");
+  // the ONE mid-month note is _mid-note.js (its own Approve / Edit / Hold card), and the first payment is ONE letter: the queue takes neither
+  for (const kind of ["mid_month", "payment_welcome"]) {
+    let took = true; try { await Q.enqueue({ clientId: C, key: `${kind}:x`, kind, mode: kind === "mid_month" ? "press" : "timer", subject: "x", markup: "y" }, W.d); } catch { took = false; }
+    if (took || Q.KINDS.includes(kind)) fail(`the queue takes a ${kind} email: a second ${kind === "mid_month" ? "mid-month note beside _mid-note.js" : "email at first payment beside the letter"}`);
+  }
 }
 {
   // two sweeps at once: one send
@@ -136,11 +146,11 @@ const world = () => {
   if (n !== 1) fail(`two sweeps at once sent it ${n} times`);
   // a failed one: shown as failed, armed again by its next event
   const W2 = world(), fails = { ...W2.d, dispatch: async () => ({ result: "failed", error: "Gmail refused" }) };
-  await Q.enqueue({ clientId: C, key: "payment_welcome", kind: "payment_welcome", mode: "timer", subject: "You're set", markup: "Hi" }, W2.d);
+  await Q.enqueue({ clientId: C, key: "welcome", kind: "welcome", mode: "timer", subject: "You're connected. Book your kickoff call", markup: "Hi" }, W2.d);
   W2.tick(11); await Q.sweep(fails);
   const f1 = Q.movesOf(Q.fold(W2.rows), { now: W2.d.now() });
   if (!f1.length || f1[0].email.state !== "failed") fail("a failed send isn't in To do as failed (Send / Drop)");
-  const re = await Q.enqueue({ clientId: C, key: "payment_welcome", kind: "payment_welcome", mode: "timer", subject: "You're set", markup: "Hi" }, W2.d);
+  const re = await Q.enqueue({ clientId: C, key: "welcome", kind: "welcome", mode: "timer", subject: "You're connected. Book your kickoff call", markup: "Hi" }, W2.d);
   W2.tick(11); await Q.sweep(W2.d);
   if (!re.queued || W2.sent.length !== 1) fail("a failed email was not armed again by its next event (the senders retried on the next event before the hold)");
   // not due any more: never sent, said why
@@ -153,9 +163,10 @@ const world = () => {
 {
   const Qs = code(read("netlify/functions/_client-email-queue.js")), NS = code(read("netlify/functions/notify-client-stage.js"));
   if (!/holdOk && HOLD_STAGES\.has\(stage\)/.test(NS) || !/holdOk: auth\.internal === true/.test(NS)) fail("notify-client-stage doesn't hold an EVENT's stage email (or holds RGA's own press)");
-  for (const s of ["stage_1b_admin_review", "billing_overdue", "billing_warning", "billing_paused", "google_disconnected"]) if (!N.HOLD_STAGES.has(s)) fail(`${s} has no hold window`);
+  for (const s of ["stage_1b_admin_review", "google_disconnected"]) if (!N.HOLD_STAGES.has(s)) fail(`${s} has no hold window`);
   if (N.HOLD_STAGES.has("stage_2_payment")) fail("the first-invoice email (RGA's Accept press) is held: RGA already pressed it");
-  if (!/client\.billing_status !== BILL\[stage\]/.test(NS)) fail("a billing notice paid during the hold would still go (the state isn't re-read at send)");
+  // the agreement's written notices: billing-daily-check pauses or ends only on a notice it proved DELIVERED in the same run (sent_at)
+  for (const s of ["billing_overdue", "billing_warning", "billing_paused", "billing_ending", "billing_terminated"]) if (N.HOLD_STAGES.has(s)) fail(`${s} is held in the queue: a written notice parked there is not delivered, so the pause or the end waits on a notice nobody can prove went`);
   if (!/it\.kind === "stage"[\s\S]{0,200}require\("\.\/notify-client-stage"\)\.deliver\(/.test(Qs)) fail("the queue doesn't send a stage email through notify-client-stage");
   if (!/it\.kind === "notice_ack"[\s\S]{0,200}require\("\.\/_notice-ack"\)\.sendAck\(/.test(Qs)) fail("the queue doesn't send the notice acknowledgment through _notice-ack");
   if (!/kind: "rga_note_sent"/.test(Qs)) fail("a note RGA sends leaves no copy in the client's portal thread");
@@ -194,18 +205,17 @@ const world = () => {
 
 // ── 5 · the notes ──
 {
-  const ON = load("_onboarding-notes.js"), MM = load("_mid-month-note.js"), L = load("_letter.js");
+  const ON = load("_onboarding-notes.js"), L = load("_letter.js");
   const fw = ON.firstWeekDraft({ primary_contact_name: "Pat", business_name: "Acme" }, { lines: [{ text: "Your main category on Google is Plumber.", source: "Read from your Google profile" }] });
   if (!fw || !fw.markup || /Talk soon/.test(fw.markup)) fail("the first-week note isn't letter markup with the one sign-off");
   if ((L.letter(fw.markup).text.match(/Rocket Growth Agency · \(/g) || []).length !== 1) fail("the first-week note doesn't sign exactly once");
-  if (MM.buildMidMonth({ client: {}, month: "2026-11-01", playbook: [{ id: "m2.exec.gbp_posts", title: "Google posts" }], tasks: {} })) fail("a mid-month note is written when nothing is done yet");
-  const mm = MM.buildMidMonth({ client: { primary_contact_name: "Pat" }, month: "2026-11-01", playbook: [{ id: "m2.exec.gbp_posts", title: "Google posts", clientLabel: "Posted an update to your Google profile" }], tasks: { "m2.exec.gbp_posts": { status: "done", completed_at: "2026-11-05T00:00:00Z" } } });
-  if (!mm || !/November/.test(mm.subject) || !mm.items.length) fail("the mid-month note doesn't say what was done this month");
+  // ONE mid-month note: _mid-note.js (approved card_notice_designs_v1 section 4). The data-only second builder is gone for good.
+  if (fs.existsSync(`${SITE}/netlify/functions/_mid-month-note.js`)) fail("_mid-month-note.js is back: a second mid-month note beside _mid-note.js");
+  if (!fs.existsSync(`${SITE}/netlify/functions/_mid-note.js`)) IND("the one mid-month note (_mid-note.js) is missing");
   const CN = load("client-notes-draft.js");
   const drafted = await CN.draftsFor({ id: "c", primary_contact_name: "Pat" }, new Date("2026-11-15T16:00:00Z"), { notesFor: async () => ({ first_week: { lines: [1] }, first_week_expired: false, day50: null, drafts: { first_week: fw, day50: null } }), month1ClosedAt: async () => "2026-10-02T00:00:00Z", monthTasks: async () => ({ "m2.exec.gbp_posts": { status: "done", completed_at: "2026-11-05T00:00:00Z" } }), playbook: () => [{ id: "m2.exec.gbp_posts", title: "Google posts", clientLabel: "Posted an update" }] });
   if (!drafted.some((x) => x.key === "first_week")) fail("the first-week note isn't drafted into To do");
-  const mid = drafted.find((x) => x.kind === "mid_month");
-  if (!mid || mid.design_pending !== true) fail("the mid-month note isn't queued, or is queued without design_pending (it would show before its design)");
+  if (drafted.some((x) => x.kind === "mid_month" || /^mid_month/.test(String(x.key)))) fail("client-notes-draft drafts a mid-month note: a second one beside _mid-note.js's Approve / Edit / Hold card");
   const CNs = code(read("netlify/functions/client-notes-draft.js"));
   if (!/mode: "press"/.test(CNs) || /mode: "timer"/.test(CNs)) fail("client-notes-draft queues a note on a timer: it must wait for RGA's press");
 }
@@ -247,4 +257,4 @@ const world = () => {
 }
 
 if (F.length) { console.error(`🔴 the client-messages build regressed (${F.length}):`); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log("✅ client messages: C6 retired (beta kept), late notices + disconnects once per occurrence, every event email held with Hold/Send/Drop, notes on RGA's press in one format, the notice acknowledged, the report proposes a check-in");
+console.log("✅ client messages: C6 retired (beta kept), late notices + disconnects once per occurrence (one scheme), event emails held with Hold/Send/Drop (not the billing ladder's written notices), notes on RGA's press in one format, one mid-month note, the notice acknowledged, the report proposes a check-in");

@@ -664,7 +664,7 @@ export const FILES = {
   emailqueuefn: "netlify/functions/client-email-queue.js",
   clientemailfn: "netlify/functions/admin-client-email.js",
   noticeack: "netlify/functions/_notice-ack.js",
-  midmonth: "netlify/functions/_mid-month-note.js",
+  // (midmonth: _mid-month-note.js was deleted 11-11: the one mid-month note is _mid-note.js, gated by check-the-mid-month-note-*)
   notesdraftfn: "netlify/functions/client-notes-draft.js",
   suggestedcall: "netlify/functions/_suggested-call.js",
   // master audit #8 (11-11): one definition per number (check-a-running-month-is-never-compared, check-one-leads-formula)

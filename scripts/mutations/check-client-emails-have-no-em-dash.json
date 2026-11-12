@@ -19,5 +19,6 @@
  ["the termination letter gets an em dash", "notifystage", "I'm sorry it ended this way. If you'd like", "I'm sorry it ended this way — if you'd like", 1],
  ["the first-payment letter gets an em dash", "invoiceemail", "Payment received. Thank you. Your receipt for", "Payment received — thank you. Your receipt for", 1],
  ["the receipt subject gets its dash back", "invoiceemail", "const subject = `Receipt for invoice ${ref}: ${amount}`;", "const subject = `Receipt for invoice ${ref} — ${amount}`;", 1],
- ["the kickoff agenda email keeps its scan", "notifystepopen", "Nothing to prepare. Reply to this email", "Nothing to prepare — reply to this email", 1]
+ ["the kickoff agenda (in the 24-hour reminder) gets an em dash", "schedulev6remind", "Nothing to prepare. Reply to this email", "Nothing to prepare — reply to this email", 1],
+ ["the mid-month note gets an em dash", "midnotefn", "If anything here looks wrong, reply to this email.", "If anything here looks wrong — reply to this email.", 1]
 ]

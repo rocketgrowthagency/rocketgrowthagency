@@ -10,5 +10,8 @@
  ["the shared sendGmail drops its notice", "monthlyreport", "if (notice && notice.clientId) await require(\"./_notices\").record(", "if (false) await require(\"./_notices\").record(", 1],
  ["the client sees a failed send", "noticesshared", "filter((r) => r && r.status === \"sent\")", "filter((r) => r)", 1],
  ["the client's list query reads every row", "noticesfn", "${view === \"client\" ? \"&status=eq.sent\" : \"\"}", "${\"\"}", 1],
- ["a link may open outside the portal", "noticessql", "link_path     text check (link_path is null or link_path ~ '^/portal/'),", "link_path     text,", 1]
+ ["a link may open outside the portal", "noticessql", "link_path     text check (link_path is null or link_path ~ '^/portal/'),", "link_path     text,", 1],
+ ["the hold queue's notes skip the list", "emailqueue", "notice: { clientId: it.client_id, code: NOTE_CODE[it.kind]", "nolist: { clientId: it.client_id, code: NOTE_CODE[it.kind]", 1],
+ ["the notice acknowledgment skips the list", "noticeack", "notice: { clientId, code: \"E1\"", "nolist: { clientId, code: \"X1\"", 1],
+ ["the termination letter is not in the list", "notifystage", "billing_ending: \"R8\", billing_terminated: \"R9\",", "", 1]
 ]

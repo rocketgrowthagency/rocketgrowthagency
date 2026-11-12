@@ -429,22 +429,22 @@
  [
   "the homepage loses its price line",
   "home",
-  "From $625 a month. One plan. Cancel with 30 days' notice.</p>",
+  "After that: $1,250 to start, then $625.</p>",
   "</p>",
   1
  ],
  [
   "the price line says no minimum",
   "home",
-  "From $625 a month. One plan. Cancel with 30 days' notice.",
-  "From $625 a month. No minimum.",
+  "First 5 clients: $625 a month, no setup fee. After that: $1,250 to start, then $625.</p>",
+  "First 5 clients: $625 a month, no minimum. After that: $1,250 to start, then $625.</p>",
   1
  ],
  [
   "the price line drifts from the price file",
   "home",
-  "From $625 a month. One plan.",
-  "From $599 a month. One plan.",
+  "color:#475569\">First 5 clients: $625 a month, no setup fee.",
+  "color:#475569\">First 5 clients: $599 a month, no setup fee.",
   1
  ],
  [

@@ -117,11 +117,13 @@ const ON = HAVE("_onboarding-notes.js") && load("_onboarding-notes.js").firstWee
 if (ON) { const fw = ON.firstWeekDraft({ primary_contact_name: "Pat", business_name: "Pat's" }, { lines: [{ text: "Your main category on Google is Plumber.", source: "Read from your Google profile" }] });
   const d5 = ON.day50Draft({ primary_contact_name: "Pat" }, { day: 52, done: ["Categories"], terms_sentence: "You can stop with 30 days' notice." });
   rendered += check("the first-week note", { subject: fw.subject, markup: fw.markup }) + check("the day-50 note", { subject: d5.subject, markup: d5.markup }); }
-const MM = HAVE("_mid-month-note.js") ? load("_mid-month-note.js") : null;
-if (MM) { let PB; try { PB = JSON.parse(read("data/playbooks/playbooks.json")).month2plus || []; } catch { PB = []; }
-  const tasks = Object.fromEntries(PB.slice(0, 12).map((s) => [s.id, { status: "done", completed_at: "2026-11-05T10:00:00Z" }]));
-  const mm = MM.buildMidMonth({ client: { primary_contact_name: "Pat", business_name: "Pat's" }, month: "2026-11-01", playbook: PB, tasks });
-  if (mm) rendered += check("the mid-month note", { subject: mm.subject, markup: mm.markup }); }
+// the ONE mid-month note (_mid-note.js, approved card_notice_designs_v1 section 4; MID in the comms catalog): its words, rendered from its own composer
+const MN = HAVE("_mid-note.js") ? load("_mid-note.js") : null;
+if (MN && typeof MN.composeNote === "function") for (const [since, next] of [[null, []], [{ reportMonth: "2026-10-01" }, ["Your November rank map"]]]) {
+  const n = MN.composeNote({ client: { primary_contact_name: "Pat Lee", business_name: "Pat's Plumbing" }, month: "2026-11-01", since, next,
+    lines: [{ text: "Posted 2 Google posts", ids: ["post:a", "post:b"] }, { text: "Replied to 3 new Google reviews", ids: ["r1", "r2", "r3"] }] });
+  rendered += check("the mid-month note", { subject: n.subject, markup: n.markup });
+} else if (MN) IND("_mid-note.js no longer exports composeNote: re-read how the mid-month note is written");
 const OC = load("admin-offboarding-confirm.js");
 { const d = OC.draftFor({ primary_contact_name: "Pat Lee" }, { ends_on: "2026-12-11", items: [{ key: "gbp", label: "Removed us from your Google profile", status: "done", evidence: "read back", at: "2026-12-12T10:00:00Z" }, { key: "web", label: "Your website", status: "na", note: "none" }] });
   rendered += check("the service-ended confirmation (E3)", { subject: d.subject, markup: d.body }); }
@@ -143,7 +145,6 @@ const SCANS = {
   "the Month 1 report letter": codeOnly(read("netlify/functions/_month1-email.js")),
   "the step reminders": codeOnly(read("netlify/functions/_step-reminders.js")),
   "the step-open emails": region(codeOnly(read("netlify/functions/notify-step-open.js")), /function buildEmail\(/, "\nasync function ", "notify-step-open buildEmail"),
-  "the kickoff agenda email": region(codeOnly(read("netlify/functions/notify-step-open.js")), /function buildAgendaEmail\(/, "\nasync function ", "buildAgendaEmail"),
   "the later-reminder email": region(codeOnly(read("netlify/functions/notify-step-open.js")), /function buildLaterEmail\(/, "\nasync function ", "buildLaterEmail"),
   "the stripe webhook and record-payment (no client text of their own)": codeOnly(read("netlify/functions/stripe-webhook.js")).split("\n").filter((l) => /subject:|markup:|body:\s*`/.test(l)).join("\n"),
   "the duplicate-cleared email": region(codeOnly(read("netlify/functions/notify-step-open.js")), /function buildDupClearedEmail\(/, "\nasync function ", "buildDupClearedEmail"),
@@ -160,7 +161,8 @@ for (const [name, src] of Object.entries(SCANS)) { const d = dashIn(src); if (d)
 // ── 3 · covered: every sender is rendered, scanned or excused ──
 const COVERED = {
   "notify-client-stage.js": "rendered", "_payment-welcome.js": "rendered", "call-reminders.js": "rendered (_call-reminders.js)", "send-confirmation-email.js": "rendered",
-  "send-invoice-email.js": "rendered", "_notice-ack.js": "rendered", "admin-offboarding-confirm.js": "rendered", "_client-email-queue.js": "rendered (its notes are _onboarding-notes / _mid-month-note; its stage emails are notify-client-stage)",
+  "send-invoice-email.js": "rendered", "_notice-ack.js": "rendered", "admin-offboarding-confirm.js": "rendered", "_client-email-queue.js": "rendered (its notes are _onboarding-notes; its stage emails are notify-client-stage; the notice acknowledgment is _notice-ack)",
+  "_mid-note.js": "rendered (composeNote; the one mid-month note, MID)",
   "_monthly-close.js": "scanned (_monthly-report-email.js + the check-in line rendered)", "send-monthly-report.js": "scanned (_monthly-report-email.js)", "admin-month1-report.js": "scanned (_month1-email.js)",
   "notify-step-open.js": "scanned (buildEmail, buildDupClearedEmail; _step-reminders.js)", "send-kickoff-invite.js": "scanned (the descriptions; titles in _call-purpose.js)",
   "walkthrough-book.js": "scanned", "send-step-email.js": "sends the words RGA reviewed in admin (scanned there: the nudge and the reminder draft) and flow-execute's access drafts (scanned)",

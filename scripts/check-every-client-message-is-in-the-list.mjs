@@ -27,6 +27,8 @@ const RGA_ONLY = {
   "rga-todo-morning.js": "the morning To do email to RGA staff",
   "rga-notify-email-background.js": "a client's message forwarded to hello@",
   "_gmail.js": "the one sender itself (records for its callers)",
+  "_alert-text.js": "texts RGA's own business line only (RGA_BUSINESS_NUMBER, no setting points it elsewhere): it can never reach a client",
+  "admin-mentions.js": "RGA's pitch to a publisher for a 'Best of' list: a third party, never a client",
 };
 /** Calendar callers that never reach a client: each needs a reason. */
 const CAL_NOT_CLIENT = {
@@ -59,6 +61,10 @@ function sweep(files) {
       if (/^\(\s*\{\s*supa\s*,\s*\.\.\.m\s*\}\s*\)$/.test(c.args.replace(/\s+/g, " ").trim())) continue;   // a pass-through wrapper (_payment-welcome send: (m) => sendAsRga({ supa, ...m })): its caller is checked
       if (/^\(\s*\{/.test(c.args) && !/\bnotice\s*:/.test(c.args)) bad.push(`${f}:${c.at} sendAsRga reaches a client with no notice: {…} (it would never be in their list)`);
     }
+    // a pass-through wrapper (send: (m) => sendAsRga({ supa, ...m })) is excused above: ITS caller (deps.send) carries the notice (11-11 reconcile)
+    if (/sendAsRga\(\{\s*supa\s*,\s*\.\.\.m\s*\}\)/.test(src)) for (const c of callsOf(src, "deps.send")) {
+      if (/^\(\s*\{/.test(c.args) && !/\bnotice\s*:/.test(c.args)) bad.push(`${f}:${c.at} deps.send (sendAsRga) reaches a client with no notice: {…} (it would never be in their list)`);
+    }
     const gmailDirect = /gmail\.googleapis\.com\/gmail\/v1\/users\/me\/messages\/send/.test(src);
     if (gmailDirect && !/_notices"\)\.record\(|Notices\.record\(/.test(src)) bad.push(`${f} sends through Gmail itself and records no notice`);
     if (/api\.openphone\.com\/v1\/messages/.test(src) && !/channel:\s*"text"/.test(src)) bad.push(`${f} sends a Quo text and records no text notice`);
@@ -79,8 +85,12 @@ try {
 
 for (const b of sweep(files)) fail(b);
 // the senders the catalog names must each record (a sender deleted or renamed is said, not skipped)
-const MUST = { "notify-step-open.js": ["M1", "M2", "M4", "K2", "C9"], "call-reminders.js": ["C3", "K5"], "send-step-email.js": ["M6", "M7"], "portal-reply.js": ["M8", "M9"], "send-kickoff-recap.js": ["K8"],
-  "_payment-welcome.js": ["C7"], "admin-offboarding-confirm.js": ["E3"], "notify-client-stage.js": ["C4", "C5", "C6", "C10", "R4", "C11"], "send-confirmation-email.js": ["C2"], "send-invoice-email.js": ["C8", "R3", "R7"],
+// (11-11 reconcile) K2 is retired: the kickoff agenda rides in the 24-hour reminder (K3, call-reminders). C7 is retired: the first payment is ONE
+// letter, the receipt (C8, send-invoice-email). The hold queue's sends record when they actually go: its notes (M10, M11), the notice
+// acknowledgment (E1, _notice-ack), its stage emails (notify-client-stage). The one mid-month note is MID (_mid-note).
+const MUST = { "notify-step-open.js": ["M1", "M2", "M4", "C9"], "call-reminders.js": ["C3", "K3", "K4", "K5"], "send-step-email.js": ["M6", "M7"], "portal-reply.js": ["M8", "M9"], "send-kickoff-recap.js": ["K8"],
+  "_client-email-queue.js": ["M10", "M11"], "_notice-ack.js": ["code: \"E1\""], "_mid-note.js": ["code: \"MID\""],
+  "admin-offboarding-confirm.js": ["E3"], "notify-client-stage.js": ["C4", "C5", "C6", "C10", "R4", "R8", "R9", "C11"], "send-confirmation-email.js": ["C2"], "send-invoice-email.js": ["C8", "R3", "R7"],
   "send-kickoff-invite.js": ["K1", "M13", "R2", "Q2"], "cancel-kickoff-invite.js": ["K7"], "_monthly-close.js": ["R1"], "admin-month1-report.js": ["M12"], "approval-comments.js": ["M9"], "admin-deliverables.js": ["New for your approval"] };
 for (const [f, codes] of Object.entries(MUST)) {
   const src = files[f]; if (!src) { fail(`${f} is gone: its client messages are no longer known to reach the list`); continue; }
