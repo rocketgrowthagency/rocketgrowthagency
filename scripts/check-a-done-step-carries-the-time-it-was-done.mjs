@@ -191,7 +191,8 @@ else if (startDecl > awaitIdx) F("flow-execute.js: the start stamp is taken AFTE
 if (awaitIdx >= 0) {
   // Brace-match the `try { … }` the executor runs in, so the window is the real block and not a
   // character count. → feedback_a_gate_window_measured_in_characters_will_lie
-  const tryOpen = execCode.lastIndexOf("{", awaitIdx);
+  // the `try {` itself (11-12: the AI ledger's `LEDGER_CTX = { … }` now sits just above the executor call, and "the last { before it" was that object)
+  const tryOpen = execCode.lastIndexOf("try {", awaitIdx) + 4;
   let d = 0, close = -1;
   for (let i = tryOpen; i < execCode.length; i++) {
     if (execCode[i] === "{") d++;

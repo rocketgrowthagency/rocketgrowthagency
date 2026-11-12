@@ -186,7 +186,7 @@ try {
     ok(await page.evaluate(() => { const b = document.querySelector("#clientLoginButton"); return b.disabled && b.classList.contains("is-busy") && /Sending/.test(b.textContent) && document.querySelector("#clientLoginEmail").disabled; }), "while sending: the button is disabled, spinning, \"Sending your link…\", and the field is greyed");
     await settle(800);
     ok(calls.otp.length === 1 && calls.otp[0].email === "owner@gmail.com", `one request, lower-cased (${JSON.stringify(calls.otp.map((c) => c.email))})`);
-    ok(calls.otp[0]?.create_user === true, "it still creates the user (shouldCreateUser, unchanged)");
+    ok(calls.otp[0]?.create_user === false, "sign-ups stay closed: a sign-in never creates a user (shouldCreateUser:false, security build 11-11)");
     ok(await visible(page, "#siSentView") && !(await visible(page, "#siFormView")), "the card is now \"Check your email\" (the form is gone)");
     await shot(page, "sent");
     ok(await text(page, "#siSentTo") === "owner@gmail.com", "it names the address");
