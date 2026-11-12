@@ -2,6 +2,13 @@
 // applies the mutations) and check-every-mutation-still-applies.mjs (which checks every anchor still matches daily).
 // A key → a path in the website repo, or "scraper:<path>" in this repo, or null (the gate itself is the target).
 export const FILES = {
+  // master plans-and-emails build (11-11)
+  createcheckout: "netlify/functions/stripe-create-checkout.js",
+  billingrules: "shared/billing-rules.js",
+  startasclient: "netlify/functions/start-as-client.js",
+  walkthroughui: "admin/walkthrough.js",
+  contractpricing: "shared/contract-pricing.js",
+  dailybillingfn: "netlify/functions/billing-daily-check.js",
   clientmonthly: "shared/client-monthly.js",   // client_monthly_v1 (11-9): the client-words rules + the between-months state, one file the server and the portal both read
   stepwhat: "data/playbooks/what-it-does.json",
   stepmapbuild: "scraper:scripts/build-step-map.mjs",   // the sheet of every step (Chris 11-1)

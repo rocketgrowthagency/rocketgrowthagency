@@ -9,8 +9,8 @@
  [
   "a struck price comes back on home",
   "home",
-  "<span class=\"big\">$625</span><span class=\"per\">/ month</span></div>\n          <p class=\"terms\">$1,250 setup",
-  "<s>$1,250</s><span class=\"big\">$625</span><span class=\"per\">/ month</span></div>\n          <p class=\"terms\">$1,250 setup",
+  "<span class=\"big\">$625</span><span class=\"per\">/ month</span></div>\n          <p class=\"terms\">First 5 clients",
+  "<s>$1,250</s><span class=\"big\">$625</span><span class=\"per\">/ month</span></div>\n          <p class=\"terms\">First 5 clients",
   1
  ],
  [
@@ -23,8 +23,8 @@
  [
   "the price line changes on pricing",
   "pricing",
-  "Stay 3 months: $2,500 total. Cancel anytime with 30 days' notice.</p>",
-  "Stay 3 months: $2,500 total.</p>",
+  "for $2,500 total, and cancel anytime with 30 days' notice. Founding clients have a 3-month minimum.</p>",
+  "for $2,500 total. Founding clients have a 3-month minimum.</p>",
   1
  ],
  [

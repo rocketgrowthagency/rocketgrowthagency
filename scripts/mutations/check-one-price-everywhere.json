@@ -1,0 +1,14 @@
+[
+ ["the FAQ's structured data goes back to $1,250 once", "faqpage", "\"text\": \"First 5 clients: $625 a month, no setup fee. After that: $1,250 to start, then $625. Full numbers", "\"text\": \"$1,250 once, which includes your first month. Full numbers", 1],
+ ["the pricing page says the first payment is $1,250 again", "pricing", "You're billed monthly. First 5 clients: $625 a month, no setup fee. After that: $1,250 to start, then $625.</p>", "You're billed monthly. The first payment of $1,250 covers setup and your first month.</p>", 1],
+ ["the home page goes back to One plan", "home", "color:#475569\">First 5 clients: $625 a month, no setup fee. After that: $1,250 to start, then $625.</p>", "color:#475569\">From $625 a month. One plan. Cancel with 30 days' notice.</p>", 1],
+ ["the services page loses the founding offer", "servicespage", "<p>First 5 clients: $625 a month, no setup fee.", "<p>$625/mo after month one.", 1],
+ ["the start page's Included list says Cancel anytime for both plans", "startgrowth", "Standard plan: cancel anytime with 30 days' notice. Founding plan: 3-month minimum, then 30 days' notice", "Cancel anytime with 30 days' notice", 1],
+ ["the audit report types its price again", "fgabuilder", "${esc(offerPriceLine())} Standard plan: stay 3 months, ${esc(offer3MonthTotal())} total.", "Stay 3 months: $2,500 total.", 1],
+ ["the founding monthly price changes in the offer file only", "offerpricing", "\"monthly\": 625, \"setup\": 0", "\"monthly\": 600, \"setup\": 0", 1],
+ ["the extra location price changes in the offer file only", "offerpricing", "\"extra_location\":   { \"now\": 500,", "\"extra_location\":   { \"now\": 450,", 1],
+ ["a call script says no minimum without the founding minimum", "adminpb", "Fair question. The first five clients pay $625 a month with no setup fee and a 3-month minimum. After that it's $1,250 to start, which includes your first month, then $625 a month, no minimum term.", "Fair question. It's $1,250 to start, which includes your first month, then $625 a month, no minimum term.", 1],
+ ["the standard plan is labelled no lock-in again", "contractgen", "label: \"Standard Plan\",\n    term_months: 3,", "label: \"Standard Plan (no lock-in)\",\n    term_months: 3,", 1],
+ ["the fee table goes back to Total for the first 3 months", "contractgen", "If you stay ${summary.term_months} months", "Total for the first ${summary.term_months} months", 1],
+ ["the standard offer card is labelled One plan again", "pricing", "<p class=\"k\">The plan</p>", "<p class=\"k\">One plan</p>", 1]
+]

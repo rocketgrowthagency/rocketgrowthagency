@@ -1,0 +1,11 @@
+[
+ ["Section 4 promises ACH again", "contractgen", "via Stripe by card. Client authorizes", "via Stripe (credit card or ACH). Client authorizes", 1],
+ ["the payment functions stop naming a method", "createcheckout", "\"payment_method_types[]\": \"card\",", "", 2],
+ ["the standard plan is labelled no lock-in again", "contractgen", "label: \"Standard Plan\",\n    term_months: 3,", "label: \"Standard Plan (no lock-in)\",\n    term_months: 3,", 1],
+ ["the standard fee table reads Total for the first 3 months", "contractgen", "ctx.plan_code === \"commit_3mo\" ? `If you stay", "false ? `If you stay", 1],
+ ["the founding fee table loses its minimum wording", "contractgen", "ctx.plan_code === \"commit_3mo\" ? `If you stay", "true ? `If you stay", 1],
+ ["a second place re-renders the agreement", "contractsignfn", "const recomputedHash", "const _again = () => buildContractHtml({});\n  const recomputedHash", 1],
+ ["a second place writes the agreement text", "contractsignfn", "const recomputedHash", "const _w = { contract_html: \"x\" };\n  const recomputedHash", 1],
+ ["the signature check stops re-hashing the stored text", "contractsignfn", ".update(contract.contract_html)", ".update(String(contract.contract_html) + \"\")", 1],
+ ["the founding agreement stops stating its minimum", "contractgen", "<strong>Three-month minimum:</strong> Client commits to the first three (3) months", "<strong>Term:</strong> Client agrees to the first three (3) months", 1]
+]
