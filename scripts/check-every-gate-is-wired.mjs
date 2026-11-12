@@ -675,6 +675,7 @@ const NOT_PREFLIGHT = {
   'check-no-one-is-staff-by-accident.mjs': 'the 11-11 database lockdown: is_internal_user() allow-lists roles, the role guard trigger exists, no public-role policy is true (Management API read-only SQL), and the portal client reads no staff rows and is refused role owner, and the role guard refuses a workspace on insert (read from its text, no probe); rules self-tested; runs in daily-health-check.sh.',
   'check-sign-ups-are-closed.mjs': 'security 11-11 gate: a typed email never becomes an account; runs in daily-health-check.sh',
   'check-no-secret-in-a-query-string.mjs': 'security 11-11 gate: no secret in a web address; runs in daily-health-check.sh',
+  'check-ai-models-are-the-approved-setup.mjs': 'AI cost setup D 11-12 gate: models per tier, valid 5.x params, empty answer falls back, budget; runs in daily-health-check',
   'check-every-model-call-is-metered.mjs': 'content and AI 11-11 gate: every model call is a ledger row, key and month checked daily; runs in daily-health-check.sh',
   'check-a-gbp-description-ends-on-a-sentence.mjs': 'content and AI 11-11 gate: the Google description is never cut mid-sentence; runs in daily-health-check.sh',
   'check-gbp-words-need-the-clients-approval.mjs': 'content and AI 11-11 gate: Google description, services and details need the client approval; runs in daily-health-check.sh',

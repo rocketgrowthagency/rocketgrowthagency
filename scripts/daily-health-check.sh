@@ -935,6 +935,7 @@ run check-no-one-is-staff-by-accident.mjs "a client is never staff and can't mak
 run check-sign-ups-are-closed.mjs "an account exists only because RGA invited that email: every sign-in link says create-user false, the server makes the account at invite time (security 11-11)"
 run check-no-secret-in-a-query-string.mjs "no secret travels in a web address: internal calls carry x-internal-secret in a header, not ?token= (security 11-11)"
 run check-every-model-call-is-metered.mjs "every model call is a ledger row, the AI key and the month budget are checked daily (content and AI 11-11)"
+run check-ai-models-are-the-approved-setup.mjs "AI cost setup D holds: client words on Sonnet 5.5, simple jobs on Haiku 5.5, no Opus, no 400-ing params, an empty answer falls back, budget \$10 (Chris 11-12)"
 run check-a-gbp-description-ends-on-a-sentence.mjs "the Google description is never cut mid-sentence: ask again, cut at the last full sentence, or no draft (content and AI 11-11)"
 run check-gbp-words-need-the-clients-approval.mjs "the Google description, services and details go out only with the client's approval: one writer each, refusal before Google is touched (content and AI 11-11)"
 run check-the-dead-content-engine-stays-gone.mjs "the dead content engine, its Apply to FLOW button and the Brain's best-inference line stay gone (content and AI 11-11)"

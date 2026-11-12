@@ -54,12 +54,16 @@ for (const n of fns) {
   const ai = body("async function aiDraft(", "\nfunction markIfTruncated(");
   const ph = body("async function describePhoto(", "\nfunction cleanAlt(");
   if (!ai || !ph) idk("flow-execute has no aiDraft(...) / describePhoto(...) to read");
-  for (const [what, re] of [["Anthropic's refusal", /provider: "anthropic", model: ladder\[k\], ok: false, status: r\.status, error: AL\.errorType/], ["Anthropic's answer", /provider: "anthropic", model: data\.model \|\| ladder\[k\], usage: data\.usage, ok: true/], ["OpenAI's refusal", /provider: "openai", model: process\.env\.GBP_AI_MODEL \|\| "gpt-4o-mini", ok: false/], ["OpenAI's answer", /provider: "openai", model: data\.model[^,]*, usage: data\.usage, ok: true/]]) if (!re.test(ai)) fail(`aiDraft doesn't record ${what}`);
-  if ((ph.match(/recordAiCall\(/g) || []).length < 2) fail("the photo describer doesn't record both its refusal and its answer");
+  // 🔒 setup D (11-12): aiDraft and the photo describer ask through _ai-models.callClaude, which writes the refusal, the answer and an empty answer
+  const am = code(read(`${FN}/_ai-models.js`));
+  if (!/AM\.callClaude\(/.test(ai)) fail("aiDraft doesn't ask Anthropic through _ai-models.callClaude (the one place that records the call)");
+  if (!/AM\.callClaude\(/.test(ph) || !/ledger: \{/.test(ph)) fail("the photo describer doesn't ask through callClaude with a ledger step");
+  for (const [what, re] of [["Anthropic's refusal", /await rec\(\{ model, ok: false, status: r\.status, error: AL\.errorType/], ["Anthropic's answer", /await rec\(\{ model: data\.model \|\| model, usage: data\.usage, ok: true/], ["Anthropic's empty answer", /ok: false, status: r\.status, error: `empty answer/]]) if (!re.test(am)) fail(`_ai-models.callClaude doesn't record ${what}`);
+  for (const [what, re] of [["OpenAI's refusal", /provider: "openai", model: process\.env\.GBP_AI_MODEL \|\| "gpt-4o-mini", ok: false/], ["OpenAI's answer", /provider: "openai", model: data\.model[^,]*, usage: data\.usage, ok: true/]]) if (!re.test(ai)) fail(`aiDraft doesn't record ${what}`);
 }
 for (const n of fns) if (/ledger/i.test(n) && n !== "_ai-ledger.js" && /anthropic|openai|ai|model/i.test(n)) fail(`${n} is a second AI ledger file (only _ai-ledger.js)`);
 if (fs.readdirSync(path.join(SITE, "docs/supabase")).some((n) => /^ANTHROPIC_USAGE/i.test(n))) fail("docs/supabase/ANTHROPIC_USAGE_*.sql is back: a second table for the same calls");
-if (callers.length < 5) idk(`only ${callers.length} website files call a model (flow-execute, the Brain, the blog chain, the photo look, the mature deps and ai-model-check are expected)`);
+if (callers.length < 4) idk(`only ${callers.length} website files call a model (flow-execute, the Brain, the blog chain, the photo look, the mature deps and ai-model-check are expected)`);
 
 // ── the table: its own SQL file, row level security in it ────────────────────────────────────────────────────────────────
 const sqlName = (fs.readdirSync(path.join(SITE, "docs/supabase")).filter((n) => /^AI_CALL_LEDGER_.*\.sql$/.test(n)).sort().pop());
@@ -80,7 +84,7 @@ if (!/job: "ai-model-check"/.test(man)) fail("ai-model-check isn't in the job ma
 const mc = code(read(`${FN}/ai-model-check.js`));
 if (!/requireCronOrInternal\(event\)/.test(mc)) fail("ai-model-check isn't guarded for its schedule (requireCronOrInternal)");
 if (!/withCheckin\("ai-model-check"/.test(mc)) fail("ai-model-check doesn't check in (a run that never happens reads as fine)");
-if (!/AL\.monthToDate\(\)/.test(mc) || !/AL\.judgeBudget\(month, process\.env\.AI_MONTHLY_BUDGET_USD\)/.test(mc)) fail("ai-model-check doesn't read the month to date against AI_MONTHLY_BUDGET_USD");
+if (!/AL\.monthToDate\(\)/.test(mc) || !/AL\.judgeBudget\(month, AL\.budgetOf\(process\.env\)\)/.test(mc)) fail("ai-model-check doesn't read the month to date against AI_MONTHLY_BUDGET_USD");
 if (!/error = !first \?/.test(mc)) fail("ai-model-check doesn't make 'no model answered' its error");
 
 // ── self-proving: the real ledger helper ─────────────────────────────────────────────────────────────────────────────────

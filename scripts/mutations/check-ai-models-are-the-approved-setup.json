@@ -1,0 +1,158 @@
+[
+ [
+  "the client tier is pinned to Opus",
+  "sa_aimodels",
+  "client: [\"claude-sonnet-5-5\",",
+  "client: [\"claude-opus-5-5\","
+ ],
+ [
+  "titles/meta go back to Opus first",
+  "sa_aimodels",
+  "const TITLE_META = TIERS.client;",
+  "const TITLE_META = [\"claude-opus-5-5\", \"claude-sonnet-4-6\"];"
+ ],
+ [
+  "client-facing words move to Haiku",
+  "sa_aimodels",
+  "client: [\"claude-sonnet-5-5\",",
+  "client: [\"claude-haiku-5-5\","
+ ],
+ [
+  "a 5.x model is sent temperature",
+  "sa_aimodels",
+  "const refusesTemperature = (model) => /^claude-(sonnet|haiku|opus)-5/.test(String(model || \"\"));",
+  "const refusesTemperature = (model) => false;"
+ ],
+ [
+  "Sonnet 5.5 is sent thinking disabled (a 400)",
+  "sa_aimodels",
+  "{ type: \"between_tools\" }",
+  "{ type: \"disabled\" }"
+ ],
+ [
+  "Haiku 5.5 thinks by default again",
+  "sa_aimodels",
+  "if (/^claude-haiku-5-5/.test(m)) return { type: \"disabled\" };",
+  ""
+ ],
+ [
+  "an empty answer is shipped instead of moving on",
+  "sa_aimodels",
+  "if (!text.trim()) {",
+  "if (false) {"
+ ],
+ [
+  "an empty answer is not a failed ledger row",
+  "sa_aimodels",
+  "error: `empty answer (stop_reason",
+  "error: `answer (stop_reason"
+ ],
+ [
+  "the temperature-refusal retry is gone",
+  "sa_aimodels",
+  "if (body.temperature != null && /temperature/i.test(t0)",
+  "if (false && /temperature/i.test(t0)"
+ ],
+ [
+  "a refused thinking shape is not retried",
+  "sa_aimodels",
+  "if (body.thinking && /thinking/i.test(t0)) {",
+  "if (false) {"
+ ],
+ [
+  "a missing model no longer moves to the next",
+  "sa_aimodels",
+  "if (!last && (r.status === 404 || r.status === 400)) continue;",
+  ""
+ ],
+ [
+  "a prefill is added to the request",
+  "sa_aimodels",
+  "    messages,\n  };\n}",
+  "    messages: [...messages, { role: \"assistant\", content: \"{\" }],\n  };\n}"
+ ],
+ [
+  "an internal job is switched to Haiku before its test",
+  "sa_aimodels",
+  "internal: [process.env.CLAUDE_MODEL || \"claude-sonnet-4-6\"],",
+  "internal: [\"claude-haiku-5-5\"],"
+ ],
+ [
+  "no model behind Haiku",
+  "sa_aimodels",
+  "simple: [\"claude-haiku-5-5\", process.env.CLAUDE_MODEL || \"claude-sonnet-4-6\"],",
+  "simple: [\"claude-haiku-5-5\"],"
+ ],
+ [
+  "the photo look leaves the simple tier",
+  "sa_photolook",
+  "AM.ladderOf(\"simple\")",
+  "AM.ladderOf(\"client\")"
+ ],
+ [
+  "the attributes list leaves the simple tier",
+  "sa_flowexec",
+  "{ maxTokens: 900, tier: \"simple\" }",
+  "{ maxTokens: 900 }"
+ ],
+ [
+  "a client-facing job (GBP description) goes to Haiku",
+  "sa_flowexec",
+  "{ maxTokens: 320 }",
+  "{ maxTokens: 320, tier: \"simple\" }"
+ ],
+ [
+  "the Brain hardcodes a model",
+  "sa_brain",
+  "require(\"./_ai-models\").BRAIN_MODEL();",
+  "\"claude-sonnet-5-5\";"
+ ],
+ [
+  "the daily ping asks two models",
+  "sa_modelcheck",
+  "for (const model of [AM.CHEAPEST]) {",
+  "for (const model of [AM.CHEAPEST, \"claude-sonnet-4-6\"]) {"
+ ],
+ [
+  "the budget default is no longer $10",
+  "sa_ledger",
+  "const DEFAULT_BUDGET_USD = 10;",
+  "const DEFAULT_BUDGET_USD = 50;"
+ ],
+ [
+  "Sonnet 5.5 is priced like Sonnet 4.6",
+  "sa_ledger",
+  "\"claude-sonnet-5-5\": [2, 10]",
+  "\"claude-sonnet-5-5\": [3, 15]"
+ ],
+ [
+  "Haiku 5.5 is priced at nothing",
+  "sa_ledger",
+  "\"claude-haiku-5-5\": [0.1, 0.5]",
+  "\"claude-haiku-5-5\": [0, 0]"
+ ],
+ [
+  "a job calls the API around the helper",
+  "sa_mature",
+  "const AM = require(\"./_ai-models\");",
+  "const AM = require(\"./_ai-models\"); void \"https://api.anthropic.com/v1/messages\";"
+ ],
+ [
+  "a file names an Opus model",
+  "sa_blogchain",
+  "const AM = require(\"./_ai-models\");",
+  "const AM = require(\"./_ai-models\"); const _o = \"claude-opus-5-5\";"
+ ],
+ [
+  "a file hardcodes Haiku",
+  "sa_titlemeta",
+  "const SC = require(\"../../shared/site-change.js\");",
+  "const SC = require(\"../../shared/site-change.js\"); const _h = \"claude-haiku-5-5\";"
+ ],
+ [
+  "a file calls OpenAI",
+  "sa_titlemeta",
+  "const SC = require(\"../../shared/site-change.js\");",
+  "const SC = require(\"../../shared/site-change.js\"); const _p = \"api.openai.com\";"
+ ]
+]

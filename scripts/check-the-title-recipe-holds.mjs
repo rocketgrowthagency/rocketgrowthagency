@@ -33,7 +33,7 @@ const deps = (o = {}) => {
   const seen = { prompt: "", models: null };
   return { seen, page: async () => o.html ?? PAGE, gsc: async () => (o.gsc === undefined ? [{ query: "rocket growth", clicks: 1, impressions: 41, position: 18.8 }, { query: "local seo culver city", clicks: 2, impressions: 30, position: 9 }] : o.gsc),
     ownPrices: () => o.prices ?? ["$625", "$1,250"], competitors: async () => o.comp ?? { titles: [], why: "SerpAPI has 0 searches left this month" }, services: () => "local SEO",
-    ai: async (sys, user, opt) => { seen.prompt = user; seen.models = opt.models; if (opt.info) { opt.info.model = o.model || "claude-opus-5-5"; opt.info.fell_back = !!o.fellBack; } return o.text ?? `Here you go:\n${JSON.stringify({ options: o.options || OPTIONS })}`; } };
+    ai: async (sys, user, opt) => { seen.prompt = user; seen.models = opt.models; if (opt.info) { opt.info.model = o.model || "claude-sonnet-5-5"; opt.info.fell_back = !!o.fellBack; } return o.text ?? `Here you go:\n${JSON.stringify({ options: o.options || OPTIONS })}`; } };
 };
 const run = async (client, o = {}) => { const d = deps(o); const r = await TM.draftTitleMeta({ client, tasks: {}, data: o.data || {}, plan: o.plan || PLAN, d }); return { r, d }; };
 
@@ -45,7 +45,7 @@ const run = async (client, o = {}) => { const d = deps(o); const r = await TM.dr
   const o2 = rec.options[1], o3 = rec.options[2];
   if (o2.ok || !o2.checks.some((c) => c.id === "claims" && !c.ok) || !o2.checks.some((c) => c.id === "facts" && !c.ok)) fail("RGA: a 24/7 promise passes");
   if (o3.ok || !o3.checks.some((c) => c.id === "keyword_city" && !c.ok) || !o3.checks.some((c) => c.id === "facts" && /\$499/.test(c.what))) fail("RGA: an off-plan keyword or a price that isn't theirs passes");
-  if (JSON.stringify(d.seen.models) !== JSON.stringify(TM.MODELS) || rec.model !== "claude-opus-5-5" || TM.MODELS[0] !== "claude-opus-5-5") fail("the model isn't pinned (newest first) and recorded on the draft");
+  if (JSON.stringify(d.seen.models) !== JSON.stringify(TM.MODELS) || rec.model !== "claude-sonnet-5-5" || TM.MODELS[0] !== "claude-sonnet-5-5") fail("the model isn't pinned (newest first) and recorded on the draft");
   for (const want of ["Its title today: Local SEO & Google Maps Agency | Rocket Growth Agency", "rocket growth · 41 · 1 · 18.8", "Their prices (use only these, exactly): $625; $1,250", "(couldn't check)"]) if (!d.seen.prompt.includes(want)) fail(`RGA: the evidence the model gets is missing "${want}"`);
   if (!rec.evidence.earned.includes("local seo culver city") || rec.evidence.earned.includes("rocket growth")) fail("RGA: a search the page earns clicks for isn't kept (or a brand search counts as one)");
   if (!rec.evidence.notes.some((n) => /SerpAPI has 0 searches left/.test(n))) fail("RGA: competitors that couldn't be checked aren't said to be");
@@ -109,7 +109,8 @@ const run = async (client, o = {}) => { const d = deps(o); const r = await TM.dr
 {
   const FE = read("netlify/functions/flow-execute.js"), AR = read("netlify/functions/_website-autorun.js"), A = read("admin/admin.js"), AD = read("netlify/functions/admin-deliverables.js");
   if (!/"m1\.web\.homepage_meta": async \(\{ client \}\) => \{[\s\S]{0,600}require\("\.\/_title-meta"\)\.draftTitleMeta\(/.test(FE)) fail("step 43 doesn't run the recipe");
-  if (!/if \(k < ladder\.length - 1 && r\.status === 404 && \/not_found_error\/\.test\(t\)\) continue;/.test(FE) || !/if \(info\) \{ info\.model = data\.model \|\| ladder\[k\]; info\.fell_back = k > 0; \}/.test(FE)) fail("the model ladder moves on more than 'model not found', or doesn't record the model");
+  const AMs = read("netlify/functions/_ai-models.js");   // 11-12 (setup D): the ladder lives in _ai-models.callClaude; it moves on for a missing model, a refused setting AND an empty answer
+  if (!/if \(!last && \(r\.status === 404 \|\| r\.status === 400\)\) continue;/.test(AMs) || !/if \(!last\) continue;/.test(AMs) || !/if \(info\) \{ info\.model = got\.model \|\| ladder\[0\]; info\.fell_back = got\.fellBack; \}/.test(FE)) fail("the model ladder doesn't move on (missing model, refused setting, empty answer), or doesn't record the model");
   if (!/!od\.recipe && !!first;/.test(AR)) fail("a recipe with no passing option reads as a check finding (it should redraft once)");
   if (!/function wcRecipeHtml\(id, task\)/.test(A) || !/data-ob-tm-use=/.test(A) || !/wcRecipeHtml\(id, task\) : "";/.test(A)) fail("step 43's card doesn't show how its draft was made, or has no Use this one");
   if (!/\(isPage \|\| id === "m1\.web\.homepage_meta"\) && c && !c\.removes_page \? wcMeasureHtml\(id, task\)/.test(A) || !/Your move · doing worse than before/.test(A)) fail("a live title + description isn't measured, or 'doing worse' isn't RGA's move");
