@@ -1,0 +1,68 @@
+[
+ [
+  "the client login makes an account again",
+  "loginjs",
+  "        shouldCreateUser: false,",
+  "        shouldCreateUser: true,"
+ ],
+ [
+  "the admin invite makes an account again",
+  "adminjs",
+  "          shouldCreateUser: false,",
+  "          shouldCreateUser: true,"
+ ],
+ [
+  "the welcome email makes an account again",
+  "sa_welcome",
+  "      create_user: false,",
+  "      create_user: true,"
+ ],
+ [
+  "the welcome email no longer makes the account on the server",
+  "sa_welcome",
+  "  try { await require(\"./_portal-user\").ensurePortalUser(portalEmail); }",
+  "  try { }"
+ ],
+ [
+  "the admin invite no longer calls the server first",
+  "adminjs",
+  "      const madeRes = await fetch(\"/.netlify/functions/admin-portal-user\", {",
+  "      const madeRes = await fetch(\"/.netlify/functions/admin-nothing\", {"
+ ],
+ [
+  "admin-portal-user loses its staff guard",
+  "sa_portaluserfn",
+  "  const gate = await requireWorkspaceForClient(event, clientId); if (gate.error) return gate.error;",
+  "  const gate = {};"
+ ],
+ [
+  "admin-portal-user makes an account for any email",
+  "sa_portaluserfn",
+  "  if (!row) return json(409, { error: \"This email has no portal access for this client yet.\" });",
+  "  if (false) return json(409, {});"
+ ],
+ [
+  "an existing account reads as a failure",
+  "sa_portaluser",
+  "    return { ok: true, created: false };",
+  "    throw new Error(\"exists\");"
+ ],
+ [
+  "a refused account reads as made",
+  "sa_portaluser",
+  "  throw new Error(`The portal account couldn't be made (",
+  "  return { ok: true, created: true }; throw new Error(`The portal account couldn't be made ("
+ ],
+ [
+  "the login page shows the sign-up refusal as an error",
+  "loginjs",
+  "    if (error && !signupRefused(error)) throw error;",
+  "    if (error) throw error;"
+ ],
+ [
+  "a rate limit reads as no account",
+  "loginjs",
+  "  return code === \"otp_disabled\" || code === \"signup_disabled\" || /signups? not allowed/i.test(String(error.message || \"\"));",
+  "  return true;"
+ ]
+]

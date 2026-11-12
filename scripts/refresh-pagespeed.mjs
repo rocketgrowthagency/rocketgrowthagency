@@ -25,7 +25,8 @@ for (const line of fs.readFileSync(path.resolve(HERE, "..", ".env"), "utf8").spl
   const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/);
   if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
 }
-const { QUO_WEBHOOK_TOKEN: TOKEN, SUPABASE_URL: U, SUPABASE_SERVICE_ROLE_KEY: K } = process.env;
+// 🔒 the secret in the x-internal-secret header, never ?token= or the body (security master 11-11)
+const { INTERNAL_FN_SECRET: TOKEN, SUPABASE_URL: U, SUPABASE_SERVICE_ROLE_KEY: K } = process.env;
 if (!TOKEN || !U || !K) { console.error("✗ credentials unavailable"); process.exit(2); }
 const h = { apikey: K, Authorization: `Bearer ${K}` };
 
@@ -33,8 +34,8 @@ const mark = new Date().toISOString().slice(0, 19);
 let accepted = false;
 try {
   const r = await fetch("https://www.rocketgrowthagency.com/.netlify/functions/refresh-pagespeed-background", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token: TOKEN }), signal: AbortSignal.timeout(40000),
+    method: "POST", headers: { "Content-Type": "application/json", "x-internal-secret": TOKEN },
+    body: JSON.stringify({}), signal: AbortSignal.timeout(40000),
   });
   accepted = r.status === 202 || r.ok;
   if (!accepted) { console.error(`✗ rejected: HTTP ${r.status}`); process.exit(1); }

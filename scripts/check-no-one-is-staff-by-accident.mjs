@@ -6,6 +6,10 @@
 //   HOLE 1 · public.is_internal_user() returned TRUE for any signed-in user with NO profile (`role <> 'client'`, a deny-list), so every
 //            staff-only policy was open to them.
 //   HOLE 2 · profiles_self_insert / profiles_self_update let a user write their OWN role, so anyone could make themselves 'owner'.
+//   HOLE 3 · (11-11 security master S1; Chris ran SECURITY_LOCKDOWN_2_2026-11-11.sql) profiles_guard_role() checked the workspace only on
+//            UPDATE, so a portal client could INSERT its own profile naming RGA's workspace (read off its own clients row) and pass every
+//            admin function guard. Now checked both ways: the guard's INSERT branch must refuse a non-null workspace_id (static), and the
+//            portal client's insert naming RGA's workspace must be refused P0001 (static only: no live probe).
 // (a) STATIC, read-only (Supabase Management API read-only SQL, SUPABASE_ACCESS_TOKEN): is_internal_user() ALLOW-lists staff roles
 //     (an `in (...)` list, no `<>`); the trigger profiles_guard_role_trg is on public.profiles and enabled; no policy for the public,
 //     authenticated or anon roles has USING or WITH CHECK exactly `true`, outside TRUE_POLICY_ALLOW (with a reason) in scripts/lib/staff-rules.mjs.
@@ -53,6 +57,15 @@ const R = await import(pathToFileURL(libPath).href);
   t(R.judgeLive({ counts: { ...live, clients: 4 }, insert: { status: 400, code: "P0001" } }).length > 0, "a client reading 4 client rows passes");
   t(R.judgeLive({ counts: live, insert: { status: 201, code: null } }).length > 0, "a client given role owner passes");
   t(R.judgeLive({ counts: { ...live, lead_intakes: null }, insert: { status: 400, code: "P0001" } }).length > 0, "an unread table passes as zero rows");
+  // HOLE 3 (11-11 security master S1, SECURITY_LOCKDOWN_2_2026-11-11.sql): the insert case
+  const guard1 = "begin\n  if coalesce(auth.role(), '') = 'service_role' then return new; end if;\n  if tg_op = 'INSERT' then\n    if coalesce(new.role, '') not in ('', 'client') and not public.is_internal_user() then\n      raise exception 'x';\n    end if;\n  elsif (new.role is distinct from old.role or new.workspace_id is distinct from old.workspace_id) and not public.is_internal_user() then\n    raise exception 'y';\n  end if;\n  return new;\nend";
+  const guard2 = guard1.replace("if coalesce(new.role, '') not in ('', 'client') and not", "if (coalesce(new.role, '') not in ('', 'client') or new.workspace_id is not null) and not");
+  t(R.judgeGuardFn(guard1).length > 0, "the first lockdown's guard (role only on INSERT, the 11-11 HOLE 3) passes");
+  t(R.judgeGuardFn(guard2).length === 0, "the second lockdown's guard (workspace refused on INSERT) fails");
+  t(R.judgeGuardFn("").length > 0, "a missing profiles_guard_role() passes");
+  t(R.judgeGuardFn(guard2.replace("raise exception 'x';", "null;")).length > 0, "an INSERT branch that never refuses passes");
+  t(R.judgeGuardFn(guard2.replace("and not public.is_internal_user()", "")).length > 0, "an INSERT branch that can't tell staff from a client passes");
+  t(R.judgeGuardFn(guard2.replace(/tg_op = 'INSERT'/, "tg_op = 'UPDATE'")).length > 0, "a guard with no INSERT branch passes");
 }
 if (process.env.SCRAPER_COPY_DIR) { console.log("✅ self-test held (mutation copy: the live database is not read)"); process.exit(0); }
 
@@ -78,6 +91,9 @@ const trgProblems = R.judgeTrigger(trg);
 F.push(...trgProblems);
 const pols = await sql("select schemaname, tablename, policyname, roles::text as roles, cmd, qual, with_check from pg_policies where qual = 'true' or with_check = 'true'");
 F.push(...R.judgePolicies(pols));
+const gfn = await sql("select pg_get_functiondef(p.oid) as def from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'profiles_guard_role'");
+const guardProblems = R.judgeGuardFn((gfn[0] || {}).def);
+F.push(...guardProblems);
 
 // ── (b) live, as the portal client ─────────────────────────────────────────────────────────────────────────────────────
 const EMAIL = "rocketgrowthagencyadmin@gmail.com";
@@ -116,7 +132,9 @@ else if (!trgProblems.length) {
     }
   } catch (e) { idk(`the role probe didn't answer: ${String(e.message).slice(0, 100)}`); }
 } else insert = { status: 0, code: "skipped: the guard trigger is missing, so the probe would make the client owner" };
+// HOLE 3 (the insert case) is checked STATICALLY above (judgeGuardFn on profiles_guard_role()'s own text): no live probe ever tries to give a
+// client RGA's workspace (Chris, 11-11).
 F.push(...R.judgeLive({ counts, insert }));
 
 if (F.length) { console.error(`🔴 someone can be staff by accident:\n${F.map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
-console.log(`✅ nobody is staff by accident: is_internal_user() allow-lists staff roles, profiles_guard_role_trg is on profiles, no public-role policy is \`true\`; the portal client reads 0 staff rows and ${counts.clients} client row, and its ask for role 'owner' was refused (P0001)`);
+console.log(`✅ nobody is staff by accident: is_internal_user() allow-lists staff roles, profiles_guard_role_trg is on profiles, no public-role policy is \`true\`; the portal client reads 0 staff rows and ${counts.clients} client row, and its ask for role 'owner' was refused (P0001); profiles_guard_role() refuses a workspace on insert (read from its own text, no probe)`);
