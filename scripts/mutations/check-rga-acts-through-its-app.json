@@ -21,13 +21,6 @@
   1
  ],
  [
-  "no fallback for clients without the app",
-  "ghidentity",
-  "    const token = process.env.GITHUB_ADMIN_TOKEN || \"\";",
-  "    const token = \"\";",
-  1
- ],
- [
   "any token counts as write",
   "ghaccess",
   "const canWrite = (token, p) => isAppToken(token) || !!(p && (p.push || p.maintain || p.admin));",
@@ -54,5 +47,29 @@
   "      const { token, me } = await require(\"./_github-identity\").forRepo(acc.repo);",
   "      const token = process.env.GITHUB_ADMIN_TOKEN || \"\", me = { ok: true };",
   1
+ ],
+ [
+  "the RGA Admin key comes back as the fallback",
+  "ghidentity",
+  "    v = { token: \"\", me: reach === \"no\" ?",
+  "    v = { token: process.env.GITHUB_ADMIN_TOKEN || \"\", me: reach === \"no\" ?"
+ ],
+ [
+  "GitHub not answering reads as not installed",
+  "ghidentity",
+  "me: reach === \"no\" ? { ok: false, state: \"app_not_installed\", login: null } : { ok: false, state: \"github_error\", login: null }",
+  "me: { ok: false, state: \"app_not_installed\", login: null }"
+ ],
+ [
+  "the connection badge reads the RGA Admin key again",
+  "ghconnectionfn",
+  "  const token = ident.token, me = ident.me;",
+  "  const token = ident.token || process.env.GITHUB_ADMIN_TOKEN || \"\", me = ident.me;"
+ ],
+ [
+  "the publish check asks for the retired key",
+  "publishblocked",
+  "    else if (me.state === \"app_not_installed\") add(\"connection\", false,",
+  "    else if (false) add(\"connection\", false,"
  ]
 ]

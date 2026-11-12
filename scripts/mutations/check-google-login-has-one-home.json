@@ -56,8 +56,8 @@
 [
 "the home's export goes missing",
 "googletoken",
-"module.exports = { googleAccessToken, refreshGrant, googleKeyToToken, auditToken, rgaToken, rgaTokenWithDetail };",
-"module.exports = { googleAccessToken, googleKeyToToken, auditToken, rgaToken, rgaTokenWithDetail };"
+"module.exports = { googleAccessToken, refreshGrant, googleKeyToToken, auditToken, rgaToken, rgaTokenWithDetail, tokenScopes };",
+"module.exports = { googleAccessToken, googleKeyToToken, auditToken, rgaToken, rgaTokenWithDetail, tokenScopes };"
 ],
 [
 "the audits lose Google's answer",
@@ -86,8 +86,8 @@
 [
 "RGA's long words lose the description",
 "googletoken",
-"`Token refresh failed: ${j.error || r.status} ${j.error_description || \"\"}`));",
-"`Token refresh failed: ${j.error || r.status}`));"
+"`Token refresh failed: ${j.error || r.status} ${j.error_description || \"\"}`), fetchFn);",
+"`Token refresh failed: ${j.error || r.status}`), fetchFn);"
 ],
 [
 "the client helper stops saying reconnect",

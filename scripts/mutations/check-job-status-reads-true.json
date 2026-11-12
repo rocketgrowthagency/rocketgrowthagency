@@ -2,7 +2,7 @@
  [
   "only OK is healthy tone broken: unknown paints green",
   "jobstatus",
-  "const toneOf = (state) => (state === \"ok\" ? \"ok\" : state === \"off\" ? \"off\" : PROBLEM.has(state) ? \"you\" : \"unk\");",
+  "const toneOf = (state) => (state === \"ok\" ? \"ok\" : state === \"off\" ? \"off\" : state === \"over\" ? \"bad\" : state === \"warn\" ? \"care\" : PROBLEM.has(state) ? \"you\" : \"unk\");",
   "const toneOf = (state) => (PROBLEM.has(state) ? \"you\" : \"ok\");"
  ],
  [
@@ -212,7 +212,7 @@
  [
   "the card: unknown gets the OK look",
   "admin",
-  "const tone = r.tone === \"ok\" ? \"ok\" : r.tone === \"you\" ? \"you\" : \"unk\";",
+  "const tone = [\"ok\", \"you\", \"bad\", \"care\"].includes(r.tone) ? r.tone : \"unk\";",
   "const tone = r.tone === \"you\" ? \"you\" : \"ok\";"
  ],
  [
@@ -314,8 +314,8 @@
  [
   "the summary counts off as unknown",
   "jobstatus",
-  "unknown: jobs.length - problems - ok - off };",
-  "unknown: jobs.length - problems - ok };"
+  "unknown: jobs.length - problems - ok - off - warn };",
+  "unknown: jobs.length - problems - ok - warn };"
  ],
  [
   "the card counts an off job among the watched",

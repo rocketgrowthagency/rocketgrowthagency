@@ -432,6 +432,14 @@ export const FILES = {
   pagesfromstorage: "scraper:scripts/outreach-pages-play-from-storage.mjs",   // rga_video_address_v1 A (11-8)
   hostcheck: "netlify/functions/_host-check.js",
   ghidentity: "netlify/functions/_github-identity.js",   // rga_github_app_v1 (11-8)
+  // integrations_hardening_v1 (11-11, check-integrations-are-watched-from-the-cloud): the cloud integration checks, the Anthropic meter, the budgets
+  integrationchecks: "netlify/functions/_integration-checks.js",
+  anthropicledger: "netlify/functions/_anthropic-ledger.js",
+  integrationwatchfn: "netlify/functions/integration-watch.js",
+  budgetwatchfn: "netlify/functions/budget-watch.js",
+  netlifyforecastfn: "netlify/functions/_netlify-credit-forecast.js",
+  quokeyfn: "netlify/functions/_quo-key.js",
+  ghconnectionfn: "netlify/functions/admin-github-connection.js",
   offboarding: "netlify/functions/_offboarding.js",   // client_offboarding_v1 (11-8): end of service runs itself
   offboardrun: "netlify/functions/offboarding-run.js",
   offboardconfirm: "netlify/functions/admin-offboarding-confirm.js",

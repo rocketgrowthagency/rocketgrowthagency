@@ -18,7 +18,8 @@ const moved = (w) => { console.error(`⚠️  INDETERMINATE — ${w} moved; re-r
 const code = (s) => s.split("\n").filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join("\n");
 
 // ── who may talk to Google's token address, and why ────────────────────────────────────────────────
-const ENDPOINT = /oauth2\.googleapis\.com\/token|googleapis\.com\/oauth2\/v\d+\/token|accounts\.google\.com\/o\/oauth2\/token/g;
+// (?!info): Google's tokeninfo only READS which permissions a token carries (_google-token.tokenScopes, 11-11); it swaps no key, so it isn't this address
+const ENDPOINT = /oauth2\.googleapis\.com\/token(?!info)|googleapis\.com\/oauth2\/v\d+\/token(?!info)|accounts\.google\.com\/o\/oauth2\/token/g;
 const REFRESH_GRANT = /grant_type["']?\s*[:=,]\s*["']?refresh_token/g;
 const CODE_GRANT = /grant_type["']?\s*[:=,]\s*["']?authorization_code/g;
 const EXCEPTIONS = {

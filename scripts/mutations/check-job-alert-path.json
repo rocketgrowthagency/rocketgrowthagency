@@ -38,8 +38,8 @@
  [
   "the reply is replaced",
   "jobcheckinlib",
-  "    await finishRun(run, fields);\n    return res;",
-  "    await finishRun(run, fields);\n    return { statusCode: 200, body: \"{}\" };"
+  "    await finishRun(run, fields);\n    if (!run.not_set_up) await finishParts(",
+  "    await finishRun(run, fields);\n    return { statusCode: 200, body: \"{}\" };\n    if (!run.not_set_up) await finishParts("
  ],
  [
   "a secret reaches a row",

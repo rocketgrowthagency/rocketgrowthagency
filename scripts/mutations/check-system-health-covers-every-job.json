@@ -216,5 +216,23 @@
   "jobmanifest",
   "{ job: \"flow-cron-daily\", label: \"Daily step runner\", cron: \"0 9 * * *\", ...NET, ...DAILY,\n",
   "{ job: \"flow-cron-daily\", label: \"Daily step runner\", cron: \"0 9 * * *\", ...NET, ...DAILY, unproven: true,\n"
+ ],
+ [
+  "a part drifts from its parent's schedule",
+  "jobmanifest",
+  "{ job: \"google-grant\", part_of: \"integration-watch\", label: \"RGA's Google connection (email + calendar)\", cron: \"25 13 * * *\"",
+  "{ job: \"google-grant\", part_of: \"integration-watch\", label: \"RGA's Google connection (email + calendar)\", cron: \"26 13 * * *\""
+ ],
+ [
+  "a part's parent is nothing anyone schedules",
+  "jobmanifest",
+  "{ job: \"anthropic-spend\", part_of: \"budget-watch\",",
+  "{ job: \"anthropic-spend\", part_of: \"budget-watchx\","
+ ],
+ [
+  "a part its parent never reports",
+  "integrationwatchfn",
+  "    \"quo-key\": () => C.quoKey(),\n",
+  ""
  ]
 ]
