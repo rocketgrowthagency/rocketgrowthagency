@@ -96,7 +96,8 @@ const client = [...defs.values()].filter((d) => d.clientStepNo).sort((a, b) => a
 // "Check what we found", client-steps.json managed.check); Month 1 work (photos, review asks, videos, the Month 1 review) is a line in the Month 1
 // card on Ongoing work with NO number; the Monthly cards print what stepNo gives them.
 const CS = JSON.parse(fs.readFileSync(`${SITE}/data/playbooks/client-steps.json`, "utf8"));
-const PMODE = (() => { const box = { module: { exports: {} } }; new Function("module", "globalThis", fs.readFileSync(`${SITE}/shared/portal-mode.js`, "utf8"))(box.module, {}); return box.module.exports; })();
+// 11-11: a real require, not a sandbox: portal-mode.js reads the Month 1 list from setup-split.js with require (ONE LIST), and a sandbox without it gave every managed step no number
+const PMODE = (await import("node:module")).createRequire(import.meta.url)(`${SITE}/shared/portal-mode.js`);
 const ROLE_WORDS = { check: "a row in managed step 3", card: "an RGA card, no number", setup: "part of a Setup step", step: "a step with no number" };
 const managedRows = (() => {
   const all = [...(CS.month1 || []), ...(CS.month2plus || [])], chk = CS.managed && CS.managed.check;
