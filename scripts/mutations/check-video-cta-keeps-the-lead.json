@@ -1,0 +1,13 @@
+[
+ ["the form reads ?vid= only again", "scriptjs", "const fromUrl = [qs.get(\"vid\"), qs.get(\"lead\")]", "const fromUrl = [qs.get(\"vid\")]", 1],
+ ["the lead is not kept for the visit", "scriptjs", "if (fromUrl) { window.sessionStorage.setItem(KEY, fromUrl); return fromUrl; }", "if (fromUrl) { return fromUrl; }", 1],
+ ["anything typed in the address goes in the form", "scriptjs", "const ok = (v) => /^(rec[A-Za-z0-9]{14}|[a-z0-9][a-z0-9-]{0,119})$/i.test(String(v || \"\"));", "const ok = (v) => !!v;", 1],
+ ["the hidden field is never filled", "scriptjs", "if (leadParam) document.querySelectorAll(", "if (false) document.querySelectorAll(", 1],
+ ["the submit drops the lead", "scriptjs", "vid: form.querySelector(\"[name='vid']\")?.value || leadRef(),", "vid: \"\",", 1],
+ ["the slug is not searched on its own", "fgaintake", "  } else if (vidSlug) {\n    const s = await find(", "  } else if (false) {\n    const s = await find(", 1],
+ ["an Airtable id is not read directly", "fgaintake", "if (/^rec[A-Za-z0-9]{14}$/.test(vidSlug)) {", "if (false) {", 1],
+ ["an unknown slug never falls back", "fgaintake", "  if (!match && (email || businessName)) {", "  if (false) {", 1],
+ ["Status booked comes back", "fgaintake", "      \"Pipeline Stage\": \"audit_submitted\",", "      \"Status\": \"booked\",\n      \"Pipeline Stage\": \"audit_submitted\",", 1],
+ ["delivery is stamped at the request", "fgaintake", "      \"Audit Submitted Date\": today,", "      \"Audit Submitted Date\": today,\n      \"Date FGA Delivered\": today,", 1],
+ ["the follow-ups drop the lead", "outreachgs", "/growth-audit/?ref=day${day}&lead=${leadId}", "/growth-audit/?ref=day${day}", 1]
+]

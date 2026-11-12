@@ -632,4 +632,8 @@ export const FILES = {
   suggestedcall: "netlify/functions/_suggested-call.js",
   // master audit #8 (11-11): one definition per number (check-a-running-month-is-never-compared, check-one-leads-formula)
   sharedmetrics: "shared/metrics.js",
+  // master audit #7 + #15 + #16 (11-11): a signed client reaches the CRM; the video CTA keeps the lead
+  startasclientfn: "netlify/functions/start-as-client.js",
+  leadcrmfn: "netlify/functions/_lead-crm.js",
+  outreachgs: "docs/apps-scripts/gmail-to-airtable.gs",
 };

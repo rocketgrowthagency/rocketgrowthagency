@@ -93,6 +93,19 @@ function checkTree(root, label) {
   }
   if (!SS) { fail("shared/setup-split.js does not exist"); return F; }
 
+  // ── 7b · ONE Month 1 work list (master audit #16, 11-11): shared/portal-mode.js kept its own 4 ids while shared/setup-split.js held 5 (it adds
+  //    m1.tracking.call_setup), and the comment said this gate kept them equal; it never compared them. setup-split.js is the one home; portal-mode
+  //    reads it. Both readers must give the same list, and every id on it must have no managed number.
+  if (PM) {
+    if (/const MONTH1_WORK\s*=\s*\[/.test(modeSrc)) fail("shared/portal-mode.js keeps its own Month 1 work list (the one home is shared/setup-split.js MONTH1_WORK)");
+    const pmList = typeof PM.month1Work === "function" ? PM.month1Work() : PM.MONTH1_WORK;
+    if (JSON.stringify(pmList || null) !== JSON.stringify(SS.MONTH1_WORK)) fail(`the two Month 1 work lists differ: portal-mode reads ${JSON.stringify(pmList || null)}, setup-split holds ${JSON.stringify(SS.MONTH1_WORK)}`);
+    for (const id of SS.MONTH1_WORK || []) {
+      const s = (play.month1 || []).find((x) => x.id === id);
+      if (s && PM.stepNo(s, "managed") !== null) fail(`${id} is Month 1 work but reads managed step ${PM.stepNo(s, "managed")} (Month 1 work has no number)`);
+    }
+  }
+
   // ── pure fixtures: Getting started ──
   const covers = SS.CHECK_COVERS, T = (over = {}) => ({ ...Object.fromEntries(covers.map((id) => [id, { status: "done" }])), "m1.kickoff.call": { status: "done" }, "m1.access.website": { status: "done" }, ...over });
   const gs = (tasks, extra = {}) => SS.gettingStarted({ tasks, kickoffInvite: extra.invite, ...(extra.noSite ? { website: "" } : { website: "https://acme.example" }) });

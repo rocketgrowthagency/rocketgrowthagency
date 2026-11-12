@@ -382,6 +382,9 @@ function buildHub() {
     .replace(/(<meta property="og:image" content=")[^"]*/, `$1${OG_IMAGE}`).replace(/(<meta name="twitter:image" content=")[^"]*/, `$1${OG_IMAGE}`);
   // strip stale plumber schema + plumber CTA band from the hub too
   html = html.replace(/\s*<script type="application\/ld\+json">[\s\S]*?<\/script>/g, '');
+  // ...and the hub's own (master audit #15, 11-11: it had none): a CollectionPage with the same publisher block as the other pages
+  html = html.replace('</head>', `  <script type="application/ld+json">\n${JSON.stringify({ '@context': 'https://schema.org', '@type': 'CollectionPage', name: title, description: desc, url: canonical,
+    publisher: { '@type': 'Organization', name: 'Rocket Growth Agency', logo: { '@type': 'ImageObject', url: 'https://www.rocketgrowthagency.com/images/assets/rga-logo.svg' } } }, null, 2)}\n  </script>\n</head>`);
   html = html.replace(/<section class="cta-band">[\s\S]*?<\/section>/,
     '<section class="cta-band"><div class="cta-band-inner"><h2>Find your city, then find your top 3.</h2><a class="btn-light" href="/free-growth-audit/">Get Your Free Growth Audit</a></div></section>');
   fs.mkdirSync(dir, { recursive: true });

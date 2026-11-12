@@ -131,6 +131,9 @@ const mS = tpl.indexOf('<main'), mSe = tpl.indexOf('>', mS) + 1, mE = tpl.lastIn
 let html = tpl.slice(0, mSe) + MAIN + tpl.slice(mE);
 // the trade template's schema is about plumbers, not this page (website_audit_v1_v2)
 html = html.replace(/\s*<script type="application\/ld\+json">[\s\S]*?<\/script>/g, '');
+// ...and this page's own (master audit #15, 11-11: it had none): a WebPage with the same publisher block as the other pages
+html = html.replace('</head>', `  <script type="application/ld+json">\n${JSON.stringify({ '@context': 'https://schema.org', '@type': 'WebPage', name: title, description: desc, url: canonical,
+  publisher: { '@type': 'Organization', name: 'Rocket Growth Agency', logo: { '@type': 'ImageObject', url: 'https://www.rocketgrowthagency.com/images/assets/rga-logo.svg' } } }, null, 2)}\n  </script>\n</head>`);
 html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(title)}</title>`)
   .replace(/<meta name="description" content="[^"]*"/, `<meta name="description" content="${esc(desc)}"`)
   .replace(/<link rel="canonical" href="[^"]*"/, `<link rel="canonical" href="${canonical}"`)

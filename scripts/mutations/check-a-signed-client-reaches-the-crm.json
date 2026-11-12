@@ -1,0 +1,20 @@
+[
+ ["start-as-client forgets the managed portal", "startasclientfn", "client_portal_stage: \"stage_1_contract\", portal_mode: require(\"../../shared/portal-mode.js\").DEFAULT_MODE, lead_ref: leadRef };", "client_portal_stage: \"stage_1_contract\", lead_ref: leadRef };", 1],
+ ["start-as-client forgets the lead", "startasclientfn", "client_portal_stage: \"stage_1_contract\", portal_mode: require(\"../../shared/portal-mode.js\").DEFAULT_MODE, lead_ref: leadRef };", "client_portal_stage: \"stage_1_contract\", portal_mode: require(\"../../shared/portal-mode.js\").DEFAULT_MODE };", 1],
+ ["a press with no lead id is let through", "startasclientfn", "if (!require(\"./_lead-crm\").isLeadId(leadRef)) return", "if (false) return", 1],
+ ["the lead_linked row is not written", "startasclientfn", "kind: \"lead_linked\", occurred_at", "kind: \"lead_seen\", occurred_at", 1],
+ ["a missing column stops the start", "startasclientfn", "if (!/PGRST204|lead_ref/.test(String(e.message))) throw e;", "throw e;", 1],
+ ["the CRM write goes fire-and-forget", "contractsignfn", "const crm = await tellTheCrm(contract, signedAt);", "const crm = { ok: true }; setTimeout(() => tellTheCrm(contract, signedAt), 5);", 1],
+ ["a refusal is not written to the timeline", "contractsignfn", "kind: \"crm_update_failed\"", "kind: \"crm_update_noted\"", 1],
+ ["a refusal is not said in the log", "contractsignfn", "if (!crm.ok && !crm.skipped) console.error(`[contract-sign] the CRM was not told this client signed: ${crm.error}`);", "void crm;", 1],
+ ["the old lead_intakes lookup comes back", "contractsignfn", "  let leadRef = null;\n  try {\n    const link = await CRM.leadRefFor(contract.client_id, supa);", "  let leadRef = null;\n  try {\n    await supa(`/lead_intakes?client_id=eq.${contract.client_id}&source=eq.fga&select=raw_payload&limit=1`).catch(() => {});\n    const link = await CRM.leadRefFor(contract.client_id, supa);", 1],
+ ["a wrong Funnel State option", "leadcrmfn", "\"Funnel State\": \"converted_to_client\",", "\"Funnel State\": \"converted\",", 1],
+ ["a field that does not exist", "leadcrmfn", "\"Date Client Signed\": day,", "\"Date Signed\": day,", 1],
+ ["a full time in a date field", "leadcrmfn", "\"Date Client Signed\": day,", "\"Date Client Signed\": signedAt,", 1],
+ ["typecast comes back", "leadcrmfn", "{ method: \"PATCH\", headers: H, body: JSON.stringify({ fields }) }", "{ method: \"PATCH\", headers: H, body: JSON.stringify({ fields, typecast: true }) }", 1],
+ ["a refusal on the update is read as success", "leadcrmfn", "  airtableOk(pr, pd);\n", "  void pd;\n", 1],
+ ["the timeline link is not read", "leadcrmfn", "kind=eq.lead_linked", "kind=eq.lead_link", 1],
+ ["the audit request is not marked converted", "leadcrmfn", "fields: { Status: \"converted\", \"Converted Client ID\": clientId }", "fields: { Status: \"converted\" }", 1],
+ ["a lead is guessed when there is no link", "contractsignfn", "    if (!leadRef) { console.log(", "    if (!leadRef) { await CRM.markLeadSigned({ leadRef: \"recGUESSEDbyname1\", clientId: contract.client_id, signedAt }).catch(() => null); console.log(", 1],
+ ["the sales path writes its own mode again", "startasclientfn", "client_portal_stage: \"stage_1_contract\", portal_mode: require(\"../../shared/portal-mode.js\").DEFAULT_MODE, lead_ref: leadRef };", "client_portal_stage: \"stage_1_contract\", portal_mode: null, lead_ref: leadRef };", 1]
+]

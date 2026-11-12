@@ -99,13 +99,17 @@ for (const f of readers) if (f !== "portal/portal.js" && !SURFACES.includes(f)) 
 for (const f of SURFACES) { const t = code(read(f)); if (!/shared\/portal-mode(-words)?\.js|rgaPortalMode/.test(t) && !(f.endsWith("portal-open-moves.js") && /require\(".\/_portal-mode"\)/.test(t))) fail(`${f} no longer asks the portal-mode helper for a step number`); }
 // WHO MAY WRITE portal_mode: the admin switch's function, and admin's two new-client paths (which write only "managed"). Reading it is free.
 const WRITE = /\bportal_mode\s*(?::|=(?!=))\s*([^,;)\n}]*)/g;   // a value assigned to portal_mode (a select list or a read has none)
-const SETTERS = ["netlify/functions/admin-client-portal-mode.js", "admin/admin.js"];
+// 🔒 master audit #16 (11-11): start-as-client (the Audit walkthrough console) is the third new-client path, and it writes only "managed" too
+const SETTERS = ["netlify/functions/admin-client-portal-mode.js", "admin/admin.js", "netlify/functions/start-as-client.js"];
 const setters = files.filter((f) => !["portal/portal.js", ...HELPERS].includes(f) && [...code(read(f)).matchAll(WRITE)].some((m) => m[1].trim()));
 for (const f of setters) if (!SETTERS.includes(f)) fail(`${f} can set a client's portal_mode: only ${SETTERS[0]} and admin's new-client paths may`);
 { const t = code(read("admin/admin.js"));
   for (const m of t.matchAll(WRITE)) { const v = m[1].trim(); if (v && v !== '"managed"' && v !== "data.mode") fail(`admin.js writes portal_mode as ${JSON.stringify(v)}; a new client gets "managed" and the switch saves what the server read back`); }
   if (!/insert\(\{ portal_mode: "managed", \.\.\.payload \}\)/.test(t)) fail("admin.js createClient must give a new client portal_mode managed (and let a named mode win)");
   if (!/portal_mode: "managed",\s*\/\/ managed_admin_v1/.test(t)) fail("admin.js promoteLeadToClient must give a promoted lead portal_mode managed"); }
+{ const t = code(read("netlify/functions/start-as-client.js"));
+  for (const m of t.matchAll(WRITE)) { const v = m[1].trim(); if (v && v !== '"managed"' && !/\.DEFAULT_MODE$/.test(v)) fail(`start-as-client.js writes portal_mode as ${JSON.stringify(v)}; a client started from a lead gets the shared default (managed) only`); }
+  if (!/portal_mode: require\("\.\.\/\.\.\/shared\/portal-mode\.js"\)\.DEFAULT_MODE/.test(t)) fail("start-as-client.js must give a client started from the Audit walkthrough console the ONE shared default mode (shared/portal-mode.js DEFAULT_MODE, master audit #16)"); }
 
 // the column changes nothing on its own
 if (!/add column if not exists portal_mode text;/.test(sql) || /portal_mode text[^;]*default/i.test(sql)) fail("supabase/client_portal_mode.sql must add portal_mode with no default");
