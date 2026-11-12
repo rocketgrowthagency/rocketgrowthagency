@@ -93,6 +93,9 @@ function world({ clients, records, left = 100, failStart = {}, patchLoses = 0, l
     record: async (o) => { log.records.push(o); return { activity: true }; },
     supa: async (p, init = {}) => {
       if (p.startsWith("/clients?")) return clients;
+      // today's database without ONBOARDING_PER_KEY_WRITES_2026-11-11.sql: the per-key function is missing, so the whole-record write runs
+      // (the per-key path itself is held by check-onboarding-writes-are-per-key)
+      if (p.startsWith("/rpc/")) throw new Error('Supabase 404: {"code":"PGRST202","message":"Could not find the function"}');
       const q = new URL("https://x" + p), table = q.pathname.slice(1);
       if (table !== "client_onboarding_records") throw new Error(`unfaked ${p}`);
       const cid = (q.searchParams.get("client_id") || "").replace(/^eq\./, ""), rid = (q.searchParams.get("id") || "").replace(/^eq\./, "");

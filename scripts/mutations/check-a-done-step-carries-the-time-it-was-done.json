@@ -62,7 +62,7 @@
  [
   "server: saveTaskState hand-merges again",
   "exec",
-  "      data.tasks[stepId] = mergeTaskState(data.tasks[stepId], patch);\n      const same =",
-  "      data.tasks[stepId] = { ...(data.tasks[stepId] || {}), ...patch };\n      const same ="
+  "    data.tasks[stepId] = mergeTaskState(data.tasks[stepId], patch);\n    const same =",
+  "    data.tasks[stepId] = { ...(data.tasks[stepId] || {}), ...patch };\n    const same ="
  ]
 ]
