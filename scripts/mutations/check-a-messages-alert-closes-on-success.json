@@ -1,0 +1,100 @@
+[
+ [
+  "a later success no longer has to come AFTER the failure",
+  "messagesalerts",
+  "if (!(t(s.created_at) > t(a.created_at))) continue;",
+  "",
+  1
+ ],
+ [
+  "a charge for any invoice closes the declined one",
+  "messagesalerts",
+  "match: (f, s) => sameInvoice(f, s), note: \"The charge went through\"",
+  "match: () => true, note: \"The charge went through\"",
+  1
+ ],
+ [
+  "an invoice email counts as the receipt",
+  "messagesalerts",
+  "match: (f, s) => s.payload && s.payload.kind === \"receipt\" && sameInvoice(f, s)",
+  "match: (f, s) => sameInvoice(f, s)",
+  1
+ ],
+ [
+  "a Google reconnect closes the manager alert even when the add failed again",
+  "messagesalerts",
+  "match: (f, s) => !!(s.payload && s.payload.gbp_manager_auto_added === true)",
+  "match: () => true",
+  1
+ ],
+ [
+  "Dismiss is no longer read",
+  "messagesalerts",
+  "if (p.dismissed && p.dismissed.at) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "a producer's retired alert vanishes again instead of closing with its note",
+  "adminmessagesfn",
+  "|| RETIRED_AS_CLEARED.test(String(a.payload?.kind || \"\")));",
+  ");",
+  1
+ ],
+ [
+  "the count includes the closed alerts again",
+  "adminmessagesfn",
+  "const liveAlerts = open.map(shape);",
+  "const liveAlerts = recent.map(shape);",
+  1
+ ],
+ [
+  "closed alerts are not returned, so they vanish with no note",
+  "adminmessagesfn",
+  "closed_alerts: closedAlerts,",
+  "closed_alerts: [],",
+  1
+ ],
+ [
+  "Dismiss can close another workspace's alert",
+  "adminmessagesfn",
+  "if (!row || !byId[row.client_id]) return json(404, { error: \"No such alert\" });",
+  "if (!row) return json(404, { error: \"No such alert\" });",
+  1
+ ],
+ [
+  "Dismiss can close a client's message",
+  "adminmessagesfn",
+  "if (!(row.kind === \"rga_alert\" || isFailureKind(row.kind))) return json(400, { error: \"That row is not an alert\" });",
+  "",
+  1
+ ],
+ [
+  "Dismiss replaces the alert's payload instead of adding to it",
+  "adminmessagesfn",
+  "body: JSON.stringify({ payload: { ...(row.payload || {}), dismissed } }) });",
+  "body: JSON.stringify({ payload: { dismissed } }) });",
+  1
+ ],
+ [
+  "the Dismiss button loses its one word",
+  "adminjs",
+  "data-alert-dismiss=\"${escapeAttribute(a.id)}\">Dismiss</button>",
+  "data-alert-dismiss=\"${escapeAttribute(a.id)}\">Dismiss this alert</button>",
+  1
+ ],
+ [
+  "the closed alerts are not drawn",
+  "adminjs",
+  "const closedAlerts = data.closed_alerts || [];",
+  "const closedAlerts = [];",
+  1
+ ],
+ [
+  "the closed alert style leaves the state tokens",
+  "admincss",
+  ".am-alert.is-closed{border-left-color:var(--state-ok,#0c5132);}",
+  ".am-alert.is-closed{border-left-color:#15803d;}",
+  1
+ ]
+]

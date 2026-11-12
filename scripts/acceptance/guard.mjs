@@ -27,7 +27,7 @@ export const READ_ONLY_FN_POSTS = {
   "portal-cancel": (b) => onlyKeys(["client_id", "action"])(b) && b.action === "read",
   // portal-quarter-answer.js — kind "pending" only reads what waits on the client; "win"/"profile" save an answer.
   "portal-quarter-answer": (b) => onlyKeys(["client_id", "kind", "month"])(b) && b.kind === "pending",
-  // netlify/functions/admin-messages.js — every branch only GETs client_activity/clients; `scope` picks the view.
+  // netlify/functions/admin-messages.js — `scope` only GETs client_activity/clients; `action: "dismiss"` PATCHes one alert (11-11), so it stays blocked.
   "admin-messages": onlyKeys(["scope"]),
   // netlify/functions/client-facts.js — POST {client_id} returns the card; it WRITES only when the body
   // carries answers / ask / answer_question / confirm.

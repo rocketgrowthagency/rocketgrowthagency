@@ -99,7 +99,9 @@ async function checkTree(root, label) {
       if (!(same(grid.m1, grid.mon) && same(grid.mon, grid.qtr))) fail(`Month 1 review / monthly / quarterly are not ONE purple (${grid.m1} | ${grid.mon} | ${grid.qtr})`);
       const distinct = new Set([grid.walk, grid.kick, grid.m1, grid.blockedC, grid.busyC]);
       if (distinct.size !== 5) fail("walkthrough blue, kickoff green, purple, blocked amber and busy grey are not five distinct colours");
-      if (!/rgb\(47, 91, 234\)/.test(grid.walk || "")) fail(`audit walkthrough is not the mockup blue (${grid.walk})`);
+      // 11-11 (design master item 7): the Schedule blues/ambers within deltaE 2 of a state token ARE the token now. Walkthrough blue
+      // #2f5bea → --state-other-edge #2457e6 (deltaE 1.53), the warn card #fff4e6 → --state-you-bg #fff1e3 (1.48): visually the same colour.
+      if (!/rgb\(36, 87, 230\)/.test(grid.walk || "")) fail(`audit walkthrough is not the system blue --state-other-edge (${grid.walk})`);
       if (!/rgb\(18, 128, 92\)/.test(grid.kick || "")) fail(`kickoff is not the mockup green (${grid.kick})`);
       if (!/rgb\(109, 75, 216\)/.test(grid.m1 || "")) fail(`purple is not the mockup purple (${grid.m1})`);
       if (!/rgb\(180, 83, 9\)/.test(grid.blockedC || "")) fail(`blocked is not the mockup amber (${grid.blockedC})`);
@@ -141,7 +143,7 @@ async function checkTree(root, label) {
         quiet: [...h.querySelectorAll(".sch-stat")].map((e) => e.textContent).join(" "), quietIsBanner: !!h.querySelector(".sch-banner"), showing: !!h.querySelector("[data-sch-owner]"), zone: /Pacific time/.test(h.innerText) }; });
     if (!/admin-button(\s|$)/.test(ctl.block || "") || !/admin-button-secondary/.test(ctl.hours || "")) fail(`Block time / Set your hours do not use the admin button classes (${ctl.block} | ${ctl.hours})`);
     if (!/admin-button/.test(ctl.grant || "")) fail("the Google banner's button is not an admin button inside the amber warn card");
-    if (!/rgb\(255, 244, 230\)/.test(ctl.warnBg || "")) fail(`the Google banner is not the mockup's amber warn card (${ctl.warnBg})`);
+    if (!/rgb\(255, 241, 227\)/.test(ctl.warnBg || "")) fail(`the Google banner is not the amber warn card, --state-you-bg (${ctl.warnBg})`);
     if (!/Texts are off/.test(ctl.quiet || "")) fail('"Texts are off" is not a status line');
     if (ctl.showing) fail('"Showing" appears with one staff row');
     if (!ctl.zone) fail("times do not say Pacific time");

@@ -1,0 +1,51 @@
+[
+ [
+  "the 09-03 shape comes back: the call-window comment loses its opener, so its tail is orphaned text before #callsView",
+  "admincss",
+  "/* 🕐 Call-window banner on the call card (2026-09-03). Colour carries URGENCY, not decoration:",
+  "🕐 Call-window banner on the call card (2026-09-03). Colour carries URGENCY, not decoration:",
+  1
+ ],
+ [
+  "a comment is pasted inside another comment (the nested opener of 09-03)",
+  "admincss",
+  "   Scoped under #callsView and using the mockup's own class names, NOT admin-card/admin-table —",
+  "   Scoped under /* #callsView and using the mockup's own class names, NOT admin-card/admin-table —",
+  1
+ ],
+ [
+  "a note is left open in the portal, so it runs to the next comment's close and swallows the rules between",
+  "portalcss",
+  ":root { --portal-ground: #f6f8fc;",
+  "/* a note left open\n:root { --portal-ground: #f6f8fc;",
+  1
+ ],
+ [
+  "a stray apostrophe in a portal selector opens a string that runs into the newline",
+  "portalcss",
+  ".pm-pill.ok { background:var(--state-ok-bg,#e3f1df);",
+  ".pm-pill.ok's { background:var(--state-ok-bg,#e3f1df);",
+  1
+ ],
+ [
+  "a selector Chrome refuses with no comment involved (only the browser half can see it)",
+  "admincss",
+  "#callsView{ --cc-brand:#2457e6;",
+  "#callsView!{ --cc-brand:#2457e6;",
+  1
+ ],
+ [
+  "a closing brace goes missing, so every rule after it is swallowed into one block",
+  "admincss",
+  ".am-alert-t{margin:0 0 4px;font-weight:650;}",
+  ".am-alert-t{margin:0 0 4px;font-weight:650;",
+  1
+ ],
+ [
+  "a comment close is typed twice in the portal",
+  "portalcss",
+  ":root { --portal-ground: #f6f8fc; --portal-sunken: #fafbfd;",
+  "*/ :root { --portal-ground: #f6f8fc; --portal-sunken: #fafbfd;",
+  1
+ ]
+]

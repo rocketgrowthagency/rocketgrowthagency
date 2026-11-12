@@ -97,7 +97,8 @@ async function checkTree(root, label) {
       if (!p) { fail("Go to date opens no popover"); return; }
       if (p.head !== "November 2026") fail(`the popover header is "${p.head}", expected November 2026`);
       if (p.cells !== 42 || p.arrows !== 2) fail(`the popover has ${p.cells} day cells and ${p.arrows} month arrows, expected 42 and 2`);
-      if (p.todayTxt !== "10" || !/rgb\(47, 91, 234\)/.test(p.todayRing || "")) fail(`today is not ringed in blue (${p.todayTxt} / ${p.todayRing})`);
+      // 11-11 (design master item 7): the Schedule blue #2f5bea IS --state-other-edge #2457e6 now (deltaE 1.53, visually the same).
+      if (p.todayTxt !== "10" || !/rgb\(36, 87, 230\)/.test(p.todayRing || "")) fail(`today is not ringed in blue (${p.todayTxt} / ${p.todayRing})`);
       if (!/(^|,)11(,|$)/.test(p.dots) || !/(^|,)13(,|$)/.test(p.dots)) fail(`the dots do not mark days with calls (Nov 11 and 13): ${p.dots}`);
       if (!p.todayLink) fail("no Today link in the popover");
       if (!p.below || !p.visible) fail("the popover is not drawn right under the Go to date button");

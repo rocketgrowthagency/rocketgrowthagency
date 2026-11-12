@@ -48,9 +48,10 @@ const queueSrc = queueRaw
   .replace(/^\s*\/\/.*$/gm, "")
   .replace(/\/\*[\s\S]*?\*\//g, "");
 
-// Must appear in the FETCH itself, not merely somewhere in the file.
-const fetchCall = queueSrc.match(/supa\(\s*`\/client_activity[\s\S]{0,400}?`\s*\)/);
-const fetchesFailureKinds = !!fetchCall && /kind\.like\.\*_failed/.test(fetchCall[0]);
+// Must appear in a FETCH itself, not merely somewhere in the file. 🔑 Any of its client_activity reads (11-11): the queue
+// now also reads one row for Dismiss and the later successes, so "the first fetch" is no longer the list read.
+const fetchCalls = [...queueSrc.matchAll(/supa\(\s*`\/client_activity[\s\S]{0,400}?`\s*\)/g)].map((m) => m[0]);
+const fetchesFailureKinds = fetchCalls.some((c) => /kind\.like\.\*_failed/.test(c));
 const readsNeedsHuman = /needs_human/.test(queueSrc);
 const shapeFn = queueSrc.match(/_\(failed\|error\)\$/);
 

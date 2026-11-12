@@ -278,6 +278,8 @@ run check-kickoff-booking-is-honest.mjs "the kickoff picker, the portal booking 
 run check-no-tab-flashes-a-wrong-answer.mjs "no admin tab flashes a contradicting number on refresh (browser sweep)"
 run check-no-invisible-controls.mjs   "no control can render invisible if a CSS variable fails"
 run check-css-declarations-are-valid.mjs "no CSS declaration the browser would silently discard"
+run check-no-dropped-css-rule.mjs     "no style rule swallowed by a broken comment or thrown away by Chrome (the 09-03 #callsView rule)"
+run check-a-messages-alert-closes-on-success.mjs "a Messages alert closes when the job that raised it later succeeds; Dismiss closes one (11-11)"
 run check-no-new-dormant-css.mjs      "no NEW style rule that nothing on any page can match"
 run check-the-setup-accordion-behaves.mjs "the client checklist folds without hiding a step or locking one"
 run check-messages-have-a-shape.mjs   "no client-facing message is a loose grey sentence"

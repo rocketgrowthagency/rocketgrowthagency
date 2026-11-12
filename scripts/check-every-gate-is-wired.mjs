@@ -278,6 +278,8 @@ const NOT_PREFLIGHT = {
   'check-setup-step-count-agrees.mjs': 'admin/portal parity gate; runs in daily-health-check.sh',
   'check-the-owner-questions-ui-contract.mjs': 'portal-UI contract gate; runs in daily-health-check.sh',
   'check-css-declarations-are-valid.mjs': 'stylesheet gate; runs in daily-health-check.sh — a dropped declaration cannot make a video unsafe',
+  'check-no-dropped-css-rule.mjs': 'stylesheet gate; runs in daily-health-check.sh — a rule swallowed by a broken comment cannot make a video unsafe',
+  'check-a-messages-alert-closes-on-success.mjs': 'admin Messages gate; runs in daily-health-check.sh — an alert that never closes cannot make a video unsafe',
   'check-portal-calls-stay-authenticated.mjs': 'portal-auth gate; runs in daily-health-check.sh — a stale token cannot make a video unsafe',
   'check-every-jump-lands-somewhere-visible.mjs': 'portal-navigation gate; runs in daily-health-check.sh — a dead jump cannot make a video unsafe',
   'check-an-audit-cannot-write.mjs': 'audit-safety gate; runs in daily-health-check.sh — an audit that writes cannot make a video unsafe',

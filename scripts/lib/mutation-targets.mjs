@@ -192,6 +192,9 @@ export const FILES = {
   stripewebhook: "netlify/functions/stripe-webhook.js",
   paymentwelcome: "netlify/functions/_payment-welcome.js",   // admin_last_research_items_v1 item 4: the welcome at payment
   admincss: "admin/admin.css",
+  // 11-11 (ui master): a Messages alert closes on a later success, plus Dismiss (check-a-messages-alert-closes-on-success)
+  messagesalerts: "netlify/functions/_messages-alerts.js",
+  adminmessagesfn: "netlify/functions/admin-messages.js",
   notifystage: "netlify/functions/notify-client-stage.js",
   confirmemail: "netlify/functions/send-confirmation-email.js",
   portalcss: "portal/portal.css",
