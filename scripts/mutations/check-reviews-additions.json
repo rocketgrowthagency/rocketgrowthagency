@@ -140,8 +140,8 @@
  [
   "the reply drafter thanks by name again",
   "exec",
-  "(r.comment || \"(no text)\").slice(0, 300)}`).join(\"\\n\");\n    const draft = await aiDraft(\n      `Write ONE reply per review. Rules: refer to what the customer actually wrote, use their name sparingly, no keywords, never repeat a sentence across replies, never argue",
-  "(r.comment || \"(no text)\").slice(0, 300)}`).join(\"\\n\");\n    const draft = await aiDraft(\n      `Write ONE reply per review. Rules: thank by name where given, never argue"
+  "(rv0.comment || \"(no text)\").slice(0, 300)}`).join(\"\\n\");\n    const draft = await aiDraft(\n      `Write ONE reply per review. Rules: refer to what the customer actually wrote, use their name sparingly, no keywords, never repeat a sentence across replies, never argue",
+  "(rv0.comment || \"(no text)\").slice(0, 300)}`).join(\"\\n\");\n    const draft = await aiDraft(\n      `Write ONE reply per review. Rules: thank by name where given, never argue"
  ],
  [
   "the admin reply card claims rejection",

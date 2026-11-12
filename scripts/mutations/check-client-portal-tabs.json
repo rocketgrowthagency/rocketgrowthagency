@@ -44,7 +44,7 @@
  [
   "replies are dropped",
   "portal",
-  "      + lr(\"Review replies\", \"RGA writes them. You approve them first.\", \"As reviews come in\") })}</div>`;",
+  "      + lr(\"Review replies\", \"RGA replies to each one. 1 to 3 star replies wait for your OK.\", \"As reviews come in\") })}</div>`;",
   " })}</div>`;",
   1
  ],

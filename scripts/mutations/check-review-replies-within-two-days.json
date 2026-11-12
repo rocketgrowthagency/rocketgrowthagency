@@ -1,0 +1,240 @@
+[
+ [
+  "the self-proof misses a planted late 5-star (the 24-hour line is moved to 30)",
+  "reviewreplies",
+  "  const RGA_DUE_MS = DAY;           // a 4 or 5 star reply is live within 24 hours of the review",
+  "  const RGA_DUE_MS = 30 * 3600000;",
+  2
+ ],
+ [
+  "the watch reads every hour, not every 2 hours",
+  "reviewreplies",
+  "  const SLOTS = [7, 9, 11, 13, 15, 17, 19];",
+  "  const SLOTS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];",
+  1
+ ],
+ [
+  "a second tick in the same slot reads Google again",
+  "reviewreplies",
+  "function readDue(watch, t, tz) { const s = slotOf(t, tz); return !!s && !((watch && Array.isArray(watch.slots) ? watch.slots : []).includes(s)); }",
+  "function readDue(watch, t, tz) { const s = slotOf(t, tz); return !!s; }",
+  1
+ ],
+ [
+  "a 2-star reply posts on RGA's OK alone",
+  "reviewreplies",
+  "  function routeFor(stars, choice) { return starsOf(stars) >= 4 && choice === CHOICE.RGA ? \"rga\" : \"client\"; }",
+  "  function routeFor(stars, choice) { return choice === CHOICE.RGA ? \"rga\" : \"client\"; }",
+  1
+ ],
+ [
+  "a review with no star rating is treated as 5 stars",
+  "reviewreplies",
+  "function routeFor(stars, choice) { return starsOf(stars) >= 4 && choice",
+  "function routeFor(stars, choice) { return (starsOf(stars) || 5) >= 4 && choice",
+  1
+ ],
+ [
+  "the default choice is I OK each one",
+  "reviewreplies",
+  "  const DEFAULT_CHOICE = CHOICE.RGA;",
+  "  const DEFAULT_CHOICE = CHOICE.CLIENT;",
+  1
+ ],
+ [
+  "the posting rule no longer needs RGA's OK",
+  "reviewreplies",
+  "    if (!it.rga_ok_at) return { ok: false, why: \"RGA has not OK'd this reply.\" };",
+  "",
+  1
+ ],
+ [
+  "the posting rule ignores the client's OK for 1 to 3 stars",
+  "reviewreplies",
+  "    if (routeFor(it.stars, choice) === \"client\" && !it.client_ok_at) return",
+  "    if (false) return",
+  1
+ ],
+ [
+  "postOne posts without asking the rule",
+  "replypost",
+  "  const it = item || {}, p = planOne(it, choice);",
+  "  const it = item || {}, p = { ok: true };",
+  1
+ ],
+ [
+  "a refused post never stops retrying",
+  "replypost",
+  "  const status = r.status === \"failed\" && r.tries >= MAX_TRIES ? RR.ST.STOPPED : r.status;",
+  "  const status = r.status;",
+  1
+ ],
+ [
+  "the watch stores the review's words",
+  "reviewrepliesfn",
+  "R[r.reviewId] = { stars: RR.starsOf(r.starRating), arrived_at: r.createTime || null, found_at: nowIso, status: ST.DRAFTING, v: 1 };",
+  "R[r.reviewId] = { stars: RR.starsOf(r.starRating), arrived_at: r.createTime || null, found_at: nowIso, status: ST.DRAFTING, v: 1, words: r.comment, who: (r.reviewer || {}).displayName };",
+  1
+ ],
+ [
+  "the watch drafts nothing in the hour it finds a review",
+  "reviewrepliesfn",
+  "      if (!it || !(it.status === ST.DRAFTING || (it.status === ST.DRAFT_FAILED && (Number(it.draft_tries) || 0) < DRAFT_TRIES))) continue;",
+  "      if (true) continue;",
+  1
+ ],
+ [
+  "a failed post is retried every hour",
+  "reviewrepliesfn",
+  "  const postable = (it) => !!it && (it.status === ST.APPROVED || (it.status === ST.FAILED && due));",
+  "  const postable = (it) => !!it && (it.status === ST.APPROVED || it.status === ST.FAILED);",
+  1
+ ],
+ [
+  "a choice switch does not move an OK'd reply to the client",
+  "reviewrepliesfn",
+  "      if (RR.needsClientNow(it, choice)) R[id] = RR.rerouteForChoice({ [id]: it }, choice, now).replies[id];",
+  "",
+  1
+ ],
+ [
+  "a repeating draft is not redrafted",
+  "reviewrepliesfn",
+  "        if (rep) { const again = RR.cleanReply(await d.draft({ client, review: rv, others, avoid: rep }));",
+  "        if (false) { const again = RR.cleanReply(await d.draft({ client, review: rv, others, avoid: rep }));",
+  1
+ ],
+ [
+  "a press between the watch's read and write is lost (no merge)",
+  "reviewrepliesfn",
+  "    const next = { ...fresh, review_replies: RR.merge(fresh.review_replies, mine), review_watch: w, review_carry_checked: true };",
+  "    const next = { ...fresh, review_replies: mine, review_watch: w, review_carry_checked: true };",
+  1
+ ],
+ [
+  "RGA's OK accepts a reply that repeats a sentence",
+  "reviewreplies",
+  "    const rep = sharedSentence(words, others); if (rep) return { ok: false, error:",
+  "    const rep = null; if (rep) return { ok: false, error:",
+  1
+ ],
+ [
+  "a failed read is shown as no new reviews",
+  "reviewreplies",
+  "      else if (last && last.status && last.status !== \"ok\") empty = { state: \"bad\", title: \"Couldn't read their reviews\"",
+  "      else if (last && last.status && last.status !== \"ok\") empty = { state: \"ok\", title: \"No new reviews\"",
+  1
+ ],
+ [
+  "the failed row stops saying when it tries again",
+  "reviewreplies",
+  "${nextAt ? `Trying again at ${clock(nextAt, tz)}` : \"Trying again at the next check\"}, try ${Math.min(MAX_TRIES, (Number(it.tries) || 0) + 1)} of ${MAX_TRIES}.",
+  "It will be looked at.",
+  1
+ ],
+ [
+  "a 2-star reply waiting on the client never reaches To do",
+  "reviewreplies",
+  "else if (it.status === ST.WITH_CLIENT && ms(it.sent_to_client_at) != null && now - ms(it.sent_to_client_at) >= LATE_MS) out.push(",
+  "else if (false) out.push(",
+  1
+ ],
+ [
+  "the To do queue does not read the late rows",
+  "adminopenmovesfn",
+  "    for (const x of RRS.todoRows({ replies: t.review_replies, now: tNow })) {",
+  "    for (const x of []) {",
+  1
+ ],
+ [
+  "the late row has no Call",
+  "admin",
+  "    ? `<a class=\"admin-button mv-main\" href=\"tel:${escapeAttribute(String(m.phone).replace(/[^0-9+]/g, \"\"))}\">Call</a>",
+  "    ? `<a class=\"admin-button mv-main\" href=\"#\">Open</a>",
+  1
+ ],
+ [
+  "the admin presses don't spin",
+  "admin",
+  "  const cid = state.selectedClient && state.selectedClient.id; if (!cid) return;\n  mgBusy(b, true);\n  try {\n    const r = await fetch(RR_FN,",
+  "  const cid = state.selectedClient && state.selectedClient.id; if (!cid) return;\n  try {\n    const r = await fetch(RR_FN,",
+  1
+ ],
+ [
+  "the admin card stops drawing the timeline",
+  "admin",
+  "  const tl = (r.chips || []).length ? `<span class=\"rr-tl\">",
+  "  const tl = false ? `<span class=\"rr-tl\">",
+  1
+ ],
+ [
+  "the client's choice card loses the 1 to 3 star promise",
+  "portal",
+  "Replies to 1, 2 and 3 star reviews always wait for your OK. You can change this choice any time.",
+  "You can change this choice any time.",
+  1
+ ],
+ [
+  "the client's approval card isn't the tinted Google card",
+  "portal",
+  "  return `<div data-rr-card=\"${escapeAttribute(a.id)}\">${googleCardHtml({ state: \"you\",",
+  "  return `<div data-rr-card=\"${escapeAttribute(a.id)}\">${csCard({ tone: \"you\",",
+  1
+ ],
+ [
+  "the client's Approve doesn't spin",
+  "portal",
+  "  const busy = (on) => { b.disabled = on; b.classList.toggle(\"is-busy\", on); if (on) b.setAttribute(\"aria-busy\", \"true\"); else b.removeAttribute(\"aria-busy\"); };",
+  "  const busy = () => {};",
+  1
+ ],
+ [
+  "the watch is not scheduled",
+  "toml",
+  "[functions.\"review-replies-watch\"]\n  schedule = \"5 * * * *\"",
+  "[functions.\"review-replies-watch\"]",
+  1
+ ],
+ [
+  "System health doesn't know the watch",
+  "jobmanifest",
+  "  { job: \"review-replies-watch\", label: \"Review replies (every 2 hours)\", cron: \"5 * * * *\",",
+  "  { job: \"review-replies-watch-x\", label: \"Review replies (every 2 hours)\", cron: \"5 * * * *\",",
+  1
+ ],
+ [
+  "the Monthly 4 runner drafts the old batch again",
+  "flowexec",
+  "    const tick = await RRW.tickClient({ client, now, deps: RRW.defaultDeps(), force: true });",
+  "    const tick = { read: \"ok\" };",
+  1
+ ],
+ [
+  "a batch Send for approval for Monthly 4 is accepted",
+  "admindeliv",
+  "    if (key === \"m2.exec.review_responses\" && decision === \"approved\" && body.monthly) return json(409,",
+  "    if (false) return json(409,",
+  1
+ ],
+ [
+  "the client is told again they approve every reply first",
+  "clientmonthly",
+  "small: `RGA replies to each one; 1 to 3 star replies wait for your OK.",
+  "small: `RGA drafts each one; you approve it first.",
+  1
+ ],
+ [
+  "the drafter thanks by name instead of writing about the review",
+  "reviewrepliesfn",
+  "Rules: refer to what the customer actually wrote, use their first name at most once,",
+  "Rules: thank them by name,",
+  1
+ ],
+ [
+  "the watch makes a month row itself, not through openMonth",
+  "reviewrepliesfn",
+  "      const om = await d.openMonth(clientId, month);",
+  "      const om = await d.supa(`/client_monthly_records`, { method: \"POST\", body: JSON.stringify({ client_id: clientId, reporting_month: month, data: { tasks: {} } }) }).then(() => ({ ok: true }));",
+  1
+ ]
+]

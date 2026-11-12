@@ -86,22 +86,22 @@
  [
   "the reply is posted without reading the review first",
   "replypost",
-  "if (!before || !before.ok) { fail(",
-  "if (false) { fail(",
+  "if (!before || !before.ok) return failed(",
+  "if (false) return failed(",
   1
  ],
  [
   "a posted reply is called live without reading it back",
   "replypost",
-  "const seen = back && back.ok && back.replied && String(back.comment || \"\").trim() === it.text;",
+  "const seen = back && back.ok && back.replied && String(back.comment || \"\").trim() === text;",
   "const seen = true;",
   1
  ],
  [
   "a failure keeps no reason",
   "replypost",
-  "fail = (why) => { rp[it.id] = { status: \"failed\", why, tries, last_try_at: at }; }",
-  "fail = () => { rp[it.id] = { status: \"failed\", tries, last_try_at: at }; }",
+  "failed = (why) => ({ status: \"failed\", why, tries, last_try_at: at })",
+  "failed = () => ({ status: \"failed\", tries, last_try_at: at })",
   1
  ],
  [
@@ -121,8 +121,8 @@
  [
   "posting skips the client's authorization",
   "replypost",
-  "if (!agreed) {",
-  "if (false) {",
+  "if (!(await consent())) return failed(",
+  "if (false) return failed(",
   1
  ],
  [

@@ -191,8 +191,8 @@
  [
   "the portal never draws the cards",
   "portal",
-  "    fillCoreChanges(clientId, token).catch((e) => console.warn(\"[core changes]\", e.message));\n    return;",
-  "    return;",
+  "    fillCoreChanges(clientId, token).catch((e) => console.warn(\"[core changes]\", e.message));\n    rrPortalLoad(clientId, true)",
+  "    rrPortalLoad(clientId, true)",
   1
  ]
 ]

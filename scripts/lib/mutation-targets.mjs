@@ -542,6 +542,9 @@ export const FILES = {
   monthlyplanfn: "netlify/functions/admin-monthly-plan.js",
   monthlyweekly: "shared/monthly-weekly.js",   // monthly_s2_weekly_v1: the four weekly cards, the week strips
   replypost: "netlify/functions/_reply-post.js",   // monthly_s2_weekly_v1: an approved reply posts itself
+  // tier3 item 2 (11-11, check-review-replies-within-two-days): Monthly 4 review replies within 1 to 2 days: the one rule, the 2-hour watch
+  reviewreplies: "shared/review-replies.js",
+  reviewrepliesfn: "netlify/functions/_review-replies.js",
   monthlyonce: "shared/monthly-monthly.js",   // monthly_s3_monthly_v1: the seven once-a-month cards
   monthlyoncesrv: "netlify/functions/_monthly-once.js",   // monthly_s3_monthly_v1: the reads and the settle
   monthlyclose: "shared/monthly-close.js",   // monthly_s5_close_v1: the five close-the-month cards
