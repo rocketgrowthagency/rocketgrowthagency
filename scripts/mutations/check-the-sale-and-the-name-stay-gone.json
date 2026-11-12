@@ -100,8 +100,15 @@
  [
   "a voided agreement takes a place",
   "contract",
-  "![\"voided\", \"declined\"].includes(r.status) && ",
-  "",
+  "r && r.status === \"signed\" && ",
+  "r && [\"signed\", \"voided\"].includes(r.status) && ",
+  1
+ ],
+ [
+  "a sent, never-signed agreement takes a place (master audit #9 item 6)",
+  "contract",
+  "r && r.status === \"signed\" && ",
+  "r && ![\"voided\", \"declined\"].includes(r.status) && ",
   1
  ],
  [

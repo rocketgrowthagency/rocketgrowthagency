@@ -70,6 +70,7 @@ const ALLOWED = {
   "netlify/functions/send-monthly-report.js": [],
   "shared/email-doc.js":                      [],
   "shared/busy.js":                           ["= 1500"],
+  "shared/billing-rules.js":                  ["commit_3mo"],   // master audit #9: the plan Section 4A applies to, named by id; no price
   "netlify/functions/_blog-chain.js": [": 3500"],   // max_tokens: 3500 is the model reply cap for a draft, not a price
   "netlify/functions/_page-brief.js": ["=5000"],   // limit=5000 is a Search Console row limit, not a price
   "netlify/functions/_page-measure.js": ["=5000"],   // limit=5000 is a Search Console row limit, not a price

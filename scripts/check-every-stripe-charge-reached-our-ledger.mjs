@@ -135,10 +135,13 @@ if (data.charges_found === 0) {
   console.log(`  ✅ ${data.reconciled.length}/${data.charges_found} charge(s) in the last ${DAYS} days are paid in our ledger`);
 }
 
-// Money we cannot tie to a client is not necessarily a fault — a Payment Link or a dashboard charge
-// has no client_id — but it must never be filtered away silently.
+// 🔴 master audit #9 (11-11): money we cannot tie to a client is RED, not an info line. Every Checkout payment of an overdue
+// invoice used to land here, unsettled, while this gate stayed green and the ladder paused the client who had paid. A Payment Link
+// or a dashboard charge may be fine, but only a person can say so: record it on the client, then this clears.
 if (unattributed.length) {
-  console.log(`  ℹ️  ${unattributed.length} charge(s) carry no client_id and cannot be reconciled:`);
-  for (const u of unattributed) console.log(`       ${u.id}  $${u.amount}  ${u.created}`);
+  console.log(`  🔴 ${unattributed.length} paid charge(s) are tied to no client and settled no invoice:`);
+  for (const u of unattributed) console.log(`       ${u.id}  $${u.amount}  ${u.created}${u.description ? `  ${u.description}` : ""}`);
+  console.log("     Find who paid in Stripe and settle the invoice that payment was for.");
+  process.exit(1);
 }
 process.exit(0);

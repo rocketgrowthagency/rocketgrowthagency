@@ -645,4 +645,9 @@ export const FILES = {
   fixplanclient: "shared/fix-plan-client.js",
   portalfixplanfn: "netlify/functions/portal-fix-plan.js",
   yournumbers: "shared/your-numbers.js",
+  // master audit #9 billing (11-11): check-a-paid-invoice-always-settles + check-the-pause-follows-the-contract
+  invoicepayfn: "netlify/functions/portal-invoice-pay.js",
+  reconcilefn: "netlify/functions/stripe-reconcile-payments.js",
+  billingrules: "shared/billing-rules.js",
+  billingalert: "netlify/functions/_billing-alert.js",
 };

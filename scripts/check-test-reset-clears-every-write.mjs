@@ -73,6 +73,8 @@ const KEPT = {
   client_portal_access: "the portal invite is not part of the payment flow and re-inviting is a separate test",
   rga_google_credentials: "workspace-level Gmail credential, nothing to do with one client's payment",
   client_onboarding_records: "the row is kept; only its stage_notifications key is cleared, because the playbook tasks are not payment state",
+  // master audit #9 (11-11): the webhook now marks each event processed (or failed) on this ledger
+  stripe_webhook_events: "Stripe's event ledger, keyed by Stripe's own event id: a re-test sends NEW events, so nothing here can make it skip a step, and clearing it would let an old delivery run the grant again",
 };
 
 console.log("── the test reset clears everything the payment flow writes ──");

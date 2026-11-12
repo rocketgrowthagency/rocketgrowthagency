@@ -117,7 +117,8 @@ async function checkTree(root, label) {
   let S = null; try { S = req("./netlify/functions/start-as-client.js"); } catch (e) { if (sc) fail(`start-as-client.js does not load: ${e.message.slice(0, 80)}`); }
   if (S) { if (S._test.planFor(4) !== "founding") fail("with places left the plan is not founding"); if (S._test.planFor(5) !== "commit_3mo") fail("with the cap reached the plan is not the standard plan"); }
   let CG = null; try { CG = req("./netlify/functions/contract-generate.js"); } catch { /* reported above */ }
-  if (CG) { if (CG.foundingPlacesTaken([{ client_id: "a", status: "signed" }, { client_id: "b", status: "voided" }, { client_id: "c", status: "sent" }]) !== 2) fail("the founding cap count includes a voided agreement"); }
+  // master audit #9 item 6: only a signed founding agreement takes a place (a voided one never did; a sent, unsigned one no longer does)
+  if (CG) { if (CG.foundingPlacesTaken([{ client_id: "a", status: "signed" }, { client_id: "b", status: "voided" }, { client_id: "c", status: "sent" }]) !== 1) fail("the founding cap count includes a voided or an unsigned agreement"); }
   // BETA is never client-visible (except the beta client's own agreement, which is contract text)
   for (const p of ["index.html", "pricing/index.html", "faq/index.html", "growth-audit.html", "start-growth-plan/index.html"]) {
     const s = rd(p); if (s && /beta_unbilled|Beta \(no invoice\)|Other plans/i.test(s)) fail(`${p} shows the beta plan`);

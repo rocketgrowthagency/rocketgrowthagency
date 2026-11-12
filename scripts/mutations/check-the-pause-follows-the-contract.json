@@ -1,0 +1,170 @@
+[
+ [
+  "three days' notice instead of five",
+  "billingrules",
+  "PAUSE_AFTER_DAYS_LATE: 15, NOTICE_DAYS: 5,",
+  "PAUSE_AFTER_DAYS_LATE: 15, NOTICE_DAYS: 3,",
+  1
+ ],
+ [
+  "a pause with no delivered notice (back to day 18)",
+  "billingrules",
+  "const p = warningNoticeAt ? pauseOn({ dueYmd, noticeAt: warningNoticeAt }) : null;",
+  "const p = warningNoticeAt ? pauseOn({ dueYmd, noticeAt: warningNoticeAt }) : addDays(businessYmd(dueYmd), 18);",
+  1
+ ],
+ [
+  "the end on day 30 with no pause notice",
+  "billingrules",
+  "if (d > LADDER.END_AFTER_DAYS_LATE && pausedNoticeAt && businessYmd(pausedNoticeAt) < businessYmd(todayYmd)) return",
+  "if (d >= LADDER.END_AFTER_DAYS_LATE) return",
+  1
+ ],
+ [
+  "the end on the same day the pause notice goes",
+  "billingrules",
+  " && pausedNoticeAt && businessYmd(pausedNoticeAt) < businessYmd(todayYmd)) return",
+  " && pausedNoticeAt) return",
+  1
+ ],
+ [
+  "the pause ignores 'more than fifteen days late'",
+  "billingrules",
+  "return byNotice > byLate ? byNotice : byLate;",
+  "return byNotice;",
+  1
+ ],
+ [
+  "a notice's day is read in UTC, not business time",
+  "billingrules",
+  "new Intl.DateTimeFormat(\"en-CA\", { timeZone: TZ, year: \"numeric\", month: \"2-digit\", day: \"2-digit\" })",
+  "new Intl.DateTimeFormat(\"en-CA\", { timeZone: \"UTC\", year: \"numeric\", month: \"2-digit\", day: \"2-digit\" })",
+  1
+ ],
+ [
+  "a date-only due date prints as UTC midnight (a day early in Pacific)",
+  "billingrules",
+  "return new Date(n * DAY + 12 * 3600000).toLocaleDateString(\"en-US\", { ...(opts || { month: \"long\", day: \"numeric\", year: \"numeric\" }), timeZone: \"UTC\" });",
+  "return new Date(n * DAY).toLocaleDateString(\"en-US\", { ...(opts || { month: \"long\", day: \"numeric\", year: \"numeric\" }) });",
+  1
+ ],
+ [
+  "the pre-billing notice only ON day -3",
+  "billingrules",
+  "daysOverdue >= LADDER.PREBILL_FROM && daysOverdue < 0",
+  "daysOverdue === LADDER.PREBILL_FROM",
+  1
+ ],
+ [
+  "the notice call carries no internal secret again",
+  "dailybilling",
+  "const INTERNAL = () => ({ \"Content-Type\": \"application/json\", \"x-internal-secret\": process.env.INTERNAL_FN_SECRET || \"\" });",
+  "const INTERNAL = () => ({ \"Content-Type\": \"application/json\" });",
+  1
+ ],
+ [
+  "the notice is not keyed to its invoice",
+  "dailybilling",
+  "stage, key: R.noticeKey(invoice.invoice_num), facts:",
+  "stage, facts:",
+  1
+ ],
+ [
+  "notify-client-stage ignores the invoice key (once per client for life)",
+  "notifystage",
+  "const slot = noticeKey ? `${stage}#${noticeKey}` : stage;",
+  "const slot = stage;",
+  1
+ ],
+ [
+  "the written notice names no day",
+  "notifystage",
+  "const msg = messageFor(stage, { first, kickoffWhen, beta, amount, pauseOn });",
+  "const msg = messageFor(stage, { first, kickoffWhen, beta, amount });",
+  1
+ ],
+ [
+  "the pause email stops saying the data stays",
+  "notifystage",
+  "Your profile, content, reports and portal stay exactly as they are. Only new work is on hold.",
+  "Your profile and content are kept. Work is on hold.",
+  1
+ ],
+ [
+  "a notice that hit the cap leaves the run green",
+  "dailybilling",
+  "return json(200, { ok: failures.length === 0,",
+  "return json(200, { ok: true,",
+  1
+ ],
+ [
+  "a notice that did not send reaches nobody",
+  "dailybilling",
+  "    if (f.what === \"receipt\") continue;",
+  "    continue;",
+  1
+ ],
+ [
+  "the portal walls a paused client's data again",
+  "portal",
+  "const _billingPaused = String(client.billing_status || \"\") === \"terminated\";",
+  "const _billingPaused = [\"paused\", \"terminated\"].includes(String(client.billing_status || \"\"));",
+  1
+ ],
+ [
+  "the paused banner says reporting is on hold",
+  "portal",
+  "<p>Your rankings, reviews and reports are all still here. Pay the invoice and work resumes the same day.</p>",
+  "<p>All active work and reporting is on hold. Pay your invoice to restore full access immediately.</p>",
+  1
+ ],
+ [
+  "the banner's due date is parsed as UTC midnight",
+  "portal",
+  "const dueDateStr = unpaidInvoice?.due_date ? billingDayLabel(unpaidInvoice.due_date) : null;",
+  "const dueDateStr = unpaidInvoice?.due_date ? new Date(unpaidInvoice.due_date).toLocaleDateString(\"en-US\", { month: \"long\", day: \"numeric\", year: \"numeric\" }) : null;",
+  1
+ ],
+ [
+  "the banner ignores the notice's pause day",
+  "portal",
+  "const R = globalThis.rgaBillingRules, pauseOn = billingPauseOn(unpaidInvoice, onboarding);",
+  "const R = globalThis.rgaBillingRules, pauseOn = null;",
+  1
+ ],
+ [
+  "the Section 4A To do never appears",
+  "adminopenmovesfn",
+  "if (sp && sp.todo_due) out.push(",
+  "if (false) out.push(",
+  1
+ ],
+ [
+  "the Section 4A To do comes on day 20",
+  "billingrules",
+  "days: 30, todo_day: 25,",
+  "days: 30, todo_day: 20,",
+  1
+ ],
+ [
+  "the founding hold To do never appears",
+  "adminopenmovesfn",
+  "if (hold && hold.todo_due) out.push(",
+  "if (false) out.push(",
+  1
+ ],
+ [
+  "a stored held_months is ignored",
+  "billingrules",
+  "const months = Number(heldMonths) > 0 ? Math.floor(Number(heldMonths)) : FOUNDING_HELD_MONTHS;",
+  "const months = FOUNDING_HELD_MONTHS;",
+  1
+ ],
+ [
+  "a founding agreement stores no held_months",
+  "contractgen",
+  "...(plan_code === \"founding\" ? { held_months: FOUNDING_HELD_MONTHS } : {}) },",
+  "},",
+  1
+ ]
+]
