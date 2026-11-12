@@ -103,5 +103,6 @@
   ".admin-button.is-busy::after { content: \"\"; display: inline-block; width: 12px; height: 12px; margin-left: 7px;",
   ".admin-button.is-busy::before { content: \"\"; display: inline-block; width: 12px; height: 12px; margin-right: 7px;",
   1
- ]
+ ],
+ ["busy.js fights the sign-in button's own spinner again (the flicker)", "busyjs", "  if (el.classList && el.classList.contains(\"is-pending\")) return;\n", "", 1]
 ]

@@ -136,5 +136,13 @@ try {
   }
 } finally { await browser.close(); }
 
+// 11-12 (Chris: "signing in button still glitchy"): a control whose handler runs its own waiting state (.is-pending: the admin sign-in
+// and two-step buttons) is OWNED by that handler. busy.js must leave it alone, or each finished request takes the ring off and the next
+// puts it back (the flicker).
+{
+  const mb = busySrc.match(/function markBusy\(el, promise, label\) \{([\s\S]*?)\n\}/);
+  const firstLines = mb ? mb[1].split("\n").filter((l) => l.trim() && !l.trim().startsWith("//")).slice(0, 1).join("") : "";
+  if (!/if \(el\.classList && el\.classList\.contains\("is-pending"\)\) return;/.test(firstLines)) fail("busy.js markBusy must skip a control whose handler owns its waiting state (.is-pending) before it counts anything, or the sign-in ring flickers");
+}
 if (F.length) { console.error("🔴 A control can wait on the server with nothing on screen:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ every control spins: shared/busy.js loads first in portal and admin; a press that starts a request turns busy (words stay, the ring beside them, same height, can't be pressed twice) until every request it started is back — a dialog's confirm credits the control that opened it; one master rule per stylesheet, no second ring");
