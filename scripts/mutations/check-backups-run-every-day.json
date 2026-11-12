@@ -18,15 +18,9 @@
   "every_day_cron: \"40 6 * * 1-5\""
  ],
  [
-  "the list says daily before the Mac does",
+  "the list still says weekdays after the Mac went daily (11-12)",
   "jobmanifest",
-  "cron: \"40 6 * * 1-5\", every_day_cron",
-  "cron: \"40 6 * * *\", every_day_cron"
- ],
- [
-  "the install line is gone",
-  "pendingchris",
-  "launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.rga.client-data-backup.plist",
-  "launchctl load ~/Library/LaunchAgents/com.rga.client-data-backup.plist"
+  "cron: \"40 6 * * *\", every_day_cron",
+  "cron: \"40 6 * * 1-5\", every_day_cron"
  ]
 ]
