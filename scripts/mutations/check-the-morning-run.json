@@ -13,7 +13,7 @@
  ["a failed start is marked done", "morningrun", "await stamp(d, c.id, p.id, { error: why }).catch(() => {});", "await stamp(d, c.id, p.id, { error: why, status: \"done\" }).catch(() => {});", 1],
  ["an indeterminate result counts as a run", "morningrun", "return o === \"indeterminate\" || o === \"error\" || o === \"failed\"; };", "return false; };", 1],
  ["the write is no longer conditional on the row", "morningrun", "const cond = rec.updated_at ? `&updated_at=eq.${encodeURIComponent(rec.updated_at)}` : \"\";", "const cond = \"\";", 1],
- ["the stamp is not read back", "morningrun", "return !!(m && m.at === mark.at);", "return true;", 1],
+ ["the stamp is not read back", "morningrun", "    return !!(m && m.at === mark.at);\n  }\n  return false;", "    return true;\n  }\n  return false;", 1],
  ["no proof still starts", "morningrun", "if (!(await stamp(d, c.id, p.id))) {", "if (false) {", 1],
  ["the day's stamp is ignored: a second start the same day", "morningrun", "=== dayOf(now)) return \"already started today\";", "=== \"never\") return \"already started today\";", 1],
  ["a run in progress is started again", "morningrun", "if (t.status === \"in_progress\" && now - (Date.parse(t.started_at || \"\") || 0) < FRESH_MS) return \"a run is in progress\";", "", 1],

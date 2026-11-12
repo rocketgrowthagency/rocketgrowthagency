@@ -158,6 +158,12 @@ export const FILES = {
   recheck: "netlify/functions/portal-step-recheck.js",
   stepsql: "docs/supabase/RGA_CLIENT_STEP_RUNS_2026-10-07.sql",
   heavy: "netlify/functions/flow-execute-heavy-background.js",
+  // master data audit 11-11 (approved): per-key writes into the Month 1 record (check-onboarding-writes-are-per-key) and contracts /
+  // invoices that refuse the delete + the Stripe event ledger (check-contracts-cannot-be-deleted)
+  onboardingpatch: "netlify/functions/_onboarding-patch.js",
+  onboardingpatchsql: "docs/supabase/ONBOARDING_PER_KEY_WRITES_2026-11-11.sql",
+  contractskeptsql: "docs/supabase/CONTRACTS_INVOICES_KEPT_2026-11-11.sql",
+  resettestclient: "scripts/reset-test-client.mjs",
   ghguardpy: "scripts/gh-account-guard.py",
   // 🔑 A LIVE-RENDER GATE READS PRODUCTION FOR ITS "GOT" SIDE, so the only input a mutation can
   // reach is the mockup it compares against. Mutating it proves the diff can fail; it cannot prove

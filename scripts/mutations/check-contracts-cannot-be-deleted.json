@@ -1,0 +1,16 @@
+[
+ ["a voided contract that was once signed can be deleted", "contractskeptsql", "  if old.status = 'voided' and old.signed_at is null then", "  if old.status = 'voided' then"],
+ ["a paid-by-intent upcoming invoice can be deleted", "contractskeptsql", "  if old.status = 'upcoming' and old.paid_at is null and old.stripe_payment_intent_id is null then", "  if old.status = 'upcoming' then"],
+ ["the contracts foreign key stays CASCADE", "contractskeptsql", "alter table public.client_contracts add constraint client_contracts_client_id_fkey\n  foreign key (client_id) references public.clients(id) on delete restrict;", "alter table public.client_contracts add constraint client_contracts_client_id_fkey\n  foreign key (client_id) references public.clients(id) on delete cascade;"],
+ ["the invoices foreign key is never replaced", "contractskeptsql", "alter table public.client_invoices add constraint client_invoices_client_id_fkey\n  foreign key (client_id) references public.clients(id) on delete restrict;", ""],
+ ["the invoice trigger is never attached", "contractskeptsql", "create trigger client_invoices_no_delete_trg before delete on public.client_invoices\n  for each row execute function public.client_invoices_no_delete();", ""],
+ ["the client guard does not count contracts", "contractskeptsql", "  select count(*) into n_contract from public.client_contracts        where client_id = old.id;", "  n_contract := 0;"],
+ ["staff keep the browser delete on clients", "contractskeptsql", "drop policy if exists clients_internal_delete on public.clients;", "-- kept: clients_internal_delete"],
+ ["the cancellation deletes any invoice", "cancellationfn", "/client_invoices?id=eq.${inv.id}&status=eq.upcoming`, { method: \"DELETE\" }", "/client_invoices?id=eq.${inv.id}`, { method: \"DELETE\" }"],
+ ["the admin deletes a contract that isn't voided", "admin", "    if (c.status !== \"voided\") {\n      rgaAlert(\"Only voided contracts can be deleted. Void it first.\");\n      return;\n    }\n", ""],
+ ["the admin gains a delete-client", "admin", "function readLocalStore() {", "async function rgaDeleteClient(id) { await supabase.from(\"clients\").delete().eq(\"id\", id); }\nfunction readLocalStore() {"],
+ ["a finished Stripe event is never marked processed", "stripewebhook", "    await markEvent(evt.id, { processed: true, processed_at: new Date().toISOString(), processing_error: null });\n", ""],
+ ["a failed Stripe run keeps no error", "stripewebhook", "    await markEvent(evt.id, { processed: false, processing_error: String(e && e.message || e).slice(0, 500) });\n", ""],
+ ["Stripe's retry of a failed event is deduped away", "stripewebhook", "        if (!(await claimFailedEvent(evt.id))) return json(200, { ok: true, deduped: true, type: evt.type });", "        return json(200, { ok: true, deduped: true, type: evt.type });"],
+ ["a finished event's redelivery runs again", "stripewebhook", "?stripe_event_id=eq.${encodeURIComponent(eventId)}&processed=eq.false&processing_error=not.is.null&select=id`", "?stripe_event_id=eq.${encodeURIComponent(eventId)}&select=id`"]
+]
