@@ -10,7 +10,7 @@
  * approved by Chris): REVIVED, DATA-DRIVEN, so it can never run out of pairs again.
  *
  * ─── HOW ─────────────────────────────────────────────────────────────────────────────────────────
- * PAIRS come from the data, not a list: every step in website reports/master-audit/steps.json whose `mockup_governing` exists as
+ * PAIRS come from the data, not a list: every step in website docs/master-sop/steps/steps.json whose `mockup_governing` exists as
  * website reports/mockups/<id>.html (the mockup registry). Each mockup is judged against the screens its steps live on: the admin
  * (the walk client's Onboarding, Monthly, Website and Overview tabs, folds opened) and/or the client portal (every nav view),
  * rendered LIVE in chromium with every write blocked (acceptance/guard.mjs: every non-GET denied unless verified read-only).
@@ -33,6 +33,8 @@ const SCR = process.env.SCRAPER_COPY_DIR || REAL;
 const __SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const SITE = process.env.SITE_DIR || `${__SITE}`;
 const REAL_SITE = "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+// the master map moved to the Master SOP 11-11 (docs/master-sop/steps/steps.json); the old place is read only as a fallback
+const STEPS_JSON = ["docs/master-sop/steps/steps.json", "reports/master-audit/steps.json"];
 const idk = (m) => { console.error(`⚠️  INDETERMINATE — ${m}`); process.exit(2); };
 const lib = fs.existsSync(path.join(SCR, "scripts/lib/mockup-match.mjs")) ? path.join(SCR, "scripts/lib/mockup-match.mjs") : path.join(REAL, "scripts/lib/mockup-match.mjs");
 const M = await import(pathToFileURL(lib).href);
@@ -55,8 +57,8 @@ if (process.env.SCRAPER_COPY_DIR) { console.log("  ✅ self-test held (mutation 
 
 // ── the pairs, from the data ─────────────────────────────────────────────────────────────────────────────────────────────
 let STEPS = null;
-for (const b of [SITE, REAL_SITE]) { try { STEPS = JSON.parse(fs.readFileSync(path.join(b, "reports/master-audit/steps.json"), "utf8")); break; } catch { /* next */ } }
-if (!Array.isArray(STEPS)) idk("reports/master-audit/steps.json is missing: no pairs can be built");
+for (const b of [SITE, REAL_SITE]) for (const rel of STEPS_JSON) { if (STEPS) break; try { STEPS = JSON.parse(fs.readFileSync(path.join(b, rel), "utf8")); } catch { /* next */ } }
+if (!Array.isArray(STEPS)) idk("docs/master-sop/steps/steps.json is missing: no pairs can be built");
 const mockFile = (id) => [SITE, REAL_SITE].map((b) => path.join(b, "reports/mockups", `${id}.html`)).find((p) => fs.existsSync(p)) || null;
 const pairs = new Map();   // id → { file, admin, portal, steps }
 for (const s of STEPS) {

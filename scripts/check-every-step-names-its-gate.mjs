@@ -6,7 +6,7 @@
 // scheduled gate named (the ten end-of-service lines, admin 14 AI readiness, admin 30 the fix plan, Monthly 15 links and press) and
 // two named by a single gate with no suite (admin 12 the on-page audit, Monthly 17 the keyword overlap check).
 // HOLDS: every step id (website data/playbooks/playbooks.json Month 1 + Month 2+, the end-of-service lines in
-// netlify/functions/_closing-list.js as offboarding.<key>, and the stage + managed ids in reports/master-audit/steps.json) appears,
+// netlify/functions/_closing-list.js as offboarding.<key>, and the stage + managed ids in docs/master-sop/steps/steps.json) appears,
 // whole, in the source of at least one gate that a scheduled runner runs (daily-health-check.sh, overnight-pipeline.sh,
 // nightly-full-check.sh, rehearse-night-run.sh, daily-deliverability-guard.sh, drip-content.sh). This gate does not count itself.
 // THIN (named by one gate with no mutation suite and no self-test) is printed, not failed: the ratchet in check-every-gate-is-wired
@@ -25,6 +25,8 @@ const SCR = process.env.SCRAPER_COPY_DIR || REAL;
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const REAL_SITE = "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const SELF = path.basename(fileURLToPath(import.meta.url));
+// the master map moved to the Master SOP 11-11 (docs/master-sop/steps/steps.json); the old place is read only as a fallback
+const STEPS_JSON = ["docs/master-sop/steps/steps.json", "reports/master-audit/steps.json"];
 const idk = (m) => { console.error(`⚠️  INDETERMINATE — ${m}`); process.exit(2); };
 const scr = (rel) => { for (const b of [SCR, REAL]) { try { return fs.readFileSync(path.join(b, rel), "utf8"); } catch { /* next */ } } return null; };
 
@@ -41,8 +43,8 @@ try {
   for (const k of keys) ids.set(`offboarding.${k}`, "end of service (_closing-list.js)");
 } catch (e) { idk(`the closing list won't load: ${e.message}`); }
 let MAP = null;
-for (const b of [SITE, REAL_SITE]) { try { MAP = JSON.parse(fs.readFileSync(path.join(b, "reports/master-audit/steps.json"), "utf8")); break; } catch { /* next */ } }
-if (!Array.isArray(MAP)) idk("reports/master-audit/steps.json is missing: the stage and managed ids can't be read");
+for (const b of [SITE, REAL_SITE]) for (const rel of STEPS_JSON) { if (MAP) break; try { MAP = JSON.parse(fs.readFileSync(path.join(b, rel), "utf8")); } catch { /* next */ } }
+if (!Array.isArray(MAP)) idk("docs/master-sop/steps/steps.json is missing: the stage and managed ids can't be read");
 for (const r of MAP) if (r && typeof r.id === "string" && !ids.has(r.id) && !/^offboarding\./.test(r.id)) ids.set(r.id, "the master map (steps.json)");
 
 // ── the scheduled gates ────────────────────────────────────────────────────────────────────────────────────────────────────
