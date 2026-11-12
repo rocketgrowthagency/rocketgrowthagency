@@ -56,6 +56,20 @@ for (const seg of ["desktop_website", "mobile", "desktop_maps"]) {
   if (!new RegExp(`for _seg in[^\\n]*\\b${seg}\\b`).test(pipe)) fail(`2d overnight-pipeline: the missing-recording check does not look for ${seg}`);
 }
 
+// ── 4 · a site no one can load is parked before any capture (11-11: cainglewoodpestcontrol.com, DNS) ──
+const reachAt = pipe.indexOf("node scripts/check-site-reachable.mjs \"$LEAD_SITE\"");
+const step3At = pipe.indexOf("node step-3-video-recorder.mjs");
+if (reachAt < 0) fail("4a overnight-pipeline: a lead's website is not checked with check-site-reachable.mjs before its capture");
+else {
+  if (step3At >= 0 && reachAt > step3At) fail("4b overnight-pipeline: the reachability check runs after step-3 has already recorded");
+  const park = pipe.slice(reachAt, reachAt + 1200);
+  if (!/= "unbuildable" \]/.test(park)) fail("4c overnight-pipeline: the reachability answer is not read as unbuildable");
+  if (!/output\/unbuildable-leads\.tsv/.test(park)) fail("4d overnight-pipeline: a parked lead is not written to output/unbuildable-leads.tsv (recovery would re-pick it)");
+  const branch = (park.match(/= "unbuildable" \][\s\S]*?return 0/) || [""])[0];
+  if (!branch) fail("4e overnight-pipeline: an unbuildable lead does not stop before the capture");
+  if (/unledger_search_for_redo/.test(branch)) fail("4f overnight-pipeline: an unbuildable lead is re-armed (spends another night's attempt)");
+}
+
 // ── 3 · the night roll-up reads tonight, once ──
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "rga-lockgate-"));
 const night = "=== Overnight pipeline: Pest control in El Segundo, CA ===\nStarted: 21:30\n>>> [worker-1] dispatching: A\n>>> [worker-2] dispatching: B\n";

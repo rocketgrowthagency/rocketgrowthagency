@@ -47,5 +47,26 @@
   "const withTime = [...byKey.values()];",
   "const withTime = timed;",
   1
+ ],
+ [
+  "the night run stops asking whether the site can be loaded",
+  "nightpipeline",
+  "    REACH_LINE=$(node scripts/check-site-reachable.mjs \"$LEAD_SITE\" 2>/dev/null | head -1)",
+  "    REACH_LINE=\"\"",
+  1
+ ],
+ [
+  "a parked lead is not written down, so recovery re-picks it",
+  "nightpipeline",
+  "      [ -n \"$LANDING_SLUG\" ] && printf '%s\\t%s\\t%s\\n' \"$LANDING_SLUG\" \"$LEAD_SITE\" \"$(date +%F)\" >> \"output/unbuildable-leads.tsv\"\n",
+  "",
+  1
+ ],
+ [
+  "an unbuildable lead is re-armed for another night",
+  "nightpipeline",
+  "      append_result \"$RESULTS_FAILED\" \"$BIZ_NAME${RSEP}website unbuildable (${REACH_WHY:-cannot connect})\"\n      return 0",
+  "      append_result \"$RESULTS_FAILED\" \"$BIZ_NAME${RSEP}website unbuildable (${REACH_WHY:-cannot connect})\"\n      unledger_search_for_redo \"$BIZ_NAME\" \"website unbuildable\"\n      return 0",
+  1
  ]
 ]

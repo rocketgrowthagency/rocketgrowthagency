@@ -1151,6 +1151,25 @@ with open("$S2_FILTERED", 'w', newline='') as f:
 print(f"  wrote {len(keep)} step-2 rows (filtered from master, no re-scrape)")
 EOPY
 
+  # 🔴 2026-11-12 — A SITE NO ONE CAN LOAD IS PARKED BEFORE ANY CAPTURE. 11-11: cainglewoodpestcontrol.com
+  # does not resolve (DNS), so the lead could never make 3/3 WebMs, yet it recorded, hung to the 10-min
+  # watchdog and was RE-ARMED (attempt 1/3) to waste two more nights. check-site-reachable.mjs already
+  # tells cannot-connect (DNS / TLS / refused → unbuildable) from slow or bot-blocked (→ try); until now
+  # only rebuild-broken-videos.sh asked it. Parked leads go to output/unbuildable-leads.tsv, which
+  # recovery-rounds.sh and parole-permafails.mjs already skip. Not re-armed: no attempt is spent.
+  LEAD_SITE=$(python3 -c "import csv,sys; r=list(csv.DictReader(open(sys.argv[1]))); print((r[0].get('Website') or '').strip() if r else '')" "$S2_FILTERED" 2>/dev/null)
+  if [ -n "$LEAD_SITE" ]; then
+    REACH_LINE=$(node scripts/check-site-reachable.mjs "$LEAD_SITE" 2>/dev/null | head -1)
+    if [ "$(printf '%s' "$REACH_LINE" | cut -f1)" = "unbuildable" ]; then
+      REACH_WHY=$(printf '%s' "$REACH_LINE" | cut -f3)
+      LANDING_SLUG=$(node -e 'console.log(require("slugify")(process.argv[1], { lower: true, strict: true }))' "$BIZ_NAME" 2>/dev/null)
+      echo "  ⛔ website unbuildable ($LEAD_SITE: ${REACH_WHY:-cannot connect}) — parked, no capture, no attempt spent" | tee -a "$LOGFILE"
+      [ -n "$LANDING_SLUG" ] && printf '%s\t%s\t%s\n' "$LANDING_SLUG" "$LEAD_SITE" "$(date +%F)" >> "output/unbuildable-leads.tsv"
+      append_result "$RESULTS_FAILED" "$BIZ_NAME${RSEP}website unbuildable (${REACH_WHY:-cannot connect})"
+      return 0
+    fi
+  fi
+
   # ============================================================
   # WITHIN-LEAD DAG PARALLELIZATION (Tier 2.5 locked 2026-05-27)
   # ============================================================
