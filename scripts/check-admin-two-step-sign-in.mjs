@@ -43,10 +43,14 @@ if (!/if \(context\.requiresMfa\) \{\s*await showTwoStepScreen\(context\.require
 if (!/signInWithPassword\(\{ email, password \}\)/.test(admin)) F("password sign-in changed");
 
 // ── 5 · words ──
-const WORDS = ["Set up your code", "Open your authenticator app and add an account.", "Scan this QR code.", "Can't scan? Type this key instead:", "Type the 6-digit code the app shows.",
-  "Turn on", "Save the key above in Bitwarden (Rocket Growth Agency &rarr; RGA Admin). If your phone is lost, it is the way back in.", "Enter your code",
-  "Open your authenticator app and type the 6-digit code for Rocket Growth Agency.", "Verify", "You stay signed in on this computer the same way you do today. The code is asked again only when you sign in again.", "Use a different account"];
+const WORDS = ["Log in to RGA Admin", "Rocket Growth Agency staff", "Forgot your password?", "Staff only &middot; protected sign-in", "Set up your code", "Open your authenticator app, add an account, scan this",
+  "Can't scan? Type this key instead:", "6-digit code", "Turn on", "Save the key above in Bitwarden (Rocket Growth Agency &rarr; RGA Admin). If your phone is lost, it's the way back in.",
+  "Enter your code", "The 6-digit code from your authenticator app", "Verify", "Use a different account"];
 for (const w of WORDS) if (!html.includes(w)) F(`admin/index.html is missing the approved words: ${w}`);
+for (const gone of ["Admin Login", "admin-lock-wordmark", "Forgot password?", "admin-mfa-steps", "admin-mfa-lede", "admin-mfa-note"]) if (html.includes(gone)) F(`admin/index.html still has "${gone}" (removed by the approved dark sign-in)`);
+if (!/<h1 class="admin-lock-heading">Log in to RGA Admin<\/h1>/.test(html)) F("the sign-in heading must be exactly: Log in to RGA Admin");
+if ((html.match(/class="admin-lock-logo"[^>]*width="48" height="48"/g) || []).length !== 3) F("all three lock screens use the RGA icon at 48px");
+if ((html.match(/class="admin-button admin-lock-submit"/g) || []).length !== 3) F("three lock buttons, each `admin-button admin-lock-submit`");
 if (!admin.includes(`"That code didn't match. Codes change every 30 seconds; try the newest one."`)) F("the wrong-code line is not exact");
 if (!/friendlyName: "Rocket Growth Agency admin"/.test(admin) || !/factorType: "totp"/.test(admin)) F("enrol must be a totp factor named Rocket Growth Agency admin");
 if ((html.match(/class="admin-code-box"/g) || []).length !== 12) F("two screens x 6 boxes expected");
@@ -64,7 +68,27 @@ if (!/max-width:\s*100%/.test(qr) || !/box-sizing:\s*border-box/.test(qr)) F("th
 const at = css.indexOf("/* Two-step sign-in");
 const block = at < 0 ? "" : css.slice(at).replace(/\/\*[\s\S]*?\*\//g, "");
 if (!block || /#[0-9a-fA-F]{3,6}\b/.test(block)) F("the two-step CSS must take colours from var() tokens, no hex literal");
-// 6 boxes x 42 + 5 gaps x 8 = 292px; the card's inner width at a 360px phone is ~284px, so the boxes must be able to shrink (flex-shrink 1, min-width 0).
+// 6 boxes x 48 + 5 gaps x 8 = 328px; the card's inner width at a 360px phone is ~284px, so the boxes must be able to shrink (flex-shrink 1, min-width 0).
+
+// ── 7 · the approved dark sign-in (Chris 11-12, mockup admin-login-spotify): tokens, scope, the doubled button selector ──
+const TOK = { "--lock-page-top": "#1a2036", "--lock-page": "#0f1320", "--lock-panel": "#121624", "--lock-field": "#1d2335", "--lock-line": "#3a4256", "--lock-divider": "#2a3044",
+  "--lock-ink": "#ffffff", "--lock-muted": "#a7b0c4", "--lock-soft": "#7c8599", "--lock-brand": "#2f6bff", "--lock-brand-hover": "#4b7fff", "--lock-warn-ink": "#f6c983" };
+for (const [k, v] of Object.entries(TOK)) if (!new RegExp(`${k}:\\s*${v}\\b`, "i").test(css)) F(`admin.css :root must declare ${k}: ${v} (approved sign-in palette)`);
+const lockAt = css.indexOf("/* ═══ 11-12 ADMIN SIGN-IN, DARK"), lockEnd = css.indexOf(".admin-main {\n  display: flex;");
+const lockCss = lockAt < 0 || lockEnd < lockAt ? "" : css.slice(lockAt, lockEnd).replace(/\/\*[\s\S]*?\*\//g, "");
+if (!lockCss) F("the lock block (from the `11-12 ADMIN SIGN-IN, DARK` comment to .admin-main) is missing");
+else {
+  if (/#[0-9a-fA-F]{3,8}\b|rgba?\(/.test(lockCss)) F("the lock rules must take every colour from a --lock-* token (no hex / rgb literal)");
+  if (!/var\(--lock-ink\)/.test(lockCss) || !/var\(--lock-brand\)/.test(lockCss) || !/var\(--lock-field\)/.test(lockCss)) F("the lock rules must use the --lock-* tokens");
+  if (!/\.admin-button\.admin-lock-submit\s*\{[^}]*height:\s*50px[^}]*border-radius:\s*999px[^}]*background:\s*var\(--lock-brand\)/s.test(lockCss)) F("the lock button must be the DOUBLED selector `.admin-button.admin-lock-submit` (50px, pill, --lock-brand): `.admin-button` later in the file squashes a single class");
+  if (/(^|\n)\.admin-lock-submit\s*\{/.test(lockCss)) F("a single-class `.admin-lock-submit` rule loses to `.admin-button` — use the doubled selector");
+  if (!/\.admin-lock-heading\s*\{[^}]*font-size:\s*2\.4rem[^}]*font-weight:\s*800[^}]*letter-spacing:\s*-0\.03em[^}]*max-width:\s*14ch/s.test(lockCss)) F("the lock heading must be 2.4rem / 800 / -0.03em / 14ch");
+  if (!/\.admin-lock-logo\s*\{[^}]*width:\s*48px[^}]*height:\s*48px[^}]*border-radius:\s*14px/s.test(lockCss)) F("the lock logo must be 48px, radius 14px");
+  if (!/\.admin-auth\s*\{[^}]*max-width:\s*520px[^}]*background:\s*var\(--lock-panel\)[^}]*padding:\s*44px 0 40px[^}]*gap:\s*30px/s.test(lockCss)) F("the panel must be 520px, --lock-panel, padding 44px 0 40px, gap 30px");
+  if (!/@media \(max-width: 599px\)\s*\{[\s\S]*background:\s*transparent/.test(lockCss)) F("on a phone the panel background goes away");
+}
+if (!/body\.admin-body\[data-admin-view="auth"\],[^{]*\{[^}]*var\(--lock-page-top\)[^}]*var\(--lock-page\)/.test(css)) F("the lock states' page background must be the --lock-page-top -> --lock-page gradient");
+if (/body\.admin-body\[data-admin-view="(dashboard|client|clients|list|leads)"\][^{]*\{[^}]*--lock-/.test(css)) F("the dark palette must never reach a signed-in admin view");
 
 // ── 1 + 2 + 4 · the real _auth.js, stubbed fetch ──
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString("base64url");

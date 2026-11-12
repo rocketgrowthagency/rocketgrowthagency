@@ -90,7 +90,9 @@ for (const [k, v] of Object.entries(CS_TOK)) {
 // 2026-10-08 after the merge (was 257 / 119). portal 107 → 109 on 2026-10-29: EXACTLY the card system's approved --cs-wait #5b6b8a
 // and --cs-wait-line #d9dfea (the other two tokens' values were already in use) — bounded by 4b, which holds them to one declaration.
 // admin 236 → 238 (Chris 10-30): the waiting Google card takes the client system's blue-grey (#5b6b8a, #d9dfea), so both portals match
-const BASELINE = { admin: 238, portal: 109 };
+// admin 238 -> 246 (Chris 11-12): the approved dark "Spotify-style" sign-in adds EXACTLY its --lock-* palette (declared in :root only; the old light
+// sign-in colours that went away are netted in); check-admin-two-step-sign-in holds every lock RULE to var(--lock-*) with no literal.
+const BASELINE = { admin: 246, portal: 109 };
 const norm = (c) => { c = c.toLowerCase(); return c.length === 4 ? "#" + [...c.slice(1)].map((x) => x + x).join("") : c; };
 for (const [name, css] of Object.entries(files)) {
   const n = new Set((strip(css).match(/#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b/g) || []).map(norm)).size;

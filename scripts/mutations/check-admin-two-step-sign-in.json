@@ -13,9 +13,18 @@
  ["the portal guard asks for the code", "sa_auth", "if (!u.email) return { error: fail(401, \"No email on token\") };", "if (!u.email) return { error: fail(401, \"No email on token\") };\n  { const m = staffMfaRefusal(u.user, bearer(event)); if (m) return { error: m }; }", 1],
  ["the refusal line changes", "sa_auth", "Two-step sign-in is required. Sign in again.\");\n}", "Sign in again.\");\n}", 1],
  ["admin-config says on by default", "adminconfigfn", "[\"1\", \"true\", \"on\", \"yes\"].includes(", "[\"1\", \"true\", \"on\", \"yes\", \"\"].includes(", 1],
- ["the code boxes cannot shrink", "admincss", "flex: 0 1 42px; min-width: 0;", "flex: 0 0 42px; min-width: 42px;", 1],
+ ["the code boxes cannot shrink", "admincss", "flex: 0 1 48px; min-width: 0;", "flex: 0 0 48px; min-width: 48px;", 1],
  ["the box row can overflow the card", "admincss", "min-width: 0; max-width: 100%; box-sizing: border-box; }\n.admin-code-box {", "}\n.admin-code-box {", 1],
- ["a hex colour sneaks into the two-step css", "admincss", "color: var(--state-other); border-radius: 12px;", "color: #123456; border-radius: 12px;", 1],
+ ["a hex colour sneaks into the two-step css", "admincss", "color: var(--lock-warn-ink); border-radius: 8px;", "color: #123456; border-radius: 8px;", 1],
  ["an approved word changes", "adminhtml", "Turn on</button>", "Go</button>", 1],
- ["the Bitwarden warning is dropped", "adminhtml", "If your phone is lost, it is the way back in.", "", 1]
+ ["the Bitwarden warning is dropped", "adminhtml", "If your phone is lost, it's the way back in.", "", 1],
+ ["the sign-in heading goes back to Admin Login", "adminhtml", "<h1 class=\"admin-lock-heading\">Log in to RGA Admin</h1>", "<h1 class=\"admin-lock-heading\">Admin Login</h1>", 1],
+ ["the lock button loses its doubled selector (squashed by .admin-button)", "admincss", ".admin-button.admin-lock-submit {\n  box-sizing", ".admin-lock-submit {\n  box-sizing", 1],
+ ["a lock rule takes a hex literal instead of a token", "admincss", "  color: var(--lock-muted);\n  text-align: center;\n  font-size: 0.95rem;", "  color: #a7b0c4;\n  text-align: center;\n  font-size: 0.95rem;", 1],
+ ["an approved lock token value drifts", "admincss", "--lock-field:#1d2335", "--lock-field:#1d2336", 1],
+ ["the lock logo shrinks back to 32px", "admincss", "  width: 48px;\n  height: 48px;\n  display: block;\n  margin: 0;\n  border-radius: 14px;", "  width: 32px;\n  height: 32px;\n  display: block;\n  margin: 0;\n  border-radius: 14px;", 1],
+ ["the lock heading shrinks", "admincss", "  font-size: 2.4rem;", "  font-size: 2rem;", 1],
+ ["the lock panel loses its background", "admincss", "  background: var(--lock-panel);\n  border-radius: 12px;", "  border-radius: 12px;", 1],
+ ["the lock page goes back to light", "admincss", "linear-gradient(180deg, var(--lock-page-top) 0%, var(--lock-page) 55%);", "linear-gradient(180deg, var(--lock-ink) 0%, var(--lock-ink) 100%);", 1],
+ ["the old wordmark line returns", "adminhtml", "<h1 class=\"admin-lock-heading\">Log in to RGA Admin</h1>", "<div class=\"admin-lock-wordmark\">Rocket</div><h1 class=\"admin-lock-heading\">Log in to RGA Admin</h1>", 1]
 ]
