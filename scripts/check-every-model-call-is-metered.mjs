@@ -150,6 +150,24 @@ if (!mtd.ready || mtd.calls !== 2 || mtd.failed !== 1 || mtd.cost_usd !== 3.25 |
 const gone = await AL.monthToDate({ url: "https://sb.test", key: "k", fetch: async () => ({ ok: false, status: 404, json: async () => ({}) }) });
 if (gone.ready !== false) fail("a missing ledger table reads as a month of nothing");
 
+// ── the key's own expiry (11-12): the Anthropic key "rga-netlify" expires 2027-11-19; said from 30 days before ──────────────
+// A key that expires with nothing watching it turns every draft, the Brain and the photo describer into errors on one morning.
+// The date is a constant in _ai-ledger.js (never the key); ai-model-check makes the warning its error and sends the date to System health.
+if (typeof AL.keyExpiry !== "function" || AL.KEY_EXPIRES_ON !== "2027-11-19" || AL.KEY_WARN_DAYS !== 30) fail("_ai-ledger.js doesn't hold the key's expiry (KEY_EXPIRES_ON 2027-11-19, KEY_WARN_DAYS 30)");
+else {
+  const at = (d) => AL.keyExpiry(Date.parse(`${d}T12:00:00Z`));
+  if (at("2026-11-12").warn || at("2026-11-12").error) fail("a key with a year to run is warned about");
+  if (at("2027-10-18").warn) fail("the key warning starts before 30 days out");
+  const w = at("2027-10-20");
+  if (!w.warn || !/expires in 29 days \(2027-11-19\)/.test(w.error || "") || !/ANTHROPIC_API_KEY/.test(w.error || "")) fail("30 days before the expiry the key isn't an error that names the date and the Netlify key to replace");
+  if (!at("2027-11-19").error || !/expired/.test(at("2027-11-20").error || "")) fail("an expired key isn't an error");
+  if (AL.keyExpiry(NaN).warn || AL.keyExpiry(Date.now(), "not a date").error) fail("an unreadable date raises a false key alarm");
+  if (/sk-ant/.test(fs.readFileSync(path.join(SITE, FN, "_ai-ledger.js"), "utf8"))) fail("a key value is written in _ai-ledger.js");
+}
+if (!/AL\.keyExpiry\(\)/.test(mc) || !/: budget && budget\.error \? budget\.error : keyExp\.error;/.test(mc)) fail("ai-model-check doesn't make the key's expiry warning its error");
+if (!/key_expires_on: keyExp\.expires_on/.test(mc) || !/key_note: keyExp\.note/.test(mc)) fail("ai-model-check doesn't send the key's expiry date and note to System health");
+if (!/\$\{b\.key_note \? ` · \$\{b\.key_note\}` : ""\}/.test(man)) fail("System health's AI row doesn't show the key note");
+
 if (F.length) { console.error(`🔴 a model call escapes the meter:\n${F.map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
 const head = `✅ every model call is metered: ${callers.length} files (${callers.join(", ")}) record each answer and refusal; ai-model-check runs daily with the month against the budget`;
 if (COPY) { console.log(`${head} (mutation copy: the live database is not read)`); process.exit(0); }

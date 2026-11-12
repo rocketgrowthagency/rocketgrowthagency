@@ -112,5 +112,47 @@
   "sa_aimodels",
   "const ask = (body) => doFetch(\"https://api.anthropic.com/v1/messages\", {",
   "const ask = (body) => require(\"./_x\").meter(\"p\")(\"https://api.anthropic.com/v1/messages\", {"
+ ],
+ [
+  "the key expiry date is moved a year out (the warning never comes)",
+  "sa_ledger",
+  "const KEY_EXPIRES_ON = \"2027-11-19\";",
+  "const KEY_EXPIRES_ON = \"2028-11-19\";"
+ ],
+ [
+  "the key warning window shrinks to 3 days",
+  "sa_ledger",
+  "const KEY_WARN_DAYS = 30;",
+  "const KEY_WARN_DAYS = 3;"
+ ],
+ [
+  "an expired key stops being an error",
+  "sa_ledger",
+  "if (daysLeft < 0) return { expires_on: expiresOn, days_left: daysLeft, warn: true, error: `The Anthropic",
+  "if (daysLeft < 0) return { expires_on: expiresOn, days_left: daysLeft, warn: true, error: null, was: `The Anthropic"
+ ],
+ [
+  "the warning no longer names the Netlify key to replace",
+  "sa_ledger",
+  "put it in Netlify as ANTHROPIC_API_KEY before then",
+  "put it somewhere before then"
+ ],
+ [
+  "ai-model-check drops the key warning from its error",
+  "sa_modelcheck",
+  ": budget && budget.error ? budget.error : keyExp.error;",
+  ": budget && budget.error ? budget.error : null;"
+ ],
+ [
+  "ai-model-check stops sending the expiry to System health",
+  "sa_modelcheck",
+  "key_expires_on: keyExp.expires_on, key_days_left: keyExp.days_left, key_note: keyExp.note,",
+  ""
+ ],
+ [
+  "System health's AI row drops the key note",
+  "jobmanifest",
+  "${b.key_note ? ` · ${b.key_note}` : \"\"}",
+  ""
  ]
 ]
