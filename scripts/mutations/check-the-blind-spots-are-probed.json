@@ -1,0 +1,80 @@
+[
+ [
+  "a billing refusal reads as refused only",
+  "cloudbilling",
+  "if (/billing/.test(text) ||",
+  "if (false ||"
+ ],
+ [
+  "a quota answer is red",
+  "cloudbilling",
+  "const bad = both.filter((x) => x.state === \"refused\");",
+  "const bad = both.filter((x) => x.state === \"refused\" || x.state === \"quota\");"
+ ],
+ [
+  "the Places probe uses SearchText",
+  "cloudbilling",
+  "fetchFn(`https://places.googleapis.com/v1/places/${PROBE_PLACE}`, {\n    headers: { \"X-Goog-Api-Key\": key, \"X-Goog-FieldMask\": \"id\" }",
+  "fetchFn(`https://places.googleapis.com/v1/places:searchText`, {\n    headers: { \"X-Goog-Api-Key\": key, \"X-Goog-FieldMask\": \"places.id\" }"
+ ],
+ [
+  "the budget is 10 seconds",
+  "supahealth",
+  "const BUDGET_MS = 2000,",
+  "const BUDGET_MS = 10000,"
+ ],
+ [
+  "a timeout is only slow",
+  "supahealth",
+  "const down = parts.filter((p) => p.state === \"timeout\" ||",
+  "const down = parts.filter((p) => false ||"
+ ],
+ [
+  "the alert stops saying what to press",
+  "supahealth",
+  "restart only with your OK: Supabase dashboard > the project > Project Settings > General > Restart project.",
+  "restart it."
+ ],
+ [
+  "it texts every bad hour",
+  "supahealth",
+  ": { text: null, next: prev };",
+  ": { text: \"reminder\", next: prev };"
+ ],
+ [
+  "no text when the state can't be kept",
+  "supahealth",
+  "{ text: h.verdict === \"unhealthy\" ? \"first\" : null, next: null }",
+  "{ text: null, next: null }"
+ ],
+ [
+  "it restarts by itself",
+  "supahealth",
+  "  let texted = null;\n",
+  "  let texted = null; if (h.verdict === \"unhealthy\") await fetchFn(`https://api.supabase.com/v1/projects/${\"x\"}/restart`, { method: \"POST\" });\n"
+ ],
+ [
+  "a bounce is fine",
+  "magiclink",
+  "const FAILED = new Set([\"bounced\", \"complained\", \"failed\"]);",
+  "const FAILED = new Set([\"failed\"]);"
+ ],
+ [
+  "no key reads as fine",
+  "magiclink",
+  "if (!KEY) return { ok: false, read: false,",
+  "if (!KEY) return { ok: true, read: false,"
+ ],
+ [
+  "addresses leave the check",
+  "magiclink",
+  "return { ok: red === 0, read: true, ...c,",
+  "return { ok: red === 0, read: true, ...c, to: body.data.map((e) => e.to),"
+ ],
+ [
+  "Supabase health is not scheduled",
+  "toml",
+  "[functions.\"supabase-health\"]\n  schedule = \"35 * * * *\"",
+  "[functions.\"supabase-health-off\"]\n  schedule = \"35 * * * *\""
+ ]
+]

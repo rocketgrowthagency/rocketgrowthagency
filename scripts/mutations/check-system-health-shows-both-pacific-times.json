@@ -1,0 +1,56 @@
+[
+ [
+  "PDT is read as UTC-8",
+  "jobstatus",
+  "pdt = seg(7, \"PDT\")",
+  "pdt = seg(8, \"PDT\")"
+ ],
+ [
+  "the day never moves back",
+  "jobstatus",
+  "shift = local < 0 ? -1 : 0",
+  "shift = 0"
+ ],
+ [
+  "the schedule leaves the status",
+  "jobstatus",
+  "where: job.where, schedule: job.off ? null : scheduleWords(job) };",
+  "where: job.where };"
+ ],
+ [
+  "the Mac jobs say UTC",
+  "jobstatus",
+  "if (job.tz && job.tz !== \"UTC\") {",
+  "if (false) {"
+ ],
+ [
+  "the row drops the schedule",
+  "adminjs",
+  "<small>${escapeHtml(r.line + alert)}${r.more || \"\"}</small>${when}</span>",
+  "<small>${escapeHtml(r.line + alert)}${r.more || \"\"}</small></span>"
+ ],
+ [
+  "the schedule is not escaped",
+  "adminjs",
+  "`<small class=\"sh-when\">${escapeHtml(r.schedule)}</small>`",
+  "`<small class=\"sh-when\">${r.schedule}</small>`"
+ ],
+ [
+  "the Running row drops it",
+  "adminjs",
+  "</small>${when}<span class=\"sh-bar\">",
+  "</small><span class=\"sh-bar\">"
+ ],
+ [
+  "the cache buster stays broken",
+  "adminhtml",
+  "/admin/admin.js?v=20261111nc",
+  "/admin/admin.js?v=admin/admin.js"
+ ],
+ [
+  "an off job says when it would run",
+  "jobstatus",
+  "schedule: job.off ? null : scheduleWords(job)",
+  "schedule: scheduleWords(job)"
+ ]
+]

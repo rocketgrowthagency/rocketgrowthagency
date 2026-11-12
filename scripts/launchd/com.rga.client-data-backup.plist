@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- 11-11 (automation clock decision 3, approved): the client data backup runs EVERY DAY at 06:40, weekends included, so a Saturday or
+     Sunday change no longer waits until Monday. The owner installs it with the one line in website docs/supabase/PENDING_FOR_CHRIS.md.
+     Gate: check-backups-run-every-day. -->
+<plist version="1.0">
+<dict>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+	</dict>
+	<key>Label</key>
+	<string>com.rga.client-data-backup</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/local/bin/node</string>
+		<string>--env-file=/Users/chris/RGA/Rocket Growth Agency Scraper VS Code/.env</string>
+		<string>/Users/chris/RGA/Rocket Growth Agency Scraper VS Code/scripts/backup-client-data.mjs</string>
+	</array>
+	<key>StandardErrorPath</key>
+	<string>/tmp/rga-client-data-backup.err.log</string>
+	<key>StandardOutPath</key>
+	<string>/tmp/rga-client-data-backup.out.log</string>
+	<key>StartCalendarInterval</key>
+	<dict>
+		<key>Hour</key>
+		<integer>6</integer>
+		<key>Minute</key>
+		<integer>40</integer>
+	</dict>
+</dict>
+</plist>

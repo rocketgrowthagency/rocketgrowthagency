@@ -1,0 +1,80 @@
+[
+ [
+  "texts go out without QUO_TEXTS_ENABLED",
+  "alerttext",
+  "if (env.QUO_TEXTS_ENABLED !== \"1\") return",
+  "if (false) return"
+ ],
+ [
+  "the Main Line texts itself",
+  "alerttext",
+  "if (from === to) return",
+  "if (false) return"
+ ],
+ [
+  "a setting can point the text elsewhere",
+  "alerttext",
+  "const to = RGA_BUSINESS_NUMBER;",
+  "const to = env.RGA_ALERT_TEXT_TO || RGA_BUSINESS_NUMBER;"
+ ],
+ [
+  "the personal cell is no longer refused",
+  "alerttext",
+  "const NEVER_TEXT = new Set([\"5985ab75a744247e4bcc686131fb79c6f4c4bb52d25b3fafcdd8603bf800ed0a\"]);",
+  "const NEVER_TEXT = new Set([]);"
+ ],
+ [
+  "Cloud billing is not always texted",
+  "alerttext",
+  "\"integration-watch\", \"cloud-billing-probe\", \"magic-link-delivery\"",
+  "\"integration-watch\", \"magic-link-delivery\""
+ ],
+ [
+  "Quo not answering throws",
+  "alerttext",
+  "} catch (e) { return { sent: false, why: `Quo did not answer:",
+  "} catch (e) { throw e; return { sent: false, why: `Quo did not answer:"
+ ],
+ [
+  "a failed email is not texted",
+  "jobwatcher",
+  "if (!emailed || ALWAYS_TEXT.has(job)) {",
+  "if (ALWAYS_TEXT.has(job)) {"
+ ],
+ [
+  "a text is not counted as delivered",
+  "jobwatcher",
+  "if (logged || emailed || texted) return",
+  "if (logged || emailed) return"
+ ],
+ [
+  "the alert email goes wherever the setting says",
+  "jobwatcher",
+  "to: rgaInbox(process.env.RGA_NOTIFICATION_EMAIL)",
+  "to: process.env.RGA_NOTIFICATION_EMAIL || RGA_INBOX"
+ ],
+ [
+  "the watcher stops pinging",
+  "jobwatcher",
+  "  const outside_ping = await ping(true);\n",
+  "  const outside_ping = \"sent\";\n"
+ ],
+ [
+  "a failed read pings as healthy",
+  "jobwatcher",
+  "const outside_ping = await ping(false);",
+  "const outside_ping = await ping(true);"
+ ],
+ [
+  "a failing run pings as healthy",
+  "outsideping",
+  "ok ? u : `${u.replace(/\\/+$/, \"\")}/fail`",
+  "u"
+ ],
+ [
+  "a bad URL still makes a request",
+  "outsideping",
+  "if (!/^https:\\/\\/[^\\s/]+\\/\\S+$/.test(u)) return \"not set up\";",
+  "if (!u) return \"not set up\";"
+ ]
+]

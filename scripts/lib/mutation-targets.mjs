@@ -650,4 +650,14 @@ export const FILES = {
   reconcilefn: "netlify/functions/stripe-reconcile-payments.js",
   billingrules: "shared/billing-rules.js",
   billingalert: "netlify/functions/_billing-alert.js",
+  // automation clock + runbooks master pages (approved 11-11): one turn on the clients' database, the second alert channel, the blind spots
+  prodturnsh: "scraper:scripts/lib/production-turn.sh",
+  prodturnmjs: "scraper:scripts/lib/production-turn.mjs",
+  backupplist: "scraper:scripts/launchd/com.rga.client-data-backup.plist",
+  alerttext: "netlify/functions/_alert-text.js",
+  outsideping: "netlify/functions/_outside-ping.js",
+  cloudbilling: "netlify/functions/cloud-billing-probe.js",
+  supahealth: "netlify/functions/supabase-health.js",
+  magiclink: "netlify/functions/magic-link-delivery.js",
+  pendingchris: "docs/supabase/PENDING_FOR_CHRIS.md",
 };

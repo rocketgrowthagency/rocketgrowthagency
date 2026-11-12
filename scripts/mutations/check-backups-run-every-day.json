@@ -1,0 +1,32 @@
+[
+ [
+  "the repo plist stays weekdays",
+  "backupplist",
+  "<key>Minute</key>\n\t\t<integer>40</integer>\n\t</dict>",
+  "<key>Minute</key>\n\t\t<integer>40</integer>\n\t\t<key>Weekday</key>\n\t\t<integer>1</integer>\n\t</dict>"
+ ],
+ [
+  "the repo plist runs at 07:40",
+  "backupplist",
+  "<key>Hour</key>\n\t\t<integer>6</integer>",
+  "<key>Hour</key>\n\t\t<integer>7</integer>"
+ ],
+ [
+  "the list forgets what it becomes",
+  "jobmanifest",
+  "every_day_cron: \"40 6 * * *\"",
+  "every_day_cron: \"40 6 * * 1-5\""
+ ],
+ [
+  "the list says daily before the Mac does",
+  "jobmanifest",
+  "cron: \"40 6 * * 1-5\", every_day_cron",
+  "cron: \"40 6 * * *\", every_day_cron"
+ ],
+ [
+  "the install line is gone",
+  "pendingchris",
+  "launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.rga.client-data-backup.plist",
+  "launchctl load ~/Library/LaunchAgents/com.rga.client-data-backup.plist"
+ ]
+]
