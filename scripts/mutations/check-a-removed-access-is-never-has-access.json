@@ -1,0 +1,51 @@
+[
+ [
+  "a private repository RGA can't see is not a removal",
+  "accesswatch",
+  "if (r.state === \"repo_unreadable\" && r.status === 404) return \"no\";",
+  "if (r.state === \"repo_unreadable\" && r.status === 404) return \"unknown\";",
+  1
+ ],
+ [
+  "the second reading no longer waits 4 minutes",
+  "accesswatch",
+  "if (Date.parse(at) - Date.parse(a.access_missing_at) < 4 * 60e3) return null;",
+  "",
+  1
+ ],
+ [
+  "an unknown reading counts as a removal",
+  "accesswatch",
+  "if (seen !== \"no\") return null;",
+  "if (seen === \"yes\") return null;",
+  1
+ ],
+ [
+  "a system removal tells no one",
+  "accesswatch",
+  "const SYSTEM_REMOVERS = new Set([\"github\"]);",
+  "const SYSTEM_REMOVERS = new Set([]);",
+  1
+ ],
+ [
+  "an undelivered alert counts as told",
+  "accesswatch",
+  "return !!(r && r.delivered === true);",
+  "return true;",
+  1
+ ],
+ [
+  "a removal is told again and again",
+  "accesswatch",
+  "&& !a.removed_alerted_at);",
+  "&& true);",
+  1
+ ],
+ [
+  "a collaborator that can only read still counts as access",
+  "accesswatch",
+  "return r.canChange ? \"yes\" : \"no\";",
+  "return \"yes\";",
+  1
+ ]
+]

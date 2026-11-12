@@ -660,4 +660,12 @@ export const FILES = {
   supahealth: "netlify/functions/supabase-health.js",
   magiclink: "netlify/functions/magic-link-delivery.js",
   pendingchris: "docs/supabase/PENDING_FOR_CHRIS.md",
+  // master mockups #11 website work, #16 portal modes, #15 public site (approved 11-11): the version-checked writer + step rows (W2), the access
+  // watch + removal alert (W4/W5), the weekly page measurement (W3), the daily form check's mark
+  taskscas: "netlify/functions/_tasks-cas.js",
+  clientsteprowssql: "docs/supabase/CLIENT_STEP_ROWS_2026-11-11.sql",
+  accesswatch: "netlify/functions/_access-watch.js",
+  measurerun: "netlify/functions/site-measure-run.js",
+  formcheck: "netlify/functions/_form-check.js",
+  robotstxt: "robots.txt",
 };

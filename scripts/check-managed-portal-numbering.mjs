@@ -103,9 +103,11 @@ const SETTERS = ["netlify/functions/admin-client-portal-mode.js", "admin/admin.j
 const setters = files.filter((f) => !["portal/portal.js", ...HELPERS].includes(f) && [...code(read(f)).matchAll(WRITE)].some((m) => m[1].trim()));
 for (const f of setters) if (!SETTERS.includes(f)) fail(`${f} can set a client's portal_mode: only ${SETTERS[0]} and admin's new-client paths may`);
 { const t = code(read("admin/admin.js"));
-  for (const m of t.matchAll(WRITE)) { const v = m[1].trim(); if (v && v !== '"managed"' && v !== "data.mode") fail(`admin.js writes portal_mode as ${JSON.stringify(v)}; a new client gets "managed" and the switch saves what the server read back`); }
-  if (!/insert\(\{ portal_mode: "managed", \.\.\.payload \}\)/.test(t)) fail("admin.js createClient must give a new client portal_mode managed (and let a named mode win)");
-  if (!/portal_mode: "managed",\s*\/\/ managed_admin_v1/.test(t)) fail("admin.js promoteLeadToClient must give a promoted lead portal_mode managed"); }
+  // master mockup #16 (11-11): the value is the ONE shared default (shared/portal-mode.js DEFAULT_MODE, "managed") through clientDefaultMode()
+  for (const m of t.matchAll(WRITE)) { const v = m[1].trim(); if (v && v !== "clientDefaultMode(" && v !== "data.mode") fail(`admin.js writes portal_mode as ${JSON.stringify(v)}; a new client gets the shared default (managed) and the switch saves what the server read back`); }
+  if (!/const clientDefaultMode = \(\) => \(globalThis\.rgaPortalMode && globalThis\.rgaPortalMode\.DEFAULT_MODE\) \|\| "managed";/.test(t)) fail("admin.js no longer takes a new client's mode from the shared default (shared/portal-mode.js DEFAULT_MODE)");
+  if (!/insert\(\{ portal_mode: clientDefaultMode\(\), \.\.\.payload \}\)/.test(t)) fail("admin.js createClient must give a new client the shared default mode (and let a named mode win)");
+  if (!/portal_mode: clientDefaultMode\(\),\s*\/\/ managed_admin_v1/.test(t)) fail("admin.js promoteLeadToClient must give a promoted lead the shared default mode"); }
 
 // the column changes nothing on its own
 if (!/add column if not exists portal_mode text;/.test(sql) || /portal_mode text[^;]*default/i.test(sql)) fail("supabase/client_portal_mode.sql must add portal_mode with no default");

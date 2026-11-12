@@ -1,0 +1,37 @@
+[
+ [
+  "the check email is not recognised",
+  "formcheck",
+  "=== CHECK_EMAIL;",
+  "=== CHECK_EMAIL + 'x';",
+  1
+ ],
+ [
+  "the check row is not marked",
+  "formcheck",
+  "({ test: true,",
+  "({ test: false,",
+  1
+ ],
+ [
+  "form-intake stops marking the check",
+  "formintake",
+  "...(check ? FC.testMark(formName) : {})",
+  "...({})",
+  1
+ ],
+ [
+  "the audit check carries on into the report",
+  "fgaintake",
+  "    return jsonResponse(200, { ok: true, formName: \"audit\", form_check: true, crm });\n  }\n",
+  "  }\n",
+  1
+ ],
+ [
+  "form-intake stops saying it knows the check",
+  "formintake",
+  "form_check: true,   //",
+  "form_check: false,   //",
+  1
+ ]
+]

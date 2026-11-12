@@ -379,7 +379,7 @@ try {
 
 // ---- no forked copy of the playbook may drift unmarked ----
 try {
-  const mock = path.join(WEBSITE, 'mockup-sales-playbook.html');
+  const mock = path.join(WEBSITE, 'reports/mockups/root-history/mockup-sales-playbook.html');   // moved out of the site root 11-11 (master mockup #15)
   if (fs.existsSync(mock)) {
     const h = fs.readFileSync(mock, 'utf8');
     if (!/SUPERSEDED|superseded/.test(h)) {
