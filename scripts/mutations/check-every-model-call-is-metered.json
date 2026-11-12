@@ -1,0 +1,21 @@
+[
+ ["the Brain's answer is no longer recorded", "sa_brain", "    await AL.recordAiCall({ fn: \"v2-brain-analysis-background\", step: \"brain\", clientId, provider: \"anthropic\", model: payload.model || BRAIN_MODEL, usage: payload.usage, ok: true, status: resp.status });", ""],
+ ["the photo look no longer records its call", "sa_photolook", "    await AL.recordAiCall({ fn: \"_photo-look\",", "    void ({ fn: \"_photo-look\","],
+ ["aiDraft's refused call leaves no row", "sa_flowexec", "        await AL.recordAiCall({ ...ledgerOf(info), provider: \"anthropic\", model: ladder[k], ok: false, status: r.status, error: AL.errorType(r.status, t) });\n", ""],
+ ["the ledger SQL loses row level security", "sa_ledgersql", "alter table public.ai_call_ledger enable row level security;", ""],
+ ["the ledger SQL grants the table to signed-in users", "sa_ledgersql", "revoke all on public.ai_call_ledger from anon, authenticated;", "grant select on public.ai_call_ledger to authenticated;"],
+ ["ai-model-check comes off the schedule", "sa_toml", "[functions.\"ai-model-check\"]\n  schedule = \"50 13 * * *\"", "# ai-model-check runs by hand"],
+ ["ai-model-check no longer reads the month against the budget", "sa_modelcheck", "budget = AL.judgeBudget(month, process.env.AI_MONTHLY_BUDGET_USD);", "budget = null;"],
+ ["ai-model-check stops checking in", "sa_modelcheck", "exports.handler = require(\"./_job-checkin\").withCheckin(\"ai-model-check\", exports.handler);", ""],
+ ["a failed ledger write throws into the draft", "sa_ledger", "    if (!warned) { warned = true; console.warn(`[ai-ledger] the ledger write failed (${String(e && e.message).slice(0, 80)}). Drafting goes on.`); }\n    return { written: false, why: \"unreachable\" };", "    throw e;"],
+ ["a refused ledger write reads as written", "sa_ledger", "    return { written: false, why: `HTTP ${r.status}` };", "    return { written: true };"],
+ ["an unknown model is priced at nothing", "sa_ledger", "const UNKNOWN = [5, 25];", "const UNKNOWN = [0, 0];"],
+ ["a key in an error is written to the ledger", "sa_ledger", ".replace(/sk-[A-Za-z0-9_-]{8,}/g, \"[key]\")", ""],
+ ["a month over budget isn't an error", "sa_ledger", "  const over = mtd.cost_usd >= Number(budget);", "  const over = false;"],
+ ["a missing ledger table reads as a month of nothing", "sa_ledger", "    if (r.status === 404 || r.status === 400) return { ready: false, from: start };", "    if (r.status === 404 || r.status === 400) return { ready: true, from: start, calls: 0, failed: 0, cost_usd: 0 };"],
+ ["the out-of-credit alert is dropped", "sa_ledger", "      await alertCreditOnce(call, f, U, K, deps.notify);", "      void alertCreditOnce;"],
+ ["the 12-hour window is dropped", "sa_ledger", "    if (r.ok && (await r.json()).length) return \"already_told\";", "    if (false) return \"already_told\";"],
+ ["a laptop writes to the real ledger", "sa_ledger", "  if (!deps.fetch && !inRuntime()) return { written: false, why: \"not a deployed function\" };\n", ""],
+ ["a second Anthropic ledger file returns", "sa_photolook", "const AL = require(\"./_ai-ledger\");", "const AL = require(\"./_ai-ledger\"); require(\"./_anthropic-ledger\");"],
+ ["a call site meters and records (two rows)", "sa_photolook", "    const r = await fetch(\"https://api.anthropic.com/v1/messages\", {", "    const r = await require(\"./_x\").meter(\"p\")(\"https://api.anthropic.com/v1/messages\", {"]
+]

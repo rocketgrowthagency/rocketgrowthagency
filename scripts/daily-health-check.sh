@@ -911,7 +911,13 @@ run check-no-dormant-tables.mjs "every database table is read or written by code
 run check-no-dormant-exports.mjs "every function exported from shared/, admin/ and portal/ has a caller, or is kept with a reason"
 run check-airtable-calls-will-last.mjs "this month's Airtable calls are forecast against the plan's cap (red at 80%)"
 run check-no-gate-flips.mjs "no gate flipped pass and fail more than twice in 7 days (a flaky gate is worse than a failing one)"
-run check-no-one-is-staff-by-accident.mjs "a client is never staff and can't make itself staff: is_internal_user() allow-lists roles, the role guard trigger is on profiles, no public-role policy is true; the portal client reads no staff rows and is refused role owner (11-11 lockdown)"
+run check-no-one-is-staff-by-accident.mjs "a client is never staff and can't make itself staff: is_internal_user() allow-lists roles, the role guard trigger is on profiles, no public-role policy is true; the portal client reads no staff rows and is refused role owner; the role guard refuses a workspace on insert, read from its own text (11-11 lockdown 1 + 2)"
+run check-sign-ups-are-closed.mjs "an account exists only because RGA invited that email: every sign-in link says create-user false, the server makes the account at invite time (security 11-11)"
+run check-no-secret-in-a-query-string.mjs "no secret travels in a web address: internal calls carry x-internal-secret in a header, not ?token= (security 11-11)"
+run check-every-model-call-is-metered.mjs "every model call is a ledger row, the AI key and the month budget are checked daily (content and AI 11-11)"
+run check-a-gbp-description-ends-on-a-sentence.mjs "the Google description is never cut mid-sentence: ask again, cut at the last full sentence, or no draft (content and AI 11-11)"
+run check-gbp-words-need-the-clients-approval.mjs "the Google description, services and details go out only with the client's approval: one writer each, refusal before Google is touched (content and AI 11-11)"
+run check-the-dead-content-engine-stays-gone.mjs "the dead content engine, its Apply to FLOW button and the Brain's best-inference line stay gone (content and AI 11-11)"
 run check-backups-leave-the-building.mjs "the LaCie backup is fresh and Supabase's own backups are on record (could not read = could not tell, never green)"
 
 # 🔴 AUDIT 10-31: WHAT THE DATABASE MADE US SKIP GETS ONE MORE RUN, 15 MINUTES LATER (the review read, PageSpeed and the place ids are in here too)
@@ -943,9 +949,10 @@ rm -f "$SKIPPED_LIVE"
 # A refusal from Google is SAID here, never "expected" (gate: check-places-cap-is-said).
 say ""
 say "── gbp hours backfill ──"
-if [ -n "${QUO_WEBHOOK_TOKEN:-}" ] || grep -q '^QUO_WEBHOOK_TOKEN' .env 2>/dev/null; then
-  _t="${QUO_WEBHOOK_TOKEN:-$(grep '^QUO_WEBHOOK_TOKEN' .env | cut -d= -f2- | tr -d '"'"'"'"'"'"'"')}"
-  _r=$(curl -s --max-time 200 "https://www.rocketgrowthagency.com/.netlify/functions/backfill-gbp-hours?token=${_t}&limit=400&commit=1" 2>/dev/null)
+if [ -n "${INTERNAL_FN_SECRET:-}" ] || grep -q '^INTERNAL_FN_SECRET' .env 2>/dev/null; then
+  # 🔒 the secret in the x-internal-secret header, never ?token= (security master 11-11)
+  _t="${INTERNAL_FN_SECRET:-$(grep '^INTERNAL_FN_SECRET' .env | cut -d= -f2- | tr -d '"'"'"'"'"'"'"')}"
+  _r=$(curl -s --max-time 200 -H "x-internal-secret: ${_t}" "https://www.rocketgrowthagency.com/.netlify/functions/backfill-gbp-hours?limit=400&commit=1" 2>/dev/null)
   _w=$(echo "$_r" | grep -oE '"written": *[0-9]+' | grep -oE '[0-9]+' | head -1)
   _f=$(echo "$_r" | grep -oE '"found": *[0-9]+' | grep -oE '[0-9]+' | head -1)
   _pstop=$(echo "$_r" | grep -oE '"stopped": *"[a-z]+"' | head -1 | sed -E 's/.*"([a-z]+)"$/\1/')
@@ -962,7 +969,7 @@ if [ -n "${QUO_WEBHOOK_TOKEN:-}" ] || grep -q '^QUO_WEBHOOK_TOKEN' .env 2>/dev/n
     say "  ⚠️  backfill did not report a count (non-fatal)"
   fi
 else
-  say "  ⚠️  QUO_WEBHOOK_TOKEN not available — backfill skipped"
+  say "  ⚠️  INTERNAL_FN_SECRET not available, so the backfill was skipped"
 fi
 
 # ── own the data: snapshot every active client's state, every day ────────────────────────────────

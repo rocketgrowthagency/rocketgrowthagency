@@ -18,7 +18,7 @@ import { csBlock } from "./lib/portal-cs.mjs";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
 const F = []; const fail = (m) => F.push(m);
-Object.assign(process.env, { SUPABASE_URL: "https://sb.test", SUPABASE_SERVICE_ROLE_KEY: "k", SUPABASE_ANON_KEY: "a", QUO_WEBHOOK_TOKEN: "t", GOOGLE_PLACES_API_KEY: "p" });
+Object.assign(process.env, { SUPABASE_URL: "https://sb.test", SUPABASE_SERVICE_ROLE_KEY: "k", SUPABASE_ANON_KEY: "a", QUO_WEBHOOK_TOKEN: "t", INTERNAL_FN_SECRET: "t", GOOGLE_PLACES_API_KEY: "p" });
 let route = null;
 globalThis.fetch = async (url, init = {}) => route(String(url), init);
 const req = createRequire(`${SITE}/netlify/functions/`);
@@ -97,7 +97,7 @@ for (const [id, ok] of [["AbC_-/9", true], ["x y", false], ["<b>", false], ["", 
       if (url.includes("places.googleapis.com")) return res(200, { userRatingCount: 3, rating: 5, displayName: { text: "Acme" } });
       return res(404, { error: "no route " + url });
     };
-    await RM.handler({ queryStringParameters: { token: "t" } });
+    await RM.handler({ headers: { "x-internal-secret": "t" }, queryStringParameters: { token: "t" } });
     return calls.filter((c) => c.method === "POST" && /client_state_snapshots$/.test(c.url)).map((c) => JSON.parse(c.body).payload);
   };
   const [pc] = await run(true), [pp] = await run(false);

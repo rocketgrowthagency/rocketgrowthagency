@@ -15,11 +15,6 @@
  ["the sign-in check emails a link", "integrationchecks", "/auth/v1/admin/generate_link`, { method: \"POST\"", "/auth/v1/otp`, { method: \"POST\""],
  ["no email server in Supabase passes", "integrationchecks", "  if (gaps.length) return { ok: false,", "  if (false) return { ok: false,"],
  ["no Management token reads as healthy", "integrationchecks", "  if (!ref || !PAT) return { ok: true, level: \"indeterminate\", note: \"a sign-in link was made (nothing sent); the email settings that deliver it weren't read: SUPABASE_ACCESS_TOKEN isn't set on Netlify\" };", "  if (!ref || !PAT) return { ok: true, note: \"a sign-in link was made\" };"],
- ["the meter skips the ledger", "anthropicledger", "      await writeRow(row, lf);", "      void row;"],
- ["out of credit is not told", "anthropicledger", "      if (row.credit_refused) await alertOnce(row, lf, opts.notify);", "      if (false) await alertOnce(row, lf, opts.notify);"],
- ["the 400 credit wording isn't a refusal", "anthropicledger", "return /billing_error|credit balance is too low|insufficient[_ ]credit/i.test(s);", "return /billing_error/i.test(s);"],
- ["a laptop writes to the real ledger", "anthropicledger", "  const ledgerOn = () => typeof opts.ledgerFetch === \"function\" || inRuntime();", "  const ledgerOn = () => true;"],
- ["an Anthropic caller skips the meter", "flowexec", "    const r = await require(\"./_anthropic-ledger\").meter(\"image-alt\")(\"https://api.anthropic.com/v1/messages\", {", "    const r = await fetch(\"https://api.anthropic.com/v1/messages\", {"],
  ["out of credit is history while it lasts", "integrationchecks", "  if (last && !(s.last_ok_at && Date.parse(s.last_ok_at) > Date.parse(last.at))) {", "  if (false) {"],
  ["the SerpAPI budget spends a search", "integrationchecks", "fetchFn(`https://serpapi.com/account.json?api_key=", "fetchFn(`https://serpapi.com/search.json?q=x&api_key="],
  ["a Places refusal isn't red", "integrationchecks", "  if (refused) return { ok: true, level: \"over\",", "  if (refused) return { ok: true, level: null,"],
@@ -30,5 +25,12 @@
  ["the Schedule tests the Quo key its own way again", "schedulev6data", "    const quoKey = await require(\"./_quo-key\").quoKeyState();", "    let quoKey = \"missing\"; if (process.env.QUO_API_KEY) { try { const r = await fetch(\"https://api.openphone.com/v1/phone-numbers\", { headers: { Authorization: process.env.QUO_API_KEY } }); quoKey = r.ok ? \"ok\" : \"refused\"; } catch { quoKey = \"unreachable\"; } }"],
  ["an advisor ERROR passes", "integrationchecks", "    if (errs.length) return { ok: false,", "    if (false) return { ok: false,"],
  ["the RGA Admin key comes back to the connection badge", "ghconnectionfn", "  const token = ident.token, me = ident.me;", "  const token = ident.token || process.env.GITHUB_ADMIN_TOKEN || \"\", me = ident.me;"],
- ["the legacy SerpAPI alias comes back", "flowexec", "  \"m1.audit.competitors\": async ({ client, clientId }) => {\n    const key = process.env.SERPAPI_KEY;", "  \"m1.audit.competitors\": async ({ client, clientId }) => {\n    const key = process.env.SERPAPI_KEY || process.env.SERP_API_KEY;"]
+ ["the legacy SerpAPI alias comes back", "flowexec", "  \"m1.audit.competitors\": async ({ client, clientId }) => {\n    const key = process.env.SERPAPI_KEY;", "  \"m1.audit.competitors\": async ({ client, clientId }) => {\n    const key = process.env.SERPAPI_KEY || process.env.SERP_API_KEY;"],
+ ["the ledger skips the row", "sa_ledger", "      body: JSON.stringify(rowFor(call)),", "      body: JSON.stringify({}),"],
+ ["out of credit is not told", "sa_ledger", "      await alertCreditOnce(call, f, U, K, deps.notify);", "      void alertCreditOnce;"],
+ ["the 400 credit wording isn't a refusal", "sa_ledger", "billing_error|credit balance is too low|insufficient[_ ]credit|credit_balance_too_low", "billing_error"],
+ ["a laptop writes to the real ledger", "sa_ledger", "  if (!deps.fetch && !inRuntime()) return { written: false, why: \"not a deployed function\" };\n", ""],
+ ["the 12-hour window is dropped", "sa_ledger", "    if (r.ok && (await r.json()).length) return \"already_told\";", "    if (false) return \"already_told\";"],
+ ["a second Anthropic ledger comes back", "flowexec", "const AL = require(\"./_ai-ledger\");", "const AL = require(\"./_ai-ledger\"); require(\"./_anthropic-ledger\");"],
+ ["a meter wrapper comes back at a call site", "sa_photolook", "    const r = await fetch(\"https://api.anthropic.com/v1/messages\", {", "    const r = await require(\"./_ai-ledger\").meter(\"photo-look\")(\"https://api.anthropic.com/v1/messages\", {"]
 ]

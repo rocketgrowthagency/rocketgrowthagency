@@ -30,6 +30,21 @@ export function judgeTrigger(rows) {
   return [];
 }
 
+/** profiles_guard_role()'s definition → problems. HOLE 3 (11-11 security master S1, SECURITY_LOCKDOWN_2_2026-11-11.sql): the INSERT
+ *  branch checked only the role, so a portal client could insert its own profile naming RGA's workspace and pass every admin
+ *  function guard. The INSERT branch must refuse a non-null workspace_id from anyone who isn't staff. */
+export function judgeGuardFn(def) {
+  const body = String(def || "").replace(/--[^\n]*/g, " ");
+  if (!body.trim()) return ["public.profiles_guard_role() is missing"];
+  const ins = /tg_op\s*=\s*'INSERT'\s*then([\s\S]*?)(?:\belsif\b|\bend\s+if\b)/i.exec(body);
+  if (!ins) return ["profiles_guard_role() has no INSERT branch: a new profile's role and workspace are never checked"];
+  const p = [];
+  if (!/new\.workspace_id\s+is\s+not\s+null/i.test(ins[1])) p.push("profiles_guard_role() lets a new profile name a workspace (the INSERT branch never checks new.workspace_id): a client can insert a profile with RGA's workspace");
+  if (!/raise\s+exception/i.test(ins[1])) p.push("profiles_guard_role()'s INSERT branch never refuses anything");
+  if (!/is_internal_user\s*\(\s*\)/i.test(ins[1])) p.push("profiles_guard_role()'s INSERT branch doesn't ask is_internal_user(), so it can't tell staff from a client");
+  return p;
+}
+
 /** pg_policies rows (roles as text) → problems: a public-role policy whose USING or WITH CHECK is exactly `true` */
 export function judgePolicies(rows, allow = TRUE_POLICY_ALLOW) {
   const p = [];

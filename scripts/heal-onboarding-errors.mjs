@@ -24,14 +24,15 @@ for (const line of fs.readFileSync(path.resolve(HERE, "..", ".env"), "utf8").spl
   const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/);
   if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
 }
-const TOKEN = process.env.QUO_WEBHOOK_TOKEN;
-if (!TOKEN) { console.error("✗ QUO_WEBHOOK_TOKEN not set"); process.exit(2); }
+// 🔒 the secret in the x-internal-secret header, never ?token= (security master 11-11)
+const TOKEN = process.env.INTERNAL_FN_SECRET;
+if (!TOKEN) { console.error("✗ INTERNAL_FN_SECRET not set"); process.exit(2); }
 
 let res;
 try {
   const r = await fetch(
-    `https://www.rocketgrowthagency.com/.netlify/functions/heal-onboarding-errors?token=${encodeURIComponent(TOKEN)}`,
-    { signal: AbortSignal.timeout(180000) });
+    `https://www.rocketgrowthagency.com/.netlify/functions/heal-onboarding-errors`,
+    { headers: { "x-internal-secret": TOKEN }, signal: AbortSignal.timeout(180000) });
   const text = await r.text();
   try { res = JSON.parse(text); }
   catch {

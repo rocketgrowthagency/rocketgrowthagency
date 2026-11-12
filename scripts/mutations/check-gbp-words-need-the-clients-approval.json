@@ -1,0 +1,8 @@
+[
+ ["the publish no longer refuses without an approval", "sa_gbppublish", "  if (approval?.decision !== \"approved\") {", "  if (false) {"],
+ ["the publish sends the draft, not the approved words", "sa_gbppublish", "    intended = approved;", "    intended = task.draft;"],
+ ["the hand tool writes ?value= as the description again", "sa_gbpapply", "    return json(409, { ok: false, error: \"The description goes on Google only through gbp-publish, in the words the client approved. Nothing was sent.\" });", "    body = { profile: { description: value } }; updateMask = \"profile.description\";"],
+ ["the services push no longer refuses with no approved list", "sa_svcpush", "  if (!names.length) return json(409,", "  if (false) return json(409,"],
+ ["the services approval no longer needs a decision", "sa_svcpush", "task.approval.decision === \"approved\" ? String(task.approval.approved_content || \"\") : \"\";", "task.approval ? String(task.approval.approved_content || \"\") : \"\";"],
+ ["a new file may write Google services", "sa_svcpush", "const S = require(\"./_gbp-services\");", "const S = require(\"./_gbp-services\"); const _x = \"updateMask=serviceItems\";"]
+]

@@ -1,0 +1,7 @@
+[
+ ["the Brain prompt guesses again", "sa_brain", "never guess or estimate what it would say", "make your best inference but flag it as estimated"],
+ ["the Brain calls the content engine again", "sa_brain", "// 🔒 The Brain → FLOW bridge is GONE", "fetch('/.netlify/functions/v2-generate-content-background'); // 🔒 The Brain → FLOW bridge is GONE"],
+ ["the Apply to FLOW handler is back", "sa_adminjs", "// 🔒 The Brain bridge (its button, the instructions card and its handler) was removed 11-11", "function applyBrainToFlow() {}\n// 🔒 The Brain bridge (its button, the instructions card and its handler) was removed 11-11"],
+ ["the Apply to FLOW button is back", "sa_adminhtml", "<!-- 🔒 The Brain bridge card (its button and the content instructions) was removed 11-11", "<button id=\"v2ApplyToFlowBtn\">Apply to FLOW</button><!-- 🔒 The Brain bridge card (its button and the content instructions) was removed 11-11"],
+ ["a schedule for the engine is back", "sa_toml", "[functions.\"ai-model-check\"]", "[functions.\"v2-generate-content-background\"]\n  schedule = \"0 * * * *\"\n[functions.\"ai-model-check\"]"]
+]

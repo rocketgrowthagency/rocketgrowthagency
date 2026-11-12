@@ -5,7 +5,8 @@
 //       send-only permission allows no Gmail read), a free/busy read, which account. A dead grant is an ERROR, and admin draws a red banner
 //       (the alert email goes through the grant that broke)
 //   2 · sign-in links: generate_link (sends nothing) + the auth email settings (Management API, read only); unreadable = INDETERMINATE
-//   3 · every Anthropic caller goes through ONE meter (a ledger row per call); an out-of-credit refusal is said (an ERROR + one Messages alert)
+//   3 · ONE AI ledger (_ai-ledger.js, table ai_call_ledger): an out-of-credit refusal is recorded and said once in 12 h (an ERROR + one Messages alert),
+//       a laptop never writes it, and the second Anthropic ledger (_anthropic-ledger.js, anthropic_usage) stays deleted
 //   4 · budgets: orange at 80% of a cap, red at 95% (SerpAPI, Places, Anthropic, Netlify), one rule
 //   5 · GITHUB_ADMIN_TOKEN is read only by the invite accept (an app can't accept an invitation); repository work is RGA's app only
 //   6 · the dormant CallRail constants and the legacy SERP_API_KEY alias are gone
@@ -49,10 +50,10 @@ async function check(DIR) {
   const section = async (name, fn) => { try { await fn(); } catch (e) { bad.push(`${name}: threw ${String(e && e.message || e).split("\n")[0].slice(0, 120)}`); } };
   const savedFetch = globalThis.fetch;
   const env0 = { ...process.env };
-  Object.assign(process.env, { SUPABASE_URL: "https://jetgayimvfeslqnkbfdq.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "svc-fake-key-0000", INTERNAL_FN_SECRET: "gate-secret-0000", URL: "https://site.test", ANTHROPIC_LEDGER: "0", PLACES_LEDGER: "0" });
+  Object.assign(process.env, { SUPABASE_URL: "https://jetgayimvfeslqnkbfdq.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "svc-fake-key-0000", INTERNAL_FN_SECRET: "gate-secret-0000", URL: "https://site.test", AI_LEDGER: "0", ANTHROPIC_LEDGER: "0", PLACES_LEDGER: "0" });
   delete process.env.AWS_LAMBDA_FUNCTION_NAME; delete process.env.LAMBDA_TASK_ROOT;
 
-  const C = load("_integration-checks.js"), S = load("_job-status.js"), CK = load("_job-checkin.js"), M = load("_job-manifest.js"), L = load("_anthropic-ledger.js");
+  const C = load("_integration-checks.js"), S = load("_job-status.js"), CK = load("_job-checkin.js"), M = load("_job-manifest.js"), L = load("_ai-ledger.js");
 
   // ── 4 · the budget rule, one for every service ─────────────────────────────────────────────────────────────────────────
   await section("budget rule", async () => {
@@ -230,51 +231,55 @@ async function check(DIR) {
     let ledgerHasRefusal = false;
     const ledgerFetch = async (url, init = {}) => {
       const u = String(url);
-      if (u.includes("/rest/v1/anthropic_usage?credit_refused=is.true")) return res(200, ledgerHasRefusal ? [{ id: 1 }] : []);
-      if (u.endsWith("/rest/v1/anthropic_usage") && init.method === "POST") { rows.push(JSON.parse(init.body)); return res(201, ""); }
+      if (u.includes("/rest/v1/ai_call_ledger?provider=eq.anthropic&error=like.")) return res(200, ledgerHasRefusal ? [{ id: 1 }] : []);
+      if (u.endsWith("/rest/v1/ai_call_ledger") && init.method === "POST") { rows.push(JSON.parse(init.body)); return res(201, ""); }
       return res(404, {});
     };
-    const api = (status, body) => async () => res(status, body);
-    const okBody = { model: "claude-sonnet-4-6", content: [{ type: "text", text: "hi" }], usage: { input_tokens: 1200, output_tokens: 300, cache_read_input_tokens: 100 } };
-    const r = await L.meter("gate", api(200, okBody), { ledgerFetch, notify: async (m) => told.push(m) })("https://api.anthropic.com/v1/messages", { method: "POST", body: JSON.stringify({ model: "claude-sonnet-4-6" }) });
-    const j = await r.json();
-    need(j.content && j.content[0].text === "hi", "the metered call doesn't hand the caller the same answer");
-    need(rows.length === 1 && rows[0].input_tokens === 1200 && rows[0].output_tokens === 300 && rows[0].cache_read_tokens === 100 && rows[0].caller === "gate" && rows[0].credit_refused === false, `a call isn't written to the ledger with its tokens (${JSON.stringify(rows[0] || {})})`);
-    need(!JSON.stringify(rows).includes("hi\""), "the ledger stores a reply's text");
-    const broke = { type: "error", error: { type: "billing_error", message: "Your credit balance is too low to access the Anthropic API." } };
-    await L.meter("gate", api(402, broke), { ledgerFetch, notify: async (m) => told.push(m) })("https://api.anthropic.com/v1/messages", { method: "POST", body: "{}" });
-    need(rows.length === 2 && rows[1].credit_refused === true && told.length === 1, "an out-of-credit refusal isn't recorded and told once");
+    const deps = { fetch: ledgerFetch, notify: async (m) => told.push(m) };
+    const broke = JSON.stringify({ type: "error", error: { type: "billing_error", message: "Your credit balance is too low to access the Anthropic API." } });
+    await L.recordAiCall({ fn: "gate", provider: "anthropic", model: "claude-sonnet-4-6", usage: { input_tokens: 1200, output_tokens: 300, cache_read_input_tokens: 100 }, ok: true, status: 200 }, deps);
+    need(rows.length === 1 && rows[0].input_tokens === 1300 && rows[0].output_tokens === 300 && rows[0].fn === "gate" && rows[0].ok === true && told.length === 0, `a call isn't written to ai_call_ledger with its tokens (${JSON.stringify(rows[0] || {})})`);
+    await L.recordAiCall({ fn: "gate", provider: "anthropic", model: "claude-sonnet-4-6", ok: false, status: 402, error: L.errorType(402, broke) }, deps);
+    need(rows.length === 2 && /credit_balance_too_low/.test(rows[1].error || "") && told.length === 1, "an out-of-credit refusal isn't recorded and told once");
     ledgerHasRefusal = true;
-    await L.meter("gate", api(400, { error: { type: "invalid_request_error", message: "Your credit balance is too low to access the Anthropic API." } }), { ledgerFetch, notify: async (m) => told.push(m) })("https://api.anthropic.com/v1/messages", { method: "POST", body: "{}" });
-    need(rows.length === 3 && rows[2].credit_refused === true && told.length === 1, "a second refusal in 12 hours is told again (or the 400 credit wording isn't read as one)");
-    // off Netlify, with no ledger handed in, nothing is written (the gates share the clients' database)
+    const wording400 = JSON.stringify({ error: { type: "invalid_request_error", message: "Your credit balance is too low to access the Anthropic API." } });
+    await L.recordAiCall({ fn: "gate", provider: "anthropic", model: "claude-sonnet-4-6", ok: false, status: 400, error: L.errorType(400, wording400) }, deps);
+    need(rows.length === 3 && /credit_balance_too_low/.test(rows[2].error || "") && told.length === 1, "a second refusal in 12 hours is told again (or the 400 credit wording isn't read as one)");
+    // a refused alert path never breaks the call it records
+    let threw = false; const warn = console.warn, err = console.error; console.warn = () => {}; console.error = () => {};
+    try { await L.recordAiCall({ fn: "gate", provider: "anthropic", ok: false, status: 402, error: "credit_balance_too_low (402)" }, { fetch: async () => { throw new Error("down"); }, notify: async () => { throw new Error("down"); } }); } catch { threw = true; }
+    console.warn = warn; console.error = err;
+    need(!threw, "a failed ledger or alert write breaks the call it records");
+    // off Netlify, with no fetch handed in, nothing is written (the gates share the clients' database)
     let touched = 0;
     globalThis.fetch = async () => { touched++; return res(200, {}); };
-    await L.meter("gate", api(200, okBody))("https://api.anthropic.com/v1/messages", { method: "POST", body: "{}" });
+    await L.recordAiCall({ fn: "gate", provider: "anthropic", ok: true, status: 200 });
     globalThis.fetch = savedFetch;
-    need(touched === 0, "the meter writes to the real database from a laptop");
-    need(Math.abs(L.costOf({ model: "claude-sonnet-4-6", input_tokens: 1e6, output_tokens: 1e6 }) - 18) < 1e-9, "the $ estimate isn't Anthropic's price per token");
-    // every caller in the functions goes through the meter
-    const dir = path.join(DIR, "netlify/functions"), raw = [];
+    need(touched === 0, "the ledger writes to the real database from a laptop");
+    need(Math.abs(L.costUsd("claude-sonnet-4-6", { input_tokens: 1e6, output_tokens: 1e6 }) - 18) < 1e-9, "the $ estimate isn't Anthropic's price per token");
+    // ONE ledger: the second one stays deleted and no caller reaches it
+    need(rd("netlify/functions/_anthropic-ledger.js") === null, "a second Anthropic ledger file (_anthropic-ledger.js) is back");
+    need(rd("docs/supabase/ANTHROPIC_USAGE_2026-11-11.sql") === null, "the second ledger's SQL file (ANTHROPIC_USAGE) is back");
+    const dir = path.join(DIR, "netlify/functions"), twice = [], second = [];
     for (const f of fs.readdirSync(dir).filter((x) => x.endsWith(".js"))) {
-      fs.readFileSync(path.join(dir, f), "utf8").split("\n").forEach((line, i) => {
-        if (/["'`]https:\/\/api\.anthropic\.com\/v1\//.test(line) && !/_anthropic-ledger"\)\.meter\(/.test(line) && !/^\s*\/\//.test(line)) raw.push(`${f}:${i + 1}`);
-      });
+      const src = fs.readFileSync(path.join(dir, f), "utf8").split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
+      if (/_anthropic-ledger|anthropic_usage|\.meter\(/.test(src)) second.push(f);
     }
-    need(raw.length === 0, `${raw.length} Anthropic call(s) skip the meter: ${raw.slice(0, 4).join(", ")}`);
-    const sql = rd("docs/supabase/ANTHROPIC_USAGE_2026-11-11.sql") || "";
-    need(/create table if not exists anthropic_usage/.test(sql) && /alter table anthropic_usage enable row level security/.test(sql) && /revoke all on anthropic_usage from anon, authenticated/.test(sql), "the ledger's SQL file doesn't make the table closed to the public in the same file");
+    need(second.length === 0, `${second.length} file(s) still use a second ledger: ${second.slice(0, 4).join(", ")}`);
+    void twice;
   });
   await section("Anthropic row", async () => {
     if (!C) return;
     const sum = (o) => async () => ({ mode: "ok", calls: 10, input: 1, output: 1, usd: 5, exact: true, refusals: [], last_ok_at: null, ...o });
     const ns = await C.anthropicSpend({ summary: async () => ({ mode: "not-set-up" }), env: {} });
-    need(ns.level === "indeterminate" && /ANTHROPIC_USAGE/.test(ns.note || ""), "no ledger table reads as $0 instead of 'not set up'");
+    need(ns.level === "indeterminate" && /AI_CALL_LEDGER/.test(ns.note || ""), "no ledger table reads as $0 instead of 'not set up'");
     const out = await C.anthropicSpend({ summary: sum({ refusals: [{ at: "2026-11-12T10:00:00Z", caller: "brain-analysis", status: 402 }], last_ok_at: "2026-11-12T09:00:00Z" }), env: {} });
     need(out.ok === false && /credit/.test(out.error || ""), "an out-of-credit refusal isn't the Anthropic row's ERROR");
     const back = await C.anthropicSpend({ summary: sum({ refusals: [{ at: "2026-11-12T10:00:00Z", caller: "x", status: 402 }], last_ok_at: "2026-11-12T11:00:00Z" }), env: {} });
     need(back.ok === true, "a refusal a good call came after is still read as out of credit");
-    const w = await C.anthropicSpend({ summary: sum({ usd: 41 }), env: { ANTHROPIC_MONTHLY_CAP_USD: "50" } }), o = await C.anthropicSpend({ summary: sum({ usd: 48 }), env: { ANTHROPIC_MONTHLY_CAP_USD: "50" } });
+    const w = await C.anthropicSpend({ summary: sum({ usd: 41 }), env: { AI_MONTHLY_BUDGET_USD: "50" } }), o = await C.anthropicSpend({ summary: sum({ usd: 48 }), env: { AI_MONTHLY_BUDGET_USD: "50" } });
+    const fb = await C.anthropicSpend({ summary: sum({ usd: 48 }), env: { ANTHROPIC_MONTHLY_CAP_USD: "50" } });
+    need(fb.level === "over", "the old ANTHROPIC_MONTHLY_CAP_USD is no longer read as the budget when AI_MONTHLY_BUDGET_USD is unset");
     need(w.level === "warn" && o.level === "over", "Anthropic spend isn't orange at 80% / red at 95% of its cap");
   });
 
@@ -349,4 +354,4 @@ try {
 } finally { try { fs.rmSync(TMP, { recursive: true, force: true }); } catch { /* best effort */ } }
 if (before.length < MIN_BEFORE) { console.log(`INDETERMINATE: the checker finds only ${before.length} problem(s) at ${BEFORE}; it can't tell the old integrations from the new`); process.exit(2); }
 if (now.length) { console.log(`❌ integrations aren't watched from the cloud — ${now.length} problem(s):`); now.forEach((m) => console.log(`  · ${m}`)); process.exit(1); }
-console.log(`✅ integrations are watched from the cloud: RGA's Google grant probed with no send (red banner when it breaks), sign-in links made without email, every Anthropic call metered (out of credit said once), budgets orange at 80% / red at 95%, Stripe ledger + Quo key + Supabase advisor on a Netlify schedule, the RGA Admin key only in the invite accept, the dormant aliases gone. Proven: the old code at ${BEFORE} fails ${before.length} ways.`);
+console.log(`✅ integrations are watched from the cloud: RGA's Google grant probed with no send (red banner when it breaks), sign-in links made without email, one AI ledger for every model call (out of credit said once), budgets orange at 80% / red at 95%, Stripe ledger + Quo key + Supabase advisor on a Netlify schedule, the RGA Admin key only in the invite accept, the dormant aliases gone. Proven: the old code at ${BEFORE} fails ${before.length} ways.`);

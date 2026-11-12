@@ -192,6 +192,29 @@ export const FILES = {
   stripewebhook: "netlify/functions/stripe-webhook.js",
   paymentwelcome: "netlify/functions/_payment-welcome.js",   // admin_last_research_items_v1 item 4: the welcome at payment
   admincss: "admin/admin.css",
+  // 11-11 security + content and AI masters (sec-ai): sign-ups closed, no secret in an address, metered model calls, the GBP words
+  staffrules: "scraper:scripts/lib/staff-rules.mjs",   // check-no-one-is-staff-by-accident (11-11 lockdown + the insert case)
+  sa_welcome: "netlify/functions/send-welcome-email.js",
+  sa_portaluser: "netlify/functions/_portal-user.js",
+  sa_portaluserfn: "netlify/functions/admin-portal-user.js",
+  sa_auth: "netlify/functions/_auth.js",
+  sa_quohook: "netlify/functions/quo-call-webhook.js",
+  sa_citation: "netlify/functions/citation-audit.js",
+  sa_flowexec: "netlify/functions/flow-execute.js",
+  sa_reviewrunner: "scraper:scripts/refresh-review-metrics.mjs",
+  sa_ledger: "netlify/functions/_ai-ledger.js",
+  sa_ledgersql: "docs/supabase/AI_CALL_LEDGER_2026-11-11.sql",
+  sa_modelcheck: "netlify/functions/ai-model-check.js",
+  sa_toml: "netlify.toml",
+  sa_brain: "netlify/functions/v2-brain-analysis-background.js",
+  sa_photolook: "netlify/functions/_photo-look.js",
+  sa_gbpdesc: "netlify/functions/_gbp-description.js",
+  sa_gbpapply: "netlify/functions/gbp-apply-change.js",
+  sa_gbppublish: "netlify/functions/gbp-publish.js",
+  sa_svcpush: "netlify/functions/admin-gbp-services-push.js",
+  sa_quarter: "netlify/functions/_monthly-quarter.js",
+  sa_adminhtml: "admin/index.html",
+  sa_adminjs: "admin/admin.js",
   // 11-11 (ui master): a Messages alert closes on a later success, plus Dismiss (check-a-messages-alert-closes-on-success)
   messagesalerts: "netlify/functions/_messages-alerts.js",
   adminmessagesfn: "netlify/functions/admin-messages.js",
@@ -434,7 +457,6 @@ export const FILES = {
   ghidentity: "netlify/functions/_github-identity.js",   // rga_github_app_v1 (11-8)
   // integrations_hardening_v1 (11-11, check-integrations-are-watched-from-the-cloud): the cloud integration checks, the Anthropic meter, the budgets
   integrationchecks: "netlify/functions/_integration-checks.js",
-  anthropicledger: "netlify/functions/_anthropic-ledger.js",
   integrationwatchfn: "netlify/functions/integration-watch.js",
   budgetwatchfn: "netlify/functions/budget-watch.js",
   netlifyforecastfn: "netlify/functions/_netlify-credit-forecast.js",

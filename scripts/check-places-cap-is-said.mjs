@@ -191,7 +191,7 @@ async function checkTree(root, label) {
   });
 
   // ── 3b · backfill-gbp-hours (the 11-11 spender) ───────────────────────────────────────────────────────────────────
-  const env = { QUO_WEBHOOK_TOKEN: "gate-token", GOOGLE_PLACES_API_KEY: "gate-places-key", AIRTABLE_API_KEY: "gate-at-key", AIRTABLE_BASE_ID: "appGATE" };
+  const env = { QUO_WEBHOOK_TOKEN: "gate-token", INTERNAL_FN_SECRET: "gate-token", GOOGLE_PLACES_API_KEY: "gate-places-key", AIRTABLE_API_KEY: "gate-at-key", AIRTABLE_BASE_ID: "appGATE" };
   await guard("backfill-gbp-hours", async () => {
     B && B._reset && B._reset();
     Object.assign(process.env, env);
@@ -204,7 +204,7 @@ async function checkTree(root, label) {
       if (isSearchText(s)) { places++; return answer === 429 ? res(429, QUOTA) : res(200, { places: [] }); }
       throw new Error(`gate: unexpected ${s.slice(0, 60)}`);
     };
-    const run = async () => JSON.parse((await H.handler({ queryStringParameters: { token: "gate-token", limit: "400", commit: "1" } })).body);
+    const run = async () => JSON.parse((await H.handler({ headers: { "x-internal-secret": "gate-token" }, queryStringParameters: { token: "gate-token", limit: "400", commit: "1" } })).body);
     const b = await run();
     if (places !== 1) fail(`backfill-gbp-hours asked Google ${places} times on a day Google refused the first`);
     if (!b.places || b.places.stopped !== "refused") fail("backfill-gbp-hours' reply doesn't say Google refused (places.stopped), so the morning check can't tell a refusal from a quiet day");
@@ -235,7 +235,7 @@ async function checkTree(root, label) {
       if (isSearchText(s)) { places++; return res(429, QUOTA); }
       throw new Error(`gate: unexpected ${s.slice(0, 60)}`);
     };
-    const b = JSON.parse((await P.handler({ queryStringParameters: { token: "gate-token" } })).body);
+    const b = JSON.parse((await P.handler({ headers: { "x-internal-secret": "gate-token" }, queryStringParameters: { token: "gate-token" } })).body);
     if (places !== 1) fail(`backfill-place-ids asked Google ${places} times after the first refusal`);
     if (!b.places || b.places.stopped !== "refused") fail("backfill-place-ids' reply doesn't say Google refused (places.stopped)");
     const r = (b.results || []);

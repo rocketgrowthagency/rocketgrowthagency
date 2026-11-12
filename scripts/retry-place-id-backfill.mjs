@@ -27,14 +27,15 @@ for (const line of fs.readFileSync(path.resolve(HERE, "..", ".env"), "utf8").spl
   if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
 }
 
-const TOKEN = process.env.QUO_WEBHOOK_TOKEN;
-if (!TOKEN) { console.error("✗ QUO_WEBHOOK_TOKEN not set — cannot call the backfill"); process.exit(2); }
+// 🔒 the secret in the x-internal-secret header, never ?token= (security master 11-11)
+const SECRET = process.env.INTERNAL_FN_SECRET;
+if (!SECRET) { console.error("✗ INTERNAL_FN_SECRET not set: cannot call the backfill"); process.exit(2); }
 
-const url = `https://www.rocketgrowthagency.com/.netlify/functions/backfill-place-ids?token=${encodeURIComponent(TOKEN)}`;
+const url = "https://www.rocketgrowthagency.com/.netlify/functions/backfill-place-ids";
 
 let res;
 try {
-  const r = await fetch(url, { signal: AbortSignal.timeout(120000) });
+  const r = await fetch(url, { headers: { "x-internal-secret": SECRET }, signal: AbortSignal.timeout(120000) });
   const text = await r.text();
   // 🔴 Parse defensively. A Netlify error page is HTML, and JSON.parse would throw a SyntaxError that
   // hides the real status — the "a failure reason can be a mask" pattern.

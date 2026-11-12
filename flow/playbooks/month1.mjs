@@ -28,10 +28,11 @@ async function fetchHomepage(url) {
 // that deliberately live only in the Netlify environment. The local runner calls them so that both
 // entry points execute the SAME code rather than two implementations that drift.
 async function callFn(name, clientId) {
-  const token = process.env.QUO_WEBHOOK_TOKEN;
-  if (!token) throw new Error("QUO_WEBHOOK_TOKEN not set — cannot reach the deployed audits");
-  const r = await fetch(`https://www.rocketgrowthagency.com/.netlify/functions/${name}` +
-    `?token=${encodeURIComponent(token)}&clientId=${encodeURIComponent(clientId)}`);
+  // 🔒 the secret in the x-internal-secret header, never ?token= (security master 11-11)
+  const secret = process.env.INTERNAL_FN_SECRET;
+  if (!secret) throw new Error("INTERNAL_FN_SECRET not set: cannot reach the deployed audits");
+  const r = await fetch(`https://www.rocketgrowthagency.com/.netlify/functions/${name}?clientId=${encodeURIComponent(clientId)}`,
+    { headers: { "x-internal-secret": secret } });
   const text = await r.text();
   let j; try { j = JSON.parse(text); }
   catch { throw new Error(`${name} returned non-JSON (HTTP ${r.status}): ${text.slice(0, 120)}`); }
