@@ -68,5 +68,12 @@
   "      append_result \"$RESULTS_FAILED\" \"$BIZ_NAME${RSEP}website unbuildable (${REACH_WHY:-cannot connect})\"\n      return 0",
   "      append_result \"$RESULTS_FAILED\" \"$BIZ_NAME${RSEP}website unbuildable (${REACH_WHY:-cannot connect})\"\n      unledger_search_for_redo \"$BIZ_NAME\" \"website unbuildable\"\n      return 0",
   1
+ ],
+ [
+  "Chrome stops painting behind a locked screen again",
+  "recorder3",
+  "      '--disable-backgrounding-occluded-windows',\n",
+  "",
+  1
  ]
 ]

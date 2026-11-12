@@ -3505,6 +3505,10 @@ async function launchBrowser() {
       // Reduce background tab work + extension overhead
       '--disable-background-timer-throttling=false',
       '--disable-renderer-backgrounding',
+      // 2026-11-12: a LOCKED screen occludes every window, and macOS Chrome then stops painting an
+      // occluded one, so the page-shot grab (the locked-screen path) could wait on a frame that never
+      // comes. Keep painting. → check-a-locked-screen-cannot-stop-a-video
+      '--disable-backgrounding-occluded-windows',
       '--disable-extensions',
     ],
   });

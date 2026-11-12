@@ -45,6 +45,7 @@ else if (!/CGSSessionScreenIsLocked/.test(lockFn) || !/<true\\\/>/.test(lockFn))
 if (!/if \([^)]*screenIsLocked\(\)[^)]*\)\s*return grabViaPageShot\(\)/.test(gf)) fail("1c step-3: a locked screen does not send grabFreeze() to the page shot");
 if (!/\(await grabViaScreenCapture\(\)\)\s*\|\|\s*grabViaPageShot\(\)/.test(gf)) fail("1d step-3: an empty desktop grab does not fall back to the page shot");
 if (/:\s*grabViaScreenCapture\(\)\s*\)?\s*;?\s*$/m.test(gf)) fail("1e step-3: grabFreeze() still ends on a bare desktop grab");
+if (!/'--disable-backgrounding-occluded-windows'/.test(rec)) fail("1f step-3: Chrome is launched without --disable-backgrounding-occluded-windows (a locked screen stops it painting)");
 
 // ── 2 · the pipeline names the missing recording ──
 const pipe = readCode("scripts/overnight-pipeline.sh", /^\s*#/);
