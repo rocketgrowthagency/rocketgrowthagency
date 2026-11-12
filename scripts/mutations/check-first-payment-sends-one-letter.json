@@ -1,0 +1,14 @@
+[
+ ["the paying client's stage email comes back (three emails again)", "notifystage", "      if (!beta) return null;", "      if (false) return null;", 1],
+ ["the webhook sends the separate welcome again", "stripewebhook", "  await sendFirstPaymentLetter(clientId, client.workspace_id);\n}", "  await sendFirstPaymentLetter(clientId, client.workspace_id);\n  await require(\"./_payment-welcome\").sendOnce({ clientId });\n}", 1],
+ ["the first receipt is the plain receipt, not the letter", "invoiceemail", "    if (firstPayment) {", "    if (false) {", 1],
+ ["a payment recorded by hand sends nothing", "recordpayment", "    if (advanced && invoices.inv1Amount > 0) {", "    if (false) {", 1],
+ ["Google connected still gets the connect step", "paymentwelcome", "  if (connected) return null;", "", 1],
+ ["an unreadable connection is read as not connected", "paymentwelcome", "  catch { return null; }", "  catch { connected = false; }", 1],
+ ["the reminder date the letter names isn't recorded", "invoiceemail", "reminder_on: firstPayment.reminder_on || null,", "reminder_on: null,", 1],
+ ["the letter gets an em dash", "invoiceemail", "Payment received. Thank you. Your receipt for", "Payment received — thank you. Your receipt for", 1],
+ ["suppression stops reaching the sender", "invoiceemail", "if (process.env.RGA_SUPPRESS_CLIENT_EMAIL === \"1\" || _suppressSend) {", "if (false) {", 1],
+ ["a redelivered payment sends a second receipt", "invoiceemail", "  if (data[sentKey] && !force) {", "  if (false) {", 1],
+ ["the welcome module sends mail again", "paymentwelcome", "module.exports = {", "const _again = () => require(\"./_gmail\").sendAsRga({});\nmodule.exports = {", 1],
+ ["the connect step stops saying it gives no website access", "paymentwelcome", "It gives us no access to your website.", "It does the rest.", 1]
+]

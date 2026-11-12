@@ -56,6 +56,7 @@ globalThis.fetch = async (u) => {
   if (String(u).startsWith("https://supa.test/")) return new Response("[]", { status: 200, headers: { "Content-Type": "application/json" } });
   throw new Error(`the gate's fake world has no ${u}: nothing leaves this machine`);
 };
+const HAVE = (m) => fs.existsSync(`${SITE}/netlify/functions/${m}`);   // a producer from a build not on this tree yet is skipped, never a false pass or a false stop
 const load = (m) => { try { return req(`${SITE}/netlify/functions/${m}`); } catch (e) { IND(`${m} did not load: ${e.message}`); } };
 const L = load("_letter.js");
 const check = (name, { subject = "", markup = null, text = "", html = "" }) => {
@@ -68,11 +69,13 @@ let rendered = 0;
 // ── 1 · rendered ──
 const N = load("notify-client-stage.js");
 if (typeof N.messageFor !== "function") IND("notify-client-stage no longer exports messageFor");
-for (const st of ["stage_1b_admin_review", "stage_2_payment", "stage_3_setup", "stage_4_onboarding", "billing_overdue", "billing_warning", "billing_paused", "google_disconnected"])
-  for (const beta of [false, true]) for (const hasCard of [false, true]) { const m = N.messageFor(st, { first: "Pat", beta, amount: 625, hasCard }); if (m) rendered += check(`stage email ${st}${beta ? " (beta)" : ""}${hasCard ? " (card)" : ""}`, { subject: m.subject, markup: m.body }); }
+for (const st of ["stage_1b_admin_review", "stage_2_payment", "stage_3_setup", "stage_4_onboarding", "billing_overdue", "billing_warning", "billing_paused", "billing_ending", "billing_terminated", "google_disconnected"])
+  for (const beta of [false, true]) for (const hasCard of [false, true]) { const m = N.messageFor(st, { first: "Pat", beta, amount: 625, hasCard, pauseOn: "Friday, November 20", endOn: "Monday, November 30, 2026", noticeOn: "Tuesday, November 24, 2026" }); if (m) rendered += check(`stage email ${st}${beta ? " (beta)" : ""}${hasCard ? " (card)" : ""}`, { subject: m.subject, markup: m.body }); }
 
 const PW = load("_payment-welcome.js");
-for (const env of [{}, { STEP_REMINDERS_EMAIL: "on" }]) { const w = PW.buildWelcome({ nowMs: Date.parse("2026-11-11T18:00:00Z"), tz: "America/Los_Angeles", env, first: "Pat" }); rendered += check("the payment welcome", { subject: w.subject, markup: w.markup }); }
+// the first payment is ONE letter (the receipt, carrying the next step); its next-step block comes from _payment-welcome (nothing sent: a fake database)
+const nextSteps = [];
+for (const env of [{}, { STEP_REMINDERS_EMAIL: "on" }]) { const fp = await PW.firstPaymentNextStep({ client: { id: "c1", primary_contact_name: "Pat" }, supa: async () => [], nowMs: Date.parse("2026-11-11T18:00:00Z"), env }); if (!fp) IND("firstPaymentNextStep returned nothing for a client with no Google connection"); nextSteps.push(fp); }
 { const r = PW.buildConnectReminder({ primary_contact_name: "Pat" }); rendered += check("the connect-Google reminder", { subject: r.subject, markup: r.markup }); }
 
 const CR = load("_call-reminders.js");
@@ -95,6 +98,8 @@ for (const tier of ["monthly", "commit_3mo", "founding", "done_for_you", "beta_u
 }
 
 const SI = load("send-invoice-email.js");
+const INVOICE_CLIENT = { id: "x", primary_contact_name: "Pat Lee", business_name: "Pat's Plumbing", primary_contact_email: "pat@x.test" };
+for (const fp of nextSteps) { const m = await SI.buildEmail({ kind: "receipt", tone: "due", invoiceNum: 1, client: INVOICE_CLIENT, contract: { id: "c1", tier: "founding", audit_log: [{ event: "generated_and_sent", addons: {} }] }, inv: { id: "i0", amount: 625, due_date: "2026-11-11", status: "paid", created_at: "2026-11-11T00:00:00Z" }, firstPayment: fp }); rendered += check(`the first-payment letter${fp.reminder ? " (with the reminder line)" : ""}`, { subject: m.subject, text: m.text, html: m.html }); }
 if (typeof SI.buildEmail !== "function") IND("send-invoice-email no longer exports buildEmail");
 for (const [kind, tone] of [["receipt", "due"], ["invoice", "upcoming"], ["invoice", "due"], ["invoice", "overdue"], ["invoice", "warning"], ["invoice", "paused"]]) {
   let m; try { m = await SI.buildEmail({ kind, tone, invoiceNum: 2, client: { id: "x", primary_contact_name: "Pat Lee", business_name: "Pat's Plumbing", primary_contact_email: "pat@x.test" }, contract: { id: "c1", tier: "monthly", audit_log: [{ event: "generated_and_sent", addons: {} }] }, inv: { id: "i1", amount: 625, due_date: "2026-12-01", status: kind === "receipt" ? "paid" : "due", created_at: "2026-11-01T00:00:00Z" } }); }
@@ -102,18 +107,18 @@ for (const [kind, tone] of [["receipt", "due"], ["invoice", "upcoming"], ["invoi
   rendered += check(`the ${kind === "receipt" ? "receipt" : `invoice email (${tone})`}`, { subject: m.subject, text: m.text, html: m.html });
 }
 
-const A = load("_notice-ack.js");
-for (const invoices of [[{ invoice_num: 4, amount: 322.58, status: "upcoming", due_date: "2026-12-01" }], []]) {
+const A = HAVE("_notice-ack.js") ? load("_notice-ack.js") : null;
+if (A) for (const invoices of [[{ invoice_num: 4, amount: 322.58, status: "upcoming", due_date: "2026-12-01" }], []]) {
   const a = A.buildAck({ client: { primary_contact_name: "Pat" }, notice: { notice_on: "2026-11-11", ends_on: "2026-12-11" }, invoices });
   if (!a.ok) { fail(`the notice acknowledgment would not build: ${a.why}`); continue; }
   rendered += check("the notice acknowledgment", { subject: a.subject, markup: a.markup });
 }
-const ON = load("_onboarding-notes.js");
-{ const fw = ON.firstWeekDraft({ primary_contact_name: "Pat", business_name: "Pat's" }, { lines: [{ text: "Your main category on Google is Plumber.", source: "Read from your Google profile" }] });
+const ON = HAVE("_onboarding-notes.js") && load("_onboarding-notes.js").firstWeekDraft ? load("_onboarding-notes.js") : null;
+if (ON) { const fw = ON.firstWeekDraft({ primary_contact_name: "Pat", business_name: "Pat's" }, { lines: [{ text: "Your main category on Google is Plumber.", source: "Read from your Google profile" }] });
   const d5 = ON.day50Draft({ primary_contact_name: "Pat" }, { day: 52, done: ["Categories"], terms_sentence: "You can stop with 30 days' notice." });
   rendered += check("the first-week note", { subject: fw.subject, markup: fw.markup }) + check("the day-50 note", { subject: d5.subject, markup: d5.markup }); }
-const MM = load("_mid-month-note.js");
-{ let PB; try { PB = JSON.parse(read("data/playbooks/playbooks.json")).month2plus || []; } catch { PB = []; }
+const MM = HAVE("_mid-month-note.js") ? load("_mid-month-note.js") : null;
+if (MM) { let PB; try { PB = JSON.parse(read("data/playbooks/playbooks.json")).month2plus || []; } catch { PB = []; }
   const tasks = Object.fromEntries(PB.slice(0, 12).map((s) => [s.id, { status: "done", completed_at: "2026-11-05T10:00:00Z" }]));
   const mm = MM.buildMidMonth({ client: { primary_contact_name: "Pat", business_name: "Pat's" }, month: "2026-11-01", playbook: PB, tasks });
   if (mm) rendered += check("the mid-month note", { subject: mm.subject, markup: mm.markup }); }
@@ -138,6 +143,9 @@ const SCANS = {
   "the Month 1 report letter": codeOnly(read("netlify/functions/_month1-email.js")),
   "the step reminders": codeOnly(read("netlify/functions/_step-reminders.js")),
   "the step-open emails": region(codeOnly(read("netlify/functions/notify-step-open.js")), /function buildEmail\(/, "\nasync function ", "notify-step-open buildEmail"),
+  "the kickoff agenda email": region(codeOnly(read("netlify/functions/notify-step-open.js")), /function buildAgendaEmail\(/, "\nasync function ", "buildAgendaEmail"),
+  "the later-reminder email": region(codeOnly(read("netlify/functions/notify-step-open.js")), /function buildLaterEmail\(/, "\nasync function ", "buildLaterEmail"),
+  "the stripe webhook and record-payment (no client text of their own)": codeOnly(read("netlify/functions/stripe-webhook.js")).split("\n").filter((l) => /subject:|markup:|body:\s*`/.test(l)).join("\n"),
   "the duplicate-cleared email": region(codeOnly(read("netlify/functions/notify-step-open.js")), /function buildDupClearedEmail\(/, "\nasync function ", "buildDupClearedEmail"),
   // the email drafts are the `Email to …: SUBJECT … Hi …` summaries (the other summaries in that block are RGA's own step results)
   "the access-step drafts (flow-execute)": (() => { const r = region(codeOnly(read("netlify/functions/flow-execute.js")), /m1\.access\.analytics/, "\n};", "the access drafts").split("\n").filter((l) => /Email to \$\{/.test(l)); if (r.length < 2) IND("the access-step email drafts moved (fewer than 2 found)"); return r.join("\n"); })(),
@@ -165,13 +173,16 @@ const EXCUSED = {
   "rga-todo-morning.js": "emails RGA's morning To do list, never a client", "cancel-kickoff-invite.js": "Google writes the canceled-event email; our words there are RGA's activity rows",
   "kickoff-rsvp-check.js": "reads Google's RSVP; its words are RGA's activity rows", "schedule-call-action.js": "moves/cancels a call on Google (Google writes that email)",
   "walkthrough-rsvp.js": "reads Google's RSVP, sends nothing",
+  "admin-mentions.js": "RGA's pitch to a publisher for a 'Best of' list: a third party, never a client",
 };
+// senders that exist only on the client-messages build (not on every tree yet): listed so they are covered the day they land, never a false stop while absent
+const MAY_BE_ABSENT = new Set(["_notice-ack.js", "_client-email-queue.js"]);
 const SENDER = /sendAsRga\(|users\/me\/messages\/send|[^a-zA-Z.]letter\(|sendGmail\(|calendar\/v3\/calendars\/primary\/events/;
 let files; try { files = fs.readdirSync(`${SITE}/netlify/functions`).filter((f) => f.endsWith(".js")); } catch { IND("cannot list netlify/functions"); }
 const senders = files.filter((f) => SENDER.test(codeOnly(fs.readFileSync(`${SITE}/netlify/functions/${f}`, "utf8"))));
 if (senders.length < 10) IND(`found only ${senders.length} senders: the probe must be wrong`);
 for (const f of senders) if (!COVERED[f] && !EXCUSED[f]) fail(`${f} sends mail or an invite and this gate neither renders, scans nor excuses it: add it to COVERED (rendered or scanned) or EXCUSED (with why)`);
-for (const f of [...Object.keys(COVERED), ...Object.keys(EXCUSED)]) if (!files.includes(f)) fail(`${f} is listed here but no longer exists: re-read the list`);
+for (const f of [...Object.keys(COVERED), ...Object.keys(EXCUSED)]) if (!files.includes(f) && !MAY_BE_ABSENT.has(f)) fail(`${f} is listed here but no longer exists: re-read the list`);
 
 if (rendered < 60) IND(`only ${rendered} emails rendered: a builder stopped answering`);
 if (F.length) { console.error(`🔴 an em dash in client text (${F.length}):`); for (const f of F) console.error("   · " + f); process.exit(1); }

@@ -15,7 +15,8 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DIR = process.env.SCRAPER_COPY_DIR ? path.join(process.env.SCRAPER_COPY_DIR, "scripts") : HERE;
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
 const F = [], fail = (m) => F.push(m);
-const LINE = "$1,250 setup, which includes your first month. Then $625/month. Stay 3 months: $2,500 total. Cancel anytime with 30 days' notice.";
+// 11-11 (master plans-and-emails decision 5): the approved line names both offers; check-one-price-everywhere derives the first sentence from the offer file
+const LINE = "First 5 clients: $625 a month, no setup fee. After that: $1,250 to start, then $625. Standard plan: stay 3 months for $2,500 total, and cancel anytime with 30 days' notice.";
 
 let files;
 try { files = execFileSync("git", ["-C", SITE, "ls-files", "*.html"], { encoding: "utf8", maxBuffer: 1e8 }).split("\n").filter(Boolean); }

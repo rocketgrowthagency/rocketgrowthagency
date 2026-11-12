@@ -52,20 +52,22 @@ for (const beta of [false, true]) {
     }
   }
 }
-// the paying client's email at first payment: the payment welcome, rendered through the real buildWelcome
+// the paying client's email at first payment: the ONE letter (the receipt for invoice #1 carrying the next step), rendered through the real builders
 try {
   const { createRequire } = await import("node:module");
-  const PW = createRequire(import.meta.url)(`${SITE}/netlify/functions/_payment-welcome.js`);
+  const rq = createRequire(import.meta.url);
+  const PW = rq(`${SITE}/netlify/functions/_payment-welcome.js`), SI = rq(`${SITE}/netlify/functions/send-invoice-email.js`);
   for (const on of [false, true]) {
-    const w = PW.buildWelcome({ nowMs: Date.parse("2026-11-11T18:00:00Z"), tz: "America/Los_Angeles", env: on ? { STEP_REMINDERS_EMAIL: "on" } : {}, first: "Sam" });
-    const all = `${w.subject}\n${w.markup}`;
+    const fp = await PW.firstPaymentNextStep({ client: { id: "c1", primary_contact_name: "Sam" }, supa: async () => [], nowMs: Date.parse("2026-11-11T18:00:00Z"), env: on ? { STEP_REMINDERS_EMAIL: "on" } : {} });
+    const w = await SI.buildEmail({ kind: "receipt", tone: "due", invoiceNum: 1, client: { id: "c1", primary_contact_name: "Sam Lee", business_name: "Sam's", primary_contact_email: "s@x.test" }, contract: { id: "k1", tier: "founding", audit_log: [{ event: "generated_and_sent", addons: {} }] }, inv: { id: "i1", amount: 625, status: "paid", due_date: "2026-11-11", created_at: "2026-11-11T00:00:00Z" }, firstPayment: fp });
+    const all = `${w.subject}\n${w.text}`;
     rendered++;
-    if (LIE.test(all)) F(`the payment welcome claims nothing more is needed: "${(all.match(LIE) || [""])[0]}"`);
-    if (!/payment went through|payment received/i.test(all)) F("a paying client is not told their payment was received (the payment welcome)");
-    if (!/kickoff/i.test(w.markup)) F("the payment welcome does not say the kickoff booking comes next (C6 said it; C6 is retired)");
-    if (!/no access to your website/i.test(w.markup)) F("the payment welcome lost C6's truth about Google access: it gives no access to their website");
+    if (LIE.test(all)) F(`the first-payment letter claims nothing more is needed: "${(all.match(LIE) || [""])[0]}"`);
+    if (!/payment received/i.test(all)) F("a paying client is not told their payment was received (the first-payment letter)");
+    if (!/kickoff/i.test(w.text)) F("the first-payment letter does not say the kickoff booking comes next");
+    if (!/no access to your website/i.test(w.text)) F("the first-payment letter lost the truth about Google access: it gives no access to their website");
   }
-} catch (e) { console.error(`⚠️  INDETERMINATE — the payment welcome did not render: ${e.message}`); process.exit(2); }
+} catch (e) { console.error(`⚠️  INDETERMINATE: the first-payment letter did not render: ${e.message}`); process.exit(2); }
 console.log(`  ${rendered} stage emails rendered (paid + beta, and the payment welcome)`);
 if (fails.length) { console.error("🔴 a client email says something untrue:"); for (const f of fails) console.error("   · " + f); process.exit(1); }
 console.log("✅ every stage email tells the truth: no \"nothing needed\", stage 4 retired, beta never told it paid");
