@@ -103,5 +103,61 @@
   "const fx = 0.5 + (to.x - from.x) / vp.width",
   "const fx = 0.5 - (to.x - from.x) / vp.width",
   1
+ ],
+ [
+  "a collapsed panel is never re-opened",
+  "recorder3",
+  "button[aria-label*=\"xpand side panel\"]",
+  "button[aria-label*=\"nothing\"]",
+  1
+ ],
+ [
+  "the freeze does not wait for fresh frames",
+  "recorder3",
+  "recorderCtl.liveCaptureCount() < c0 + 2; w++) await sleep(250);",
+  "false; w++) await sleep(250);",
+  1
+ ],
+ [
+  "the page is not re-verified after the pause",
+  "recorder3",
+  "recorderCtl.pauseCapture();\n          if (resultsViewProblem(await readResultsViewState(page), query)) { recorderCtl.resumeCapture(); continue; }",
+  "recorderCtl.pauseCapture();\n          if (false) { recorderCtl.resumeCapture(); continue; }",
+  1
+ ],
+ [
+  "a bad page is not repaired before the freeze",
+  "recorder3",
+  "await ensureResultsViewFramed(page, meta, query, initialMapsUrl, 'results-freeze');   // reloads, or throws",
+  "",
+  1
+ ],
+ [
+  "no verified frame does not fail the lead",
+  "recorder3",
+  "if (!_frozen) {\n          throw new Error('[step-3 GUARDRAIL] results-freeze",
+  "if (false) {\n          throw new Error('[step-3 GUARDRAIL] results-freeze",
+  1
+ ],
+ [
+  "the freeze never pauses",
+  "recorder3",
+  "          recorderCtl.pauseCapture();\n          if (resultsViewProblem",
+  "          if (resultsViewProblem",
+  1
+ ],
+ [
+  "the capture is never gated on a verified page",
+  "recorder3",
+  "recorderCtl.setFrameGate(async () => !resultsViewProblem(await readResultsViewState(page), query));",
+  "",
+  1
+ ],
+ [
+  "the loop films a frame the gate rejects",
+  "recorder3",
+  "if (_okFrame) latestFrame = _grabbed;",
+  "latestFrame = _grabbed;",
+  1
  ]
 ]

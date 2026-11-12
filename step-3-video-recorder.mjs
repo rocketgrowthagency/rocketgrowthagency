@@ -1665,6 +1665,14 @@ async function ensureResultsViewFramed(page, meta, query, retryUrl, label = 'res
   if (problem) {
     throw new Error(`[step-3 GUARDRAIL] ${label}: the Maps results page is not a usable results list — ${problem}. The held "competitive results" frame would show that instead of the search (american-structural / south-bay / xtermicon, 11-11). Failing the lead to the redo queue.`);
   }
+  // Google collapses the left panel on its own at times (11-11 south-bay, 11-12 live test): re-open it the moment it does.
+  await page.evaluate(() => {
+    if (window.__rgaPanelGuard) clearInterval(window.__rgaPanelGuard);
+    window.__rgaPanelGuard = setInterval(() => {
+      const b = document.querySelector('button[aria-label*="xpand side panel"]');
+      if (b && b.offsetParent !== null) b.click();
+    }, 200);
+  }).catch(() => {});
   // Frame the map: business to the viewport centre → zoom (zooms toward the centre) → into the visible map.
   let scale = await readMapScaleMeters(page);
   for (let attempt = 1; attempt <= 3; attempt++) {
@@ -2395,6 +2403,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       await page.waitForSelector('a.hfpxzc', { timeout: 9000 }).catch(() => {});
       await sleep(1500); // settle so cards are interactive before scroll-find
       // 🔴 2026-11-12 verify + frame the RESULTS page before capture is ever paused on it (see ensureResultsViewFramed).
+      if (recorderCtl && recorderCtl.setFrameGate) recorderCtl.setFrameGate(async () => !resultsViewProblem(await readResultsViewState(page), query));
       await ensureResultsViewFramed(page, meta, query, initialMapsUrl, 'results-view');
       // 2026-06-22: Google normalizes the displayed category search to lowercase in the box
       // ("roofers in pasadena, ca"). Overwrite it back to Title Case with the state uppercased —
@@ -2417,6 +2426,35 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         force();
       }, inputSelector, displayQuery).catch(() => {});
       await sleep(600);
+      // 🔴 2026-11-12 FREEZE ON THE VERIFIED RESULTS FRAME NOW. A live test of the first fix (xtermicon) showed the
+      // results page collapsing its left panel and drifting to open water within ~3s of the verified frame, and the
+      // live capture filmed it for ~20s while the deep-rank typed search + goto chain ran. So: re-verify, take ONE
+      // page shot of the verified view and PAUSE on it — the video then shows exactly that frame until the card
+      // frames are pushed, whatever the page does in between (both paths: scroll-find pauses here too).
+      if (recorderCtl && recorderCtl.pauseCapture) {
+        // The page is verified, then the recorder's OWN loop must film >= 2 more frames (each one started after the
+        // verification), then we pause and verify AGAIN: the frame it holds is a frame of a verified page. We do not
+        // take our own page.screenshot — after the repair reload (a goto) it hangs (11-12 live tests, 2 of 2), the
+        // known goto-opened-page behaviour the live loop works around with its 2.5s race.
+        let _frozen = false;
+        for (let i = 0; i < 4 && !_frozen; i++) {
+          if (resultsViewProblem(await readResultsViewState(page), query)) {
+            await ensureResultsViewFramed(page, meta, query, initialMapsUrl, 'results-freeze');   // reloads, or throws
+            await sleep(500);
+            continue;
+          }
+          const c0 = recorderCtl.liveCaptureCount ? recorderCtl.liveCaptureCount() : 0;
+          for (let w = 0; w < 40 && recorderCtl.liveCaptureCount && recorderCtl.liveCaptureCount() < c0 + 2; w++) await sleep(250);
+          recorderCtl.pauseCapture();
+          if (resultsViewProblem(await readResultsViewState(page), query)) { recorderCtl.resumeCapture(); continue; }   // changed under the frame
+          _frozen = true;
+          if (recorderCtl.setFrameGate) recorderCtl.setFrameGate(null);
+        }
+        if (!_frozen) {
+          throw new Error('[step-3 GUARDRAIL] results-freeze: could not hold a frame of a verified results page in 4 tries — the held results frame would be unverified (xtermicon / south-bay, 11-12 live tests). Failing the lead to the redo queue.');
+        }
+        console.log('   → results-freeze: capture paused on a verified results frame');
+      }
     }
 
     if (businessName && !skipScrollAttempt) {
@@ -2931,6 +2969,7 @@ function createScreencastRecorder(page, outputPath, viewport) {
   let captureCount = 0;
   let latestFrame = null;
   let capturePaused = false;
+  let frameGate = null;
   const stderrChunks = [];
 
   async function start() {
@@ -3013,10 +3052,16 @@ function createScreencastRecorder(page, outputPath, viewport) {
           // detail page hangs it ~176s, which bloated recordings to 232s). Race it against a
           // real timer so a stuck capture is abandoned in ~2.5s and the loop keeps emitting
           // the last good frame. Light pages capture in <1s, so no quality loss.
-          latestFrame = await Promise.race([
+          const _grabbed = await Promise.race([
             page.screenshot({ type: 'jpeg', quality: 78, captureBeyondViewport: false, timeout: 2500 }),
             new Promise((_, rej) => setTimeout(() => rej(new Error('cap-race-timeout')), 2500)),
           ]);
+          // 🔴 2026-11-12 FRAME GATE: while the results page is being verified/repaired (collapsed panel, reload,
+          // city card) a live frame of it is NOT footage — the 11-12 live test still showed a 3s collapsed-ocean
+          // frame inside the repair window. A gated frame is dropped; the recording keeps the last good one.
+          let _okFrame = true;
+          if (frameGate) { try { _okFrame = !!(await frameGate()); } catch (_) { _okFrame = false; } }
+          if (_okFrame) latestFrame = _grabbed;
           captureCount += 1;
         } catch {
           await sleep(120);
@@ -3126,7 +3171,9 @@ function createScreencastRecorder(page, outputPath, viewport) {
   function pauseCapture() { capturePaused = true; }
   function resumeCapture() { capturePaused = false; }
 
-  return { start, stop, pushFrame, pauseCapture, resumeCapture };
+  const liveCaptureCount = () => captureCount;
+  const setFrameGate = (fn) => { frameGate = fn || null; };
+  return { start, stop, pushFrame, pauseCapture, resumeCapture, liveCaptureCount, setFrameGate };
 }
 
 async function recordDesktopMapsVideo(browser, meta, outputPath) {
@@ -3164,6 +3211,8 @@ async function recordDesktopMapsVideo(browser, meta, outputPath) {
       pushFrame: recorder.pushFrame,
       pauseCapture: recorder.pauseCapture,
       resumeCapture: recorder.resumeCapture,
+      liveCaptureCount: recorder.liveCaptureCount,
+      setFrameGate: recorder.setFrameGate,
     });
     console.log(`   [timing] nav (goToMaps...) took ${Date.now() - _navT0}ms, mode=${mode}`);
     if (!recorderStarted) await startRecorder();

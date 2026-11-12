@@ -49,6 +49,16 @@ else {
   if (firstPause !== -1 && at > firstPause) fail("1k the results page is verified AFTER capture is paused on it");
 }
 
+if (!/initialMapsUrl, 'results-view'\);/.test(code)) fail("1n the first results verification (before the settle + Title Case) is gone");
+// ── 1l · capture is paused on a VERIFIED frame right after the results are verified ──
+if (!/let _frozen = false;[\s\S]*?'results-freeze'\);[\s\S]*?liveCaptureCount\(\) < c0 \+ 2[\s\S]*?recorderCtl\.pauseCapture\(\);\s*if \(resultsViewProblem\([\s\S]*?recorderCtl\.resumeCapture\(\); continue; \}[^\n]*\n\s*_frozen = true;[\s\S]*?if \(!_frozen\) \{\s*throw new Error/.test(code))
+  fail("1l capture is not paused on a re-verified results frame (or no verified frame does not fail the lead) before the typed search / goto chain (xtermicon live tests 11-12: 20s of collapsed ocean)");
+if (ens && !/xpand side panel/.test(ens)) fail("1m a collapsed results panel is not re-opened");
+
+// ── 1o · frames of an unverified results page are dropped, not filmed ──
+if (!/recorderCtl\.setFrameGate\(async \(\) => !resultsViewProblem\(/.test(code)) fail("1o the live capture is not gated on the results page being verified (a 3s collapsed-ocean frame was filmed inside the repair window, 11-12)");
+if (!/if \(frameGate\)[\s\S]{0,120}?frameGate\(\)[\s\S]{0,120}?if \(_okFrame\) latestFrame = _grabbed;/.test(code)) fail("1p the capture loop does not drop a frame the gate rejects");
+
 // ── 2 · the business must be inside the visible map ──
 const frm = fn("businessFramePx");
 if (!frm) fail("2a no businessFramePx() — the card frame is judged only by the 25km bound");
