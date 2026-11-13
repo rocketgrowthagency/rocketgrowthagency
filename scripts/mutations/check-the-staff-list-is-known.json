@@ -1,0 +1,23 @@
+[
+ [
+  "the robot is forgotten, so a staff account nobody listed passes",
+  "knownstaff",
+  "  \"rocketgrowthagencyadmin+robot@gmail.com\": { role: \"staff\",",
+  "  \"someone-else@example.com\": { role: \"staff\",",
+  1
+ ],
+ [
+  "the robot is expected to have two authenticators",
+  "knownstaff",
+  "(scripts/create-robot-staff.mjs, 11-13)\", factors: 1 },",
+  "(scripts/create-robot-staff.mjs, 11-13)\", factors: 2 },",
+  1
+ ],
+ [
+  "Chris is expected as staff, not owner",
+  "knownstaff",
+  "\"hello@rocketgrowthagency.com\": { role: \"owner\",",
+  "\"hello@rocketgrowthagency.com\": { role: \"staff\",",
+  1
+ ]
+]
