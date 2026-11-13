@@ -38,6 +38,7 @@ import fs from "node:fs";
 // 🔒 THE RENDER CLIENT IS NAMED, never "whichever row comes back first" (2026-10-13): with the walk's test clients in
 // the table, an unordered `limit=1` could open a client with nothing done and measure nothing. → acceptance/clients.mjs
 import { WALK_CLIENTS } from "./acceptance/clients.mjs";
+import { signInAdmin } from "./lib/admin-sign-in.mjs";
 import { createRequire } from "node:module";
 const SITE_DIR = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 
@@ -126,17 +127,6 @@ EXPECT_VIEW = {
 };
 console.log(`  client mode: ${portalMode || "not chosen"}${MW_YOU.size ? ` (${MW_YOU.size} managed steps read You)` : ""}; website steps that run themselves: ${m1.filter((s) => kindOf(s) === "you" && runsItself(s)).length}`);
 
-let link;
-try {
-  const r = await fetch(`${SUPA_URL}/auth/v1/admin/generate_link`, {
-    method: "POST",
-    headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ type: "magiclink", email: ADMIN_EMAIL }),
-  });
-  const j = await r.json();
-  link = j.action_link || j.properties?.action_link;
-  if (!link) { console.log(`  ⚠️  no sign-in link: ${JSON.stringify(j).slice(0, 140)}`); process.exit(2); }
-} catch (e) { console.log(`  ⚠️  could not mint a sign-in link: ${e.message}`); process.exit(2); }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 // 🔴🔴 THIS GATE WAS FLAKY, AND A FLAKY GATE IS WORSE THAN A FAILING ONE (2026-10-05). Three runs
@@ -187,7 +177,8 @@ try {
       process.exit(2);
     }
   };
-  await nav(link, "the sign-in link");
+  // 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
+  await signInAdmin(page).catch((e) => { console.error(`⚠️  could not sign in to the admin: ${String(e.message).split("\n")[0]}`); process.exit(2); });
   await new Promise((r) => setTimeout(r, 6000));
   await nav(`${SITE}/admin/?view=client&id=${clientId}&tab=onboarding-v2`, "the admin onboarding tab");
   // 🔴 A FIXED 14s WAS THE REST OF THE FLAKINESS. The checklist loads its playbook and the client's

@@ -3,7 +3,7 @@
 // gates threw in one sweep on 2026-10-08 purely because they ran concurrently against the live
 // admin. `nav` exits 2 and names the navigation it could not complete.
 // → feedback_a_gate_that_throws_is_not_a_gate_that_fails · feedback_a_flaky_gate_is_worse_than_a_failing_one
-const { nav: _sharedNav } = await import("./_admin-session.mjs");
+const { nav: _sharedNav, adminSignIn } = await import("./_admin-session.mjs");
 const navOrIndeterminate = (pg, url) => _sharedNav(pg, url, "a page this gate measures");
 /**
  * ═══════════════════════════════════════════════════════════════════════════════════════════════
@@ -99,7 +99,6 @@ try{
   if(!Array.isArray(rows)||!rows[0]?.id){console.error("⚠️  INDETERMINATE — no unarchived client to render the card against.");process.exit(2);}
   cid=rows[0].id;
 }catch(e){console.error(`⚠️  INDETERMINATE — could not reach Supabase: ${e.message}`);process.exit(2);}
-const j=await (await fetch(`${U}/auth/v1/admin/generate_link`,{method:"POST",headers:{apikey:K,Authorization:`Bearer ${K}`,"Content-Type":"application/json"},body:JSON.stringify({type:"magiclink",email:"hello@rocketgrowthagency.com"})})).json();
 const b=await puppeteer.launch({headless:"new",args:["--no-sandbox"]});
 const read=(sel,props)=>{const el=document.querySelector(sel); if(!el)return null;
   const cs=getComputedStyle(el); const o={}; props.forEach(p=>o[p]=cs[p]); o.__t=(el.textContent||"").trim().slice(0,28); return o;};
@@ -126,7 +125,8 @@ const want={}; for(const s of SPEC) want[s.name]=await mp.evaluate(read,s.mock,s
 
 const page=await b.newPage(); await page.setViewport({width:1280,height:1000});
 const errs=[]; page.on("pageerror",e=>errs.push(e.message.split("\n")[0].slice(0,140)));
-await navOrIndeterminate(page, j.action_link||j.properties.action_link);
+// 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
+await adminSignIn(page);
 await new Promise(r=>setTimeout(r,6000));
 await navOrIndeterminate(page, `${SITE}/admin/?view=client&id=${cid}&tab=onboarding-v2`);
 await new Promise(r=>setTimeout(r,15000));

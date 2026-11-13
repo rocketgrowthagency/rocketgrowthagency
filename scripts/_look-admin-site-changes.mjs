@@ -4,7 +4,7 @@
 // undo request · nothing needed changing); every write is caught. node scripts/_look-admin-site-changes.mjs <outdir>
 import fs from "node:fs"; import path from "node:path";
 import { classify } from "./acceptance/guard.mjs"; import { WALK_CLIENTS } from "./acceptance/clients.mjs";
-import { adminLink, SITE } from "./_admin-session.mjs";
+import { adminSignIn, SITE } from "./_admin-session.mjs";
 const SITE_DIR = "/Users/chris/RGA/Rocket Growth Agency Website VS Code", out = process.argv[2] || "/tmp";
 const SUPA = process.env.SUPABASE_URL;
 const { chromium } = await import("playwright");
@@ -33,7 +33,8 @@ const writes = [];
 await ctx.route("**/.netlify/functions/admin-deliverables", (r) => { const j = JSON.parse(r.request().postData() || "{}"); if (j.site_action === "prefill") return r.fallback(); writes.push(j); r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: false, error: "(harness: not written)" }) }); });
 const page = await ctx.newPage();
 page.on("pageerror", (e) => console.log("PAGEERROR", String(e.message).slice(0, 300)));
-await page.goto(await adminLink(), { waitUntil: "domcontentloaded", timeout: 60000 }); await page.waitForTimeout(6000);
+// 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
+await adminSignIn(page); await page.waitForTimeout(6000);
 await page.goto(`${SITE}/admin/?view=client&id=${WALK_CLIENTS.main.id}&tab=onboarding-v2`, { waitUntil: "domcontentloaded", timeout: 60000 });
 await page.waitForSelector(".ob-step", { state: "attached", timeout: 60000 }); await page.waitForTimeout(4000);
 await page.evaluate(() => { document.querySelectorAll(".ob-phase:not(.open) [data-ob-phase-toggle]").forEach((x) => x.click()); document.querySelectorAll("[data-ob-rollup-toggle][aria-expanded='false']").forEach((x) => x.click()); });

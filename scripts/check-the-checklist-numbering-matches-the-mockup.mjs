@@ -3,7 +3,7 @@
 // gates threw in one sweep on 2026-10-08 purely because they ran concurrently against the live
 // admin. `nav` exits 2 and names the navigation it could not complete.
 // → feedback_a_gate_that_throws_is_not_a_gate_that_fails · feedback_a_flaky_gate_is_worse_than_a_failing_one
-const { nav: _sharedNav } = await import("./_admin-session.mjs");
+const { nav: _sharedNav, adminSignIn } = await import("./_admin-session.mjs");
 const navOrIndeterminate = (pg, url) => _sharedNav(pg, url, "a page this gate measures");
 /**
  * ═══════════════════════════════════════════════════════════════════════════════════════════════
@@ -53,17 +53,6 @@ try { clientId = (await api(`clients?id=eq.${WALK_CLIENTS.main.id}&select=id`))?
 catch (e) { console.log(`  ⚠️  could not read a client: ${e.message}`); process.exit(2); }
 if (!clientId) { console.log("  ⚠️  no active client to open."); process.exit(2); }
 
-let link;
-try {
-  const r = await fetch(`${SUPA_URL}/auth/v1/admin/generate_link`, {
-    method: "POST",
-    headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ type: "magiclink", email: ADMIN_EMAIL }),
-  });
-  const j = await r.json();
-  link = j.action_link || j.properties?.action_link;
-} catch (e) { console.log(`  ⚠️  could not mint a sign-in link: ${e.message}`); process.exit(2); }
-if (!link) { console.log("  ⚠️  no sign-in link."); process.exit(2); }
 
 // what each element must match, and on which properties. Font FAMILY of the body face differs
 // between a standalone mockup and the admin shell by design, so it is compared only where the
@@ -121,7 +110,8 @@ try {
   await page.setViewport({ width: 1280, height: 1000 });
   const errs = [];
   page.on("pageerror", (e) => errs.push(e.message.split("\n")[0].slice(0, 160)));
-  await navOrIndeterminate(page, link);
+  // 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
+  await adminSignIn(page);
   await new Promise((r) => setTimeout(r, 6000));
   await navOrIndeterminate(page, `${SITE}/admin/?view=client&id=${clientId}&tab=onboarding-v2`);
   // 🔑 WAIT FOR THE ROWS, not a fixed 14 s: inside the long sequential suite the machine is slower and the fixed wait ran out

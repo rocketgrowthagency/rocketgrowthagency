@@ -1,7 +1,7 @@
 // _look-citations-additions.mjs — READ-ONLY: admin step "Audit citation NAP consistency" with the listings the audit found (citations_additions_v1), in Chrome, with THIS repo's admin.
 // The test client's record is given the step's result IN THE BROWSER ONLY; every write is blocked. node scripts/_look-citations-additions.mjs <outdir>
 import { classify } from "./acceptance/guard.mjs"; import { WALK_CLIENTS } from "./acceptance/clients.mjs";
-import { adminLink, SITE } from "./_admin-session.mjs";
+import { adminSignIn, SITE } from "./_admin-session.mjs";
 import fs from "node:fs";
 const SITE_DIR = "/Users/chris/RGA/Rocket Growth Agency Website VS Code", out = process.argv[2] || "/tmp", SUPA = process.env.SUPABASE_URL, CID = WALK_CLIENTS.main.id;
 const { chromium } = await import("playwright"); const b = await chromium.launch({ headless: true });
@@ -20,7 +20,8 @@ await ctx.route("**/rest/v1/client_onboarding_records*", async (r) => { if (r.re
   try { const j = JSON.parse(body), rows = Array.isArray(j) ? j : [j]; for (const row of rows) if (row && row.data) row.data.tasks = { ...(row.data.tasks || {}), "m1.audit.citations_nap": TASK }; body = JSON.stringify(j); } catch {}
   r.fulfill({ status: res.status(), headers: res.headers(), body }); });
 const page = await ctx.newPage(); page.on("pageerror", (e) => console.log("PAGEERROR", String(e.message).slice(0, 300)));
-await page.goto(await adminLink(), { waitUntil: "domcontentloaded", timeout: 60000 }); await page.waitForTimeout(6000);
+// 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
+await adminSignIn(page); await page.waitForTimeout(6000);
 await page.goto(`${SITE}/admin/?view=client&id=${CID}&tab=onboarding-v2`, { waitUntil: "domcontentloaded", timeout: 60000 });
 await page.waitForSelector(".ob-step", { state: "attached", timeout: 60000 });
 await page.evaluate(() => { document.querySelectorAll(".ob-phase:not(.open) [data-ob-phase-toggle]").forEach((x) => x.click()); document.querySelectorAll("[data-ob-rollup-toggle][aria-expanded='false']").forEach((x) => x.click()); });

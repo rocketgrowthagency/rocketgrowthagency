@@ -1,7 +1,7 @@
 // _look-todo.mjs — READ-ONLY look at the To do system LIVE (todo_inbox_v1): the admin To do queue, the RGA client's "Next up",
 // and the portal's step 4 row, signed in as the walk owner / walk client, every write caught. node scripts/_look-todo.mjs <outdir>
 import { classify } from "./acceptance/guard.mjs"; import { WALK_CLIENTS } from "./acceptance/clients.mjs";
-import { adminLink, SITE } from "./_admin-session.mjs";
+import { adminSignIn, SITE } from "./_admin-session.mjs";
 const out = process.argv[2] || "/tmp", SUPA = process.env.SUPABASE_URL, KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const { chromium } = await import("playwright");
 const b = await chromium.launch({ headless: true });
@@ -14,7 +14,8 @@ const guard = async (ctx) => { await ctx.route("**/*", (r) => { const q = r.requ
 // admin
 { const ctx = await b.newContext({ viewport: { width: 1280, height: 1000 } }); await guard(ctx);
   const page = await ctx.newPage(); page.on("pageerror", (e) => console.log("PAGEERROR", String(e.message).slice(0, 200)));
-  await page.goto(await adminLink(), { waitUntil: "domcontentloaded", timeout: 60000 }); await page.waitForTimeout(6000);
+  // 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
+  await adminSignIn(page); await page.waitForTimeout(6000);
   await page.goto(`${SITE}/admin/?view=todo`, { waitUntil: "domcontentloaded", timeout: 60000 });
   await page.waitForSelector("#todoList .mv-kpis, #todoList .admin-card", { timeout: 45000 }).catch(() => {});
   await page.waitForTimeout(1500);

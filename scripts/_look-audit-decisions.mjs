@@ -2,7 +2,7 @@
 // given each state IN THE BROWSER ONLY; every write is blocked, and gbp-publish is answered by the harness, so nothing reaches Google. node scripts/_look-audit-decisions.mjs <outdir>
 import fs from "node:fs"; import path from "node:path";
 import { classify } from "./acceptance/guard.mjs"; import { WALK_CLIENTS } from "./acceptance/clients.mjs";
-import { adminLink, SITE } from "./_admin-session.mjs";
+import { adminSignIn, SITE } from "./_admin-session.mjs";
 const SITE_DIR = "/Users/chris/RGA/Rocket Growth Agency Website VS Code", out = process.argv[2] || "/tmp", SUPA = process.env.SUPABASE_URL, KEY = process.env.SUPABASE_SERVICE_ROLE_KEY, CID = WALK_CLIENTS.main.id;
 const { chromium } = await import("playwright"); const b = await chromium.launch({ headless: true });
 const LOCAL = new Set(["/admin/admin.js", "/admin/admin.css", "/portal/portal.js", "/portal/portal.css", "/shared/photo-second-logo.js", "/data/playbooks/playbooks.json"]);
@@ -44,7 +44,8 @@ async function browser(scene, vw = 1200) {
   return { ctx, page, presses };
 }
 async function openAdmin(page) {
-  await page.goto(await adminLink(), { waitUntil: "domcontentloaded", timeout: 60000 }); await page.waitForTimeout(6000);
+  // 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
+  await adminSignIn(page); await page.waitForTimeout(6000);
   await page.goto(`${SITE}/admin/?view=client&id=${CID}&tab=onboarding-v2`, { waitUntil: "domcontentloaded", timeout: 60000 });
   await page.waitForSelector(".ob-step", { state: "attached", timeout: 60000 }).catch(async (e) => { console.log("NO ROWS. The page says:", (await page.locator("body").innerText()).replace(/\s+/g, " ").slice(0, 400), "| url", page.url().slice(0, 100)); throw e; }); await page.waitForTimeout(4000);
   await page.evaluate(() => { document.querySelectorAll(".ob-phase:not(.open) [data-ob-phase-toggle]").forEach((x) => x.click()); document.querySelectorAll("[data-ob-rollup-toggle][aria-expanded='false']").forEach((x) => x.click()); });

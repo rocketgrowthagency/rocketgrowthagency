@@ -22,6 +22,7 @@
 // 🔒 THE RENDER CLIENT IS NAMED, never "whichever row comes back first" (2026-10-13): with the walk's test clients in
 // the table, an unordered `limit=1` could open a client with nothing done and measure nothing. → acceptance/clients.mjs
 import { WALK_CLIENTS } from "./acceptance/clients.mjs";
+import { signInAdmin } from "./lib/admin-sign-in.mjs";
 const SITE = process.env.RGA_SITE_URL || "https://www.rocketgrowthagency.com";
 const SUPA_URL = process.env.SUPABASE_URL, SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_EMAIL = process.env.RGA_ADMIN_EMAIL || "hello@rocketgrowthagency.com";
@@ -40,21 +41,12 @@ try {
 } catch { /* reported below */ }
 if (!clientId) { console.error("⚠️  INDETERMINATE — no active client to open."); process.exit(2); }
 
-// 🔑 generate_link RETURNS the link and emails nobody.
-let link;
-try {
-  const j = await (await fetch(`${SUPA_URL}/auth/v1/admin/generate_link`, {
-    method: "POST", headers: { ...H, "Content-Type": "application/json" },
-    body: JSON.stringify({ type: "magiclink", email: ADMIN_EMAIL }),
-  })).json();
-  link = j.action_link || j.properties?.action_link;
-} catch { /* reported below */ }
-if (!link) { console.error("⚠️  INDETERMINATE — no sign-in link returned."); process.exit(2); }
 
 const b = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 try {
   const page = await b.newPage();
-  await page.goto(link, { waitUntil: "networkidle2", timeout: 60000 });
+  // 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
+  await signInAdmin(page, undefined, { site: SITE }).catch((e) => { console.error(`⚠️  INDETERMINATE — could not sign in to the admin: ${String(e.message).split("\n")[0]}`); process.exit(2); });
   await page.goto(`${SITE}/admin/?view=client&id=${clientId}&tab=client-setup`, { waitUntil: "networkidle2", timeout: 60000 });
   // 🔴🔴 THE SWALLOWED WAIT WAS THE FLAKINESS. `waitForSelector(...).catch(() => {})` followed by a
   // fixed 2.5s sleep meant a slow render reported "the checklist rendered no rows" — which reads as
