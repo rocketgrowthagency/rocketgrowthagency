@@ -153,6 +153,8 @@ try {
       oldPhaseNumerals: host.querySelectorAll(".ob-ph-idx").length,
       gotos: host.querySelectorAll(".ob-goto").length,
       queued: host.querySelectorAll(".ob-step.queued").length,
+      // 🔑 11-13: where a way back SHOULD be (admin.js backHtml): a phase without the active step that holds a queued row
+      backExpected: phases.filter((p) => !p.querySelector(".ob-step.active") && p.querySelector(".ob-step.queued")).length,
       gotoInActivePhase: phases.filter((p) => p.querySelector(".ob-step.active") && p.querySelector(".ob-goto")).length,
       oldLabel: /Go to step \d/.test(host.textContent || ""),
       gotoText: (host.querySelector(".ob-goto")?.textContent || "").replace(/\s+/g, " ").trim(),
@@ -227,7 +229,11 @@ try {
     const w = want[s.name];
     if (!w) { bad(`the mockup has no \`${s.mock}\` — the spec cannot be read`); continue; }
     const g = await page.evaluate(read, s.live, s.props);
-    if (!g) { bad(`the live page has no \`${s.live}\``); continue; }
+    // 🔴 11-13: the way back is DATA-DEPENDENT (admin.js backHtml draws it only in a phase that waits on the active step). With no such
+    // phase on the walk client's checklist today it is correctly absent: that is nothing to compare, not a design failure. Absent where a
+    // phase DOES wait on the active step is still a failure.
+    if (!g && /ob-goto|ob-ph-back/.test(s.live) && survey.backExpected === 0) { console.log(`  ·  ${s.name}: not on screen today (no phase waits on the active step) — not compared`); continue; }
+    if (!g) { bad(`the live page has no \`${s.live}\`${/ob-goto|ob-ph-back/.test(s.live) ? ` although ${survey.backExpected} phase(s) wait on the active step` : ""}`); continue; }
     const d = [];
     for (const p of s.props) {
       compared++;

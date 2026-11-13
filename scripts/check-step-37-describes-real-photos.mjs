@@ -216,7 +216,7 @@ if (has(SC, "photosReadBack", "the photo read-back")) {
     || !/Couldn't tell what this shows; write it yourself/.test(h) || !/data-ob-img-send>Send<\/button>/.test(h) || !/Goes to their For your approval as one website change/.test(h) || !/>Draft again<\/button>/.test(h) || !/<img class="ob-img-th" src="https:\/\/cdn\.joes\.test\/p\/crew\.jpg\?w=1200"/.test(h)) fail("state 3 (check and send) isn't one line per photo with its thumbnail, Today, Ours, Edit, Send and Draft again");
   never(h, "state 3");
   if (pill(t3) !== "Your move") fail(`state 3's row pill reads "${pill(t3)}"`);
-  if (!/How RGA names photos it uploads for them/.test(h) || !/joes-plumbing-and-heating-llc-what-it-shows-denver-co\.jpg/.test(h) || !/not sent to the client/.test(h)) fail("RGA's file-name rule (name + city on file) isn't on the card");
+  if (!/How RGA names photos it uploads for the client/   /* 11-11 audit f51768c7: admin copy names the client */.test(h) || !/joes-plumbing-and-heating-llc-what-it-shows-denver-co\.jpg/.test(h) || !/not sent to the client/.test(h)) fail("RGA's file-name rule (name + city on file) isn't on the card");
   // 4 · the 11:28 record: an old prose draft, cut off
   const OLD = "I'll deliver every requested asset in one pass.\nFILENAME_TEMPLATE: {business}-{what}.jpg\n…\n\n[[TRUNCATED: this draft hit the token ceiling and is INCOMPLETE — do not publish or approve it. Re-run the step after raising maxTokens.]]";
   const t4 = { status: "in_progress", ran_at: "2026-11-06T19:28:00Z", outcome: "draft_ready", auto_result: { summary: OLD } };
@@ -253,7 +253,7 @@ if (has(SC, "photosReadBack", "the photo read-back")) {
   const ch = SC.cleanChange("m1.web.image_seo", { kind: "batch", items: lines0.filter((i) => i.after) }).change || { items: [] };
   const v = "2026-11-06T19:40:00Z", sent = { status: "in_progress", site_change: { ...ch, v }, internal_review: { decision: "approved", change_v: v, at: "2026-11-06T19:41:00Z" } };
   h = card(sent);
-  if (!/With the client/.test(h) || !/2 photo descriptions/.test(h) || !/to For your approval\. Waiting for them\./.test(h)) fail("state 6 (with the client) isn't drawn");
+  if (!/With the client/.test(h) || !/2 photo descriptions/.test(h) || !/to For your approval\. Waiting for the client\./.test(h)) fail("state 6 (with the client) isn't drawn");
   const live = { ...sent, status: "done", approval: { decision: "approved", change_v: v, at: "2026-11-07T15:00:00Z" }, published: { v, at: "2026-11-08T15:00:00Z", checked: true } };
   h = card(live);
   if (!/2 photos described on their website/.test(h) || !/on their site and read back/.test(h) || !/See them/.test(h)) fail("state 6 (Done) isn't 'N photos described · Approved · on their site and read back'");

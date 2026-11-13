@@ -22,16 +22,24 @@ const idk = (m) => { console.error(`⚠️  INDETERMINATE — ${m}`); process.ex
 
 // 🔑 KEPT ON PURPOSE. Each needs a reason in words; never "it was failing".
 const KEEP = {
+  // 🔄 11-13: client_activity_log was RENAMED to _archived_client_activity_log and client_reviews_history DROPPED by Chris's 11-12 run of
+  // ARCHIVE_ / DROP_DORMANT_TABLES_2026-11-11.sql, so their old entries went; the archives they left behind are kept on purpose:
+  _archived_client_activity_log: "ARCHIVE_DORMANT_TABLES_2026-11-11.sql renamed client_activity_log here (9 rows of client history, read by nothing since its writer was removed 11-11). Kept: client data is never dropped without Chris (feedback_never_lose_client_work)",
+  _archived_client_activity_orphans: "INTEGRITY_REPAIRS_2026-11-11.sql MOVED 4 orphaned client_activity rows here, whole, so nothing is lost (server-only, RLS on, no policy). An archive is read only by a person restoring it",
+  client_activity_log: "named only by its old SQL file (RGA_CLIENT_ACTIVITY_LOG_PATCH.sql); LIVE it is _archived_client_activity_log since Chris ran ARCHIVE_DORMANT_TABLES_2026-11-11.sql (11-12). Its writer was removed 11-11",
+  client_reviews_history: "named only by its old SQL file (RGA_PERFORMANCE_TRACKING_PATCH.sql); DROPPED live by DROP_DORMANT_TABLES_2026-11-11.sql (Chris, 11-12). Nothing writes it since review metrics moved",
+  client_mature_records: "0 rows. The Mature stage's quarterly review card is gone (master map decision 6, 11-11); ARCHIVE_DORMANT_TABLES_2026-11-11.sql line 27-29 says retire it together with portal-mature.js. Retiring it is a schema change: Chris's SQL, not built",
   blog_worked: "blog_system_v1 (approved 10-31): the ledger the blog system grades its claims into (anecdote, supported, no clear effect); the grading is not built yet, so nothing writes it",
   serpapi_usage: "the website half of the SerpAPI meter (project_serpapi_budget, 11-10): docs/supabase/RGA_SERPAPI_USAGE_2026-11-10.sql says NOT BUILT YET, waiting on Chris to run it and approve the helper",
-  client_activity_log: "its only writer (seven admin saves) was REMOVED 11-11 in the master map Tier 1 cleanup: it was read by nothing (9 rows since 08-12). The table stays because it holds those rows and client data is never dropped without Chris; dropping it is his call",
-  client_reviews_history: "old review-count snapshots from RGA_PERFORMANCE_TRACKING_PATCH; nothing writes it since review metrics moved, but it holds history, and client data is never deleted without Chris (feedback_never_lose_client_work). Retiring it is Chris's call",
 };
 
 const read = (p) => { try { return fs.readFileSync(p, "utf8"); } catch { return ""; } };
 const sqlFiles = ["supabase", "docs/supabase"].flatMap((d) => { try { return fs.readdirSync(path.join(SITE, d)).filter((f) => f.endsWith(".sql")).map((f) => path.join(SITE, d, f)); } catch { return []; } });
 const declared = new Map();
 for (const f of sqlFiles) for (const m of read(f).replace(/--[^\n]*/g, "").matchAll(/create table (?:if not exists )?(?:public\.)?"?([a-z_0-9]+)"?\s*\(/gi)) declared.set(m[1].toLowerCase(), path.relative(SITE, f));
+// 🔄 11-13: a table can also be MADE by a rename (ARCHIVE_DORMANT_TABLES_2026-11-11.sql: client_activity_log → _archived_client_activity_log),
+// so the mutation harness, which has no live read, called that kept archive "gone". A rename target is declared by its SQL file too.
+for (const f of sqlFiles) for (const m of read(f).replace(/--[^\n]*/g, "").matchAll(/alter table (?:if exists )?(?:public\.)?"?[a-z_0-9]+"? rename to "?([a-z_0-9]+)"?/gi)) if (!declared.has(m[1].toLowerCase())) declared.set(m[1].toLowerCase(), path.relative(SITE, f));
 if (declared.size < 20) idk(`only ${declared.size} tables parsed from the SQL files`);
 
 // the live tables (read-only), outside the mutation harness

@@ -35,10 +35,16 @@ if (!/do not promise a date/.test(recap)) fail("the recap does not say the same 
 for (const [where, txt] of [["script", agenda], ["recap", recap]]) if (/30\s*(to|[–-])\s*60 days/.test(txt)) fail(`the ${where} gives the 30-to-60-day range again`);
 for (const [where, txt] of [["script", agenda], ["recap", recap]]) if (/month 2[–-]3|month two/i.test(txt)) fail(`the ${where} still says "month 2–3" — the call says 30 to 60 days`);
 // 2
-const promisesMonday = /Every Monday your portal shows what we did/.test(agenda + recap);
-if (promisesMonday) {
-  if (!/schedule:\s*"0 \d+ \* \* 1"/.test(digest) || !/client_portal_content/.test(digest)) fail("the script/recap promise a Monday portal update, but flow-cron-weekly-digest is not a Monday job writing to the portal");
+// 🔒 11-13: flow-cron-weekly-digest was RETIRED on purpose 11-11 (936565a8: it never ran; the Dashboard's "What RGA did · The last 14 days"
+// already shows the work). The script + recap still promised "Every Monday your portal shows what we did" until 11-13. Now they promise what
+// the portal DOES: each piece of work shows the day it's done, under What RGA did — and that card must still be drawn.
+const promisesMonday = /every monday/i.test(agenda + recap);
+if (promisesMonday && (!/schedule:\s*"0 \d+ \* \* 1"/.test(digest) || !/client_portal_content/.test(digest))) fail("the script/recap promise something every Monday, but no Monday job writes to the portal (flow-cron-weekly-digest is retired)");
+const portalJs = read("portal/portal.js");
+for (const [where, txt] of [["script", agenda], ["recap", recap]]) {
+  if (!/Each piece of work shows in your portal the day it's done, under What RGA did/.test(txt)) fail(`the ${where} no longer tells the client where the work shows (What RGA did, the day it's done)`);
 }
+if (!/<div class="k">What RGA did<\/div><h3>The last 14 days<\/h3>/.test(portalJs) || !/Each piece of work shows here the day it/.test(portalJs)) fail("the script/recap point at the portal's What RGA did card, but the portal no longer draws it");
 if (/report arrives by email/.test(agenda + recap) && !/\[functions\."send-monthly-report"\]\s*\n\s*schedule = "0 \d+ [1-7] \* \*"/.test(toml)) fail("the script promises a monthly report email in the first week of the month, but send-monthly-report is not scheduled for days 1 to 7");
 // 3
 if (/Friday/i.test(agenda) || /Friday/i.test(recap)) fail("the kickoff script or recap promises something on a Friday — nothing sends on Fridays");

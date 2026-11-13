@@ -96,8 +96,26 @@ if (portalMode === "managed") {
 let SC;
 try { SC = createRequire(import.meta.url)(SITE_DIR + "/shared/site-change.js"); } catch (e) { console.log(`  ⚠️  INDETERMINATE — shared/site-change.js unreadable: ${e.message}`); process.exit(2); }
 if (typeof SC.isAutoStep !== "function" || typeof SC.autoClientWhyNot !== "function") { console.log("  ⚠️  INDETERMINATE — site-change.js has no isAutoStep / autoClientWhyNot; can't say which steps run themselves"); process.exit(2); }
-const runsItself = (s) => !!(SC.isAutoStep(s.id) && clientRow && !SC.autoClientWhyNot(clientRow));
-const kindShown = (s) => { const k0 = kindOf(s); const k = k0 === "you" && runsItself(s) ? "auto" : k0; return k === "both" && MW_YOU.has(s.id) ? "you" : k; };
+// 🔄 11-13: the 11-12 "runs itself" release (master map Tier 1 item 1 + Tier 2 a-d, approved 11-11) gave admin's stepKind a third rule,
+// stepRunsItself(id): m1.audit.citations, or the step is in a shared module's SELF list (steps-57-64, monthly-monthly, monthly-close,
+// monthly-quarter, monthly-health). The gate lagged it and read 5 correct "Runs itself" pills as wrong. Read the SAME lists the admin reads;
+// unreadable → can't tell, never a guess.
+const SELF_RUN = new Set(["m1.audit.citations"]);
+for (const f of ["steps-57-64", "monthly-monthly", "monthly-close", "monthly-quarter", "monthly-health"]) {
+  let M; try { M = createRequire(import.meta.url)(`${SITE_DIR}/shared/${f}.js`); } catch (e) { console.log(`  ⚠️  INDETERMINATE — shared/${f}.js unreadable: ${e.message}`); process.exit(2); }
+  if (!Array.isArray(M.SELF)) { console.log(`  ⚠️  INDETERMINATE — shared/${f}.js has no SELF list; can't say which steps run themselves`); process.exit(2); }
+  for (const id of M.SELF) SELF_RUN.add(id);
+}
+{ const AJ = fs.readFileSync(SITE_DIR + "/admin/admin.js", "utf8");
+  if (!/\(typeof stepRunsItself === "function" && stepRunsItself\(o\.flowId\)\) \? "auto"/.test(AJ) || !/if \(id === "m1\.audit\.citations"\) return true;/.test(AJ)) { console.log("  ⚠️  INDETERMINATE — admin.js's stepRunsItself rule moved; re-read it before trusting this gate"); process.exit(2); } }
+const runsItself = (s) => !!(SC.isAutoStep(s.id) && clientRow && !SC.autoClientWhyNot(clientRow)) || SELF_RUN.has(s.id);
+// 🔄 11-13: admin's mwKind also reads a managed "both" step as You when its managed role is "card" (shared/portal-mode.js roleOf): the
+// client sees an RGA card, not a step. Same module, same rule.
+let PMODE; try { PMODE = createRequire(import.meta.url)(SITE_DIR + "/shared/portal-mode.js"); } catch (e) { console.log(`  ⚠️  INDETERMINATE — shared/portal-mode.js unreadable: ${e.message}`); process.exit(2); }
+if (typeof PMODE.roleOf !== "function") { console.log("  ⚠️  INDETERMINATE — portal-mode.js has no roleOf"); process.exit(2); }
+if (portalMode === "managed" && !/MW_YOU\.has\(o\.flowId\) \|\| globalThis\.rgaPortalMode\.roleOf\(o, "managed"\) === "card"\) \? "you"/.test(fs.readFileSync(SITE_DIR + "/admin/admin.js", "utf8"))) { console.log("  ⚠️  INDETERMINATE — admin.js's mwKind rule moved; re-read it before trusting this gate"); process.exit(2); }
+const managedCard = (s) => portalMode === "managed" && PMODE.roleOf(s, "managed") === "card";
+const kindShown = (s) => { const k0 = kindOf(s); const k = k0 === "you" && runsItself(s) ? "auto" : k0; return k === "both" && (MW_YOU.has(s.id) || managedCard(s)) ? "you" : k; };
 EXPECT = { total: m1.length, client: 0, auto: 0, you: 0, both: 0 };
 m1.forEach((s) => { EXPECT[kindShown(s)]++; });
 // A "both" step belongs to BOTH views, so each view expects its own rows plus every both row.

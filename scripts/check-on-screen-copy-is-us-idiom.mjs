@@ -37,7 +37,7 @@ const F = (m) => fails.push(m);
 const BRITISH = new RegExp([
   "\\b(?:priorit|organ|recogn|apolog|custom|optim|summar|util|categor|standard|minim|maxim|special|real)is(?:e|es|ed|ing|ation|ations|er|ers)\\b",
   "\\banaly(?:se|sed|sing|ser)\\b",
-  "\\b(?:colour|colours|coloured|behaviour|behaviours|catalogue|catalogues|licence|defence|favourite|favourites|labour|neighbour|neighbours|programme|programmes|grey|whilst|amongst|centre|centres|centred|metres|litres)\\b",
+  "\\b(?:colour|colours|coloured|behaviour|behaviours|catalogue|catalogues|licence|defence|favourite|favourites|labour|neighbour|neighbours|programme|programmes|grey|whilst|amongst|centre|centres|centred|metres|litres|labelled|labelling)\\b",
 ].join("|"), "gi");
 
 // ═══ THE DETECTOR PROVES ITSELF BEFORE IT ACCUSES ANYTHING ═══════════════════════════════════
@@ -50,11 +50,11 @@ const BRITISH = new RegExp([
 // → feedback_run_it_against_reality_before_calling_it_done · feedback_the_harness_i_wrote_to_check_my_work_can_lie
 const MUST_FLAG = ["prioritise", "recognise", "organised", "analyse", "analysed", "analysing",
   "optimising", "summarise", "utilise", "customise", "colour", "behaviour", "licence", "defence",
-  "centred", "whilst", "catalogue", "favourite"];
+  "centred", "whilst", "catalogue", "favourite", "labelled", "labelling"];   // labelled: 11-13, the numbers card said "Labelled \"reported by you\""
 const MUST_NOT_FLAG = ["analysis", "analyses", "analyst", "analytics", "analyze", "analyzed", "optimism",
   "optimistic", "specialist", "realism", "customer", "standard", "minimum", "recognition", "center",
   "centered", "color", "defense", "license", "summary", "utility", "category", "organ", "programmer",
-  "maximum", "special"];
+  "maximum", "special", "labeled", "labeling", "label"];
 {
   const wrong = [];
   for (const w of MUST_FLAG) { BRITISH.lastIndex = 0; if (!BRITISH.test(w)) wrong.push(`missed "${w}"`); }

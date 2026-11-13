@@ -139,39 +139,45 @@ const textOf = (h) => h.replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(
   const nd = card(id, { notDue: q });
   if (pills(nd) !== "Next: Jan 1" || !/Nothing needed now · we ask again in the first week of January/.test(nd.html) || /data-in-submit/.test(nd.html) || nd.tone !== "wait") fail(`17: not this quarter isn't the grey "Next: Jan 1" card (${pills(nd)})`);
   if (!/i\.status !== "skipped" && !i\.notDue\)\.length;/.test(P) || !/&& !i\.notDue\n/.test(P) || !/!r\.withRga && !r\.notDue &&/.test(P)) fail("17: not this quarter still counts as to do (the counter, the next-step card or the orange row)");
+  // 🔒 11-13: tier3 item 10b (approved tier3_best_in_class_v1 s10b, 11-11) replaced the one-question page (client_step17_numbers_v1) with the
+  // PRE-FILLED card: Calls · Form leads · Booked jobs · Revenue, "Confirm" + "Not sure". The ask's wording and the field list are also held by
+  // check-monthly-quarter + check-monthly-asks; here the card the client sees, its read-back, and free text with no format.
   const open = card(id);
   if (!/^Your turn \| [A-Z][a-z]{2} – [A-Z][a-z]{2}$/.test(pills(open))) fail(`17: your turn doesn't say the quarter (${pills(open)})`);
-  if (!/2 numbers · about 2 minutes/.test(open.html) || !/for your quarterly report/.test(open.html) || !/Estimates are fine\./.test(open.html)) fail("17: the ask isn't the page's");
-  if (!/placeholder="e\.g\. 12 of 20"/.test(open.html) || !/placeholder="e\.g\. 450"/.test(open.html) || !/<i>\$<\/i>/.test(open.html)) fail("17: the fields lost their examples or the $ sign");
-  if ((open.html.match(/data-in-notsure-all/g) || []).length !== 1 || !/Not sure \(that's fine\)/.test(open.html)) fail("17: not one Not sure box");
+  if (!/Are these right\? Confirm saves them for this quarter\./.test(open.html)) fail("17: the ask isn't the approved pre-filled card's");
+  for (const k of ["calls", "form_leads", "jobs_from_leads", "revenue"]) if (!new RegExp(`data-in-field="${k}"`).test(open.html)) fail(`17: the ${k} field is missing`);
+  if (!/placeholder="e\.g\. 12"/.test(open.html) || !/<i>\$<\/i>\s*<input[^>]*data-in-field="revenue"/.test(open.html)) fail("17: the fields lost their example or the $ sign on revenue");
+  if ((open.html.match(/data-in-notsure-all/g) || []).length !== 1 || !/data-yn-notsure>Not sure</.test(open.html)) fail("17: not one Not sure");
   if (!/data-in-field="anything_unusual"/.test(open.html)) fail("17: the \"anything unusual\" note was dropped (it explains a dip in the report)");
-  if (!/class="pm-k5-acts"><button type="button" class="pm-act is-go" data-in-submit>Send my numbers/.test(open.html)) fail("17: the button isn't under the card");
-  const sent = card(id, { isDone: true, task: { status: "done", client_input: { jobs_from_leads: 12, jobs_from_leads_of: 20, avg_job_value: 450 }, client_input_at: ago(1) } });
+  if (!/class="pm-k5-acts"><button type="button" class="pm-act is-go" data-in-submit>Confirm<\/button>/.test(open.html)) fail("17: the Confirm button isn't under the card");
+  const sent = card(id, { isDone: true, task: { status: "done", client_input: { calls: 30, form_leads: 4, jobs_from_leads: 12, jobs_from_leads_of: 20, revenue: 5400 }, client_input_at: ago(1) } });
   if (!/You sent your numbers/.test(sent.html) || /Used in your report/.test(sent.html) || /used them/.test(sent.html)) fail("17: it claims RGA used them the moment they're sent");
   if (pills(sent) !== "Done | RGA adds them to your report" || sent.tone !== "rga") fail(`17: sent isn't Done + RGA adds them (${pills(sent)})`);
-  if (!/12 of 20/.test(sent.html) || !/\$450/.test(sent.html) || !/Leads that became jobs/.test(sent.html)) fail("17: the sent card doesn't read back what they gave");
+  if (!/12 of 20/.test(sent.html) || !/\$5,400/.test(sent.html) || !/Booked jobs/.test(sent.html) || !/>30</.test(sent.html)) fail("17: the sent card doesn't read back what they gave");
+  if (/[Ll]abelled/.test(sent.html)) fail("17: British spelling on the card (\"labelled\")");
   if (!/data-step-reopen="m2\.snap\.business_outcomes">Change something/.test(sent.html)) fail("17: sent has no Change something");
-  const unsure = card(id, { isDone: true, task: { status: "done", client_input: { jobs_from_leads: 7, not_sure: ["avg_job_value"] }, client_input_at: ago(1) } });
+  const unsure = card(id, { isDone: true, task: { status: "done", client_input: { calls: 30, jobs_from_leads: 7, not_sure: ["revenue", "form_leads"] }, client_input_at: ago(1) } });
   if (!/Not sure/.test(unsure.html) || /\$0/.test(unsure.html)) fail("17: \"Not sure\" reads as a number");
-  const t2 = { status: "done", client_input: { jobs_from_leads: 12, avg_job_value: 450 }, client_input_at: ago(8), rga_confirmed: { at: ago(1), by: "rga" } };
+  const t2 = { status: "done", client_input: { jobs_from_leads: 12, revenue: 450 }, client_input_at: ago(8), rga_confirmed: { at: ago(1), by: "rga" } };
   const used = card(id, { isDone: true, task: t2, locked: STEP_LOCK.stepLock(id, t2, {}) });
   if (!/Used in your report/.test(used.html) || pills(used) !== "Done" || used.tone !== "ok" || /data-step-reopen/.test(used.html)) fail("17: used isn't \"Used in your report\" (no reopen)");
   if (!/Locked · \$\{escapeHtml\(stepId === "m2\.snap\.business_outcomes" \? "in your report"/.test(P)) fail("17: the lock doesn't read \"Locked · in your report\"");
   if (!/data-in-notsure-all\]"\)\?\.checked/.test(P)) fail("17: the one Not sure box isn't sent");
-  // the server: free text has no format
+  // the server: free text has no format (a Denver plumber types "12/20", a London cleaner "about 12", a dentist "1,200")
   const vs = /function validate\(spec, raw\) \{/.exec(SI); if (!vs) moved("validate in portal-step-input");
   const ve = SI.indexOf("\n}\n", vs.index); const vctx = vm.createContext({ Number, String, Array, Object, URL, require: () => ({}) });
   try { vm.runInContext(SI.slice(vs.index, ve + 2), vctx); } catch (e) { console.error(`⚠️  INDETERMINATE — validate doesn't load (${e.message})`); process.exit(2); }
   vctx.__s = (PB.month2plus.find((s) => s.id === id) || {}).clientInput;
   const tryV = (v) => { vctx.__v = v; return vm.runInContext("validate(__s, __v)", vctx); };
+  const base = { calls: "30", form_leads: "4" };
   for (const [v, jobs, of] of [["12 of 20", 12, 20], ["12/20", 12, 20], ["12 out of 20", 12, 20], ["about 12", 12, undefined], ["12", 12, undefined], ["12 jobs", 12, undefined], ["1,200", 1200, undefined]]) {
-    const r = tryV({ jobs_from_leads: v, avg_job_value: "$450" });
-    if (r.error || r.value.jobs_from_leads !== jobs || r.value.jobs_from_leads_of !== of || r.value.avg_job_value !== 450) fail(`17: "${v}" isn't read as ${jobs}${of ? ` of ${of}` : ""} (${JSON.stringify(r)})`); }
-  if (!tryV({ jobs_from_leads: "a few", avg_job_value: "450" }).error) fail("17: \"a few\" is stored as a number");
-  if (!tryV({ jobs_from_leads: "12", avg_job_value: "10 of 20" }).error) fail("17: \"of\" is taken on a field that doesn't mean it");
-  const ns = tryV({ jobs_from_leads: "", avg_job_value: "", not_sure: ["jobs_from_leads", "avg_job_value"] });
-  if (ns.error || (ns.value.not_sure || []).length !== 2) fail("17: Not sure on both isn't an answer");
-  if (!tryV({ jobs_from_leads: "", avg_job_value: "450" }).error) fail("17: a blank with no Not sure is taken as an answer");
+    const r = tryV({ ...base, jobs_from_leads: v, revenue: "$450" });
+    if (r.error || r.value.jobs_from_leads !== jobs || r.value.jobs_from_leads_of !== of || r.value.revenue !== 450) fail(`17: "${v}" isn't read as ${jobs}${of ? ` of ${of}` : ""} (${JSON.stringify(r)})`); }
+  if (!tryV({ ...base, jobs_from_leads: "a few", revenue: "450" }).error) fail("17: \"a few\" is stored as a number");
+  if (!tryV({ ...base, jobs_from_leads: "12", revenue: "10 of 20" }).error) fail("17: \"of\" is taken on a field that doesn't mean it");
+  const ns = tryV({ calls: "", form_leads: "", jobs_from_leads: "", revenue: "", not_sure: ["calls", "form_leads", "jobs_from_leads", "revenue"] });
+  if (ns.error || (ns.value.not_sure || []).length !== 4) fail("17: Not sure on every field isn't an answer");
+  if (!tryV({ ...base, jobs_from_leads: "", revenue: "450" }).error) fail("17: a blank with no Not sure is taken as an answer");
   vctx.__s = (PB.month2plus.find((s) => s.id === "m2.win_story.capture") || {}).clientInput || { kind: "x" };
   const st = tryV({ job: "  burst pipe at O'Brien's ", what: "Fixed it.", ok_first_name: true });
   if (st.error || st.value.job !== "burst pipe at O'Brien's" || st.value.ok_first_name !== true) fail(`win story: the server doesn't take a story (${JSON.stringify(st)})`);

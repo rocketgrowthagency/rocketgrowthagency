@@ -9,8 +9,8 @@
  [
   "the script promises a Friday email again",
   "admin",
-  "Every Monday your portal shows what we did that week, and in the first week",
-  "Every Friday you get a short email of what we did, and in the first week",
+  "Each piece of work shows in your portal the day it's done, under What RGA did, and in",
+  "Every Friday your portal shows what we did, and in",
   1
  ],
  [
@@ -25,6 +25,20 @@
   "toml",
   "[functions.\"send-monthly-report\"]\n  schedule = \"0 9 5 * *\"",
   "[functions.\"send-monthly-report\"]\n  # schedule = \"0 9 5 * *\"",
+  1
+ ],
+ [
+  "the Monday promise comes back (11-13)",
+  "admin",
+  "`- Each piece of work shows in your portal the day it's done, under What RGA did.`,",
+  "`- Every Monday your portal shows what we did that week.`,",
+  1
+ ],
+ [
+  "the portal stops drawing What RGA did (11-13)",
+  "portal",
+  "<div class=\"k\">What RGA did</div><h3>The last 14 days</h3>",
+  "<div class=\"k\">Recent work</div><h3>The last 14 days</h3>",
   1
  ]
 ]
