@@ -222,5 +222,26 @@
   "  opacity: 1;   /* 11-12: no dimming; the spinner (is-busy) says it's working */",
   "  opacity: 0.82;",
   1
+ ],
+ [
+  "the lock ring loses its own layer (stutters while the admin loads)",
+  "admincss",
+  "  will-change: transform;\n  transform: translateZ(0);\n",
+  "",
+  1
+ ],
+ [
+  "the lock ring goes back to a quarter cut away",
+  "admincss",
+  "  border-top-color: var(--lock-ink);\n",
+  "  border-right-color: transparent;\n",
+  1
+ ],
+ [
+  "the lock ring shrinks back to 12px",
+  "admincss",
+  "  width: 16px;\n  height: 16px;\n  flex: none;",
+  "  width: 12px;\n  height: 12px;\n  flex: none;",
+  1
  ]
 ]

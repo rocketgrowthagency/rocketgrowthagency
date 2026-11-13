@@ -151,6 +151,16 @@ fs.rmSync(tmp, { recursive: true, force: true });
   if (!/button\.classList\.toggle\("is-busy", on\)/.test(admin)) F("two-step screens: their buttons must spin (is-busy) while they wait");
   const dim = css.match(/\.admin-button\.admin-lock-submit\.is-pending \{[^}]*opacity:\s*([0-9.]+)/);
   if (!dim || Number(dim[1]) !== 1) F("the waiting lock button must stay full colour (opacity 1), not dimmed");
+  // 11-12 (Chris: "not a smooth circle and still glitchy"): the lock ring is a clean 16px track + arc on its own GPU layer
+  const ring = css.match(/\.admin-lock-shell \.admin-button\.admin-lock-submit\.is-busy::after \{([^}]*)\}/);
+  if (!ring) F("the lock buttons must draw their own ring (.admin-lock-shell .admin-button.admin-lock-submit.is-busy::after)");
+  else {
+    const r = ring[1];
+    if (!/width:\s*16px/.test(r) || !/height:\s*16px/.test(r) || !/box-sizing:\s*border-box/.test(r)) F("the lock ring must be a 16px border-box circle");
+    if (!/will-change:\s*transform/.test(r)) F("the lock ring must run on its own layer (will-change: transform) so it turns while the admin loads");
+    if (!/flex:\s*none/.test(r)) F("the lock ring must not stretch or move the words (flex: none)");
+    if (!/border:\s*2px solid var\(--lock-spin-track\)/.test(r) || !/border-top-color:\s*var\(--lock-ink\)/.test(r)) F("the lock ring must be a faint full track with one bright arc (no quarter cut away)");
+  }
 }
 if (fails.length) { console.error("BROKEN: admin two-step sign-in"); for (const f of fails) console.error("   - " + f); process.exit(1); }
 console.log("two-step sign-in holds: off = unchanged, on = aal2 for enrolled staff, no lockout, portal/internal untouched, words exact, boxes shrink");
