@@ -114,8 +114,8 @@
  [
   "a hex colour sneaks into the two-step css",
   "admincss",
-  "color: var(--lock-warn-ink); border-radius: 8px;",
-  "color: #123456; border-radius: 8px;",
+  ".admin-mfa-keysave { color: var(--lock-muted); font-size: 0.85rem;",
+  ".admin-mfa-keysave { color: #123456; font-size: 0.85rem;",
   1
  ],
  [
@@ -242,6 +242,41 @@
   "admincss",
   "  width: 16px;\n  height: 16px;\n  flex: none;",
   "  width: 12px;\n  height: 12px;\n  flex: none;",
+  1
+ ],
+ [
+  "11-13 v3: the amber Bitwarden box comes back",
+  "sa_adminhtml",
+  "<div class=\"admin-mfa-keysave\">Save the key above in Bitwarden",
+  "<div class=\"admin-mfa-warn\">Save the key above in Bitwarden",
+  1
+ ],
+ [
+  "11-13 v3: the enroll loses the short issuer (dense QR)",
+  "admin",
+  "friendlyName: \"Rocket Growth Agency admin\", issuer: \"RGA\" });",
+  "friendlyName: \"Rocket Growth Agency admin\" });",
+  1
+ ],
+ [
+  "11-13 v3: the setup screen loses the padlock",
+  "sa_adminhtml",
+  "<section class=\"admin-auth\" id=\"mfaSetupView\" hidden>\n      <div class=\"admin-lock-logo admin-lock-pad\" aria-hidden=\"true\">",
+  "<section class=\"admin-auth\" id=\"mfaSetupView\" hidden>\n      <div class=\"admin-lock-logo\" aria-hidden=\"true\">",
+  1
+ ],
+ [
+  "11-13 v3: the Bitwarden line is drawn in amber again",
+  "css",
+  ".admin-mfa-keysave { color: var(--lock-muted);",
+  ".admin-mfa-keysave { color: var(--lock-warn-ink);",
+  1
+ ],
+ [
+  "11-13 v3: the key is one run-on line again",
+  "admin",
+  "[groups.slice(0, half), groups.slice(half)]",
+  "[groups]",
   1
  ]
 ]

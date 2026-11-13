@@ -49,7 +49,16 @@ const WORDS = ["Log in to RGA Admin", "Rocket Growth Agency staff", "Forgot your
 for (const w of WORDS) if (!html.includes(w)) F(`admin/index.html is missing the approved words: ${w}`);
 for (const gone of ["Admin Login", "admin-lock-wordmark", "Forgot password?", "admin-mfa-steps", "admin-mfa-lede", "admin-mfa-note"]) if (html.includes(gone)) F(`admin/index.html still has "${gone}" (removed by the approved dark sign-in)`);
 if (!/<h1 class="admin-lock-heading">Log in to RGA Admin<\/h1>/.test(html)) F("the sign-in heading must be exactly: Log in to RGA Admin");
-if ((html.match(/class="admin-lock-logo"[^>]*width="48" height="48"/g) || []).length !== 3) F("all three lock screens use the RGA icon at 48px");
+// 🔄 11-13 (admin_two_step_setup_v3; the approved admin_login_dark_v2 already drew it so): the SIGN-IN screens wear the RGA icon, the CODE
+// and SETUP screens a padlock tile at 48px. This line used to pin the RGA icon on all three, which never matched the mockup.
+if ((html.match(/class="admin-lock-logo"[^>]*width="48" height="48"/g) || []).length < 1) F("the sign-in screen lost the RGA icon at 48px");
+for (const id of ["mfaSetupView", "mfaCodeView"]) { const sec = (html.split(`id="${id}"`)[1] || "").split("</section>")[0]; if (!/class="admin-lock-logo admin-lock-pad" aria-hidden="true"><svg[^>]*><rect x="5" y="11" width="14" height="10" rx="2"\/><path d="M8 11V7a4 4 0 0 1 8 0v4"\/><\/svg>/.test(sec)) F(`the ${id === "mfaSetupView" ? "setup" : "code"} screen doesn't wear the padlock tile`); }
+// the Bitwarden line is a quiet grey line (no amber box), the key two even lines, and Supabase's QR made with the short name
+{ const css = read("admin/admin.css");
+  if (/class="admin-mfa-warn"/.test(html)) F("the amber Bitwarden box is back (v3 made it a quiet grey line)");
+  if (!/<div class="admin-mfa-keysave">Save the key above in Bitwarden/.test(html) || !/\.admin-mfa-keysave \{ color: var\(--lock-muted\); font-size: 0\.85rem; line-height: 1\.5; text-align: center; \}/.test(css)) F("the Bitwarden line isn't the quiet grey line of admin_two_step_setup_v3");
+  if (!/issuer: "RGA" \}\);/.test(admin)) F("the authenticator enroll lost the short issuer (the QR goes dense again)");
+  if (!/\[groups\.slice\(0, half\), groups\.slice\(half\)\]/.test(admin) || /mfaSecret"\)\.innerHTML/.test(admin)) F("the key isn't drawn as two even lines of text nodes"); }
 if ((html.match(/class="admin-button admin-lock-submit"/g) || []).length !== 3) F("three lock buttons, each `admin-button admin-lock-submit`");
 if (!admin.includes(`"That code didn't match. Codes change every 30 seconds; try the newest one."`)) F("the wrong-code line is not exact");
 if (!/friendlyName: "Rocket Growth Agency admin"/.test(admin) || !/factorType: "totp"/.test(admin)) F("enrol must be a totp factor named Rocket Growth Agency admin");
