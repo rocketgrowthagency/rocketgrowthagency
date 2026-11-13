@@ -1,0 +1,23 @@
+[
+ [
+  "a check mints an owner magic link again",
+  "adminsession",
+  "/** Sign a browser page in to the admin. */",
+  "export async function ownerLink() { return (await (await fetch(`${SUPA}/auth/v1/admin/generate_link`, { method: \"POST\", headers: H(), body: JSON.stringify({ type: \"magiclink\", email: ADMIN_EMAIL }) })).json()).action_link; }\n/** Sign a browser page in to the admin. */",
+  1
+ ],
+ [
+  "the helper stops finishing two-step",
+  "adminsignin",
+  "code: totp(process.env.RGA_ROBOT_TOTP_SECRET)",
+  "code: \"000000\"",
+  1
+ ],
+ [
+  "the helper stores the session under another key",
+  "adminsignin",
+  "`sb-${new URL(url).hostname.split(\".\")[0]}-auth-token`",
+  "`supabase.auth.token`",
+  1
+ ]
+]

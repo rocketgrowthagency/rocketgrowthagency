@@ -476,6 +476,8 @@ export const FILES = {
   videolanding: "scraper:build-video-landing.mjs",   // check-a-video-page-names-its-own-search (11-13)
   steptitles: "shared/step-titles.js",   // check-a-step-title-has-one-home (11-13): generated from playbooks.json
   knownstaff: "scraper:scripts/lib/known-staff.mjs",   // check-the-staff-list-is-known (11-13)
+  adminsignin: "scraper:scripts/lib/admin-sign-in.mjs",   // check-checks-sign-in-as-the-robot (11-13)
+  adminsession: "scraper:scripts/_admin-session.mjs",   // check-checks-sign-in-as-the-robot (11-13)
   nightrollup: "scraper:scripts/check-run-productivity.mjs",   // check-a-locked-screen-cannot-stop-a-video (11-12)
   videotemplate: "scraper:templates/video-landing.html",   // rga_video_address_v1 A (11-8): the outreach page template
   pagesfromstorage: "scraper:scripts/outreach-pages-play-from-storage.mjs",   // rga_video_address_v1 A (11-8)

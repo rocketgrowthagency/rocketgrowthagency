@@ -850,6 +850,7 @@ run check-the-video-shows-the-search-being-typed.mjs "the video keeps the search
 run check-a-video-page-names-its-own-search.mjs "a video page names the search its video was made from, never the CRM's first-found search (Chris 11-13: Culver City over a Beverly Hills video)"
 run check-the-company-numbers-skip-test-clients.mjs "the company's numbers (Dashboard, KPI row, Pipeline header, averages, MRR) count only real clients, never the walk's test records (Chris 11-13)"
 run check-the-staff-list-is-known.mjs "RGA's staff sign-ins are exactly Chris (owner) and the checks' robot (one authenticator); a new staff account goes red (11-13)"
+run check-checks-sign-in-as-the-robot.mjs "every check signs in to the admin as the robot staff account at aal2, never with an owner magic link (two-step-ready, 11-13)"
 run check-a-locked-screen-cannot-stop-a-video.mjs "a locked Mac screen cannot stop a video (Maps frames fall back to the page), the N/3 WebMs line names the missing recording, the night roll-up reads tonight once"
 run check-netlify-credits-will-last.mjs "Netlify credits last until the cycle resets at the current deploy pace (5 outages from running out)"
 run acceptance-walk.mjs "every Month-1 step clicks through in admin + portal (read-only), both sides agree — report: website reports/acceptance/latest.md"
