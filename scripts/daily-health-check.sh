@@ -848,6 +848,7 @@ run check-a-found-email-is-the-business.mjs "a found email must be the business'
 run check-the-maps-frame-shows-the-business-and-the-search.mjs "the held Maps results frame is a verified results list at city level and the business sits inside the visible map (11-11: county-wide map, ocean, city card)"
 run check-the-video-shows-the-search-being-typed.mjs "the video keeps the search being typed: step 4 never trims the front of the maps clip, it cuts the still results hold (Chris 11-13)"
 run check-a-video-page-names-its-own-search.mjs "a video page names the search its video was made from, never the CRM's first-found search (Chris 11-13: Culver City over a Beverly Hills video)"
+run check-the-company-numbers-skip-test-clients.mjs "the company's numbers (Dashboard, KPI row, Pipeline header, averages, MRR) count only real clients, never the walk's test records (Chris 11-13)"
 run check-a-locked-screen-cannot-stop-a-video.mjs "a locked Mac screen cannot stop a video (Maps frames fall back to the page), the N/3 WebMs line names the missing recording, the night roll-up reads tonight once"
 run check-netlify-credits-will-last.mjs "Netlify credits last until the cycle resets at the current deploy pace (5 outages from running out)"
 run acceptance-walk.mjs "every Month-1 step clicks through in admin + portal (read-only), both sides agree — report: website reports/acceptance/latest.md"

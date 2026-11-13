@@ -146,7 +146,10 @@ try {
       for (const w of ["Optional", "usually the same day", "5 new photos", "5 more"]) hasNot(r10 || "", w, `${L} step 10`);
       // step 12, before the 5th's run
       const r12 = await rowText(h, "m2.call.monthly");
-      for (const w of ["First: your October report", "early November", "RGA checks it and sends it early next month. Then you pick a time for the call here.", "Bring one job you're proud of", "What they needed, what you did, how it turned out", "Send it in writing instead"]) has(r12 || "", w, `${L} step 12`);
+      for (const w of ["First: your October report", "early November", "RGA checks it and sends it early next month. Then you pick a time for the call here."]) has(r12 || "", w, `${L} step 12`);
+      // 🔄 11-13: the win story is a QUARTER step (0f064b09, 11-11). November is not a quarter's first month, so step 12 does not invite it,
+      // and nothing opens a story form that would say "Next: Jan 1" (this check runs on a November clock; the quarter-month invitation is the same OG_CARD line, gated by quarterOpenNow).
+      for (const w of ["Bring one job you're proud of", "Send it in writing instead"]) hasNot(r12 || "", w, `${L} step 12 (Nov: the story isn't due)`);
       hasNot(r12 || "", "RGA writes it up as a Google post", `${L} step 12`);
       // the panel: last, four lines
       const pan = await h.page.evaluate(`(() => { const t = ${TAB}; const p = t.querySelector('.pm-og-rga'); const last = [...t.children].filter((c) => !c.hidden && c.offsetParent !== null).pop();
@@ -163,10 +166,10 @@ try {
       await h.page.evaluate(`(() => ${TAB}.querySelector('[data-og-see="value"]')?.click())()`); await tick(300);
       const seen = await h.page.evaluate(`(() => { const p = ${TAB}.querySelector('[data-og-panel="value"]'); return p && !p.hidden && /What we watched for you/.test(p.innerText); })()`);
       if (!seen) fail(`${L}: the panel's See doesn't open What we watched`);
-      // Send it in writing instead → the story form
-      await h.page.evaluate(`(() => ${TAB}.querySelector('[data-og-story-open]')?.click())()`); await tick(400);
-      const st = await h.page.evaluate(`(() => { const f = ${TAB}.querySelector('[data-og-story-fold]'); const b = f && f.querySelector('[data-in-kind="story"] [data-in-submit]'); return !!f && !f.hidden && !!b && b.offsetParent !== null; })()`);
-      if (!st) fail(`${L}: "Send it in writing instead" doesn't open the win story's form`);
+      // 🔄 11-13: outside a quarter's first month there is no "Send it in writing instead", and the story fold stays shut
+      { const so = await h.page.evaluate(`(() => { const b = ${TAB}.querySelector('[data-og-story-open]'); const f = ${TAB}.querySelector('[data-og-story-fold]'); return { btn: !!b && b.offsetParent !== null, open: !!f && !f.hidden }; })()`);
+        if (so.btn) fail(`${L}: step 12 invites the win story in November (it is a quarter step: Jan, Apr, Jul, Oct)`);
+        if (so.open) fail(`${L}: the win story's fold is open outside its quarter`); }
       // Send a video now → step 11's link field
       await h.page.evaluate(`(() => ${TAB}.querySelector('[data-og-video-open]')?.click())()`); await tick(400);
       const vd = await h.page.evaluate(`(() => { const f = ${TAB}.querySelector('[data-og-video-fold]'); const a = f && f.querySelector('.pm-og-addf'); const i = a && a.querySelector('[data-in-kind="url"] input[data-in-field="value"]'); return !!f && !f.hidden && !!a && !a.hidden && !!i && i.offsetParent !== null; })()`);

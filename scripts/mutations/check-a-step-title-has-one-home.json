@@ -1,0 +1,44 @@
+[
+ [
+  "the portal pastes Review replies back as a card title (11-13)",
+  "portal",
+  "ogRowHtml({ id: \"og-replies\", pills, tone, title: rgaStepName(\"m2.exec.review_responses\"), body })",
+  "ogRowHtml({ id: \"og-replies\", pills, tone, title: \"Review replies\", body })",
+  1
+ ],
+ [
+  "the portal pastes the monthly call's name back (11-13)",
+  "portal",
+  "ogLr(OG_IDS.call, `${rgaStepName(\"m2.call.monthly\")} call`,",
+  "ogLr(OG_IDS.call, \"Monthly check-in call\",",
+  1
+ ],
+ [
+  "the generated titles file is hand-edited / stale (11-13)",
+  "steptitles",
+  "\"m2.exec.gbp_posts\": \"Google posts\"",
+  "\"m2.exec.gbp_posts\": \"GBP posts\"",
+  1
+ ],
+ [
+  "the portal stops importing the generated titles (11-13)",
+  "portal",
+  "import \"/shared/step-titles.js?v=",
+  "import \"/shared/no-titles.js?v=",
+  1
+ ],
+ [
+  "admin pastes Review replies back (11-13)",
+  "admin",
+  "title: escapeHtml(stepTitleOf(\"m2.exec.review_responses\")), acts: skipStep",
+  "title: \"Review replies\", acts: skipStep",
+  1
+ ],
+ [
+  "the build stops generating the titles file (11-13)",
+  "buildcs",
+  "fs.writeFileSync(path.join(ROOT, \"shared/step-titles.js\"), js);",
+  "/* titles not generated */",
+  1
+ ]
+]

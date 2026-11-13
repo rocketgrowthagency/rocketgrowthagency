@@ -390,5 +390,12 @@
   "const moves = (canRemind ? `<span class=\"pm-og-mv\"><a class=\"pm-og-b\"",
   "const moves = (!r.reminded_at ? `<span class=\"pm-og-mv\"><a class=\"pm-og-b\"",
   1
+ ],
+ [
+  "11-13: step 12 invites the win story outside its quarter",
+  "portal",
+  "![\"done\", \"skipped\"].includes(st.status) && quarterOpenNow()",
+  "![\"done\", \"skipped\"].includes(st.status)",
+  1
  ]
 ]

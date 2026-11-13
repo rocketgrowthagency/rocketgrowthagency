@@ -45,7 +45,7 @@ if ((A["m2.report.generate"]?.dependsOn || []).includes("m2.snap.business_outcom
 if (!/if \(f\.allowNotSure && notSure\.includes\(f\.key\)\) \{ out\.not_sure = /.test(INP)) fail("step 17: Not sure isn't stored as an answer (it could read as 0)");
 for (const [iso, want] of [["2026-10-20T12:00:00Z", "2027-01-01"], ["2026-12-31T12:00:00Z", "2027-01-01"], ["2026-01-15T12:00:00Z", "2026-04-01"], ["2026-03-31T12:00:00Z", "2026-04-01"]])
   if (run("nextQuarterStart(new Date(__d))", { __d: iso }).slice(0, 10) !== want) fail(`step 17: the next quarter after ${iso.slice(0, 10)} isn't ${want}`);
-if (!/s\.clientQuarterly && status !== "done" && !\[0, 3, 6, 9\]\.includes\(new Date\(\)\.getUTCMonth\(\)\)/.test(P) || !/notDue && !isDone \? \{ text: "Every 3 months"/.test(P)) fail("step 17: a quarterly step reads due outside a quarter's first month");
+if (!/s\.clientQuarterly && status !== "done" && !quarterOpenNow\(\)/.test(P) || !/const quarterOpenNow = \(\) => \[0, 3, 6, 9\]\.includes\(new Date\(\)\.getUTCMonth\(\)\);/.test(P)   /* 11-13: one helper, also used by step 12's story line */ || !/notDue && !isDone \? \{ text: "Every 3 months"/.test(P)) fail("step 17: a quarterly step reads due outside a quarter's first month");
 // 🔒 EVERY place that draws the numbers keeps them (10-30: the Ongoing card became a second one; "appears somewhere" passed with either dropped)
 const legacyOf = (re) => (P.match(re) || []).length;
 if (!legacyOf(/const LEGACY = \[\{ key: "enquiries"/g) || legacyOf(/const all = \[\.\.\.fields, \.\.\.LEGACY\.filter\(/g) !== legacyOf(/const LEGACY = \[\{ key: "enquiries"/g)) fail("step 17: numbers a client saved in the old monthly fields stop showing");

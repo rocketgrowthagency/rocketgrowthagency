@@ -61,6 +61,9 @@ try {
   await page.setContent(`<!doctype html><html><body style="margin:0"><div id="h" style="padding:0 16px"></div></body></html>`);
   await page.addStyleTag({ content: CSS });
   await page.addScriptTag({ content: read("shared/call-length.js") });   // master map decision 1 (11-11): the monthly words come from the ONE call-length setting
+  // 11-13: the portal's labels read the titles generated from playbooks.json (shared/step-titles.js) through its own rgaStepName line
+  { const ln = (/^const rgaStepName = [^\n]*$/m.exec(P) || [])[0]; if (!ln) { console.error("⚠️  INDETERMINATE — portal.js's rgaStepName moved"); process.exit(2); }
+    await page.addScriptTag({ content: read("shared/step-titles.js") }); await page.addScriptTag({ content: ln.replace(/^const /, "var ") }); }
   await page.addScriptTag({ content: src });
   if (errs.length) { console.error(`⚠️  INDETERMINATE — the lifted cards won't load: ${errs[0]}`); await browser.close(); process.exit(2); }
   R = await page.evaluate(() => {

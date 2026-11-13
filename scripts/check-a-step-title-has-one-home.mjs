@@ -104,7 +104,13 @@ if (titles.length >= 40) {
     const outside = code.split(reader || "\u0000__never__").join(" ");
     const dupes = [];
     for (const { id, t } of titles) {
-      const n = outside.split(t).length - 1;
+      // 🔄 11-13: a title of ONE or TWO words ("Google posts", "Review replies", "Monthly check-in") is also ordinary English, so a
+      // sentence like "How many Google posts a month?" is not a signpost. Such a title counts only where it STARTS a label: right
+      // after a quote, a backtick or a tag (`"Google posts"`, `title: "Review replies"`, `>Monthly check-in<`, `"Monthly check-in call"`).
+      // A longer title still counts anywhere (the 09-29 banner pasted "Send the kickoff calendar invite" mid-sentence).
+      const short = t.trim().split(/\s+/).length <= 2;
+      const esc = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const n = short ? (outside.match(new RegExp(`["'\`>]${esc}`, "g")) || []).length : outside.split(t).length - 1;
       if (n > 0) dupes.push(`${id} ("${t}") ×${n}`);
     }
     if (dupes.length) {
@@ -112,6 +118,27 @@ if (titles.length >= 40) {
         + `from playbooks.json: ${dupes.join(" · ")}. Rename the step and this surface goes on naming `
         + `something that no longer exists — silently, because a wrong name does not throw.`);
     } else pass.push(`${rel} — names no step by a copied title`);
+  }
+}
+
+// ── 1b. THE PORTAL'S GENERATED TITLES ARE THE PLAYBOOK'S (11-13) ─────────────────────────────────────────────
+// shared/step-titles.js is written by scripts/build-client-steps.mjs from playbooks.json; the portal reads its labels from it
+// (rgaStepName). A stale or hand-edited file would be a second home again.
+{
+  const gen = read("shared/step-titles.js", 100);
+  const pbRaw = read("data/playbooks/playbooks.json", 5000);
+  const portal = read("portal/portal.js", 50000);
+  if (gen && pbRaw && portal) {
+    let T = null; try { const m = { exports: {} }; new Function("module", "globalThis", gen)(m, {}); T = m.exports; } catch (e) { fail.push(`shared/step-titles.js does not load: ${e.message}`); }
+    const pb = JSON.parse(pbRaw), all = [...(pb.month1 || []), ...(pb.month2plus || [])];
+    if (T) {
+      for (const [id, t] of Object.entries(T)) { const st = all.find((x) => x.id === id); if (!st || st.title !== t) fail.push(`shared/step-titles.js says ${id} is "${t}" but playbooks.json says "${st ? st.title : "(no such step)"}": rebuild it (node scripts/build-client-steps.mjs)`); }
+      if (!Object.keys(T).length) fail.push("shared/step-titles.js holds no titles");
+      else pass.push(`shared/step-titles.js matches playbooks.json (${Object.keys(T).length} titles)`);
+    }
+    if (!/import "\/shared\/step-titles\.js\?v=/.test(portal)) fail.push("portal.js no longer imports shared/step-titles.js, so its labels read empty");
+    if (!/const rgaStepName = \(id\) => \(globalThis\.rgaStepTitles \|\| \{\}\)\[id\]/.test(portal)) fail.push("portal.js's rgaStepName no longer reads the generated titles");
+    if (!/writeFileSync\(path\.join\(ROOT, "shared\/step-titles\.js"\)/.test(read("scripts/build-client-steps.mjs", 1000) || "")) fail.push("build-client-steps no longer generates shared/step-titles.js");
   }
 }
 

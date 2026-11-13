@@ -30,8 +30,8 @@
  [
   "quarterly step due every month",
   "portal",
-  "![0, 3, 6, 9].includes(new Date().getUTCMonth())",
-  "![0,1,2,3,4,5,6,7,8,9,10,11].includes(new Date().getUTCMonth())",
+  "const quarterOpenNow = () => [0, 3, 6, 9].includes(new Date().getUTCMonth());",
+  "const quarterOpenNow = () => [0,1,2,3,4,5,6,7,8,9,10,11].includes(new Date().getUTCMonth());",
   1
  ],
  [
@@ -62,5 +62,11 @@
   "${k}",
   1
  ],
- ["the win story card asks 'Your turn' outside its quarter again", "portal", "    if (c.notDue && !c.isDone) return ogNotDue(c);\n    return { tone: \"you\", noHow: true, pills: [[\"Your turn\", \"you\"], m],", "    return { tone: \"you\", noHow: true, pills: [[\"Your turn\", \"you\"], m],", 1]
+ [
+  "the win story card asks 'Your turn' outside its quarter again",
+  "portal",
+  "    if (c.notDue && !c.isDone) return ogNotDue(c);\n    return { tone: \"you\", noHow: true, pills: [[\"Your turn\", \"you\"], m],",
+  "    return { tone: \"you\", noHow: true, pills: [[\"Your turn\", \"you\"], m],",
+  1
+ ]
 ]

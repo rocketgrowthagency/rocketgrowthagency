@@ -38,6 +38,9 @@ for (const id of IDS) if (!stepsById[id]) fail(`${id} isn't in the client's proj
 const ctx = vm.createContext({ Date, JSON, Number, Set, Map, Array, String, Object, Math, RegExp, Intl, Boolean, parseInt, isNaN, console, CSS: { escape: (x) => String(x) }, document: { querySelectorAll: () => [], addEventListener() {} },
   escapeHtml: (x) => String(x ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])), escapeAttribute: (x) => String(x ?? "").replace(/"/g, "&quot;"),
   fmtDateShort: (x) => String(x || "").slice(0, 10), closeCallHtml: () => '<div class="pm-cc" data-closeout-call="c~m2"></div>', stepLockOf: (id, t) => STEP_LOCK.stepLock(id, t, {}) });
+// 11-13: the portal's labels read the titles generated from playbooks.json (shared/step-titles.js) through its own rgaStepName line
+{ const ln = (/^const rgaStepName = [^\n]*$/m.exec(P) || [])[0]; if (!ln) moved("const rgaStepName");
+  vm.runInContext(read("shared/step-titles.js"), ctx); vm.runInContext(ln.replace(/^const /, "var "), ctx); }
 try {
   const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) moved("the plan-card pieces");
   const hand = P.slice(a, b);

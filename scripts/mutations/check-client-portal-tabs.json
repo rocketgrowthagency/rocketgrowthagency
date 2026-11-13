@@ -37,14 +37,14 @@
  [
   "posts are dropped",
   "portal",
-  "      + lr(\"Google posts\", \"RGA writes the number you choose. Nothing posts until you approve.\", \"Every month\")\n",
+  "      + lr(rgaStepName(\"m2.exec.gbp_posts\"), \"RGA writes the number you choose. Nothing posts until you approve.\", \"Every month\")\n",
   "",
   1
  ],
  [
   "replies are dropped",
   "portal",
-  "      + lr(\"Review replies\", \"RGA replies to each one. 1 to 3 star replies wait for your OK.\", \"As reviews come in\") })}</div>`;",
+  "      + lr(rgaStepName(\"m2.exec.review_responses\"), \"RGA replies to each one. 1 to 3 star replies wait for your OK.\", \"As reviews come in\") })}</div>`;",
   " })}</div>`;",
   1
  ],

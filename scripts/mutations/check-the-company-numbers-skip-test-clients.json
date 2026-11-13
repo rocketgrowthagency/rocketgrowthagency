@@ -1,0 +1,44 @@
+[
+ [
+  "isActiveClient counts test records again",
+  "sharedmetrics",
+  "    if (!c || c.archived_at || isTestClient(c)) return false;",
+  "    if (!c || c.archived_at) return false;",
+  1
+ ],
+ [
+  "isTestClient matches any source containing test",
+  "sharedmetrics",
+  "const isTestClient = (c) => /^test:/.test(",
+  "const isTestClient = (c) => /test/i.test(",
+  1
+ ],
+ [
+  "the definition stops saying test records are left out",
+  "sharedmetrics",
+  "not churned or cancelled, and not a test record.",
+  "not churned or cancelled.",
+  1
+ ],
+ [
+  "the Dashboard live list counts test records",
+  "admin",
+  "&& !globalThis.rgaMetrics.isTestClient(c));\n",
+  "&& true);\n",
+  1
+ ],
+ [
+  "the portal-login count includes test records",
+  "admin",
+  "const accounts = (state.portalAccounts || []).filter((a) => !testIds.has(",
+  "const accounts = (state.portalAccounts || []).filter((a) => true || !testIds.has(",
+  1
+ ],
+ [
+  "the Pipeline header counts a test record as onboarding",
+  "admin",
+  "const liveForKpi = clients.filter((c) => !c.archived_at && !M8.isTestClient(c));",
+  "const liveForKpi = clients.filter((c) => !c.archived_at);",
+  1
+ ]
+]
