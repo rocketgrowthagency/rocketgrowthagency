@@ -56,21 +56,6 @@ export async function firstClient(select = "id") {
   return rows[0];
 }
 
-/** A one-time sign-in link for the OWNER identity. */
-export async function adminLink() {
-  requireCreds();
-  let j;
-  try {
-    j = await (await fetch(`${SUPA}/auth/v1/admin/generate_link`, {
-      method: "POST", headers: H(),
-      body: JSON.stringify({ type: "magiclink", email: ADMIN_EMAIL }),
-    })).json();
-  } catch (e) { die(`could not mint a sign-in link: ${e.message}`); }
-  const link = j?.action_link || j?.properties?.action_link;
-  if (!link) die(`no sign-in link returned: ${JSON.stringify(j).slice(0, 160)}`);
-  return link;
-}
-
 /** Sign a browser page in to the admin. */
 export async function adminSignIn(page) {
   // 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
