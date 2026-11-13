@@ -39,8 +39,10 @@ const FN = "https://www.rocketgrowthagency.com/.netlify/functions/stripe-go-live
 console.log("── no client can pay us with a test card ──");
 
 // ── the internal secret is not stored locally; read it from Netlify the way a human would ──
-let secret;
-try {
+// 🔄 11-13: Netlify reads secret keys back MASKED since 11-12, so the Mac's own copy (the Scraper .env, loaded by daily-health-check)
+// comes first; Netlify's is the fallback. Never printed.
+let secret = (process.env.INTERNAL_FN_SECRET || "").trim();
+if (!secret) try {
   secret = execFileSync("netlify", ["env:get", "INTERNAL_FN_SECRET", "--context", "production"],
     { cwd: SITE, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] })
     .trim().split("\n").pop().trim();
@@ -48,7 +50,7 @@ try {
   console.log(`  ⚠️  could not read INTERNAL_FN_SECRET (netlify CLI not logged in?): ${e.message}`);
   process.exit(2);  // 🔑 couldn't tell ≠ a finding. → feedback_exit_code_semantics_for_gates
 }
-if (!secret || secret.length < 8) {
+if (!secret || secret.length < 8 || new Set(secret).size < 8) {
   console.log("  ⚠️  INTERNAL_FN_SECRET came back empty or masked — cannot authenticate the probe.");
   process.exit(2);
 }

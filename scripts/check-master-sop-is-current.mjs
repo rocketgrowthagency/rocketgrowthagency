@@ -125,6 +125,18 @@ async function checkTree(F, { sopRoot = F.root, label = "after", strictMissing =
       for (const r of rows) { if (!r || !r.id) { fail("a steps row has no id"); continue; } if (have.has(r.id)) fail(`steps data lists ${r.id} twice`); have.set(r.id, r); }
       for (const [id, from] of want) if (!have.has(id)) fail(`${id} (${from}) is missing from the steps data`);
       for (const id of have.keys()) if (want.size && !want.has(id)) fail(`the steps data names ${id}, which no longer exists in the playbook, managed steps, closing list or stage list`);
+      // 🔒 11-13: the admin Monthly numbers run in PAGE ORDER from shared/monthly-sections.js (NUMBERING = section, d43574c2 11-11), but
+      // 20 Monthly rows here kept the old numbers (14-20, 31-33 instead of 16-25 …) for two days and nothing noticed. The number a step's
+      // row carries must be the number the admin draws.
+      const msTxt = F.read("shared/monthly-sections.js");
+      if (msTxt != null) {
+        let R = null; try { const m = { exports: {} }, g = {}; new Function("module", "exports", "globalThis", "window", msTxt)(m, m.exports, g, g); R = (m.exports && m.exports.SECTIONS) ? m.exports : g.rgaMonthly; } catch (e) { fail(`shared/monthly-sections.js does not load (${String(e.message).slice(0, 80)})`); }
+        if (R && Array.isArray(R.SECTIONS) && R.NUMBERING === "section") {
+          let n = 0; const pageNo = {}; for (const sec of R.SECTIONS) for (const id of sec.ids || []) pageNo[id] = ++n;
+          const off = [...have.values()].filter((r) => pageNo[r.id] != null && Number(r.admin_no) !== pageNo[r.id]);
+          if (off.length) fail(`${off.length} Monthly step row(s) carry an admin number the page doesn't draw (page order, shared/monthly-sections.js): ${off.slice(0, 6).map((r) => `${r.id} ${r.admin_no}→${pageNo[r.id]}`).join(", ")}${off.length > 6 ? " …" : ""}`);
+        }
+      }
     }
   }
   // 2 · every scheduled job has a checker entry

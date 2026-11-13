@@ -33,8 +33,10 @@ const DAYS = 7;
 
 console.log("── every Stripe charge reached our ledger ──");
 
-let secret;
-try {
+// 🔄 11-13: since the Netlify keys were marked secret (11-12) Netlify only reads them back masked, so the Mac's own copy (the Scraper .env,
+// loaded by daily-health-check) comes FIRST; Netlify's is the fallback. Never printed.
+let secret = (process.env.INTERNAL_FN_SECRET || "").trim();
+if (!secret) try {
   secret = execFileSync("netlify", ["env:get", "INTERNAL_FN_SECRET", "--context", "production"],
     { cwd: SITE, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] })
     .trim().split("\n").pop().trim();

@@ -76,7 +76,7 @@ try {
         runBtn: el.querySelectorAll("[data-onboard-run]").length,
         skip: el.querySelectorAll("[data-uni-skip],[data-cb-act='skip']").length,
         measured: /WE MEASURED/i.test(text), bolt: text.includes("⚡"), override: /\bOVERRIDE\b/i.test(text), markDone: /Mark step complete/i.test(text),
-        notChecked: /NOT CHECKED YET/i.test(text), draftBtn: /Draft this for me|Draft replies/i.test(text), runMonthlyCall: /Run monthly call/i.test(text) };
+        notChecked: /Nothing measured for this step so far/i.test(text) /* 11-13: the OLD detection block's own words; the approved tier3 replies card (8b3b6662) says "Not checked yet · The first check is at …" */, draftBtn: /Draft this for me|Draft replies/i.test(text), runMonthlyCall: /Run monthly call/i.test(text) };
     });
   });
   const NO_SKIP = new Set(["m2.start.open_month", "m2.handoff.next_month"]);

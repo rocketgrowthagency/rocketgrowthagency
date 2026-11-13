@@ -81,7 +81,10 @@ process.env.INTERNAL_FN_SECRET = "gate-secret";
 const CID = "11111111-1111-4111-8111-111111111111";
 let db;
 const fresh = () => ({
-  client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: { "m1.audit.gbp_duplicate": { status: "done", outcome_data: { verdict: "clean", duplicates: [] } } } } }],
+  // 🔄 11-13: rows carry updated_at like the real table: the writers' version check (_tasks-cas.js, approved 11-11 W2) saves only when it
+  // still matches, and needs the saved row back (Prefer: return=representation). This fake answered 204 with no rows, so every save
+  // looked like "changed while you were saving" and the gate could only say INDETERMINATE.
+  client_onboarding_records: [{ id: "ob1", client_id: CID, updated_at: "2026-11-01T00:00:00.000Z", data: { tasks: { "m1.audit.gbp_duplicate": { status: "done", outcome_data: { verdict: "clean", duplicates: [] } } } } }],
   client_monthly_records: [],
 });
 const real = globalThis.fetch;
@@ -94,8 +97,9 @@ globalThis.fetch = async (url, init = {}) => {
   const q = [...u.searchParams].filter(([k, v]) => /^eq\./.test(v) && !k.includes("->"));
   const match = (r) => q.every(([k, v]) => String(r[k]) === v.slice(3));
   if (m === "GET") return new Response(JSON.stringify(rows.filter(match)), { status: 200 });
-  if (m === "POST") { const b = JSON.parse(init.body); const row = { id: `${table}-${rows.length + 1}`, ...b }; rows.push(row); return new Response(JSON.stringify([row]), { status: 201 }); }
-  if (m === "PATCH") { const b = JSON.parse(init.body); rows.filter(match).forEach((r) => Object.assign(r, b)); return new Response(null, { status: 204 }); }
+  const rep = /return=representation/.test(String((init.headers || {}).Prefer || (init.headers || {}).prefer || ""));
+  if (m === "POST") { const b = JSON.parse(init.body); const row = { id: `${table}-${rows.length + 1}`, updated_at: new Date().toISOString(), ...b }; rows.push(row); return new Response(JSON.stringify([row]), { status: 201 }); }
+  if (m === "PATCH") { const b = JSON.parse(init.body); const hit = rows.filter(match); hit.forEach((r) => Object.assign(r, b)); return rep ? new Response(JSON.stringify(hit), { status: 200 }) : new Response(null, { status: 204 }); }
   return real(url, init);
 };
 const auth = req("./_auth.js");

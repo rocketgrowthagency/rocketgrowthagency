@@ -233,6 +233,17 @@ async function runFlows(M, FIX, WANT, fail) {
     const { out } = await go(FIX, { listStatus: 200, listBody: { records: [] } });
     if (out.ok !== false || !/zero leads/.test(out.error || "")) fail(`an empty table must be an error, it said ok=${out.ok}`);
   }
+  // 🔒 11-13: ONE slow page is asked again, not the end of the run (that morning the first page took >10s, nothing was read and 5
+  // opted-out twins stayed live through the 7 AM send)
+  {
+    const A = fakeAirtable(FIX); let failed = 0;
+    const flaky = async (url, init = {}) => {
+      if ((init.method || "GET").toUpperCase() === "GET" && !new URL(url).searchParams.get("filterByFormula") && !failed) { failed++; const e = new Error("The operation was aborted due to timeout"); e.name = "TimeoutError"; throw e; }
+      return A.fetchFn(url, init);
+    };
+    let out; try { out = await M.run({ env: ENV, fetchFn: flaky, now: NOW, dry: true }); } catch (e) { out = { threw: String(e.message) }; }
+    if (!out || out.ok !== true || out.scanned !== FIX.length) fail(`one timed-out page must be asked again, the run said ok=${out && out.ok} scanned=${out && out.scanned} "${String((out && (out.error || out.threw)) || "").slice(0, 120)}"`);
+  }
   // changed since the list: left alone
   {
     const { out, calls } = await go(FIX, { rereadPatch: { recD: { Suppressed: true }, recB: { Website: "another.com" } } });

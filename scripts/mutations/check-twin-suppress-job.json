@@ -94,5 +94,12 @@
   "jobmanifest",
   "    read: (b) => ({ count: b.suppressed || 0, error: b.error || null,",
   "    read: (b) => ({ count: b.suppressed || 0, error: null,"
+ ],
+ [
+  "11-13: one slow page ends the run again",
+  "twinsuppress",
+  "} catch (e) { if (attempt >= 2 || Date.now() - started > budgetMs) throw e; }",
+  "} catch (e) { throw e; }",
+  1
  ]
 ]

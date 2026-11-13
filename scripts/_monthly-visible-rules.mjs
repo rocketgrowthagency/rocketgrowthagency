@@ -1,3 +1,12 @@
+import { createRequire } from "node:module";
+// the quarter section's numbers in page order, from the one list the admin numbers from
+const QUARTER_NUMS = (() => {
+  const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+  const M = createRequire(import.meta.url)(`${SITE}/shared/monthly-sections.js`), R = (M && M.SECTIONS) ? M : globalThis.rgaMonthly;
+  let n = 0; const out = [];
+  for (const sec of R.SECTIONS) for (const id of sec.ids) { n++; if (sec.key === "m2s-quarter") out.push(n); }
+  return out;
+})();
 // The rules the Monthly tab's browser gate applies to what is VISIBLY DRAWN (monthly_fix_v3, 11-9). Pure: a row is plain data read from the page, so the same rules
 // run in the live browser gate and, here, against fixtures. The first version of the browser gate passed with the chip date, the orange row, the stray "Active now"
 // on Review replies, step 24's loose "More" and the dateless Open card all on screen, because it read the pill text of rows it had flagged as "self" from the
@@ -71,7 +80,9 @@ export function previewFailures(p) {
   if (!/^Starts [A-Z][a-z]{2} \d{1,2} \u00B7 Month \d+$/.test((p.pill || "").trim())) F.push('Every quarter: the header pill is not "Starts <date> · Month N"');
   if (!/Preview only/i.test(p.text || "") || !/Months 3, 6, 9 and 12/.test(p.text || "")) F.push('Every quarter: the "Preview only" band is missing');
   // mature_account_health_v1 (11-10): the quarter also holds 31 Quarterly letter, 32 Grow the plan, 33 AI search check (appended numbers)
-  if (JSON.stringify(p.nums || []) !== JSON.stringify([14, 15, 16, 17, 18, 19, 20, 31, 32, 33])) F.push(`Every quarter: the preview rows are numbered ${JSON.stringify(p.nums)}, not 14 to 20 then 31 to 33`);
+  // 🔄 11-13: the admin Monthly numbers run in PAGE ORDER (shared/monthly-sections.js, NUMBERING = section, d43574c2 11-11); the old
+  // [14..20, 31..33] was the numbering before that. Read the expected numbers from the one list, never a typed copy.
+  if (JSON.stringify(p.nums || []) !== JSON.stringify(QUARTER_NUMS)) F.push(`Every quarter: the preview rows are numbered ${JSON.stringify(p.nums)}, not the page order ${JSON.stringify(QUARTER_NUMS)} (shared/monthly-sections.js)`);
   if (/\(quarterly\)/i.test((p.titles || []).join(" ") + " " + (p.text || ""))) F.push('Every quarter: a title still carries "(quarterly)"');
   if (p.buttons) F.push("Every quarter: the preview has buttons or Skip (it is read-only)");
   if (p.applies === false && !p.notFor) F.push('Every quarter: the lead-handling test does not apply but the row has no "not for <client>" tag');
@@ -102,13 +113,13 @@ const FIX_AFTER = [
   { id: "m2.plan.rotating_focus", tagSelf: false, pill: "Waiting", rowCls: "ob-step queued", statusCls: "ob-status queued", markerCls: "queued", cardText: "Waiting for the month's suggestion\nSuggestion ready Dec 2.", moreCount: 0, moreInside: true },
 ];
 const PREVIEW_BEFORE = { pill: "Month 3", text: "Starts in Month 3 (January)\nTheir numbers: booked jobs and revenue (quarterly)", nums: [], titles: ["Video (optional)", "Links and local press (quarterly)"], buttons: 0, applies: false, notFor: false };
-const PREVIEW_AFTER = { pill: "Starts Jan 1 \u00B7 Month 3", text: "Preview only. These open in Months 3, 6, 9 and 12. Nothing here can be done or skipped yet.\nResults go into that month's report under \"This quarter\". Fold", nums: [14, 15, 16, 17, 18, 19, 20, 31, 32, 33], titles: ["Video"], buttons: 0, applies: false, notFor: true };
+const PREVIEW_AFTER = { pill: "Starts Jan 1 \u00B7 Month 3", text: "Preview only. These open in Months 3, 6, 9 and 12. Nothing here can be done or skipped yet.\nResults go into that month's report under \"This quarter\". Fold", nums: QUARTER_NUMS, titles: ["Video"], buttons: 0, applies: false, notFor: true };
 export function auditSelfTest() {
   const F = [], before = [...auditRowFailures(FIX_BEFORE), ...previewFailures(PREVIEW_BEFORE)].join("\n"), after = [...auditRowFailures(FIX_AFTER), ...previewFailures(PREVIEW_AFTER)];
   for (const [re, what] of [[/a day before the month starts/, "the Open the month date before the month"], [/chip says "Active now"/, "Active now on a client's move card"], [/must read "Client's move"\n?/, "Review asks chip"], [/Client's move · optional/, "New photos chip"], [/ranking claim/, "the replies ranking claim"],
     [/not "You \+ client"/, "the Google posts who tag"], [/does not say "so far"/, "step 8 not month-to-date"], [/without every listing link read/, "nothing changed without every link read"], [/numbered 14/, "the new step numbered into the old range"],
     [/names no "Suggestion ready/, "the plan waiting with no date"], [/before last month's numbers are frozen/, "the plan suggesting before the freeze"], [/not drawn on the Monthly tab/, "a missing new step"],
-    [/header pill is not/, "the preview pill"], [/Preview only/, "the preview band"], [/not 14 to 20/, "the preview numbers"], [/\(quarterly\)/, "(quarterly) in a title"], [/no "not for/, "the not-for tag"], [/footer/, "the preview footer"]])
+    [/header pill is not/, "the preview pill"], [/Preview only/, "the preview band"], [/not the page order/, "the preview numbers"], [/\(quarterly\)/, "(quarterly) in a title"], [/no "not for/, "the not-for tag"], [/footer/, "the preview footer"]])
     if (!re.test(before)) F.push(`audit-rules: the new rule does NOT fire on the live-before state: ${what}`);
   if (after.length) F.push(`audit-rules: the rules fire on the fixed state: ${after.join(" | ")}`);
   return F;

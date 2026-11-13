@@ -34,5 +34,12 @@
   "toml",
   "from = \"/docs/*\"",
   "from = \"/docs-archive/*\""
+ ],
+ [
+  "11-13: the page order changes and the master SOP's Monthly numbers are left behind",
+  "monthlysections",
+  "ids: [\"m2.snap.business_outcomes\", \"m2.exec.local_pr\",",
+  "ids: [\"m2.exec.local_pr\", \"m2.snap.business_outcomes\",",
+  1
  ]
 ]
