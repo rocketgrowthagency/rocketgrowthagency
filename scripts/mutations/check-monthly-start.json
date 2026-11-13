@@ -324,7 +324,7 @@
  [
   "11-13: admin-months stops sending each month's close state",
   "adminmonths",
-  "      freeze_by_month: freezeByMonth(rows),",
+  "      freeze_by_month: freezeByMonth(rows, d.now()),",
   "",
   1
  ],
@@ -345,8 +345,29 @@
  [
   "11-13: admin-months stops sending each month's freeze day",
   "adminmonths",
-  "    else out[r.reporting_month] = { status: \"not_run\", reads_on: ro };",
-  "    else out[r.reporting_month] = { status: \"not_run\" };",
+  "    else out[r.reporting_month] = { status: ro && now - Date.parse(ro) > 7 * 86400000 ? \"missed\" : \"not_run\", reads_on: ro };",
+  "    else out[r.reporting_month] = { status: ro && now - Date.parse(ro) > 7 * 86400000 ? \"missed\" : \"not_run\" };",
+  1
+ ],
+ [
+  "11-13: a missed month blocks the next plan forever (server)",
+  "monthlyplanread",
+  "    if (!d.frozen && Date.now() - Date.parse(readyOn) > MISSED_AFTER_MS) return { ready: true, readyOn, baseline: true, missed: true };\n",
+  "",
+  1
+ ],
+ [
+  "11-13: a missed month still asks for a freeze it can't take (card)",
+  "monthlystart",
+  "      if (lf && lf.status === \"missed\") return",
+  "      if (false && lf && lf.status === \"missed\") return",
+  1
+ ],
+ [
+  "11-13: the months list never says missed",
+  "adminmonths",
+  "status: ro && now - Date.parse(ro) > 7 * 86400000 ? \"missed\" : \"not_run\"",
+  "status: \"not_run\"",
   1
  ]
 ]

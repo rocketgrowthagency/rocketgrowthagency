@@ -493,6 +493,9 @@ const vge = (txt, re, min) => { const m = re.exec(txt); return !!m && m[1] >= mi
   const late = W({ status: "not_run", name: "October" }, "2026-11-05T09:00:00Z");
   if (late.waitTitle !== "Waiting on October's numbers") fail(`a ready date that already passed still promises it (${late.waitTitle}): it must say what it waits on`);
   for (const [n, v] of [["A", A], ["B", B], ["C", C]]) if (!v.waitTitle || /isn't there yet/.test(v.reason)) fail(`plan wait ${n} fell back to the dateless line`);
+  const M = W({ status: "missed", name: "October", reads_on: "2026-11-02T00:00:00.000Z" });
+  if (/Freeze or skip/.test(M.reason) || !/never frozen and that month is closed, so the plan is picked without last month's comparison\. The morning run suggests it next\./.test(M.reason)) fail(`a missed month still asks for a freeze or skip it can't take: ${M.reason}`);
+  if (!/if \(!d\.frozen && Date\.now\(\) - Date\.parse\(readyOn\) > MISSED_AFTER_MS\) return \{ ready: true, readyOn, baseline: true, missed: true \};/.test(read("netlify/functions/_monthly-plan.js"))) fail("the server's freezeState no longer lets a long-missed month go: the next plan would wait forever");
   // 11-13 live: December's plan waited on a November that wasn't over yet and read "November's were never frozen". A month whose own
   // freeze day is still ahead is B, with that day, never A.
   const notOver = W({ status: "not_run", name: "November", reads_on: "2026-12-05T09:00:00.000Z" });
@@ -501,13 +504,16 @@ const vge = (txt, re, min) => { const m = re.exec(txt); return !!m && m[1] >= mi
   const AM = req("./admin-months.js");
   if (typeof AM.freezeByMonth !== "function") fail("admin-months.js no longer exports freezeByMonth (the plan card can't say what it waits on)");
   else {
-    const fb = AM.freezeByMonth([{ reporting_month: "2026-10-01", data: {} }, { reporting_month: "2026-09-01", data: { tasks: { "m2.report.freeze": { status: "skipped" } } } }, { reporting_month: "2026-08-01", data: { frozen: {} } }, { reporting_month: "2026-07-01", data: { tasks: { "m2.report.freeze": { status: "done" } } } }]);
+    const fb = AM.freezeByMonth([{ reporting_month: "2026-10-01", data: {} }, { reporting_month: "2026-09-01", data: { tasks: { "m2.report.freeze": { status: "skipped" } } } }, { reporting_month: "2026-08-01", data: { frozen: {} } }, { reporting_month: "2026-07-01", data: { tasks: { "m2.report.freeze": { status: "done" } } } }], Date.parse("2026-10-20T12:00:00Z"));
+    // 11-13: nothing frozen a week past the freeze day = missed for good (RGA's October: closed, read-only, blocked November's plan forever)
+    const fm = AM.freezeByMonth([{ reporting_month: "2026-10-01", data: {} }, { reporting_month: "2026-11-01", data: {} }, { reporting_month: "2026-08-01", data: { frozen: {} } }], Date.parse("2026-11-13T12:00:00Z"));
+    if (fm["2026-10-01"]?.status !== "missed" || fm["2026-11-01"]?.status !== "not_run" || fm["2026-08-01"]?.status !== "incomplete") fail(`a long-missed freeze isn't "missed" (or a running month / an incomplete freeze is): ${JSON.stringify(fm)}`);
     if (fb["2026-10-01"]?.status !== "not_run" || fb["2026-09-01"]?.status !== "skipped" || fb["2026-07-01"]?.status !== "done") fail(`freezeByMonth reads the close states wrong: ${JSON.stringify(fb)}`);
     if (!fb["2026-10-01"]?.reads_on || !/^2026-11-0\d/.test(fb["2026-10-01"].reads_on)) fail(`freezeByMonth doesn't say when step 29 freezes each month (reads_on): ${JSON.stringify(fb["2026-10-01"])}`);
     if (fb["2026-08-01"]?.status !== "incomplete" || !/isn't in yet|aren't in yet/.test(fb["2026-08-01"]?.why || "")) fail(`an incomplete freeze doesn't carry step 29's own reason: ${JSON.stringify(fb["2026-08-01"])}`);
   }
   const AMsrc = read("netlify/functions/admin-months.js"), AD = read("admin/admin.js");
-  if (!/freeze_by_month: freezeByMonth\(rows\)/.test(AMsrc)) fail("admin-months doesn't send freeze_by_month");
+  if (!/freeze_by_month: freezeByMonth\(rows, d\.now\(\)\)/.test(AMsrc)) fail("admin-months doesn't send freeze_by_month");
   if (!/lastFreeze, freezeRef: obStepRef\("m2\.report\.freeze", "month2plus"\), freezeTitle: stepTitleOf\("m2\.report\.freeze"\)/.test(AD)) fail("the admin doesn't pass last month's close state and step 29's number + title to the plan card");
   if (!/title: v\.waitTitle \|\| "Waiting for the month's suggestion"/.test(AD)) fail("the admin's waiting card doesn't draw the view's waitTitle");
 }
