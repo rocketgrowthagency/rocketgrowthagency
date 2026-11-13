@@ -19,5 +19,12 @@
   "\"hello@rocketgrowthagency.com\": { role: \"owner\",",
   "\"hello@rocketgrowthagency.com\": { role: \"staff\",",
   1
+ ],
+ [
+  "Chris is expected to have no authenticator",
+  "knownstaff",
+  "(Google Authenticator enrolled 11-13)\", factors: 1 },",
+  "(Google Authenticator enrolled 11-13)\", factors: 0 },",
+  1
  ]
 ]
