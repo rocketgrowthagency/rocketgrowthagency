@@ -76,5 +76,12 @@
   "nightpipeline",
   "node scripts/check-verification-system.mjs || exit 1",
   "node scripts/check-admin-tabs-render.mjs || exit 1"
+ ],
+ [
+  "11-13: the night range is uncapped again",
+  "nightlyfull",
+  "then W_SINCE=\"$W_CAP\"; RANGE_CAPPED=1; fi",
+  "then RANGE_CAPPED=1; fi",
+  1
  ]
 ]

@@ -62,10 +62,18 @@ W_SINCE=$(node -e 'try{process.stdout.write(require(process.argv[1]).website||""
 S_SINCE=$(node -e 'try{process.stdout.write(require(process.argv[1]).scraper||"")}catch{}' "$STATE")
 [ -z "$W_SINCE" ] && W_SINCE=$(git -C "$SITE" rev-list -1 --before="30 hours ago" HEAD)
 [ -z "$S_SINCE" ] && S_SINCE=$(git -C "$SCR" rev-list -1 --before="30 hours ago" HEAD)
+# 🔒 11-13: THE RANGE IS CAPPED AT 48 HOURS. last-run.json only moves when a whole night holds; it sat at 11-01 for 12 days, so each night
+# checked every commit since 11-01, ran into the 06:00 hard end, could not hold, and the range only grew (a loop it could never leave).
+# The 07:30 morning check already runs every wired gate every day, so older commits are covered there; the night checks the last 48h.
+W_CAP=$(git -C "$SITE" rev-list -1 --before="48 hours ago" HEAD); S_CAP=$(git -C "$SCR" rev-list -1 --before="48 hours ago" HEAD)
+RANGE_CAPPED=""
+if [ -n "$W_CAP" ] && git -C "$SITE" merge-base --is-ancestor "$W_SINCE" "$W_CAP" 2>/dev/null && [ "$W_SINCE" != "$W_CAP" ]; then W_SINCE="$W_CAP"; RANGE_CAPPED=1; fi
+if [ -n "$S_CAP" ] && git -C "$SCR" merge-base --is-ancestor "$S_SINCE" "$S_CAP" 2>/dev/null && [ "$S_SINCE" != "$S_CAP" ]; then S_SINCE="$S_CAP"; RANGE_CAPPED=1; fi
 {
   echo "# Full check · night of $DAY"
   echo
   echo "Range: website ${W_SINCE:0:8}..${W_HEAD:0:8} · scraper ${S_SINCE:0:8}..${S_HEAD:0:8}"
+  [ -n "$RANGE_CAPPED" ] && echo "(capped to the last 48 hours: the last night that held is older; the 07:30 morning check covers every gate daily)"
 } > "$OUT"
 if [ "$W_SINCE" = "$W_HEAD" ] && [ "$S_SINCE" = "$S_HEAD" ]; then
   { echo; echo "## Morning summary"; echo "- **Nothing changed since the last full run.** Nothing to check."; } >> "$OUT"; JOB_REACHED_END=1; JOB_NOTE="Nothing changed since the last full run"; exit 0

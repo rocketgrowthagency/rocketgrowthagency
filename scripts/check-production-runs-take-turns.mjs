@@ -95,6 +95,11 @@ async function checkTree(site, scr, label) {
   // ── 3 + 4 who takes it ────────────────────────────────────────────────────────────────────────────────────────────────────
   const dh = S("scripts/daily-health-check.sh"), nf = S("scripts/nightly-full-check.sh"), bk = S("scripts/backup-client-data.mjs");
   if (!dh || !nf || !bk) { fail("the morning check, the night full check or the backup moved"); return F; }
+  // 🔒 11-13: the night's commit range is capped at 48 hours, before the report names it. Uncapped, a last good night of 11-01 made every
+  // night check 12 days of commits, hit the 06:00 hard end, never hold, and grow the range: a loop it could not leave.
+  { const cap = nf.search(/^W_CAP=\$\(git -C "\$SITE" rev-list -1 --before="48 hours ago" HEAD\)/m), use = nf.search(/then W_SINCE="\$W_CAP"; RANGE_CAPPED=1; fi/), useS = nf.search(/then S_SINCE="\$S_CAP"; RANGE_CAPPED=1; fi/), rep = nf.search(/echo "Range: website/);
+    if (cap < 0 || use < 0 || useS < 0) fail("the night full check's commit range isn't capped at 48 hours (an old last-good night makes it grow until it never finishes)");
+    else if (rep >= 0 && (use > rep || useS > rep)) fail("the night full check caps its range after the report has named it"); }
   {
     const take = dh.search(/^if ! production_turn_take daily-health-check \d+ /m), firstGate = dh.search(/^run [a-z0-9-]+\.mjs /m);
     if (!/^\. scripts\/lib\/production-turn\.sh$/m.test(dh) || take < 0) fail("the morning check doesn't take the turn on the clients' database");
