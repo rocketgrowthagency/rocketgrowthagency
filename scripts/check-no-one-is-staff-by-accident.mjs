@@ -71,7 +71,7 @@ const R = await import(pathToFileURL(libPath).href);
   t(R.judgeTwoStep({ ...ts, ok: "" }).length > 0, "a missing staff_two_step_ok() passes");
   t(R.judgeTwoStep({ ...ts, internal: "select true" }).length > 0, "is_internal_user() without two-step passes");
   t(R.judgeTwoStep({ ...ts, owns: "select true" }).length > 0, "current_user_owns_client() without two-step passes");
-  t(R.judgeTwoStep({ ...ts, ok: okDef.replace(/or not exists[\s\S]*$/, "") }).length > 0, "a helper that locks out everyone without a factor passes");
+  t(R.judgeTwoStep({ ...ts, ok: okDef.replace(/not exists[\s\S]*$/, "false;") }).length > 0, "a helper that locks out everyone without a factor passes");
   t(R.judgeGuardFn(guard2.replace(/tg_op = 'INSERT'/, "tg_op = 'UPDATE'")).length > 0, "a guard with no INSERT branch passes");
 }
 if (process.env.SCRAPER_COPY_DIR) { console.log("✅ self-test held (mutation copy: the live database is not read)"); process.exit(0); }
