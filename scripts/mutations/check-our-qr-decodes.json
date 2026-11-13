@@ -30,8 +30,8 @@
  [
   "the setup QR is drawn from the long link again",
   "admin",
+  "globalThis.rgaQr.svg([{ mode: \"byte\", data: \"otpauth://totp/RGA?secret=\" }, { mode: \"alnum\", data: raw }], { ecl: \"L\" })",
   "globalThis.rgaQr.svg(`otpauth://totp/RGA:Admin?secret=${raw}&issuer=RGA`, { ecl: \"L\" })",
-  "globalThis.rgaQr.svg(`otpauth://totp/www.rocketgrowthagency.com:hello%40rocketgrowthagency.com?secret=${raw}&issuer=www.rocketgrowthagency.com`, { ecl: \"L\" })",
   1
  ],
  [
@@ -39,6 +39,13 @@
   "admin",
   "      img.src = data.totp.qr_code;\n",
   "",
+  1
+ ],
+ [
+  "alphanumeric pairs are packed wrong",
+  "ownqr",
+  "put(a * 45 + ALNUM.indexOf(g.data[i + 1]), 11)",
+  "put(a * 44 + ALNUM.indexOf(g.data[i + 1]), 11)",
   1
  ]
 ]

@@ -30,7 +30,7 @@ if (!Q || typeof Q.svg !== "function" || typeof Q.encode !== "function") { conso
 {
   const A = fs.readFileSync(path.join(SITE, "admin/admin.js"), "utf8");
   if (!/import "\/shared\/qr\.js\?v=/.test(A)) F.push("admin.js no longer loads shared/qr.js (the setup QR falls back to Supabase's dense one)");
-  if (!/globalThis\.rgaQr\.svg\(`otpauth:\/\/totp\/RGA:Admin\?secret=\$\{raw\}&issuer=RGA`, \{ ecl: "L" \}\)/.test(A)) F.push("the setup QR isn't drawn from the short link (RGA:Admin, issuer RGA) at level L");
+  if (!/globalThis\.rgaQr\.svg\(\[\{ mode: "byte", data: "otpauth:\/\/totp\/RGA\?secret=" \}, \{ mode: "alnum", data: raw \}\], \{ ecl: "L" \}\)/.test(A)) F.push("the setup QR isn't drawn as the short link (label RGA) with the key in alphanumeric mode at level L (the mockup's 29 × 29)");
   if (!/\/\^\[A-Z2-7\]\{16,64\}\$\/\.test\(raw\)/.test(A)) F.push("the key isn't checked to be base32 before it goes into the QR");
   if (!/img\.src = data\.totp\.qr_code;/.test(A)) F.push("there is no Supabase QR fallback if our drawing fails");
 }
@@ -47,19 +47,21 @@ let puppeteer;
 try { ({ default: puppeteer } = await import("puppeteer")); } catch { console.error("⚠️  INDETERMINATE — puppeteer unavailable"); process.exit(2); }
 const B32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567", rand = (n) => Array.from(crypto.randomBytes(n), (b) => B32[b % 32]).join("");
 const cases = [];
-for (let i = 0; i < 6; i++) cases.push([`otpauth://totp/RGA:Admin?secret=${rand(32)}&issuer=RGA`, "L"]);   // what the setup screen draws
+for (let i = 0; i < 8; i++) { const k = rand(32); cases.push([[{ mode: "byte", data: "otpauth://totp/RGA?secret=" }, { mode: "alnum", data: k }], "L", `otpauth://totp/RGA?secret=${k}`]); }   // what the setup screen draws
+cases.push([[{ mode: "alnum", data: "HELLO WORLD 123 $%*+-./:" }], "L", "HELLO WORLD 123 $%*+-./:"]);
 cases.push([`otpauth://totp/RGA:Admin?secret=${rand(32)}&issuer=RGA`, "M"], ["HELLO", "L"], ["https://www.rocketgrowthagency.com/admin/", "M"], ["a".repeat(120), "L"], [`otpauth://totp/RGA:Admin?secret=${rand(32)}&issuer=RGA&x=${"y".repeat(110)}`, "L"]);
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "rga-qr-"));
 const b = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 const want = [];
 try {
   const p = await b.newPage(); await p.setViewport({ width: 300, height: 300, deviceScaleFactor: 1 });
-  for (const [i, [t, ecl]] of cases.entries()) {
-    let svg; try { svg = Q.svg(t, { ecl }); } catch (e) { F.push(`the encoder refused a ${t.length}-character code at ${ecl}: ${e.message}`); continue; }
+  for (const [i, [input, ecl, plain]] of cases.entries()) {
+    const t = plain || input;
+    let svg; try { svg = Q.svg(input, { ecl }); } catch (e) { F.push(`the encoder refused a ${t.length}-character code at ${ecl}: ${e.message}`); continue; }
     // the setup screen's box: 168px, 12px white padding
     await p.setContent(`<body style="margin:0;background:#0f1320"><div style="box-sizing:border-box;width:168px;height:168px;margin:20px;padding:12px;background:#fff;border-radius:12px">${svg}</div></body>`);
     const f = path.join(dir, `q${i}.png`); await p.screenshot({ path: f, clip: { x: 0, y: 0, width: 208, height: 208 } });
-    want.push({ f, t, v: Q.encode(t, ecl).version });
+    want.push({ f, t, v: Q.encode(input, ecl).version });
   }
 } finally { await b.close(); }
 let got = {};
@@ -68,8 +70,8 @@ catch (e) { console.error(`⚠️  INDETERMINATE — the QR reader failed to run
 for (const w of want) if (got[w.f] !== w.t) F.push(`a version-${w.v} code read back as "${String(got[w.f] || "").slice(0, 50)}" (encoded ${w.t.slice(0, 40)}…)`);
 fs.rmSync(dir, { recursive: true, force: true });
 const setupV = want.length ? Q.encode(cases[0][0], "L").version : null;
-if (setupV !== 4) F.push(`the setup code is version ${setupV} (${setupV * 4 + 17} × ${setupV * 4 + 17}); the approved look is version 4, 33 × 33`);
+if (setupV !== 3) F.push(`the setup code is version ${setupV} (${setupV * 4 + 17} × ${setupV * 4 + 17}); the approved mockup's grid is version 3, 29 × 29`);
 
 if (F.length) { console.log(`❌ OUR QR CODE DOESN'T SCAN BACK (${F.length}):`); for (const x of F) console.log("   • " + x); process.exit(1); }
-console.log(`✅ our QR encoder scans back exactly: ${want.length} codes (versions ${[...new Set(want.map((w) => w.v))].sort((a, z) => a - z).join(", ")}) read by macOS's own QR reader at the setup screen's size; the setup code is 33 × 33`);
+console.log(`✅ our QR encoder scans back exactly: ${want.length} codes (versions ${[...new Set(want.map((w) => w.v))].sort((a, z) => a - z).join(", ")}) read by macOS's own QR reader at the setup screen's size; the setup code is 29 × 29 (the mockup's grid)`);
 process.exit(0);
