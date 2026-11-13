@@ -209,7 +209,10 @@ async function check(DIR) {
   await section("Quo key", async () => {
     if (!C) return;
     const q = (st) => async () => (st === "throw" ? (() => { throw new Error("ECONNRESET"); })() : res(st, {}));
-    const ok = await C.quoKey({ fetchFn: q(200), env: { QUO_API_KEY: "k" } }), no = await C.quoKey({ fetchFn: q(401), env: { QUO_API_KEY: "k" } });
+    const ok = await C.quoKey({ fetchFn: q(200), env: { QUO_API_KEY: "k", QUO_WEBHOOK_SIGNING_KEY: "s" } }), no = await C.quoKey({ fetchFn: q(401), env: { QUO_API_KEY: "k" } });
+    // 11-12: the key works but the webhook signing key is gone → red, naming the setting (else calls silently fall back to the URL token)
+    const unsigned = await C.quoKey({ fetchFn: q(200), env: { QUO_API_KEY: "k" } });
+    need(unsigned.ok === false && /QUO_WEBHOOK_SIGNING_KEY/.test(unsigned.error || ""), "a missing QUO_WEBHOOK_SIGNING_KEY doesn't turn the Quo row red (calls would fall back to the old address token unnoticed)");
     const gone = await C.quoKey({ fetchFn: q(200), env: {} }), down = await C.quoKey({ fetchFn: q("throw"), env: { QUO_API_KEY: "k" } });
     need(ok.ok === true && no.ok === false && gone.ok === false && down.level === "indeterminate", "the Quo row doesn't tell ok / refused / missing / unreachable apart");
     const sd = rd("netlify/functions/schedule-data.js") || "";
