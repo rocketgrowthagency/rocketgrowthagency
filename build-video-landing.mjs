@@ -129,7 +129,8 @@ async function loadStep2Data() {
   const rankHistory = {};   // slug → [{mtime, rank}] from every step-2 CSV
   const nameMap = {}; // slug → original scraped Business Name (preserves BRGD, KNR, etc.)
   const searchTermMap = {}; // slug → search term (so landing page can show "Audit performed for the search: X")
-  if (!fs.existsSync(STEP2_DIR)) return { rankMap, nameMap, searchTermMap, rankHistory };
+  const searchTermHistory = {};   // slug → [{mtime, term}] from every step-2 CSV (the search a video was made from)
+  if (!fs.existsSync(STEP2_DIR)) return { rankMap, nameMap, searchTermMap, rankHistory, searchTermHistory };
   // Read CSVs newest-first by mtime, and use FIRST-WRITE-WINS so the freshest
   // scrape's rank for each business is canonical. Without this, older CSVs with
   // the same business at a different rank (different city/search term) silently
@@ -165,6 +166,11 @@ async function loadStep2Data() {
               // so the newer expectation sits below the older overlay — which is why 28 of 30
               // mismatches read "worse than expected" (+7.6 mean).
               if (Number.isFinite(rank)) (rankHistory[s] || (rankHistory[s] = [])).push({ mtime: fileMtime, rank });
+              // 🔴 2026-11-13 the SAME rule for the search wording: /v/plastic-surgery-institute/ said "based on the
+              // search 'Plastic surgeons in Culver City, CA'" over a video of the Beverly Hills search (rank #31 there),
+              // because the CRM's Search Term (where the lead was FIRST found) won. A re-filmed lead's page must name
+              // the search its video was made from.
+              if (sterm) (searchTermHistory[s] || (searchTermHistory[s] = [])).push({ mtime: fileMtime, term: sterm });
             }
           }
         })
@@ -172,7 +178,16 @@ async function loadStep2Data() {
         .on('error', resolve);
     });
   }
-  return { rankMap, nameMap, searchTermMap, rankHistory };
+  return { rankMap, nameMap, searchTermMap, rankHistory, searchTermHistory };
+}
+
+// The search a video was made from: the newest step-2 CSV that already existed when the MP4 was written
+// (60s slack for same-run writes), the same rule expectedRank uses. null when no CSV predates the video.
+function searchTermAtVideoTime(history, videoPath) {
+  let vTime = 0;
+  try { vTime = fs.statSync(videoPath).mtimeMs; } catch { return null; }
+  const before = (history || []).filter((h) => h.mtime <= vTime + 60000).sort((a, b) => b.mtime - a.mtime);
+  return before.length ? before[0].term : null;
 }
 
 // Prefer a clean business-name slug; fall back to filename slug.
@@ -531,7 +546,7 @@ async function main() {
 
   ensureDir(LANDING_OUT_DIR);
 
-  const { rankMap: step2Ranks, nameMap: step2Names, searchTermMap: step2SearchTerms, rankHistory: step2RankHistory } = await loadStep2Data();
+  const { rankMap: step2Ranks, nameMap: step2Names, searchTermMap: step2SearchTerms, rankHistory: step2RankHistory, searchTermHistory: step2TermHistory } = await loadStep2Data();
 
   let built = 0;
   let airtableWrites = 0;
@@ -657,7 +672,10 @@ async function main() {
     // — without this fallback it shows empty quotes ("") and there's nothing
     // on the page validating the ranking claim. Caught 2026-05-28 on Target
     // Plumbers landing.
-    const searchTerm = airtableRecord?.fields?.["Search Term"] || step2SearchTerms?.[slug] || '';
+    // 2026-11-13: the search THIS video was made from comes first (see searchTermAtVideoTime); the CRM's Search Term
+    // is where the lead was first found, which differs for a lead re-filmed from another search.
+    const searchTerm = searchTermAtVideoTime(step2TermHistory?.[slug] || step2TermHistory?.[fileSlug], v.fullPath)
+      || airtableRecord?.fields?.["Search Term"] || step2SearchTerms?.[slug] || step2SearchTerms?.[fileSlug] || '';
     const variantTail = isTop3
       ? `your top 3 ranking and the gaps a competitor could exploit`
       : `your current rank and the top issues holding you back from the top 3`;

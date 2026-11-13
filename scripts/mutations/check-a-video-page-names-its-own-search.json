@@ -1,0 +1,44 @@
+[
+ [
+  "the CRM's first-found search wins again",
+  "videolanding",
+  "    const searchTerm = searchTermAtVideoTime(step2TermHistory?.[slug] || step2TermHistory?.[fileSlug], v.fullPath)\n      || airtableRecord",
+  "    const searchTerm = airtableRecord?.fields?.[\"Search Term\"] || searchTermAtVideoTime(step2TermHistory?.[slug] || step2TermHistory?.[fileSlug], v.fullPath)\n      || airtableRecord",
+  1
+ ],
+ [
+  "the newest CSV wins even if written after the video",
+  "videolanding",
+  "const before = (history || []).filter((h) => h.mtime <= vTime + 60000)",
+  "const before = (history || []).filter((h) => true)",
+  1
+ ],
+ [
+  "the oldest CSV before the video wins",
+  "videolanding",
+  "return before.length ? before[0].term : null;",
+  "return before.length ? before[before.length - 1].term : null;",
+  1
+ ],
+ [
+  "no slack for the same run's CSV",
+  "videolanding",
+  "const before = (history || []).filter((h) => h.mtime <= vTime + 60000)",
+  "const before = (history || []).filter((h) => h.mtime <= vTime)",
+  1
+ ],
+ [
+  "rows stop recording their search",
+  "videolanding",
+  "              if (sterm) (searchTermHistory[s] || (searchTermHistory[s] = [])).push({ mtime: fileMtime, term: sterm });\n",
+  "",
+  1
+ ],
+ [
+  "a missing video guesses a search",
+  "videolanding",
+  "  try { vTime = fs.statSync(videoPath).mtimeMs; } catch { return null; }",
+  "  try { vTime = fs.statSync(videoPath).mtimeMs; } catch { vTime = Date.now(); }",
+  1
+ ]
+]

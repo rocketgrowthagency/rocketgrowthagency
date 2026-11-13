@@ -162,25 +162,47 @@ async function makeMobileTmp(mobileInput, tmpOutput) {
 
 // 2026-06-24: the deep-rank Maps card appears too late in the video (~38s) because the variable
 // nav time pads the competitive-results portion of the webm with a frozen frame. The card freeze is
-// a long STATIC tail — detect where it starts via ffmpeg freezedetect, then trim that much dead
-// padding off the FRONT so the card lands ~MAPS_CARD_OFFSET_SEC into the maps segment (Chris wants
+// a long STATIC tail — detect where it starts via ffmpeg freezedetect, then cut that much dead
+// padding so the card lands ~MAPS_CARD_OFFSET_SEC into the maps segment (Chris wants
 // the card on screen ~27-30s, i.e. ~13s into maps, when the voiceover starts on the listing).
+// Since 2026-11-13 the padding is cut from the MIDDLE, never the front (planMapsCut below).
 const MAPS_CARD_OFFSET_SEC = Number(process.env.MAPS_CARD_OFFSET_SEC || 13);
-async function detectCardStart(webmPath) {
+async function detectFreezes(webmPath) {
   return new Promise((resolve) => {
     let stderr = '';
     const p = spawn('ffmpeg', ['-hide_banner', '-i', webmPath, '-vf', 'freezedetect=n=-50dB:d=2', '-map', '0:v', '-f', 'null', '-']);
     p.stderr.on('data', (d) => { stderr += d.toString(); });
     p.on('close', () => {
       const starts = [...stderr.matchAll(/freeze_start:\s*([0-9.]+)/g)].map((m) => parseFloat(m[1]));
-      // the card freeze is the LAST (latest-starting) static segment
-      resolve(starts.length ? Math.max(...starts) : null);
+      const ends = [...stderr.matchAll(/freeze_end:\s*([0-9.]+)/g)].map((m) => parseFloat(m[1]));
+      resolve(starts.map((s, i) => ({ start: s, end: ends[i] != null ? ends[i] : null })));
     });
-    p.on('error', () => resolve(null));
+    p.on('error', () => resolve([]));
   });
 }
 
-async function sliceAndPad(inputPath, startSec, endSec, targetSec, outPath, isDesktop) {
+// 🔴 2026-11-13 (Chris: "it used to type 'plumbers in beverly hills CA' into the search box when the voice says it"):
+// the old FRONT trim (cardStart − 13s off the start) cut away the opening of the maps clip, and the opening is where
+// the recorder TYPES the search (seconds ~2–6). Once the 11-12 results-freeze held a still results frame while the
+// deep-rank search ran, the card moved to ~30s and the front trim grew to ~18s: no typing in any video.
+// Now the opening is KEPT and the excess is cut from the MIDDLE:
+//   • with a still results hold (a freeze that runs into the card): cut from inside the hold, so the cut is invisible;
+//   • without one: keep the first MAPS_OPENING_KEEP_SEC (load + typing + results), cut what follows.
+// The card still lands ~MAPS_CARD_OFFSET_SEC into the maps segment, synced to the voiceover.
+const MAPS_OPENING_KEEP_SEC = Number(process.env.MAPS_OPENING_KEEP_SEC || 8);
+function planMapsCut(freezes) {
+  if (!freezes.length) return { cardStart: null, cut: null };
+  const card = freezes.reduce((a, b) => (b.start > a.start ? b : a));   // the card freeze is the LAST static segment
+  const cardStart = card.start;
+  const hold = freezes.find((f) => f !== card && f.end != null && Math.abs(f.end - cardStart) < 1.0 && f.start < cardStart);
+  const keepUntil = hold ? hold.start + 0.5 : Math.min(MAPS_OPENING_KEEP_SEC, cardStart);
+  const targetCard = Math.max(MAPS_CARD_OFFSET_SEC, keepUntil + 1);
+  const cutLen = cardStart - targetCard;
+  if (!(cutLen > 0.25)) return { cardStart, cut: null, keepUntil, viaHold: !!hold };
+  return { cardStart, cut: { from: keepUntil, to: keepUntil + cutLen }, keepUntil, viaHold: !!hold };
+}
+
+async function sliceAndPad(inputPath, startSec, endSec, targetSec, outPath, isDesktop, cut = null) {
   // Use OUTPUT-side seek for accurate slicing (input-side seek lands on keyframes
   // which can be sparse in webm and miss the intended cut point by seconds).
   // -i input -ss X -t (Y-X) means: read the input, then seek X in, then keep
@@ -193,8 +215,11 @@ async function sliceAndPad(inputPath, startSec, endSec, targetSec, outPath, isDe
 
   // Filter scales to standard frame + sets 30 fps + pads tail with last frame
   // so trim-to-target works in both pad and trim cases.
+  // A middle cut (planMapsCut) drops [from, to) after the 30 fps resample, then renumbers the frames so the
+  // remaining clip plays straight through.
+  const cutFilter = cut ? `select='not(between(t\\,${cut.from.toFixed(3)}\\,${cut.to.toFixed(3)}))',setpts=N/30/TB,` : '';
   const filter = isDesktop
-    ? `fps=30,scale=1280:720:flags=lanczos,setsar=1,format=yuv420p,tpad=stop_mode=clone:stop_duration=999`
+    ? `fps=30,${cutFilter}scale=1280:720:flags=lanczos,setsar=1,format=yuv420p,tpad=stop_mode=clone:stop_duration=999`
     : `fps=30,scale=390:720:flags=lanczos:force_original_aspect_ratio=decrease,pad=390:720:(ow-iw)/2:(oh-ih)/2:color=white,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=white,setsar=1,format=yuv420p,tpad=stop_mode=clone:stop_duration=999`;
 
   args.push(
@@ -386,15 +411,16 @@ async function main() {
 
         // 2026-06-24: trim dead competitive padding off the front of the maps webm so the detail
         // card appears ~MAPS_CARD_OFFSET_SEC into the maps segment (synced to the voiceover).
-        const mapsCardStart = await detectCardStart(pair.mapsPath);
-        const mapsFrontTrim = (mapsCardStart != null && mapsCardStart > MAPS_CARD_OFFSET_SEC)
-          ? mapsCardStart - MAPS_CARD_OFFSET_SEC : 0;
-        console.log(`  Maps card-start=${mapsCardStart != null ? mapsCardStart.toFixed(2) : 'n/a'}s → front-trim ${mapsFrontTrim.toFixed(2)}s (card lands ~${MAPS_CARD_OFFSET_SEC}s into maps)`);
+        // 2026-11-13: the opening (the typed search) is kept; the excess is cut from the middle (see planMapsCut).
+        const mapsPlan = planMapsCut(await detectFreezes(pair.mapsPath));
+        console.log(`  Maps card-start=${mapsPlan.cardStart != null ? mapsPlan.cardStart.toFixed(2) : 'n/a'}s → ` +
+          (mapsPlan.cut ? `middle cut ${mapsPlan.cut.from.toFixed(2)}–${mapsPlan.cut.to.toFixed(2)}s (${mapsPlan.viaHold ? 'inside the still results hold' : 'after the opening'}); opening kept, card lands ~${MAPS_CARD_OFFSET_SEC}s into maps`
+            : 'no cut needed'));
 
         // 2026-05-27 Tier 2.6: parallelize the 3 sliceAndPad ops (independent
         // inputs/outputs; concat below needs all 3 done before running).
         await Promise.all([
-          sliceAndPad(pair.mapsPath, mapsFrontTrim, null, mapsTargetSec, mapsTmp, true),
+          sliceAndPad(pair.mapsPath, 0, null, mapsTargetSec, mapsTmp, true, mapsPlan.cut),
           sliceAndPad(pair.websitePath, 0, null, websiteTargetSec, websiteTmp, true),
           sliceAndPad(pair.mobilePath, 0, null, mobileTargetSec, mobileSegTmp, false),
         ]);

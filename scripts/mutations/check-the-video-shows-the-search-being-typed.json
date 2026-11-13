@@ -1,0 +1,65 @@
+[
+ [
+  "the front trim comes back",
+  "combine4",
+  "sliceAndPad(pair.mapsPath, 0, null, mapsTargetSec, mapsTmp, true, mapsPlan.cut)",
+  "sliceAndPad(pair.mapsPath, Math.max(0, (mapsPlan.cardStart || 0) - 13), null, mapsTargetSec, mapsTmp, true)",
+  1
+ ],
+ [
+  "the cut starts at the very beginning",
+  "combine4",
+  "const keepUntil = hold ? hold.start + 0.5 : Math.min(MAPS_OPENING_KEEP_SEC, cardStart);",
+  "const keepUntil = 0;",
+  1
+ ],
+ [
+  "the opening kept is only 2s",
+  "combine4",
+  "MAPS_OPENING_KEEP_SEC || 8",
+  "MAPS_OPENING_KEEP_SEC || 2",
+  1
+ ],
+ [
+  "the card lands 10s late",
+  "combine4",
+  "const targetCard = Math.max(MAPS_CARD_OFFSET_SEC, keepUntil + 1);",
+  "const targetCard = Math.max(MAPS_CARD_OFFSET_SEC + 10, keepUntil + 1);",
+  1
+ ],
+ [
+  "the cut runs before the 30 fps resample",
+  "combine4",
+  "fps=30,${cutFilter}scale=1280:720",
+  "${cutFilter}fps=30,scale=1280:720",
+  1
+ ],
+ [
+  "frames are not renumbered after the cut",
+  "combine4",
+  "setpts=N/30/TB,",
+  "",
+  1
+ ],
+ [
+  "the hold is ignored (cut from the opening)",
+  "combine4",
+  "const hold = freezes.find(",
+  "const hold = null && freezes.find(",
+  1
+ ],
+ [
+  "the recorder stops typing the search",
+  "recorder3",
+  "      await clearAndType(page, inputSelector, query);\n",
+  "",
+  1
+ ],
+ [
+  "the search is pasted, not typed",
+  "recorder3",
+  "await page.type(selector, value, { delay: 45 });",
+  "await page.$eval(selector, (el, v) => { el.value = v; }, value);",
+  1
+ ]
+]
