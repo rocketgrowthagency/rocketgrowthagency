@@ -53,7 +53,9 @@ const hasSmsSender = fns.some((f) => SMS_SENDER.test(fs.readFileSync(path.join(f
 const pb = JSON.parse(read("data/playbooks/playbooks.json"));
 const steps = [...(pb.month1 || []), ...(pb.month2plus || [])];
 // "we send / we auto-send / we'll text them" — a claim that WE are the sender.
-const CLAIMS_WE_SEND = /\b(we|we'll|we will)\s+(auto-?send|send|text|email)\b[^.]{0,60}\b(request|review|them|each)\b/i;
+// night fixer 11-12: the claim stays on ONE line. "WHAT WE SEND" is a heading over "Two short scripts … each answering" (step 19's video
+// scripts), and the old [^.] window ran across the line break into "each" — a heading is not a claim that we send review requests.
+const CLAIMS_WE_SEND = /\b(we|we'll|we will)[ \t]+(auto-?send|send|text|email)\b[^.\n]{0,60}\b(request|review|them|each)\b/i;
 for (const s of steps) {
   for (const field of ["clientHint", "clientLabel", "clientInstructions"]) {
     const v = String(s[field] || "");

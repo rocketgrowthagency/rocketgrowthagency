@@ -1,0 +1,16 @@
+[
+ [
+  "the review-sites card says Saving… again while Google only saves",
+  "portal",
+  "page…</span>` : \"\";   // Google only: the Save button spins and the status stays empty (every control spins)",
+  "page…</span>` : `<span class=\"pm-rs2-wait\">Saving…</span>`;",
+  1
+ ],
+ [
+  "a one-tap answer relabels its button Saving…",
+  "portal",
+  "  b.classList.add(\"is-busy\");\n  const st = h.querySelector(\"[data-rs2-status]\");",
+  "  b.classList.add(\"is-busy\"); b.textContent = \"Saving…\";\n  const st = h.querySelector(\"[data-rs2-status]\");",
+  1
+ ]
+]

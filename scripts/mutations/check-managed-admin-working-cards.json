@@ -544,5 +544,12 @@
   "return !!(id && /^m2\\./.test(id) && M && M.SECTIONS",
   "return true || !!(id && /^m2\\./.test(id) && M && M.SECTIONS",
   1
+ ],
+ [
+  "the Getting started chip names the wrong step for a Google fact row",
+  "admin",
+  "|| (SS.CHECK_COVERS.includes(id) ? 3 : null);",
+  "|| (SS.CHECK_COVERS.includes(id) ? 4 : null);",
+  1
  ]
 ]

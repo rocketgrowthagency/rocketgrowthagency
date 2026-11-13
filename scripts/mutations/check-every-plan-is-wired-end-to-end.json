@@ -96,5 +96,33 @@
   "  await notifyClientStage(clientId, \"stage_4_onboarding\");\n  await queueWelcomeEmail(supaUrl, supaKey, clientId);\n",
   "  await notifyClientStage(clientId, \"stage_4_onboarding\");\n",
   1
+ ],
+ [
+  "the welcome is queued but a full queue sends nothing",
+  "oauthcb",
+  "return q.queued || q.already ? \"queued\" : await sendWelcomeEmail(supaUrl, supaKey, clientId);",
+  "return \"queued\";",
+  1
+ ],
+ [
+  "the welcome queue cannot be written and nothing is sent",
+  "oauthcb",
+  "    return sendWelcomeEmail(supaUrl, supaKey, clientId);\n  }\n}",
+  "    return \"failed\";\n  }\n}",
+  1
+ ],
+ [
+  "the queue sweep stops sending the welcome",
+  "emailqueue",
+  "const outcome = await require(\"./oauth-google-callback\").sendWelcomeEmail(",
+  "const outcome = await (async () => \"sent\")(",
+  1
+ ],
+ [
+  "the stage email loses its amount (with the notice dates still passed)",
+  "notifystage",
+  "messageFor(stage, { first, kickoffWhen, beta, amount, hasCard,",
+  "messageFor(stage, { first, kickoffWhen, beta, hasCard,",
+  1
  ]
 ]

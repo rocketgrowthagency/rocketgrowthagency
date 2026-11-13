@@ -95,7 +95,8 @@ for (const [tier, addons, pt] of CASES) {
 // wiring
 const N = code(read("netlify/functions/notify-client-stage.js"));
 // master audit #9 (11-11): the pause notice is also handed its date (pauseOn); the amount must still be there
-if (!/const msg = messageFor\(stage, \{ first, kickoffWhen, beta, amount(?:, [a-zA-Z]+)* \}\);/.test(N)) F("the stage email is no longer given the invoice amount");
+// 11-11 client messages: the end-of-service notices are also handed endOn / noticeOn (`key: dayLabel(…)`); the amount must still be there
+if (!/const msg = messageFor\(stage, \{ first, kickoffWhen, beta, amount(?:, [a-zA-Z]+(?:: [a-zA-Z]+\(facts\.[a-z_]+\))?)* \}\);/.test(N)) F("the stage email is no longer given the invoice amount");
 if (!/cg\.dfyHalf\(signedContract\)[\s\S]{0,200}cg\.firstInvoiceAmount\(signedContract\.tier/.test(N)) F("the stage email's amount is not computed by the charge's own helpers");
 const S = code(read("netlify/functions/send-confirmation-email.js"));
 if (!/if \(isAgreementSend\) \{\s*data\.agreement_email = /.test(S)) F("the agreement email writes step 1 again — it would block the welcome email");
@@ -119,7 +120,15 @@ const BAL = code(read("netlify/functions/admin-send-balance-invoice.js"));
 if (!/invoice_num: 2, amount/.test(BAL) || !/const amount = dfyHalf\(contract\);/.test(BAL)) F("the balance invoice is not invoice #2 at dfyHalf");
 if (!/String\(inv1\.status\)\.toLowerCase\(\) !== "paid"/.test(BAL)) F("the balance invoice can open before the deposit is paid");
 const OC = code(read("netlify/functions/oauth-google-callback.js"));
-if (!/await notifyClientStage\(clientId, "stage_4_onboarding"\);\s*await sendWelcomeEmail\(supaUrl, supaKey, clientId\);/.test(OC)) F("connecting Google no longer sends the welcome email (the stage-3 email promises it)");
+// 🔒 HOLD-AND-UNDO (client messages decision 3, approved 11-11): the welcome is QUEUED for the hold window, then the queue's sweep sends it with
+// sendWelcomeEmail; a queue that can't be written sends it at once. Every end is checked: queued, both fallbacks, and the sweep's sender.
+const CQ = code(read("netlify/functions/_client-email-queue.js"));
+const qw = OC.slice(OC.indexOf("async function queueWelcomeEmail"), OC.indexOf("async function sendWelcomeEmail"));
+const queued = /await notifyClientStage\(clientId, "stage_4_onboarding"\);\s*await queueWelcomeEmail\(supaUrl, supaKey, clientId\);/.test(OC)
+  && /return q\.queued \|\| q\.already \? "queued" : await sendWelcomeEmail\(supaUrl, supaKey, clientId\);/.test(qw) && /catch \(e\) \{[\s\S]{0,240}?return sendWelcomeEmail\(supaUrl, supaKey, clientId\);/.test(qw)
+  && /exports\.sendWelcomeEmail = \(\.\.\.a\) => sendWelcomeEmail\(\.\.\.a\);/.test(OC)
+  && /if \(it\.kind === "welcome"\) \{\s*const outcome = await require\("\.\/oauth-google-callback"\)\.sendWelcomeEmail\(/.test(CQ);
+if (!queued && !/await notifyClientStage\(clientId, "stage_4_onboarding"\);\s*await sendWelcomeEmail\(supaUrl, supaKey, clientId\);/.test(OC)) F("connecting Google no longer sends the welcome email (the stage-3 email promises it)");
 if (!/kind: "welcome_email_failed"/.test(OC)) F("a failed automatic welcome email is no longer recorded on the client");
 const CG = code(read("netlify/functions/contract-generate.js"));
 if (/Client has committed to a/.test(CG) || /-month commitment<\/strong>/.test(CG)) F("the 3-Month agreement calls itself a commitment again");

@@ -51,6 +51,15 @@ for (const f of fs.readdirSync(dir).filter((x) => x.endsWith(".js") && x !== "_s
   const src = nc(fs.readFileSync(`${dir}/${f}`, "utf8"));
   if (!/\bwriteStepTasks\(/.test(src)) continue;
   if (ALLOW[f]) continue;
+  // 🔑 AN INJECTED RECORDER (night fixer 11-12): a runner handed `record` by its caller (master map Tier 2d: _monthly-plan.js adoptWhenSuggested,
+  // given base.record by the morning run) records only if that caller really hands it recordSubmission. Checked at both ends, never assumed.
+  const INJECTED = { "_monthly-plan.js": { caller: "_morning-run.js", call: /adoptWhenSuggested\(base\.supa, clientId, month, base\.now\(\), base\.record\)/ } };
+  if (INJECTED[f] && /\bawait record\(\{ clientId, kind: "[a-z_]+", stepId: STEP,/.test(src)) {
+    const C = nc(fs.readFileSync(`${dir}/${INJECTED[f].caller}`, "utf8")), CB = nc(fs.readFileSync(`${dir}/_citation-build.js`, "utf8"));
+    if (!INJECTED[f].call.test(C) || !/const base = B\.defaultDeps\(\)/.test(C) || !/record: \(o\) => require\("\.\/_record"\)\.recordSubmission\(\{ supa, \.\.\.o \}\)/.test(CB))
+      fail(`${f} records through an injected recorder, but ${INJECTED[f].caller} doesn't hand it recordSubmission`);
+    continue;
+  }
   if (!/\brecordSubmission\(|\b[dD]\.record\(/.test(src)) fail(`${f} writes a step record but doesn't record the submission (_record.js recordSubmission)`);
 }
 

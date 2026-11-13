@@ -36,6 +36,15 @@ const TARGETS = [
 // Actions whose visible result IS the UI change they cause. Excused BY NAME with a reason — an
 // exemption must be argued, never assumed (same discipline as the pre-flight gate list).
 const UI_ONLY = {
+  // ↓ night fixer 11-12: first audited once the inline-branch binder could see them (each handler read; none saves anything)
+  "data-chv-seg": "the Clients list's List / Health switch: shows one view, hides the other, flips aria-selected (visible); opening Health re-reads the view; nothing is saved",
+  "data-chv-reload": "re-reads the admin client health view (its button spins, an error paints in the card); changes nothing",
+  "data-apc-more": "the approval thread's Show earlier: unhides the earlier entries and removes itself (visible); nothing is saved",
+  "data-fp-open": "a pointer to a step: switches the portal tab and scrolls to that step's row (visible); nothing is saved",
+  "data-lk-o": "the links card's choice chips: tick or untick (is-on + aria-pressed, visible), None of these clears the rest; nothing is saved until Send, which IS audited (data-lk-send)",
+  "data-og-qcall-open": "the month card's quarter-call link: unfolds the call fold, hides itself and scrolls to it (visible); nothing is saved",
+  "data-rs2-pick": "the review-sites card's pick: holds the choice in the page and redraws the card with it (visible); nothing is saved",
+  "data-rmob-change": "the mobile number's Change: redraws the row as an empty field with focus (visible); nothing is saved until Save, which IS audited (data-rmob-save)",
   "data-todo-wt": "a Calls row in the admin To do (master schedule v6, 11-10): opens the walkthrough console for that call (visible: the console opens either way); its one write, remembering the console was opened so Call them now stops, is best effort by design",
   "data-og-call-open": "the client month card's call fold (client_monthly_cycle_v1, 11-10): unfolds the call section, hides its own link and scrolls to it (visible); nothing is saved",
   "data-og-mchip": "the client month card's month chips (client_monthly_cycle_v1, 11-10): shows that month's panel and flips aria-pressed (visible); nothing is saved",
@@ -281,11 +290,20 @@ function analyse({ label, path }) {
     else body = after.slice(0, 3000);
     actions.push({ name: action, line, body });
   }
+  // 🔑 THE INLINE BRANCH (night fixer 11-12): `if (e.target && e.target.closest && e.target.closest("[data-x]")) { … }` dispatches with
+  // no variable, so the binder above never saw it and four live controls (data-chv-reload, data-apc-reload, data-rmob-change, and the
+  // negated host check below) dropped out of the audit. The branch's own block is the handler.
+  const inlineRe = /\bif\s*\(([^{\n]{0,160}?)\btarget\b[^;\n{]{0,60}?closest\("\[(data-[a-z0-9-]+)\]"\)[^{\n]{0,80}?\)\s*\{/g;
+  while ((m = inlineRe.exec(src)) !== null) {
+    if (/!\s*\(?\s*[\w$.]*$/.test(m[1])) continue; // a NEGATED test is a "click outside" container check, never a control
+    if (actions.some((a) => a.name === m[2])) continue;
+    actions.push({ name: m[2], line: src.slice(0, m.index).split("\n").length, body: blockFrom(m.index + m[0].length - 1) });
+  }
 
   // 🔴 NO SILENT COVERAGE LOSS. If an action plainly exists but the binder could not bind it, say so
   // — otherwise it drops out of the audit and this gate reports a clean sweep it never performed.
   // Only attributes dispatched FROM AN EVENT TARGET are actions; the rest are container selectors.
-  const declared = new Set([...src.matchAll(/\btarget\b[^;\n]{0,60}?closest\("\[(data-[a-z0-9-]+)\]"\)/g)].map((x) => x[1]));
+  const declared = new Set([...src.matchAll(/(!\s*\(\s*[\w$.]*)?\btarget\b[^;\n]{0,60}?closest\("\[(data-[a-z0-9-]+)\]"\)/g)].filter((x) => !x[1]).map((x) => x[2]));
   const captured = new Set(actions.map((a) => a.name));
   const dropped = [...declared].filter((d) => !captured.has(d) && !UI_ONLY[d]);
 

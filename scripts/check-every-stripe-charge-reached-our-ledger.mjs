@@ -46,6 +46,13 @@ if (!secret || secret.length < 8) {
   console.log("  ⚠️  INTERNAL_FN_SECRET came back empty or masked.");
   process.exit(2);
 }
+// 🔑 A SECRET VALUE READS BACK MASKED (night fixer 11-12): on 11-12 the Netlify keys were marked secret, and `env:get` now returns a
+// stand-in (20 characters, 4 distinct), never the key. Asking with it is refused (401 "Invalid or missing internal secret") — that is
+// "couldn't ask", not "the reconciler can't detect a miss". A real key has far more than 8 distinct characters.
+if (new Set(secret).size < 8) {
+  console.log("  ⚠️  INTERNAL_FN_SECRET reads back masked (a Netlify secret value since 11-12) — couldn't ask the reconciler.");
+  process.exit(2);
+}
 
 async function ask(payload) {
   const res = await fetch(FN, {
@@ -73,6 +80,10 @@ try {
       metadata: { client_id: "00000000-0000-0000-0000-000000000000", invoice_num: "99991" },
     }],
   });
+  if (probe && /internal secret/i.test(String(probe.error || ""))) {
+    console.log(`  ⚠️  the reconciler refused the key (${String(probe.error).slice(0, 60)}) — couldn't ask; this is not a self-test result.`);
+    process.exit(2);
+  }
   if (probe?.missing_from_ledger?.length !== 1) {
     console.log("  ⚠️  SELF-TEST FAILED — a charge that cannot be in the ledger was not flagged.");
     console.log(`     Got: ${JSON.stringify(probe).slice(0, 180)}`);

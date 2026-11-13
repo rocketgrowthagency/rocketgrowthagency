@@ -75,5 +75,12 @@
   "const rank = keywordRank(noBrand, pack.keywords, places);",
   "const rank = keywordRank(title, pack.keywords, places);",
   1
+ ],
+ [
+  "a contact cell reaches the title draft",
+  "titlemeta",
+  "phone: client.identity_phone || null,",
+  "phone: client.identity_phone || client.primary_contact_phone || null,",
+  1
  ]
 ]

@@ -37,12 +37,16 @@ const SHEETS = ["portal/portal.css", "admin/admin.css"];
 // It can only go up from here by someone adding a rule nothing matches.
 const BASELINE = { "portal/portal.css": 0, "admin/admin.css": 0 };
 
-const SKIP_DIRS = new Set(["node_modules", ".git", ".netlify", "reports"]);
+// 🔴 .claude holds agent WORKTREES — whole copies of the site (night fixer 11-12: 27,077 files read, the haystack hit V8's 512 MB string
+// limit inside .claude/worktrees, and the 114,323 files after it, admin/index.html among them, were skipped by the silent catch, so
+// 27 classes the sign-in page really uses read as dead). A copy of the site is not the site.
+const SKIP_DIRS = new Set(["node_modules", ".git", ".netlify", "reports", ".claude"]);
 const CODE = /\.(js|mjs|cjs|html|json)$/;
 
 function readAllCode(root) {
   let out = "";
   let files = 0;
+  const unread = [];
   const walk = (dir) => {
     let entries;
     try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
@@ -50,11 +54,11 @@ function readAllCode(root) {
       if (SKIP_DIRS.has(e.name)) continue;
       const p = path.join(dir, e.name);
       if (e.isDirectory()) walk(p);
-      else if (CODE.test(e.name)) { try { out += fs.readFileSync(p, "utf8"); files++; } catch {} }
+      else if (CODE.test(e.name)) { try { out += fs.readFileSync(p, "utf8"); files++; } catch (x) { unread.push(`${path.relative(root, p)} (${String(x && x.message).slice(0, 60)})`); } }
     }
   };
   walk(root);
-  return { text: out, files };
+  return { text: out, files, unread };
 }
 
 function dormantIn(cssPath, code) {
@@ -81,7 +85,12 @@ function dormantIn(cssPath, code) {
 
 console.log("── no NEW dormant CSS ──");
 
-const { text: code, files } = readAllCode(SITE);
+const { text: code, files, unread } = readAllCode(SITE);
+// 🔴 A FILE THAT COULD NOT BE READ IS NOT A FILE WITHOUT THE CLASS. Every class it uses would read as dead. → feedback_a_silent_catch_hides_an_optimisation_doing_nothing
+if (unread.length) {
+  console.log(`  ⚠️  ${unread.length} code file(s) could not be read (first: ${unread[0]}) — cannot judge.`);
+  process.exit(2);
+}
 // 🔴 An empty haystack would mark EVERY class dormant and read as a catastrophic regression. That is
 // a broken gate, not a finding. → feedback_indeterminate_is_not_a_finding
 if (files < 50 || code.length < 200000) {

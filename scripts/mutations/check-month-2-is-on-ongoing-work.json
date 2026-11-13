@@ -68,5 +68,12 @@
   ".pm-ongoing-ground .pm-doit > .portal-card > .portal-card-head { display: none; }",
   ".pm-ongoing-ground .pm-doit > .portal-card > .portal-card-head { display: none; }\n.pm-ongoing-ground .pm-act { min-height: 30px; }",
   1
+ ],
+ [
+  "step 17 drops its quarter pill (tier3 10b)",
+  "portal",
+  "pills: [[\"Your turn\", \"you\"], [yn.quarter, \"wait off\"]]",
+  "pills: [[\"Your turn\", \"you\"]]",
+  1
  ]
 ]

@@ -350,9 +350,12 @@ const P10S = {};   // the remaining states, drawn in Chrome below
   // 11-6 night fixer: finish with fewer (client_setup_fewer_v1, approved 11-5) adds one more condition after this one (its count is in the band)
   if (!/!\(csRow && step\.clientForm === "photo_upload"\)(?:\s*(?:\/\/[^\n]*)?\n\s*&& !\(globalThis\.rgaSetupFewer[^\n]*)?\s*\? `<p class="pm-evidence">/.test(P)) fail("step 10 done repeats \"20 photos received\" under its card");
   if (!/const csCardOf = [^\n]*!c\.closest\("\.pm-pc-more"\)/.test(P)) fail("a done step's lock or How seats on the card inside the closed Add more list, where nobody sees it");
-  // the tile handler: the file's LAST listener, and it handles a tile, a kind and ‹ Shot ›
-  const last = P.lastIndexOf('document.addEventListener("click"'), tail = P.slice(last);
-  if (!/closest\("\[data-p10-t\], \[data-p10-kind\]"\)/.test(tail) || !/_p10Sel\.set\(/.test(tail) || P.trimEnd().slice(-4) !== "\n});") fail("step 10's tile / kind handler isn't the last listener in portal.js");
+  // the tile handler: ONE document click listener handles a tile, a kind and ‹ Shot › (night fixer 11-12: this pinned "the file's LAST
+  // listener", a position; the mobile-number listener (11-12) was appended after it and the step was no less wired. The listener is now
+  // found by its selector and read to its own closing `\n});`.)
+  const p10At = P.indexOf('closest("[data-p10-t], [data-p10-kind]")'), lst = p10At < 0 ? -1 : P.lastIndexOf('document.addEventListener("click"', p10At);
+  const tail = lst < 0 ? "" : P.slice(lst, P.indexOf("\n});", lst) + 4);
+  if (!/closest\("\[data-p10-t\], \[data-p10-kind\]"\)/.test(tail) || !/_p10Sel\.set\(/.test(tail) || P.indexOf('closest("[data-p10-t], [data-p10-kind]")', p10At + 1) >= 0) fail("step 10's tile / kind handler isn't one document click listener in portal.js");
   if (!/\.pm-cs \.pm-p10-shot\[hidden\] \{ display:none; \}/.test(C) || !/\.pm-cs \.pm-p10-tiles \{ display:grid;/.test(C)) fail("portal.css lost step 10's tiles grid or the hidden shot rule"); }
 
 // ── 7 · Chrome: the kickoff calendar in the card + its tap · the kickoff pill · the video pill ───────────────────────────

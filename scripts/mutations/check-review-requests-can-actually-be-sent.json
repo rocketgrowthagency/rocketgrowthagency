@@ -1,0 +1,23 @@
+[
+ [
+  "a client hint claims we send each customer a request (step 12's old words)",
+  "playbook",
+  "\"clientHint\": \"The messages you send your customers asking for reviews. We write them, you tap",
+  "\"clientHint\": \"We send each one a personal request from you. The messages you send your customers asking for reviews. We write them, you tap",
+  1
+ ],
+ [
+  "a client hint claims we auto-send review requests (step 16's old words)",
+  "playbook",
+  "\"clientHint\": \"The messages you send your customers asking for reviews. We write them, you tap",
+  "\"clientHint\": \"We auto-send personalized review requests. The messages you send your customers asking for reviews. We write them, you tap",
+  1
+ ],
+ [
+  "a heading is followed by a real claim on its own line",
+  "playbook",
+  "WHAT WE SEND\\nTwo short scripts",
+  "WHAT WE SEND\\nWe send each customer a review request. Two short scripts",
+  1
+ ]
+]

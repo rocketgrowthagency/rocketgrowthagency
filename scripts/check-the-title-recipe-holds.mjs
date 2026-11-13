@@ -21,7 +21,7 @@ catch (e) { console.error(`⚠️  INDETERMINATE — couldn't load the recipe: $
 const bad = [];
 const fail = (m) => bad.push(m);
 
-const RGA = { id: "rga", business_name: "Rocket Growth Agency", primary_market: "Culver City, CA", website_url: "https://www.rocketgrowthagency.com/", primary_contact_phone: "(424) 242-2040" };
+const RGA = { id: "rga", business_name: "Rocket Growth Agency", primary_market: "Culver City, CA", website_url: "https://www.rocketgrowthagency.com/", identity_phone: "(424) 242-2040" };   // the BUSINESS phone (calls_catchup_v1 F, 11-11)
 const PLAN = { keywords: ["local seo services near me", "google business profile optimization", "local seo agency culver city", "seo company culver city ca"], locations: ["Mar Vista", "Palms", "Playa Vista"] };
 const PAGE = `<html><head><title>Local SEO &amp; Google Maps Agency | Rocket Growth Agency</title><meta name="description" content="We set up and keep up your Google Business Profile."></head><body>Cancel anytime.</body></html>`;
 const OPTIONS = [
@@ -50,9 +50,14 @@ const run = async (client, o = {}) => { const d = deps(o); const r = await TM.dr
   if (!rec.evidence.earned.includes("local seo culver city") || rec.evidence.earned.includes("rocket growth")) fail("RGA: a search the page earns clicks for isn't kept (or a brand search counts as one)");
   if (!rec.evidence.notes.some((n) => /SerpAPI has 0 searches left/.test(n))) fail("RGA: competitors that couldn't be checked aren't said to be");
 }
+// 1b · a contact cell never reaches a title (calls_catchup_v1 F, 11-11): a client with only the owner's cell on file is told "no phone"
+{
+  const { r, d } = await run({ ...RGA, identity_phone: null, primary_contact_phone: "(310) 555-0199" });
+  if (!/Phone: none on file \(don't write one\)/.test(d.seen.prompt) || /555-0199/.test(d.seen.prompt) || r.outcome_data.recipe.options[0].ok) fail("a contact cell reaches the title draft (only the business phone may)");
+}
 // 2 · a plumber with no price on file: the model is told there's no price, and an option with one fails
 {
-  const P = { id: "p", business_name: "Acme Plumbing", primary_market: "Austin, TX", website_url: "https://acmeplumbing.test", primary_contact_phone: "(512) 555-0100" };
+  const P = { id: "p", business_name: "Acme Plumbing", primary_market: "Austin, TX", website_url: "https://acmeplumbing.test", identity_phone: "(512) 555-0100" };
   const plan = { keywords: ["emergency plumber near me", "water heater repair austin"], locations: ["Hyde Park"] };
   const { r, d } = await run(P, { prices: [], plan, options: [
     { title: "Emergency Plumber in Austin | Acme Plumbing", description: "Fast plumbing in Austin from $99. Call (512) 555-0100.", why: "" },

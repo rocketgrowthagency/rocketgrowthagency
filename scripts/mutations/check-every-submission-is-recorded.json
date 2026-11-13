@@ -130,5 +130,26 @@
   "gbpprofilewatch",
   "now: () => Date.now(), record: (o) => recordSubmission({ supa, ...o }) });",
   "now: () => Date.now(), record: null });"
+ ],
+ [
+  "the morning run stops handing the plan adoption its recorder",
+  "morningrun",
+  "adoptWhenSuggested(base.supa, clientId, month, base.now(), base.record)",
+  "adoptWhenSuggested(base.supa, clientId, month, base.now(), null)",
+  1
+ ],
+ [
+  "the default recorder is no longer recordSubmission",
+  "citbuild",
+  "record: (o) => require(\"./_record\").recordSubmission({ supa, ...o }),",
+  "record: async () => ({ ok: true }),",
+  1
+ ],
+ [
+  "the adopted plan is written with no record",
+  "monthlyplanread",
+  "    if (record) await record({ clientId, kind: \"monthly_plan_chosen\", stepId: STEP,",
+  "    if (false) await console.log({ clientId, kind: \"monthly_plan_chosen\", stepId: STEP,",
+  1
  ]
 ]
