@@ -1,0 +1,44 @@
+[
+ [
+  "the format bits name the wrong error-correction level",
+  "ownqr",
+  "const FORMAT_ECL = { L: 1, M: 0 };",
+  "const FORMAT_ECL = { L: 3, M: 2 };",
+  1
+ ],
+ [
+  "Reed-Solomon uses the wrong generator root",
+  "ownqr",
+  "root = gfMul(root, 0x02);",
+  "root = gfMul(root, 0x03);",
+  1
+ ],
+ [
+  "the data is placed in the wrong direction",
+  "ownqr",
+  "up = ((right + 1) & 2) === 0",
+  "up = ((right + 1) & 2) !== 0",
+  1
+ ],
+ [
+  "GF(256) uses the wrong polynomial",
+  "ownqr",
+  "((z >>> 7) * 0x11d)",
+  "((z >>> 7) * 0x11b)",
+  1
+ ],
+ [
+  "the setup QR is drawn from the long link again",
+  "admin",
+  "globalThis.rgaQr.svg(`otpauth://totp/RGA:Admin?secret=${raw}&issuer=RGA`, { ecl: \"L\" })",
+  "globalThis.rgaQr.svg(`otpauth://totp/www.rocketgrowthagency.com:hello%40rocketgrowthagency.com?secret=${raw}&issuer=www.rocketgrowthagency.com`, { ecl: \"L\" })",
+  1
+ ],
+ [
+  "the Supabase fallback is removed",
+  "admin",
+  "      img.src = data.totp.qr_code;\n",
+  "",
+  1
+ ]
+]

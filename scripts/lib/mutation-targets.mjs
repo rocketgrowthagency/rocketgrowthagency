@@ -478,6 +478,7 @@ export const FILES = {
   knownstaff: "scraper:scripts/lib/known-staff.mjs",   // check-the-staff-list-is-known (11-13)
   adminsignin: "scraper:scripts/lib/admin-sign-in.mjs",   // check-checks-sign-in-as-the-robot (11-13)
   adminsession: "scraper:scripts/_admin-session.mjs",   // check-checks-sign-in-as-the-robot (11-13)
+  ownqr: "shared/qr.js",   // check-our-qr-decodes (11-13): RGA's own QR encoder
   nightrollup: "scraper:scripts/check-run-productivity.mjs",   // check-a-locked-screen-cannot-stop-a-video (11-12)
   videotemplate: "scraper:templates/video-landing.html",   // rga_video_address_v1 A (11-8): the outreach page template
   pagesfromstorage: "scraper:scripts/outreach-pages-play-from-storage.mjs",   // rga_video_address_v1 A (11-8)
