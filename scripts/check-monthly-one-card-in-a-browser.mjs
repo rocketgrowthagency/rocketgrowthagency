@@ -22,6 +22,7 @@
 //   Run it ONCE AFTER A DEPLOY (it reads the live site). It needs SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in the environment.
 //
 // Exit 0 clean · 1 a row draws old chrome / the tab is wrong · 2 INDETERMINATE (no credentials, no browser, page never rendered)
+import { signInAdmin } from "./lib/admin-sign-in.mjs";
 import { visibleRowFailures, visibleRulesSelfTest, previewFailures } from "./_monthly-visible-rules.mjs";
 const SITE = process.env.RGA_SITE_URL || "https://www.rocketgrowthagency.com";
 const CLIENT = process.argv[2] || process.env.RGA_MONTHLY_CLIENT_ID || "ae817a9c-60a2-4cc9-a196-0582b7b7e7c3";
@@ -33,18 +34,13 @@ let puppeteer;
 try { ({ default: puppeteer } = await import("puppeteer")); } catch { console.error("INDETERMINATE: puppeteer is not available here."); process.exit(2); }
 
 const H = { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` };
-let link;
-try {
-  const j = await (await fetch(`${SUPA_URL}/auth/v1/admin/generate_link`, { method: "POST", headers: { ...H, "Content-Type": "application/json" }, body: JSON.stringify({ type: "magiclink", email: ADMIN_EMAIL }) })).json();
-  link = j.action_link || j.properties?.action_link;
-} catch { /* reported below */ }
-if (!link) { console.error("INDETERMINATE: no sign-in link returned."); process.exit(2); }
 
 const fails = [...visibleRulesSelfTest()];
 const b = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 try {
   const page = await b.newPage();
-  await page.goto(link, { waitUntil: "networkidle2", timeout: 60000 });
+  // 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
+  await signInAdmin(page, undefined, { site: SITE }).catch((e) => { console.error(`INDETERMINATE: could not sign in to the admin: ${String(e.message).split("\n")[0]}`); process.exit(2); });
   await page.goto(`${SITE}/admin/?view=client&id=${CLIENT}&tab=monthlynew`, { waitUntil: "networkidle2", timeout: 60000 });
   const count = () => page.evaluate(() => document.querySelectorAll('#monthlyChecklistHost .ob-step[data-ob-step^="m2."]').length);
   let n = 0, stable = 0;

@@ -8,10 +8,10 @@ const U = process.env.SUPABASE_URL, K = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!U || !K) { console.log("INDETERMINATE: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set (run with --env-file=.env)"); process.exit(2); }
 let j;
 try {
-  const g = await (await fetch(`${U}/auth/v1/admin/generate_link`, { method: "POST", headers: { apikey: K, Authorization: `Bearer ${K}`, "Content-Type": "application/json" }, body: JSON.stringify({ type: "magiclink", email: "hello@rocketgrowthagency.com" }) })).json();
-  const v = await (await fetch(`${U}/auth/v1/verify`, { method: "POST", headers: { apikey: K, "Content-Type": "application/json" }, body: JSON.stringify({ type: "magiclink", token_hash: g.hashed_token || (g.properties && g.properties.hashed_token) }) })).json();
+  // 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
+  const { robotSession } = await import("./lib/admin-sign-in.mjs"), session = await robotSession();
   const d = new Date(), day = (n) => new Date(d.getTime() + n * 86400000).toISOString().slice(0, 10);
-  const r = await fetch(`https://www.rocketgrowthagency.com/.netlify/functions/schedule-data?from=${day(0)}&to=${day(7)}`, { headers: { Authorization: `Bearer ${v.access_token}` } });
+  const r = await fetch(`https://www.rocketgrowthagency.com/.netlify/functions/schedule-data?from=${day(0)}&to=${day(7)}`, { headers: { Authorization: `Bearer ${session.access_token}` } });
   if (!r.ok) { console.log(`INDETERMINATE: schedule-data answered ${r.status}`); process.exit(2); }
   j = await r.json();
 } catch (e) { console.log(`INDETERMINATE: could not reach the live site (${e.message})`); process.exit(2); }

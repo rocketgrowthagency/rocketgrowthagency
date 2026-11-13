@@ -1,7 +1,7 @@
 // _look-reviews-additions.mjs — READ-ONLY: the reply-live card (reviews_additions_v1 item 2) and the funnel card (item 3), in Chrome, with THIS repo's admin files.
 // Every write is blocked; portal-review-requests is answered by the harness, so nothing reaches Google. node scripts/_look-reviews-additions.mjs <outdir>
 import { classify } from "./acceptance/guard.mjs"; import { WALK_CLIENTS } from "./acceptance/clients.mjs";
-import { adminLink, SITE } from "./_admin-session.mjs";
+import { adminSignIn, SITE } from "./_admin-session.mjs";
 import fs from "node:fs";
 const SITE_DIR = "/Users/chris/RGA/Rocket Growth Agency Website VS Code", out = process.argv[2] || "/tmp", SUPA = process.env.SUPABASE_URL, CID = WALK_CLIENTS.main.id;
 const { chromium } = await import("playwright"); const b = await chromium.launch({ headless: true });
@@ -25,7 +25,8 @@ for (const scene of Object.keys(SCENES)) {
       : { ok: true, requests: [{ name: "Maria", already_marked: true, message: "x" }], reviews: null, matches: [] };
     r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) }); });
   const page = await ctx.newPage(); page.on("pageerror", (e) => console.log("PAGEERROR", String(e.message).slice(0, 300)));
-  await page.goto(await adminLink(), { waitUntil: "domcontentloaded", timeout: 60000 }); await page.waitForTimeout(6000);
+  // 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
+  await adminSignIn(page); await page.waitForTimeout(6000);
   await page.goto(`${SITE}/admin/?view=client&id=${CID}&tab=onboarding-v2`, { waitUntil: "domcontentloaded", timeout: 60000 });
   await page.waitForSelector(".ob-step", { state: "attached", timeout: 60000 });
   await page.evaluate(() => { document.querySelectorAll(".ob-phase:not(.open) [data-ob-phase-toggle]").forEach((x) => x.click()); document.querySelectorAll("[data-ob-rollup-toggle][aria-expanded='false']").forEach((x) => x.click()); });

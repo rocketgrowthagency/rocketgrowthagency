@@ -6,7 +6,7 @@
 // 🔒 THE RENDER CLIENT IS NAMED, never "whichever row comes back first" (2026-10-13): with the walk's test clients in
 // the table, an unordered `limit=1` could open a client with nothing done and measure nothing. → acceptance/clients.mjs
 import { WALK_CLIENTS } from "./acceptance/clients.mjs";
-const { nav: _sharedNav } = await import("./_admin-session.mjs");
+const { nav: _sharedNav, adminSignIn } = await import("./_admin-session.mjs");
 const navOrIndeterminate = (pg, url) => _sharedNav(pg, url, "a page this gate measures");
 /**
  * check-admin-tabs-render.mjs — the admin AND the report it produces must render, signed in.
@@ -69,18 +69,6 @@ try {
   if (!clientId) { console.log("  ⚠️  no active client to open — cannot exercise the client view."); process.exit(2); }
 } catch (e) { console.log(`  ⚠️  could not read a client: ${e.message}`); process.exit(2); }
 
-// 🔑 generate_link RETURNS the link and does NOT email anyone.
-let link;
-try {
-  const r = await fetch(`${SUPA_URL}/auth/v1/admin/generate_link`, {
-    method: "POST",
-    headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ type: "magiclink", email: ADMIN_EMAIL }),
-  });
-  const j = await r.json();
-  link = j.action_link || j.properties?.action_link;
-  if (!link) { console.log(`  ⚠️  no sign-in link returned: ${JSON.stringify(j).slice(0, 140)}`); process.exit(2); }
-} catch (e) { console.log(`  ⚠️  could not mint a sign-in link: ${e.message}`); process.exit(2); }
 
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 let fails = 0;
@@ -104,7 +92,8 @@ try {
     }
   });
 
-  await navOrIndeterminate(page, link);
+  // 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
+  await adminSignIn(page);
   await new Promise((r) => setTimeout(r, 6000));
   await navOrIndeterminate(page, `${SITE}/admin/?view=client&id=${clientId}&tab=overview`);
   await new Promise((r) => setTimeout(r, 12000));

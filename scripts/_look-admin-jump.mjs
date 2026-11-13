@@ -6,14 +6,13 @@ import puppeteer from "puppeteer";
 const SUPA_URL = process.env.SUPABASE_URL, SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SITE = "https://www.rocketgrowthagency.com", RGA = "ae817a9c-60a2-4cc9-a196-0582b7b7e7c3";
 const SEL = process.env.SEL || "#panel-overview [data-goto-step]";
-const r = await fetch(`${SUPA_URL}/auth/v1/admin/generate_link`, { method: "POST", headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ type: "magiclink", email: "hello@rocketgrowthagency.com" }) });
-const j = await r.json(); const link = j.action_link || j.properties?.action_link;
-if (!link) { console.log("no sign-in link"); process.exit(2); }
+// 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
+import { signInAdmin } from "./lib/admin-sign-in.mjs";
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 try {
   const page = await browser.newPage(); await page.setViewport({ width: 1400, height: 1000 });
   const errs = []; page.on("pageerror", (e) => errs.push(e.message.split("\n")[0].slice(0, 140)));
-  await page.goto(link, { waitUntil: "networkidle2", timeout: 60000 }); await new Promise((r) => setTimeout(r, 5000));
+  await signInAdmin(page); await new Promise((r) => setTimeout(r, 5000));
   await page.goto(`${SITE}/admin/?view=client&id=${RGA}&tab=overview`, { waitUntil: "networkidle2", timeout: 60000 }); for (let i = 0; i < 300 && !(await page.$(SEL)); i++) await new Promise((r) => setTimeout(r, 100));
   if (!process.env.EARLY) await new Promise((r) => setTimeout(r, 12000));
   const btns = await page.evaluate((sel) => [...document.querySelectorAll(sel)].map((b) => `${b.textContent.trim()} → ${b.getAttribute("data-goto-step")}`), SEL);

@@ -71,6 +71,14 @@ export async function adminLink() {
   return link;
 }
 
+/** Sign a browser page in to the admin. */
+export async function adminSignIn(page) {
+  // 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
+  requireCreds();
+  const { signInAdmin } = await import("./lib/admin-sign-in.mjs");
+  try { await signInAdmin(page, undefined, { site: SITE }); } catch (e) { die(`could not sign in to the admin: ${String(e.message).split("\n")[0]}`); }
+}
+
 /** Navigate, or exit 2 — a navigation timeout is never a product defect. */
 export async function nav(page, url, what) {
   try { await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 }); }
@@ -108,7 +116,7 @@ export async function openAdminClient(page, clientId, tab = "onboarding-v2", { e
   // → feedback_a_flaky_gate_is_worse_than_a_failing_one
   let rows = 0;
   for (let attempt = 1; attempt <= Math.max(1, tries); attempt++) {
-    await nav(page, await adminLink(), "the sign-in link");
+    await adminSignIn(page);
     // 🔑 the session needs a beat before the next navigation, or the admin loads unauthenticated
     await new Promise((r) => setTimeout(r, 6000));
     await nav(page, `${SITE}/admin/?view=client&id=${clientId}&tab=${tab}`, `the admin ${tab} tab`);

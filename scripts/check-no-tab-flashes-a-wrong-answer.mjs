@@ -38,7 +38,7 @@ const SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // "✅ no wrong answer flashed — 11 surface(s) swept" about eleven pages it never saw.
 // 🔑 A GATE THAT SWEEPS A PAGE IT CANNOT LOAD IS A GATE THAT IS ALWAYS GREEN.
 // → feedback_an_unwired_gate_is_a_gate_that_is_always_green · feedback_fix_the_class_not_the_instance
-const { ADMIN_EMAIL, nav } = await import("./_admin-session.mjs");
+const { ADMIN_EMAIL, nav, adminSignIn } = await import("./_admin-session.mjs");
 const SITE = process.env.FLASH_SITE || "https://www.rocketgrowthagency.com";
 
 const say = (s) => console.log(s);
@@ -61,12 +61,6 @@ try {
 } catch { /* handled */ }
 if (!clientId) { say("  ⚠️  no active client to open."); process.exit(2); }
 
-let link;
-try {
-  const j = await api("/auth/v1/admin/generate_link", { method: "POST", body: JSON.stringify({ type: "magiclink", email: ADMIN_EMAIL }) });
-  link = j.action_link || j.properties?.action_link;
-} catch { /* handled */ }
-if (!link) { say("  ⚠️  could not mint a sign-in link."); process.exit(2); }
 
 // ── what counts as a CLAIM an operator could act on ───────────────────────────────────────────
 // Each returns a normalised string when it matches, so early and settled frames can be compared.
@@ -104,7 +98,8 @@ try {
   // recorded "the product is broken" with no finding printed at all.
   // 🔑 COULD-NOT-SIGN-IN IS EXIT 2, NEVER 1. `nav` does that, in one place, for every gate.
   // → feedback_a_flaky_gate_is_worse_than_a_failing_one · feedback_a_gate_that_throws_is_not_a_gate_that_fails
-  await nav(page, link, "the sign-in link");
+  // 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
+  await adminSignIn(page);
   await new Promise((r) => setTimeout(r, 6000));
 
   const targets = [

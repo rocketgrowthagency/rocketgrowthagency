@@ -1,7 +1,7 @@
 // _look-after2.mjs — READ-ONLY look at the worktree's CODE against the live data. Serves /portal /admin /shared /data from SITE_DIR, blocks every write (guard).
 // node --env-file=.env scripts/_look-after2.mjs <outdir> portal|admin <views...>   (WALK=main|new|month2 picks the portal client)
 import fs from "node:fs"; import path from "node:path";
-import { classify } from "./acceptance/guard.mjs"; import { WALK_CLIENTS } from "./acceptance/clients.mjs";
+import { signInAdmin } from "./lib/admin-sign-in.mjs"; import { classify } from "./acceptance/guard.mjs"; import { WALK_CLIENTS } from "./acceptance/clients.mjs";
 const SITE = process.env.SITE_DIR, out = process.argv[2], mode = process.argv[3], views = process.argv.slice(4);
 fs.mkdirSync(out, { recursive: true });
 const SUPA = process.env.SUPABASE_URL, KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -10,7 +10,7 @@ const { chromium } = await import("playwright");
 const b = await chromium.launch({ headless: true });
 const email = mode === "portal" ? WALK_CLIENTS[process.env.WALK || "main"].email : "hello@rocketgrowthagency.com";
 const redirect = mode === "portal" ? "https://www.rocketgrowthagency.com/portal/" : "https://www.rocketgrowthagency.com/admin/";
-const g = await (await fetch(`${SUPA}/auth/v1/admin/generate_link`, { method: "POST", headers: { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ type: "magiclink", email, options: { redirect_to: redirect } }) })).json();
+const g = mode !== "portal" ? null : await (await fetch(`${SUPA}/auth/v1/admin/generate_link`, { method: "POST", headers: { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ type: "magiclink", email, options: { redirect_to: redirect } }) })).json();
 const ctx = await b.newContext({ viewport: { width: 1300, height: 1000 } });
 await ctx.route("**/*", (r) => {
   const q = r.request(), u = new URL(q.url());
@@ -27,7 +27,8 @@ if (process.env.MATURE_FIX) { const H = fs.readFileSync(process.env.MATURE_FIX, 
 await ctx.route("**/.netlify/functions/walkthrough-outcome", (r) => r.fulfill({ status: 200, contentType: "application/json", body: "{\"ok\":true}" }));
 const page = await ctx.newPage();
 page.on("pageerror", (e) => console.log("PAGEERROR", String(e.message).slice(0, 300)));
-await page.goto(g.action_link || g.properties?.action_link, { waitUntil: "domcontentloaded", timeout: 60000 });
+// 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
+if (mode !== "portal") await signInAdmin(page); else await page.goto(g.action_link || g.properties?.action_link, { waitUntil: "domcontentloaded", timeout: 60000 });
 if (mode === "portal") {
   await page.waitForSelector('.portal-nav a[data-view="setup"]', { state: "attached", timeout: 45000 }); await page.waitForSelector("#portalLoadingPanel", { state: "hidden", timeout: 45000 });
   for (const v of views) {

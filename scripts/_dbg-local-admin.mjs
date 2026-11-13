@@ -1,5 +1,5 @@
 // Load the live admin with a LOCAL admin.js swapped in (proved by a marker), and report rows + render errors.
-const { adminLink } = await import("./_admin-session.mjs");
+const { adminSignIn } = await import("./_admin-session.mjs");
 const { default: puppeteer } = await import("puppeteer");
 const fs = await import("node:fs");
 const [clientId, localJs] = process.argv.slice(2);
@@ -12,7 +12,8 @@ p.on("console", async (m) => { if (/Flow render failed|load error/.test(m.text()
 p.on("pageerror", (e) => errs.push("PAGEERROR " + e.message.slice(0, 200)));
 await p.setRequestInterception(true);
 p.on("request", (r) => { if (new URL(r.url()).pathname === "/admin/admin.js") return r.respond({ status: 200, contentType: "text/javascript", body }); r.continue(); });
-await p.goto(await adminLink(), { waitUntil: "domcontentloaded" }); await new Promise((r) => setTimeout(r, 6000));
+// 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
+await adminSignIn(p); await new Promise((r) => setTimeout(r, 6000));
 await p.goto(`https://www.rocketgrowthagency.com/admin/?view=client&id=${clientId}&tab=onboarding-v2`, { waitUntil: "domcontentloaded" });
 let st;
 for (let s = 0; s < 90; s += 5) { await new Promise((r) => setTimeout(r, 5000)); st = await p.evaluate(() => ({ local: !!globalThis.__LOCAL_ADMIN, rows: document.querySelectorAll(".ob-step").length, chips: document.querySelectorAll("[data-mw-chip], .mw-chip").length })); if (st.rows) break; }
