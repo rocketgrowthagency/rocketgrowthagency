@@ -470,6 +470,7 @@ export const FILES = {
   nightpipeline: "scraper:scripts/overnight-pipeline.sh",
   emailscraper2: "scraper:step-2-email-scraper.mjs",   // check-a-found-email-is-the-business (11-12)
   emailvalidation: "scraper:lib/email-validation.cjs",   // check-a-found-email-is-the-business (11-12)
+  admindocfn: "netlify/functions/admin-doc.js",   // check-admin-functions-require-staff (11-12)
   recorder3: "scraper:step-3-video-recorder.mjs",   // check-a-locked-screen-cannot-stop-a-video (11-12)
   nightrollup: "scraper:scripts/check-run-productivity.mjs",   // check-a-locked-screen-cannot-stop-a-video (11-12)
   videotemplate: "scraper:templates/video-landing.html",   // rga_video_address_v1 A (11-8): the outreach page template

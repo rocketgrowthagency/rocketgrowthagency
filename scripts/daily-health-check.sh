@@ -843,6 +843,7 @@ run check-every-submission-is-recorded.mjs "every client submission is recorded 
 run check-a-retake-can-be-cleared.mjs "a photo Google asked to retake can be cleared by the client"
 run check-month-2-lives-in-the-monthly-record.mjs "a client's Month-2 answer lands in this month's monthly record, the one the admin and their portal read"
 run check-the-night-run-stops-before-morning.mjs "the nightly video run starts nothing after 04:00 and stops at 06:30, recording what it stopped"
+run check-admin-functions-require-staff.mjs "every admin function needs RGA staff, never just any signed-in person (11-12: admin-doc served playbooks to any session)"
 run check-a-found-email-is-the-business.mjs "a found email must be the business's: search words never name-match, regulators and theme demos are rejected"
 run check-the-maps-frame-shows-the-business-and-the-search.mjs "the held Maps results frame is a verified results list at city level and the business sits inside the visible map (11-11: county-wide map, ocean, city card)"
 run check-a-locked-screen-cannot-stop-a-video.mjs "a locked Mac screen cannot stop a video (Maps frames fall back to the page), the N/3 WebMs line names the missing recording, the night roll-up reads tonight once"

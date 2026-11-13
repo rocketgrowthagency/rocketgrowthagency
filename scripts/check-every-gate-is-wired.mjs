@@ -121,6 +121,7 @@ const NOT_PREFLIGHT = {
   'check-netlify-credits-will-last.mjs': 'live-data: Netlify credit forecast (API); runs in daily-health-check.sh + after every deploy — billing, not video safety; self-tests its arithmetic (4 mut)',
   'check-nothing-goes-on-a-listing-until-it-is-the-only-one.mjs': 'behavioural: one-listing rule + writers + step 7/39 locks; runs in daily-health-check.sh — a listing gate cannot make a video unsafe',
   'check-the-night-run-stops-before-morning.mjs': 'behavioural: the night run\'s real clock lines on 6 start times + every start point + the watchdog; runs in daily-health-check.sh',
+  'check-admin-functions-require-staff.mjs': 'static: every netlify admin-* function calls a staff or machine guard; runs in daily-health-check.sh — an access gate cannot make a video unsafe',
   'check-a-found-email-is-the-business.mjs': 'behavioural: the real name-match token filter on 6 trades and the real email validator; runs in daily-health-check.sh + the email-validation suite in the night pre-flight',
   'check-the-maps-frame-shows-the-business-and-the-search.mjs': 'static + behavioural: the results page is verified + framed before capture pauses on it, and the business must sit inside the visible map (the real businessFramePx on the 11-11 South Bay numbers); runs in daily-health-check.sh',
   'check-a-locked-screen-cannot-stop-a-video.mjs': 'static + behavioural: the Maps freeze grab on a locked screen, the N/3 WebMs line, and the night roll-up on a fixture night; runs in daily-health-check.sh',

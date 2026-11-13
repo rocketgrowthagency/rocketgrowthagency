@@ -1,0 +1,16 @@
+[
+ [
+  "admin-doc goes back to any signed-in person",
+  "admindocfn",
+  "  const auth = await requireWorkspaceUser(event);",
+  "  const auth = await requireUser(event);",
+  1
+ ],
+ [
+  "admin-doc imports no staff guard",
+  "admindocfn",
+  "const { requireWorkspaceUser, fail } = require(\"./_auth\");",
+  "const { requireUser: requireWorkspaceUser, fail } = require(\"./_auth\");",
+  1
+ ]
+]
