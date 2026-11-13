@@ -64,6 +64,14 @@ const R = await import(pathToFileURL(libPath).href);
   t(R.judgeGuardFn("").length > 0, "a missing profiles_guard_role() passes");
   t(R.judgeGuardFn(guard2.replace("raise exception 'x';", "null;")).length > 0, "an INSERT branch that never refuses passes");
   t(R.judgeGuardFn(guard2.replace("and not public.is_internal_user()", "")).length > 0, "an INSERT branch that can't tell staff from a client passes");
+  // 11-12: two-step in the database (ADMIN_TWO_STEP_RLS_2026-11-12.sql)
+  const okDef = "select coalesce(auth.jwt() ->> 'aal', '') = 'aal2' or not exists ( select 1 from auth.mfa_factors f where f.user_id = auth.uid() and f.status = 'verified' );";
+  const ts = { ok: okDef, internal: "select coalesce(public.current_profile_role(), '') in ('owner') and public.staff_two_step_ok();", owns: "select exists (select 1) and public.staff_two_step_ok();" };
+  t(R.judgeTwoStep(ts).length === 0, "the 11-12 two-step helpers fail");
+  t(R.judgeTwoStep({ ...ts, ok: "" }).length > 0, "a missing staff_two_step_ok() passes");
+  t(R.judgeTwoStep({ ...ts, internal: "select true" }).length > 0, "is_internal_user() without two-step passes");
+  t(R.judgeTwoStep({ ...ts, owns: "select true" }).length > 0, "current_user_owns_client() without two-step passes");
+  t(R.judgeTwoStep({ ...ts, ok: okDef.replace(/or not exists[\s\S]*$/, "") }).length > 0, "a helper that locks out everyone without a factor passes");
   t(R.judgeGuardFn(guard2.replace(/tg_op = 'INSERT'/, "tg_op = 'UPDATE'")).length > 0, "a guard with no INSERT branch passes");
 }
 if (process.env.SCRAPER_COPY_DIR) { console.log("✅ self-test held (mutation copy: the live database is not read)"); process.exit(0); }
@@ -93,6 +101,8 @@ F.push(...R.judgePolicies(pols));
 const gfn = await sql("select pg_get_functiondef(p.oid) as def from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'profiles_guard_role'");
 const guardProblems = R.judgeGuardFn((gfn[0] || {}).def);
 F.push(...guardProblems);
+const tsDef = async (name) => ((await sql(`select pg_get_functiondef(p.oid) as def from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = '${name}'`))[0] || {}).def;
+F.push(...R.judgeTwoStep({ ok: await tsDef("staff_two_step_ok"), internal: await tsDef("is_internal_user"), owns: await tsDef("current_user_owns_client") }));
 
 // ── (b) live, as the portal client ─────────────────────────────────────────────────────────────────────────────────────
 const EMAIL = "rocketgrowthagencyadmin@gmail.com";

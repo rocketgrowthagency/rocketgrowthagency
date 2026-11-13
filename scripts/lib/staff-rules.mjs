@@ -45,6 +45,21 @@ export function judgeGuardFn(def) {
   return p;
 }
 
+/** 11-12 (ADMIN_TWO_STEP_RLS_2026-11-12.sql): the staff helpers require two-step once a person has an authenticator.
+ *  defs = { ok: staff_two_step_ok(), internal: is_internal_user(), owns: current_user_owns_client() } definitions → problems */
+export function judgeTwoStep(defs) {
+  const p = [];
+  const clean = (d) => String(d || "").replace(/--[^\n]*/g, " ");
+  const ok = clean(defs && defs.ok), internal = clean(defs && defs.internal), owns = clean(defs && defs.owns);
+  if (!ok.trim()) return ["public.staff_two_step_ok() is missing: staff reach client data in the database without the code once 2FA is on"];
+  if (!/auth\.jwt\(\)\s*->>\s*'aal'\s*,\s*''\s*\)\s*=\s*'aal2'/i.test(ok)) p.push("staff_two_step_ok() doesn't accept an aal2 token");
+  if (!/not\s+exists\s*\([\s\S]*auth\.mfa_factors[\s\S]*status\s*=\s*'verified'/i.test(ok)) p.push("staff_two_step_ok() doesn't let a person with no verified authenticator through (lockout before setup)");
+  if (!/\bor\b/i.test(ok)) p.push("staff_two_step_ok() must accept aal2 OR no verified factor");
+  if (!/staff_two_step_ok\s*\(\s*\)/i.test(internal)) p.push("is_internal_user() doesn't require staff_two_step_ok(): staff RLS ignores two-step");
+  if (!/staff_two_step_ok\s*\(\s*\)/i.test(owns)) p.push("current_user_owns_client() doesn't require staff_two_step_ok(): staff RLS ignores two-step");
+  return p;
+}
+
 /** pg_policies rows (roles as text) → problems: a public-role policy whose USING or WITH CHECK is exactly `true` */
 export function judgePolicies(rows, allow = TRUE_POLICY_ALLOW) {
   const p = [];

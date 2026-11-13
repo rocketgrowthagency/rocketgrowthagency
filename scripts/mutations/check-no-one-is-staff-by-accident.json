@@ -61,5 +61,7 @@
   "  if (!/is_internal_user\\s*\\(\\s*\\)/i.test(ins[1])) p.push(",
   "  if (false) p.push(",
   2
- ]
+ ],
+ ["two-step: the helper check is gone", "staffrules", "  if (!/staff_two_step_ok\\s*\\(\\s*\\)/i.test(internal)) p.push(", "  if (false) p.push(", 1],
+ ["two-step: a lockout-before-setup helper passes", "staffrules", "  if (!/not\\s+exists\\s*\\([\\s\\S]*auth\\.mfa_factors[\\s\\S]*status\\s*=\\s*'verified'/i.test(ok)) p.push(", "  if (false) p.push(", 1]
 ]
