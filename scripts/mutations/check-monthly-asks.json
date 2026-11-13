@@ -61,5 +61,6 @@
   "(?:^|\\\\n)[\\\\s*#-]*${k}\\\\b",
   "${k}",
   1
- ]
+ ],
+ ["the win story card asks 'Your turn' outside its quarter again", "portal", "    if (c.notDue && !c.isDone) return ogNotDue(c);\n    return { tone: \"you\", noHow: true, pills: [[\"Your turn\", \"you\"], m],", "    return { tone: \"you\", noHow: true, pills: [[\"Your turn\", \"you\"], m],", 1]
 ]

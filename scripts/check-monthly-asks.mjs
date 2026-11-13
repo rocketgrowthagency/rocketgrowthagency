@@ -66,5 +66,19 @@ if (!fs.existsSync(`${SITE}/docs/supabase/RGA_SLOT_HOLD_PURPOSE_M2_2026-10-20.sq
 // first" until then, and the client's request (Confirm / Decline) after — never "email times" by hand
 if (!/Offered once \$\{monthWord\(x\.month\)\}'s report is sent or skipped/.test(read("shared/monthly-close.js")) || !/closeoutAdminHtml\("m2_monthly"\)/.test(ADM)) // monthly_s5_close_v1 (11-9): the call card says it
   fail("step 20: admin row 26 doesn't say report first, then the client's request");
+// 11-12 (acceptance walk, month-2 client): EVERY quarterly step's card honours notDue. The win story card skipped it and asked "Your turn"
+// outside its quarter while the admin folded it. The class: any OG_CARD for a clientQuarterly playbook step.
+{
+  const quarterlyIds = [];
+  const walkPB = (o) => { if (Array.isArray(o)) o.forEach(walkPB); else if (o && typeof o === "object") { if (o.clientQuarterly && o.id) quarterlyIds.push(o.id); Object.values(o).forEach(walkPB); } };
+  walkPB(PB);
+  if (quarterlyIds.length < 3) fail(`only ${quarterlyIds.length} quarterly steps found in the playbook; the check lost its subject`);
+  for (const id of [...new Set(quarterlyIds)]) {
+    const at = P.indexOf(`"${id}": (step, c) => {`);
+    if (at < 0) continue;   // no card of its own: the shared row already shows "Every 3 months"
+    const end = P.indexOf("\n  },\n", at), card = P.slice(at, end > at ? end : at + 4000);
+    if (!/if \(c\.notDue && !c\.isDone\) return (\{ \.\.\.)?ogNotDue\(c\)/.test(card)) fail(`${id}: its portal card doesn't honour notDue, so outside its quarter it asks the client to act while the admin folds it`);
+  }
+}
 if (F.length) { console.error("🔴 Monthly (steps 16–20) regressed:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ Monthly holds: list cadence (client's, read back) + done = everyone asked + cell or email · numbers quarterly, Not sure stored, never block the report, old numbers kept · photos a suggestion counted on Google · video optional + quarterly with RGA's script · call = report first, RGA emails times, next month never waits, SQL file ready");
