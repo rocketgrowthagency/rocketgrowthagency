@@ -22,6 +22,8 @@
 //   Run it ONCE AFTER A DEPLOY (it reads the live site). It needs SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in the environment.
 //
 // Exit 0 clean · 1 a row draws old chrome / the tab is wrong · 2 INDETERMINATE (no credentials, no browser, page never rendered)
+import fs from "node:fs";
+import path from "node:path";
 import { signInAdmin } from "./lib/admin-sign-in.mjs";
 import { visibleRowFailures, visibleRulesSelfTest, previewFailures } from "./_monthly-visible-rules.mjs";
 const SITE = process.env.RGA_SITE_URL || "https://www.rocketgrowthagency.com";
@@ -39,6 +41,21 @@ const fails = [...visibleRulesSelfTest()];
 const b = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 try {
   const page = await b.newPage();
+  // 🔒 11-13: under the mutation runner (APPROVAL_ARCHIVE_SITE_DIR = its copy of the website), the browser gets the COPY's admin, shared
+  // and vendor files, so a mutated admin.js is what the page runs; data, sign-in and functions stay live. Before this, all 20 mutations
+  // changed a copy the browser never loaded and the suite proved 1 of 20.
+  const COPY = process.env.APPROVAL_ARCHIVE_SITE_DIR;
+  if (COPY && fs.existsSync(path.join(COPY, "admin/admin.js")) && path.resolve(COPY) !== path.resolve("/Users/chris/RGA/Rocket Growth Agency Website VS Code")) {
+    await page.setRequestInterception(true);
+    page.on("request", (req) => {
+      try {
+        const u = new URL(req.url());
+        const local = req.method() === "GET" && u.origin === new URL(SITE).origin && /^\/(admin|shared|vendor)\/[^?]+\.(js|css|html)$/.test(u.pathname) ? path.join(COPY, u.pathname) : null;
+        if (local && fs.existsSync(local)) return req.respond({ status: 200, contentType: /\.css$/.test(local) ? "text/css" : /\.html$/.test(local) ? "text/html" : "application/javascript", body: fs.readFileSync(local, "utf8") });
+      } catch { /* fall through to the live site */ }
+      req.continue();
+    });
+  }
   // 11-13: signs in as the checks' robot staff account (two-step-ready) — scripts/lib/admin-sign-in.mjs
   await signInAdmin(page, undefined, { site: SITE }).catch((e) => { console.error(`INDETERMINATE: could not sign in to the admin: ${String(e.message).split("\n")[0]}`); process.exit(2); });
   await page.goto(`${SITE}/admin/?view=client&id=${CLIENT}&tab=monthlynew`, { waitUntil: "networkidle2", timeout: 60000 });
