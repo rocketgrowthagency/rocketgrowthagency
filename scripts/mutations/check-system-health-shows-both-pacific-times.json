@@ -44,7 +44,7 @@
  [
   "the cache buster stays broken",
   "adminhtml",
-  "/admin/admin.js?v=20261113c",
+  "/admin/admin.js?v=20261113f",
   "/admin/admin.js?v=admin/admin.js"
  ],
  [

@@ -233,7 +233,8 @@ const OPEN_AT = Date.UTC(2026, 11, 1, 6, 0, 0);
   if (dec().data.plan_suggestion) fail("4b a suggestion was made on the 1st although November is not frozen");
   if (!dec().data.plan_pending || dec().data.plan_pending.ready_on !== "2026-12-02T00:00:00.000Z") fail(`4b the month must record when the suggestion is ready: ${JSON.stringify(dec().data.plan_pending)}`);
   const w = MS.planView({ record: dec().data, task: {} }, {});
-  if (w.state !== "wait" || !/^Suggestion ready Dec 2\./.test(w.reason)) fail(`4b on the 1st the plan reads "Suggestion ready Dec 2": ${w.state} / ${w.reason}`);
+  // 🔄 11-13 admin_monthly_plan_wait_v1: the date is the waiting row's TITLE ("Suggestion ready Dec 2"), the line says which numbers and why
+  if (w.state !== "wait" || w.waitTitle !== "Suggestion ready Dec 2" || !/never picked from half a month/.test(w.reason || "")) fail(`4b on the 1st the plan reads "Suggestion ready Dec 2": ${w.state} / ${w.waitTitle} / ${w.reason}`);
   // the morning run before the freeze lands changes nothing
   let r = await MP.suggestWhenFrozen(DB.cur.supa, CID, "2026-12-01", D + 86400e3);
   if (r.suggested || dec().data.plan_suggestion) fail("4b the morning run must not suggest while November is unfrozen");
@@ -476,6 +477,39 @@ const vge = (txt, re, min) => { const m = re.exec(txt); return !!m && m[1] >= mi
   const mr = read("netlify/functions/_morning-run.js");
   if (!/month_open_error/.test(mr) || !/by: "the morning run"/.test(mr)) fail("8 the morning run must say who opened the month and keep why it couldn't");
   if (!/month_open_error/.test(a)) fail("8 the open card must read why the month couldn't open");
+}
+
+// 🔒 admin_monthly_plan_wait_v1 (approved 11-13): a waiting plan says WHAT it waits on. RGA's November said "isn't there yet" with no date for
+// days because its October was never frozen. The words are the approved mockup's (reports/mockups/admin_monthly_plan_wait_v1.html).
+{
+  const N = Date.parse("2026-11-13T12:00:00Z"), ctx = (lf) => ({ lastFreeze: lf, freezeRef: "step 29", freezeTitle: "Freeze the month's numbers", now: N });
+  const W = (lf, pend) => MS.planView({ record: pend ? { plan_pending: { ready_on: pend } } : {}, task: {} }, ctx(lf));
+  const A = W({ status: "not_run", name: "October" });
+  if (A.waitTitle !== "Waiting on October's numbers" || A.reason !== "The plan is picked from last month's frozen numbers. October's were never frozen: step 29, Freeze the month's numbers, has not run for October. Freeze or skip October's step 29 and the plan is suggested the next morning.") fail(`plan wait A (never frozen) isn't the approved words: ${A.waitTitle} / ${A.reason}`);
+  const C = W({ status: "incomplete", name: "October", why: "Calls isn't in yet" });
+  if (C.waitTitle !== "Waiting on October's numbers" || C.reason !== "October's numbers aren't complete: Calls isn't in yet (step 29, Freeze the month's numbers). Once step 29 has them or is skipped, the plan is suggested the next morning.") fail(`plan wait C (incomplete) isn't the approved words: ${C.waitTitle} / ${C.reason}`);
+  const B = W({ status: "done", name: "November" }, "2026-12-05T09:00:00Z");
+  if (B.waitTitle !== "Suggestion ready Dec 5" || B.reason !== "It is picked from November's numbers once step 29 freezes them on Dec 5, so it is never picked from half a month.") fail(`plan wait B (ahead) isn't the approved words: ${B.waitTitle} / ${B.reason}`);
+  const late = W({ status: "not_run", name: "October" }, "2026-11-05T09:00:00Z");
+  if (late.waitTitle !== "Waiting on October's numbers") fail(`a ready date that already passed still promises it (${late.waitTitle}): it must say what it waits on`);
+  for (const [n, v] of [["A", A], ["B", B], ["C", C]]) if (!v.waitTitle || /isn't there yet/.test(v.reason)) fail(`plan wait ${n} fell back to the dateless line`);
+  // 11-13 live: December's plan waited on a November that wasn't over yet and read "November's were never frozen". A month whose own
+  // freeze day is still ahead is B, with that day, never A.
+  const notOver = W({ status: "not_run", name: "November", reads_on: "2026-12-05T09:00:00.000Z" });
+  if (notOver.waitTitle !== "Suggestion ready Dec 5" || /never frozen/.test(notOver.reason)) fail(`a last month that isn't over yet reads as never frozen: ${notOver.waitTitle} / ${notOver.reason}`);
+  // the server half: admin-months reports each month's close state with step 29's own build-check reason, and the admin passes it
+  const AM = req("./admin-months.js");
+  if (typeof AM.freezeByMonth !== "function") fail("admin-months.js no longer exports freezeByMonth (the plan card can't say what it waits on)");
+  else {
+    const fb = AM.freezeByMonth([{ reporting_month: "2026-10-01", data: {} }, { reporting_month: "2026-09-01", data: { tasks: { "m2.report.freeze": { status: "skipped" } } } }, { reporting_month: "2026-08-01", data: { frozen: {} } }, { reporting_month: "2026-07-01", data: { tasks: { "m2.report.freeze": { status: "done" } } } }]);
+    if (fb["2026-10-01"]?.status !== "not_run" || fb["2026-09-01"]?.status !== "skipped" || fb["2026-07-01"]?.status !== "done") fail(`freezeByMonth reads the close states wrong: ${JSON.stringify(fb)}`);
+    if (!fb["2026-10-01"]?.reads_on || !/^2026-11-0\d/.test(fb["2026-10-01"].reads_on)) fail(`freezeByMonth doesn't say when step 29 freezes each month (reads_on): ${JSON.stringify(fb["2026-10-01"])}`);
+    if (fb["2026-08-01"]?.status !== "incomplete" || !/isn't in yet|aren't in yet/.test(fb["2026-08-01"]?.why || "")) fail(`an incomplete freeze doesn't carry step 29's own reason: ${JSON.stringify(fb["2026-08-01"])}`);
+  }
+  const AMsrc = read("netlify/functions/admin-months.js"), AD = read("admin/admin.js");
+  if (!/freeze_by_month: freezeByMonth\(rows\)/.test(AMsrc)) fail("admin-months doesn't send freeze_by_month");
+  if (!/lastFreeze, freezeRef: obStepRef\("m2\.report\.freeze", "month2plus"\), freezeTitle: stepTitleOf\("m2\.report\.freeze"\)/.test(AD)) fail("the admin doesn't pass last month's close state and step 29's number + title to the plan card");
+  if (!/title: v\.waitTitle \|\| "Waiting for the month's suggestion"/.test(AD)) fail("the admin's waiting card doesn't draw the view's waitTitle");
 }
 
 // monthly_fix_v2 (11-9): the OLD pieces must be gone too, not only the new ones present (one card per row, the To do for numbered months, Open the month settled, the quarter preview, the bottom blocks)

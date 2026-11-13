@@ -68,7 +68,9 @@ export function auditRowFailures(rows) {
       if (r.id === "m2.exec.tracking_check" && /recorded this month: yes/i.test(card) && /: couldn't check\b/i.test(card))   /* 11-9: the card's own "It never says working" is an explanation, not a status */ F.push(`${tag}: says working and couldn't check at once`);
     }
     // 9 · Plan the month does not suggest before last month is frozen
-    if (r.id === "m2.plan.rotating_focus" && /Waiting for the month's suggestion/i.test(card) && !/Suggestion ready [A-Z][a-z]{2} \d{1,2}|Plans start with Month 2/.test(card))   /* a month before the cycle says when plans start */ F.push(`${tag}: waiting for the suggestion but names no "Suggestion ready <date>"`);
+    if (r.id === "m2.plan.rotating_focus" && /Waiting for the month's suggestion/i.test(card) && !/Suggestion ready [A-Z][a-z]{2} \d{1,2}|Plans start with Month 2|The morning run suggests the plan next/.test(card))   /* a month before the cycle says when plans start; a frozen month says the morning run is next (admin_monthly_plan_wait_v1) */ F.push(`${tag}: waiting for the suggestion but names no "Suggestion ready <date>"`);
+    // 🔒 admin_monthly_plan_wait_v1 (11-13): waiting on last month's numbers must name the step it waits on
+    if (r.id === "m2.plan.rotating_focus" && /Waiting on [A-Z][a-z]+'s numbers/.test(card) && !/step \d+/.test(card)) F.push(`${tag}: waiting on last month's numbers but names no step`);
     if (r.id === "m2.plan.rotating_focus" && r.plan_before_freeze) F.push(`${tag}: suggests a focus before last month's numbers are frozen`);
   }
   for (const id of ["m2.exec.profile_watch", "m2.exec.tracking_check"]) if (rows.length > 6 && !by.has(id)) F.push(`${id}: the step is not drawn on the Monthly tab`);

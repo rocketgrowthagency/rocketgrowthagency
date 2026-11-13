@@ -226,8 +226,8 @@
  [
   "the plan wait names no date",
   "monthlystart",
-  "reason: pend ? `Suggestion ready ${dayWords(pend)}.",
-  "reason: pend ? `Suggestion ready soon.",
+  "waitTitle: `Suggestion ready ${dayWords(pend)}`",
+  "waitTitle: `Suggestion ready soon`",
   1
  ],
  [
@@ -291,6 +291,62 @@
   "monthlyplanfn",
   "if (rec.data.plan && !adopted) return json(409, { error: \"This month's plan was chosen by a person",
   "if (false) return json(409, { error: \"This month's plan was chosen by a person",
+  1
+ ],
+ [
+  "11-13: a never-frozen month waits with no reason again",
+  "monthlystart",
+  "      if (lf && lf.status === \"not_run\") return",
+  "      if (false && lf && lf.status === \"not_run\") return",
+  1
+ ],
+ [
+  "11-13: an incomplete freeze hides step 29's reason",
+  "monthlystart",
+  "${lf.name}'s numbers aren't complete: ${lf.why} (${step}).",
+  "${lf.name}'s numbers aren't complete (${step}).",
+  1
+ ],
+ [
+  "11-13: a ready date already passed is still promised",
+  "monthlystart",
+  "if (pend && Date.parse(pend) > nowMs) return",
+  "if (pend) return",
+  1
+ ],
+ [
+  "11-13: the admin stops passing last month's close state",
+  "admin",
+  "    lastFreeze, freezeRef: obStepRef(\"m2.report.freeze\", \"month2plus\"), freezeTitle: stepTitleOf(\"m2.report.freeze\") });",
+  "    freezeRef: obStepRef(\"m2.report.freeze\", \"month2plus\"), freezeTitle: stepTitleOf(\"m2.report.freeze\") });",
+  1
+ ],
+ [
+  "11-13: admin-months stops sending each month's close state",
+  "adminmonths",
+  "      freeze_by_month: freezeByMonth(rows),",
+  "",
+  1
+ ],
+ [
+  "11-13: an incomplete freeze reads as done",
+  "adminmonths",
+  "out[r.reporting_month] = c.ok ? { status: \"done\", reads_on: ro } : { status: \"incomplete\", why: c.why, reads_on: ro };",
+  "out[r.reporting_month] = { status: \"done\", reads_on: ro };",
+  1
+ ],
+ [
+  "11-13: a last month that isn't over yet reads as never frozen",
+  "monthlystart",
+  "if (!(pend && Date.parse(pend) > nowMs) && lfDue) return",
+  "if (false && lfDue) return",
+  1
+ ],
+ [
+  "11-13: admin-months stops sending each month's freeze day",
+  "adminmonths",
+  "    else out[r.reporting_month] = { status: \"not_run\", reads_on: ro };",
+  "    else out[r.reporting_month] = { status: \"not_run\" };",
   1
  ]
 ]
